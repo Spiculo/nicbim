@@ -173,6 +173,28 @@ private slots:
         QCOMPARE(p.templatesFolder(), QString("Z:/Plantillas"));
     }
 
+    void workspacesRoundTrip()
+    {
+        QTemporaryDir tmp;
+        const QString path = tmp.filePath("preferences.json");
+        {
+            kimbim::Preferences p(path);
+            p.saveWorkspace("Wide plan", QByteArray("\x01layout one", 9));
+            p.saveWorkspace("Section", QByteArray("\x02layout two", 9));
+            QVERIFY(p.save());
+        }
+        kimbim::Preferences q(path);
+        QVERIFY(q.load());
+        const QJsonObject all = q.workspaces();
+        QCOMPARE(all.size(), 2);
+        QCOMPARE(QByteArray::fromBase64(all.value("Wide plan").toString().toLatin1()),
+                 QByteArray("\x01layout one", 9));
+        q.deleteWorkspace("Section");
+        QCOMPARE(q.workspaces().size(), 1);
+        q.deleteWorkspace("Absent"); // harmless
+        QCOMPARE(q.workspaces().size(), 1);
+    }
+
     void preferencesScrollWhenTheWindowIsShort()
     {
         kimbim::Preferences p; // in memory

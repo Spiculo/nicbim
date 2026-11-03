@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D127).**
+**Status as of `main` (2026-11-03, after D112–D131).**
 
 ## How to read it
 
@@ -333,7 +333,7 @@ release notes, so check before relying on a single cell.
 | Python console with the model API | RV(pyRevit) BB | ✅ | P1 | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | Visual programming | AC RV VW | ⬜ | new | Grasshopper, Dynamo, Marionette |
 | Plugins / add-ons | all | ⬜ | P2 | |
-| Customisable shortcuts, toolbars and workspaces | all | 🟡 | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. Toolbars and workspaces are still to do |
+| Customisable shortcuts, toolbars and workspaces | all | 🟡 | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. Toolbar customisation is still to do |
 | UI languages | all | ✅ | P0 | English and Spanish |
 | AI assistant | AC RV VW | 🔮 | — | [08](08-future.md) |
 

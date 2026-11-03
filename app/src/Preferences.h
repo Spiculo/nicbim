@@ -64,6 +64,9 @@ public:
     void addRecent(const QString& path); // most recent first, no duplicates, at most 10
     QByteArray layout() const;
     void setLayout(const QByteArray& state);
+    QJsonObject workspaces() const;                 // named saved dock layouts (D131)
+    void saveWorkspace(const QString& name, const QByteArray& state);
+    void deleteWorkspace(const QString& name);
     QByteArray windowGeometry() const; // D75: the main window's size, position and maximized state
     void setWindowGeometry(const QByteArray& geometry);
 private:

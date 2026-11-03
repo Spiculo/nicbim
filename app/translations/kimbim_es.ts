@@ -4763,6 +4763,61 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>&amp;Buscar y seleccionar...</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="964" />
+      <source>&amp;Workspaces</source>
+      <translation>&amp;Espacios de trabajo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="970" />
+      <source>&amp;Save current layout...</source>
+      <translation>&amp;Guardar la disposición actual...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="975" />
+      <source>Save workspace</source>
+      <translation>Guardar espacio de trabajo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="982" />
+      <source>Workspace "%1" saved</source>
+      <translation>Espacio de trabajo "%1" guardado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="983" />
+      <source>The workspace was applied but the preferences could not be saved</source>
+      <translation>El espacio de trabajo se aplicó, pero no se pudieron guardar las preferencias</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="985" />
+      <source>&amp;Delete workspace...</source>
+      <translation>&amp;Eliminar espacio de trabajo...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="992" />
+      <source>Delete workspace</source>
+      <translation>Eliminar espacio de trabajo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="992" />
+      <source>Workspace:</source>
+      <translation>Espacio de trabajo:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="999" />
+      <source>Workspace "%1" deleted</source>
+      <translation>Espacio de trabajo "%1" eliminado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1004" />
+      <source>(no saved workspaces)</source>
+      <translation>(no hay espacios de trabajo guardados)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1011" />
+      <source>Workspace "%1"</source>
+      <translation>Espacio de trabajo "%1"</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="664" />
       <source>&amp;Preferences...</source>
       <translation>&amp;Preferencias...</translation>

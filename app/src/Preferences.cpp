@@ -299,4 +299,23 @@ void Preferences::setLayout(const QByteArray& state)
     setValue("layout", QString::fromLatin1(state.toBase64()));
 }
 
+QJsonObject Preferences::workspaces() const
+{
+    return value("workspaces").toObject();
+}
+
+void Preferences::saveWorkspace(const QString& name, const QByteArray& state)
+{
+    QJsonObject all = workspaces();
+    all.insert(name, QString::fromLatin1(state.toBase64()));
+    setValue("workspaces", all);
+}
+
+void Preferences::deleteWorkspace(const QString& name)
+{
+    QJsonObject all = workspaces();
+    all.remove(name);
+    setValue("workspaces", all);
+}
+
 } // namespace kimbim

@@ -958,6 +958,57 @@ void MainWindow::buildMenus()
             perspective->setChecked(m_viewport && m_viewport->isPerspective());
         });
     }
+    { // D131: named desktop layouts (workspaces), kept in the user preferences.
+        QMenu* workspaces = view->addMenu(tr("&Workspaces"));
+        workspaces->setObjectName(QStringLiteral("menuWorkspaces"));
+        connect(workspaces, &QMenu::aboutToShow, this, [this, workspaces] {
+            while (!workspaces->actions().isEmpty())
+                workspaces->removeAction(workspaces->actions().first());
+            QAction* saveWorkspace = workspaces->addAction(tr("&Save current layout..."));
+            saveWorkspace->setObjectName(QStringLiteral("actionSaveWorkspace"));
+            connect(saveWorkspace, &QAction::triggered, this, [this] {
+                bool ok = false;
+                const QString name = QInputDialog::getText(this, tr("Save workspace"), tr("Name:"),
+                    QLineEdit::Normal, QString(), &ok).trimmed();
+                if (!ok || name.isEmpty())
+                    return;
+                m_prefs.saveWorkspace(name, m_dock->saveLayout());
+                const bool saved = m_prefs.save();
+                m_status->showMessage(saved ? tr("Workspace \"%1\" saved").arg(name)
+                                            : tr("The workspace was applied but the preferences could not be saved"));
+            });
+            QAction* deleteWorkspace = workspaces->addAction(tr("&Delete workspace..."));
+            deleteWorkspace->setObjectName(QStringLiteral("actionDeleteWorkspace"));
+            connect(deleteWorkspace, &QAction::triggered, this, [this] {
+                const QStringList names = m_prefs.workspaces().keys();
+                if (names.isEmpty())
+                    return;
+                bool ok = false;
+                const QString name = QInputDialog::getItem(this, tr("Delete workspace"), tr("Workspace:"),
+                    names, 0, false, &ok);
+                if (!ok || name.isEmpty())
+                    return;
+                m_prefs.deleteWorkspace(name);
+                m_prefs.save();
+                m_status->showMessage(tr("Workspace \"%1\" deleted").arg(name));
+            });
+            workspaces->addSeparator();
+            const QJsonObject all = m_prefs.workspaces();
+            if (all.isEmpty()) {
+                QAction* none = workspaces->addAction(tr("(no saved workspaces)"));
+                none->setEnabled(false);
+                return;
+            }
+            for (const QString& name : all.keys()) {
+                QAction* apply = workspaces->addAction(name);
+                const QByteArray state = QByteArray::fromBase64(all.value(name).toString().toLatin1());
+                connect(apply, &QAction::triggered, this, [this, name, state] {
+                    m_dock->restoreLayout(state);
+                    m_status->showMessage(tr("Workspace \"%1\"").arg(name));
+                });
+            }
+        });
+    }
     view->addSeparator();
     QAction* hide = view->addAction(tr("&Hide selected"));
     hide->setObjectName(QStringLiteral("actionHideSelected"));
