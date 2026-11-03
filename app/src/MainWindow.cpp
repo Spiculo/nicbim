@@ -695,6 +695,8 @@ void MainWindow::buildMenus()
         ->setToolTip(tr("Mirror the selection: click two points of the mirror line (hold Ctrl on the second click to mirror a copy)"));
     editAction(tr("Multi&ply..."), "actionMultiply", QKeySequence(Qt::CTRL | Qt::Key_U), [this] { multiplyDialog(); });
     editAction(tr("&Align..."), "actionAlign", QKeySequence(), [this] { alignDialog(); }); // D154
+    editAction(tr("El&evate..."), "actionElevate", QKeySequence(), [this] { elevateDialog(); }) // D159
+        ->setToolTip(tr("Move the selection up or down without changing its plan position"));
     editAction(tr("&Offset..."), "actionOffset", QKeySequence(), [this] { offsetDialog(); });
     editAction(tr("Resi&ze..."), "actionResize", QKeySequence(), [this] { // D98: Archicad's Resize
         if (m_selection.isEmpty()) {
@@ -8665,6 +8667,28 @@ void MainWindow::ceilingDialog()
     afterEdit(r);
     setSelection({r.value("guid").toString()});
     m_status->showMessage(tr("Ceiling created"));
+}
+
+void MainWindow::elevateDialog()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select what to elevate first"));
+        return;
+    }
+    bool ok = false;
+    const double delta = QInputDialog::getDouble(this, tr("Elevate"),
+        tr("Distance up (+) or down (-) in metres:"), 0.3, -1000.0, 1000.0, 3, &ok);
+    if (!ok)
+        return;
+    auto num = [](double v) { return QString::number(v, 'g', 17); };
+    const QJsonObject r = bridge("move_elements", {jsonList(m_selection), QStringLiteral("0"),
+        QStringLiteral("0"), num(delta), QStringLiteral("0")});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Elevate"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    m_status->showMessage(tr("Elevated %n element(s)", nullptr, m_selection.size()));
 }
 
 void MainWindow::overallDimensionDialog()

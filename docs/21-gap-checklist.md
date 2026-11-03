@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D158 plus explicit overrides for the final items.
+after D123–D159 plus explicit overrides for the final items.
 
-**Summary: 143 done, 63 deferred, 3 blocked.**
+**Summary: 144 done, 62 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -77,7 +77,7 @@ after D123–D158 plus explicit overrides for the final items.
 | 4. Editing tools (general) | Offset (parallel copy) | **Done** | Slice 17: walls (parallel copy), slabs (grow/shrink) |
 | 4. Editing tools (general) | Trim, extend to boundary, split, join | **Deferred** | Core done; remainder deferred. D80: walls and beams (split, trim/extend to an element, a grid line or a corner, join/merge, unjoin; Shift+S, Shift+T, Shift+J). D98: curved walls split. Not yet: 2D lines, trimming curved walls |
 | 4. Editing tools (general) | Align (to an edge or face) | **Done** | D154: Edit > *Align...* aligns on X/Y/Z at min/max/centre to the selection's combined bounds (or a reference element); one undo step. |
-| 4. Editing tools (general) | Elevate (change vertical position) | **Deferred** | Core done; remainder deferred. Wall height; no general elevate |
+| 4. Editing tools (general) | Elevate (change vertical position) | **Done** | D159: Edit > *Elevate...* moves the selection up or down by a distance without changing its plan position (hosted doors/windows follow); the `move_elements` `dz` path. |
 | 4. Editing tools (general) | Resize / scale | **Done** | D98: Edit › Resize (about the selection's middle) |
 | 4. Editing tools (general) | Pick up and inject settings (eyedropper / match properties) | **Done** | D97: Edit › Pick up / Inject settings (Ctrl+Alt+C / V) |
 | 4. Editing tools (general) | Edit by polygon points (add, move, delete vertices; curve an edge) | **Deferred** | Core done; remainder deferred. D98: Stretch tool on slabs and 2D shapes: move, add at an edge's middle, Ctrl+click delete; no curved edges |

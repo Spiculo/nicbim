@@ -172,6 +172,17 @@ def test_moving_walls_of_an_imported_model_keeps_their_geometry(room):
     assert [r.Items for r in w1.Representation.Representations if r.RepresentationIdentifier == "Body"] == items
 
 
+def test_elevate_moves_the_selection_vertically(room):
+    slab = b._model.by_guid(room["slab"])
+    before = ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[2][3]
+    r = call("move_elements", g(room["slab"]), 0, 0, 0.5)
+    assert r["ok"], r
+    after = ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[2][3]
+    assert (after - before) * authoring._scale() == pytest.approx(0.5, abs=1e-6)
+    # the plan position is untouched
+    assert ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[0][3] == pytest.approx(0.0, abs=1e-9)
+
+
 def test_round_corners_geometry():
     from kimbim import editing as E
 

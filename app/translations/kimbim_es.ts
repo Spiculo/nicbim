@@ -5234,6 +5234,39 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Dimensión total añadida</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="698" />
+      <source>El&amp;evate...</source>
+      <translation>Ele&amp;var...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="699" />
+      <source>Move the selection up or down without changing its plan position</source>
+      <translation>Mover la selección hacia arriba o abajo sin cambiar su posición en planta</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8661" />
+      <source>Select what to elevate first</source>
+      <translation>Selecciona primero qué elevar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8666" />
+      <source>Elevate</source>
+      <translation>Elevar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8667" />
+      <source>Distance up (+) or down (-) in metres:</source>
+      <translation>Distancia hacia arriba (+) o abajo (-) en metros:</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../src/MainWindow.cpp" line="8678" />
+      <source>Elevated %n element(s)</source>
+      <translation>
+        <numerusform>Elemento elevado</numerusform>
+        <numerusform>Elementos elevados</numerusform>
+      </translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>

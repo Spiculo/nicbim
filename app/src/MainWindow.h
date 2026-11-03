@@ -638,6 +638,7 @@ private:
     void alignDialog();        // D154: align the selection's edges or centres
     void ceilingDialog();      // D156: an IfcCovering ceiling over a slab or closed walls
     void wallOpeningDialog();  // D157: a bare hole through a wall
+    void elevateDialog();      // D159: move the selection up or down
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();
