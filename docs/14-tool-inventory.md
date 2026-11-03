@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D174).**
+**Status as of `main` (2026-11-03, after D112–D175).**
 
 ## How to read it
 
@@ -271,7 +271,7 @@ release notes, so check before relying on a single cell.
 |------|-----|--------|-----|-------|
 | Element schedules (doors, windows, walls), editable | all | ✅ | P1 | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
 | Room / area schedules | all | ✅ | P1 | D77: the Rooms schedule (every IfcSpace) |
-| Material take-off, quantities (area, volume, length) | all | 🟡 | P1 | D77: length, height, areas (net/gross side, openings), volume, count from Qto_ sets, parameters or shape; merge identical items + totals. Take-off by material layer later |
+| Material take-off, quantities (area, volume, length) | all | ✅ | P1 | D77: length, height, areas (net/gross side, openings), volume, count from Qto_ sets, parameters or shape; merge identical items + totals. D96 adds the *Building materials* take-off: one row per material layer (material, thickness, area, volume, count), tested by `tests/python/test_materials.py::test_material_takeoff_schedule` |
 | Schedule on a sheet | all | ✅ | new | D112: Sheets › Place schedule... (scheme, width, merge; vector table in PDF/SVG) |
 | Export to CSV / XLSX | all | ✅ | P1 | D77 (openpyxl) |
 | Cost estimating (5D) | BB AL | ⬜ | new | Bonsai has it |

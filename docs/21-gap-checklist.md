@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D174 plus explicit overrides for the final items.
+after D123–D175 plus explicit overrides for the final items.
 
-**Summary: 158 done, 48 deferred, 3 blocked.**
+**Summary: 159 done, 47 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -192,7 +192,7 @@ after D123–D174 plus explicit overrides for the final items.
 | 14. Sheets and output | DWG/DXF export | **Deferred** | Core done; remainder deferred. D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. DWG not yet (open question) |
 | 15. Schedules and quantities | Element schedules (doors, windows, walls), editable | **Done** | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
 | 15. Schedules and quantities | Room / area schedules | **Done** | D77: the Rooms schedule (every IfcSpace) |
-| 15. Schedules and quantities | Material take-off, quantities (area, volume, length) | **Deferred** | Core done; remainder deferred. D77: length, height, areas (net/gross side, openings), volume, count from Qto_ sets, parameters or shape; merge identical items + totals. Take-off by material layer later |
+| 15. Schedules and quantities | Material take-off, quantities (area, volume, length) | **Done** | D77 quantities plus D96's *Building materials* take-off: one row per material layer (material, thickness, area, volume, count), tested by `tests/python/test_materials.py::test_material_takeoff_schedule`. |
 | 15. Schedules and quantities | Schedule on a sheet | **Done** | D112: Sheets › Place schedule... (scheme, width, merge; vector table in PDF/SVG) |
 | 15. Schedules and quantities | Export to CSV / XLSX | **Done** | D77 (openpyxl) |
 | 15. Schedules and quantities | Cost estimating (5D) | **Deferred** | Bonsai has it |
