@@ -629,6 +629,33 @@ void MainWindow::buildMenus()
     dxfExport->setObjectName(QStringLiteral("actionExportDxf"));
     dxfExport->setToolTip(tr("Drawings and sheets to DXF files, several at once"));
     connect(dxfExport, &QAction::triggered, this, &MainWindow::exportDxfDialog);
+    QAction* shareWeb = file->addAction(tr("Share as &web page...")); // D215
+    shareWeb->setObjectName(QStringLiteral("actionShareWebPage"));
+    shareWeb->setToolTip(tr("Save a sheet as a self-contained HTML page with pan and zoom"));
+    connect(shareWeb, &QAction::triggered, this, [this] {
+        QStringList numbers;
+        for (const auto& v : bridge("sheets").value("sheets").toArray())
+            numbers << v.toObject().value("number").toString();
+        if (numbers.isEmpty()) {
+            m_status->showMessage(tr("No sheets yet: add one in the Sheets panel"));
+            return;
+        }
+        bool ok = false;
+        const QString number = QInputDialog::getItem(this, tr("Share as web page"), tr("Sheet:"), numbers,
+                                                     0, false, &ok);
+        if (!ok || number.isEmpty())
+            return;
+        const QString path = QFileDialog::getSaveFileName(this, tr("Share as web page"), QString(),
+            tr("Web page (*.html)"));
+        if (path.isEmpty())
+            return;
+        const QJsonObject r = bridge("export_web", {number, path});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Share as web page"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("Web page written: %1").arg(QDir::toNativeSeparators(path)));
+    });
     addUnderlayActions(file); // D85: Place underlay..., Underlays... (Underlays.cpp)
     QAction* schedule = file->addAction(tr("&Room schedule..."));
     schedule->setObjectName(QStringLiteral("actionRoomSchedule"));

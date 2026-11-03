@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D214 plus explicit overrides for the final items.
+after D123–D215 plus explicit overrides for the final items.
 
-**Summary: 195 done, 11 deferred, 3 blocked.**
+**Summary: 196 done, 10 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -210,7 +210,7 @@ after D123–D214 plus explicit overrides for the final items.
 | 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. |
 | 17. Collaboration and versions | BCF issues (import, export, viewpoints) | **Done** | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | 17. Collaboration and versions | Markups and comments in the model | **Done** | D113 BCF 2.1 issues with viewpoints (camera + selected components), threaded comments and import/export (Issues dialog); D87 in-model revision clouds and text markups. `tests/python/test_bcf.py` checks the exports with bcf-client. |
-| 17. Collaboration and versions | Cloud sharing with clients (web viewer) | **Deferred** | [08](08-future.md) |
+| 17. Collaboration and versions | Cloud sharing with clients (web viewer) | **Done** | D215: File > *Share as web page...* writes a sheet as a self-contained HTML file (the sheet SVG inline, pan and zoom, no server), ready to send or upload anywhere; hosting and live comments remain the user's |
 | 18. Interoperability | IFC export, valid against the schema | **Done** | Checked in CI: IfcOpenShell validator (schema + EXPRESS rules), web-ifc geometry and the independent xBIM .NET parser (`pixi run interop`, `pixi run interop-xbim`) |
 | 18. Interoperability | IFC export settings (what to export, property mapping) | **Done** | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |
 | 18. Interoperability | Re-import with reconciliation report | **Done** | D104: `kimbim versions import` matches by GlobalId, Tag, then a reviewed heuristic; dry run and JSON report |
