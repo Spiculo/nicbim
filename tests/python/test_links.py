@@ -235,6 +235,7 @@ def test_stale_links_and_refresh(tmp_path):
     refreshed = call(L.refresh_links)
     assert refreshed["ok"], refreshed
     assert refreshed["refreshed"] == [r["guid"]]
+    assert refreshed["geometry"]["changed"] == [r["guid"]]  # the app re-meshes it
     assert len(B._ids) == steps + 1  # one undo step
     assert call(L.stale_links)["links"][0]["changed"] is False
     # A second pass leaves the unchanged link alone.

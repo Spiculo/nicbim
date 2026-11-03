@@ -288,10 +288,10 @@ def update_link(guid: str) -> str:
         return 1, [guid], []
 
     try:
-        B._run(action)
+        r = B._run(action)
     except Exception as ex:  # noqa: BLE001
         return A._fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({"ok": True, "guid": guid, "elements": elements, "triangles": len(faces),
+    return B._dump({**r, "guid": guid, "elements": elements, "triangles": len(faces),
                     "bounds": _bounds(points)})
 
 
@@ -333,6 +333,7 @@ def refresh_links(guids_json: str = "") -> str:
             return A._fail("guids must be a JSON list")
     stale = {entry["guid"]: entry for entry in json.loads(stale_links())["links"] if entry["changed"]}
     refreshed, skipped, errors = [], [], []
+    geometry = {"changed": [], "removed": []}
     for element, _data in _links():
         guid = element.GlobalId
         if wanted is not None and guid not in wanted:
@@ -344,10 +345,13 @@ def refresh_links(guids_json: str = "") -> str:
         result = json.loads(update_link(guid))
         if result.get("ok"):
             refreshed.append(guid)
+            for key in ("changed", "removed"):
+                geometry[key].extend(result.get("geometry", {}).get(key) or [])
         else:
             errors.append({"guid": guid, "error": result.get("error", "")})
+    geometry = {k: list(dict.fromkeys(v)) for k, v in geometry.items()}
     return B._dump({"ok": True, "refreshed": refreshed, "skipped": skipped, "errors": errors,
-                    "changed": len(stale)})
+                    "changed": len(stale), "geometry": geometry})
 
 
 def set_link_transform(guid: str, transform_json: str) -> str:
@@ -383,10 +387,10 @@ def set_link_transform(guid: str, transform_json: str) -> str:
         return 1, [guid], []
 
     try:
-        B._run(action)
+        r = B._run(action)
     except Exception as ex:  # noqa: BLE001
         return A._fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({"ok": True, "guid": guid, "elements": elements, "triangles": len(faces),
+    return B._dump({**r, "guid": guid, "elements": elements, "triangles": len(faces),
                     "bounds": _bounds(points)})
 
 
@@ -403,7 +407,7 @@ def unlink(guid: str) -> str:
         return 1, [], [guid]
 
     try:
-        B._run(action)
+        r = B._run(action)
     except Exception as ex:  # noqa: BLE001
         return A._fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({"ok": True, "guid": guid})
+    return B._dump({**r, "guid": guid})
