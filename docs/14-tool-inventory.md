@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D172).**
+**Status as of `main` (2026-11-03, after D112–D173).**
 
 ## How to read it
 
@@ -216,7 +216,7 @@ release notes, so check before relying on a single cell.
 |------|-----|--------|-----|-------|
 | Floor plan drawings (one per story, cut plane, symbols) | all | ✅ | P1 | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
 | Section views (marker in plan, linked view) | all | 🟡 | P1 | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; SVG from IfcOpenShell's serializer, in a tab (D60, D61). Not yet: scale setting, detail level, cropping by hand |
-| Elevations (building, interior) | all | 🟡 | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). Interior elevations: an elevation with a limited depth |
+| Elevations (building, interior) | all | ✅ | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). D173 adds a depth choice to the Section/Elevation tool strip (infinite, cut only or a limited depth); a limited depth gives an interior elevation |
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
 | 3D documents / axonometric drawings | AC RV VW | ✅ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |

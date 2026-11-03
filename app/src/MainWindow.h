@@ -922,6 +922,8 @@ private:
     bool traceUnderlay(const QString& storey, Underlay* u, std::shared_ptr<const UnderlayLines>* lines);
     QComboBox* m_roofKind = nullptr;
     QComboBox* m_sectionShape = nullptr; // D110: Line, Polyline or Curve for section/elevation markers
+    QComboBox* m_drawingDepthMode = nullptr; // D173: Infinite, cut only or a limited depth
+    QDoubleSpinBox* m_drawingDepth = nullptr;
     QSpinBox* m_detailScale = nullptr;   // D116: the detail view's 1:n
     bool m_sectionPathDone = false;      // D110: the path is closed; the next click is the look side
     QDoubleSpinBox* m_roofPitch = nullptr;

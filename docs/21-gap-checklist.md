@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D172 plus explicit overrides for the final items.
+after D123–D173 plus explicit overrides for the final items.
 
-**Summary: 156 done, 50 deferred, 3 blocked.**
+**Summary: 157 done, 49 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -157,7 +157,7 @@ after D123–D172 plus explicit overrides for the final items.
 | 10. Attributes and graphics standards | Attribute manager (import/export standards between projects) | **Done** | D121: Graphics > *Attribute manager...* exports/imports pens, line types, fills, styles, purposes, layers, materials, surfaces and composites (merge or replace, group selection) |
 | 11. Drawings (views made from the model) | Floor plan drawings (one per story, cut plane, symbols) | **Done** | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
 | 11. Drawings (views made from the model) | Section views (marker in plan, linked view) | **Deferred** | Core done; remainder deferred. Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; SVG from IfcOpenShell's serializer, in a tab (D60, D61). Not yet: scale setting, detail level, cropping by hand |
-| 11. Drawings (views made from the model) | Elevations (building, interior) | **Deferred** | Core done; remainder deferred. Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). Interior elevations: an elevation with a limited depth |
+| 11. Drawings (views made from the model) | Elevations (building, interior) | **Done** | Template N/S/E/W elevations, *Create elevations*, Elevation tool (Shift+V); D173 adds the depth choice to the tool strip (infinite, cut only or a limited depth, the last being an interior elevation). |
 | 11. Drawings (views made from the model) | Detail views (enlarged, cropped, with extra 2D) | **Done** | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | 11. Drawings (views made from the model) | Drafting views (2D only) | **Done** | D98: worksheets |
 | 11. Drawings (views made from the model) | 3D documents / axonometric drawings | **Done** | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |

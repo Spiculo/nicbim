@@ -5520,6 +5520,31 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Publicar conjunto de láminas como PDF</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="3200" />
+      <source>Infinite depth</source>
+      <translation>Profundidad infinita</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3201" />
+      <source>Cut only</source>
+      <translation>Solo el corte</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3202" />
+      <source>Limited depth</source>
+      <translation>Profundidad limitada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3203" />
+      <source>How far the section or elevation sees: infinite, the cut only, or a limited depth (an interior elevation)</source>
+      <translation>Hasta dónde ve la sección o el alzado: infinito, solo el corte o una profundidad limitada (un alzado interior)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3212" />
+      <source>The limited depth</source>
+      <translation>La profundidad limitada</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

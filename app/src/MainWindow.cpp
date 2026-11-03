@@ -3198,6 +3198,31 @@ void MainWindow::buildModelingToolbar()
     sectionRow->addWidget(m_sectionShape);
     bar->addField(sectionBox);
     sectionBox->setVisible(false);
+    // D173: interior elevations: a section or elevation with a limited depth.
+    auto* depthBox = new QWidget(bar);
+    auto* depthRow = new QHBoxLayout(depthBox);
+    depthRow->setContentsMargins(0, 0, 0, 0);
+    m_drawingDepthMode = new QComboBox(depthBox);
+    m_drawingDepthMode->setObjectName(QStringLiteral("drawingDepthMode"));
+    m_drawingDepthMode->addItem(tr("Infinite depth"), QStringLiteral("-1"));
+    m_drawingDepthMode->addItem(tr("Cut only"), QStringLiteral("0"));
+    m_drawingDepthMode->addItem(tr("Limited depth"), QStringLiteral("1"));
+    m_drawingDepthMode->setToolTip(tr("How far the section or elevation sees: infinite, the cut only, or a limited depth (an interior elevation)"));
+    m_drawingDepth = new QDoubleSpinBox(depthBox);
+    m_drawingDepth->setObjectName(QStringLiteral("drawingDepth"));
+    m_drawingDepth->setRange(0.1, 100.0);
+    m_drawingDepth->setDecimals(2);
+    m_drawingDepth->setValue(6.0);
+    m_drawingDepth->setSuffix(tr(" m"));
+    m_drawingDepth->setEnabled(false);
+    m_drawingDepth->setToolTip(tr("The limited depth"));
+    connect(m_drawingDepthMode, &QComboBox::currentIndexChanged, m_drawingDepth, [this] {
+        m_drawingDepth->setEnabled(m_drawingDepthMode->currentData().toString() == QLatin1String("1"));
+    });
+    depthRow->addWidget(m_drawingDepthMode);
+    depthRow->addWidget(m_drawingDepth);
+    bar->addField(depthBox);
+    depthBox->setVisible(false);
     m_detailScale = new QSpinBox(bar);
     m_detailScale->setObjectName(QStringLiteral("detailScale"));
     m_detailScale->setRange(1, 500);
@@ -3938,6 +3963,7 @@ void MainWindow::setTool(Tool tool)
     m_wallHeight->setToolTip(tool == Tool::Roof ? tr("Eaves height above the level") : tr("Wall height"));
     m_roofKind->parentWidget()->setVisible(tool == Tool::Roof);
     m_sectionShape->parentWidget()->setVisible(tool == Tool::Section || tool == Tool::Elevation);
+    m_drawingDepthMode->parentWidget()->setVisible(tool == Tool::Section || tool == Tool::Elevation);
     if (m_detailScale)
         m_detailScale->setVisible(tool == Tool::Detail);
     m_lengthInput->setVisible(tool == Tool::Wall || tool == Tool::Beam || tool == Tool::Grid || tool == Tool::Move
@@ -5955,10 +5981,16 @@ bool MainWindow::createDrawing(const QString& kind, const QVector<QPointF>& path
         pts.append(QJsonArray{p.x(), p.y()});
     for (int i = 0; i + 1 < path.size(); ++i)
         arcs.append(i < bulges.size() ? bulges[i] : 0.0);
+    QString depth = QStringLiteral("-1"); // D173: infinite by default
+    if (m_drawingDepthMode) {
+        depth = m_drawingDepthMode->currentData().toString();
+        if (depth == QLatin1String("1"))
+            depth = QString::number(m_drawingDepth->value(), 'g', 17);
+    }
     const QJsonObject r = bridge("create_drawing_path", {kind,
         QString::fromUtf8(QJsonDocument(pts).toJson(QJsonDocument::Compact)),
         QString::fromUtf8(QJsonDocument(arcs).toJson(QJsonDocument::Compact)),
-        num(look.x()), num(look.y()), QStringLiteral("-1"), num(tilt), num(base)});
+        num(look.x()), num(look.y()), depth, num(tilt), num(base)});
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Could not add it: %1").arg(r.value("error").toString()));
         return false;
