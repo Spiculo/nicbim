@@ -318,4 +318,17 @@ void Preferences::deleteWorkspace(const QString& name)
     setValue("workspaces", all);
 }
 
+bool Preferences::toolbarVisible(const QString& name, bool fallback) const
+{
+    const QJsonObject all = value("toolbars").toObject();
+    return all.contains(name) ? all.value(name).toBool(fallback) : fallback;
+}
+
+void Preferences::setToolbarVisible(const QString& name, bool visible)
+{
+    QJsonObject all = value("toolbars").toObject();
+    all.insert(name, visible);
+    setValue("toolbars", all);
+}
+
 } // namespace kimbim

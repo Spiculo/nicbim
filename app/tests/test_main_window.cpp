@@ -3146,6 +3146,14 @@ private slots:
             QVERIFY2(action(w, name), name);
     }
 
+    // D131/D135: the customisation menus are in View and list what the window has.
+    void customisationMenusExist()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuWorkspaces")));
+        QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuToolbars")));
+    }
+
     // BCF viewpoints restore the camera: eye, target, up and projection.
     void bcfViewpointRestoresTheCamera()
     {

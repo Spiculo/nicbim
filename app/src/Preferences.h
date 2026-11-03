@@ -67,6 +67,8 @@ public:
     QJsonObject workspaces() const;                 // named saved dock layouts (D131)
     void saveWorkspace(const QString& name, const QByteArray& state);
     void deleteWorkspace(const QString& name);
+    bool toolbarVisible(const QString& name, bool fallback = true) const; // D135
+    void setToolbarVisible(const QString& name, bool visible);
     QByteArray windowGeometry() const; // D75: the main window's size, position and maximized state
     void setWindowGeometry(const QByteArray& geometry);
 private:

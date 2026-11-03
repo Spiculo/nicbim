@@ -307,6 +307,7 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     buildDocks();
     buildCutsToolbar();    // the level and the cuts, after the menus
     buildModelingToolbar();
+    applyToolbarPreferences(); // D135: the toolbars the user chose to hide
     buildVersions();       // the Versions menu and the title bar's Versions button
     buildPalette();
     applyShortcutOverrides(this); // saved user rebindings, after every menu/tool action exists
@@ -1006,6 +1007,34 @@ void MainWindow::buildMenus()
                     m_dock->restoreLayout(state);
                     m_status->showMessage(tr("Workspace \"%1\"").arg(name));
                 });
+            }
+        });
+    }
+    { // D135: show or hide each toolbar; the choice is kept in the user preferences.
+        QMenu* toolbars = view->addMenu(tr("&Toolbars"));
+        toolbars->setObjectName(QStringLiteral("menuToolbars"));
+        connect(toolbars, &QMenu::aboutToShow, this, [this, toolbars] {
+            while (!toolbars->actions().isEmpty())
+                toolbars->removeAction(toolbars->actions().first());
+            bool any = false;
+            for (QToolBar* bar : findChildren<QToolBar*>()) {
+                const QString name = bar->objectName();
+                if (name.isEmpty())
+                    continue;
+                any = true;
+                QAction* toggle = toolbars->addAction(bar->windowTitle());
+                toggle->setObjectName(QStringLiteral("actionToolbar") + name);
+                toggle->setCheckable(true);
+                toggle->setChecked(bar->isVisible());
+                connect(toggle, &QAction::toggled, this, [this, bar, name](bool shown) {
+                    bar->setVisible(shown);
+                    m_prefs.setToolbarVisible(name, shown);
+                    m_prefs.save();
+                });
+            }
+            if (!any) {
+                QAction* none = toolbars->addAction(tr("(no toolbars)"));
+                none->setEnabled(false);
             }
         });
     }
@@ -5481,6 +5510,17 @@ void MainWindow::applyTitleBarPreferences()
         m_cutSeparator->setVisible(m_prefs.titleBarCut());
     if (m_versionsButton)
         m_versionsButton->setVisible(m_prefs.titleBarVersions());
+}
+
+void MainWindow::applyToolbarPreferences()
+{
+    for (QToolBar* bar : findChildren<QToolBar*>()) {
+        const QString name = bar->objectName();
+        if (name.isEmpty())
+            continue;
+        // The proposal bar is for an agent's task and starts hidden; the others are part of the window.
+        bar->setVisible(m_prefs.toolbarVisible(name, name != QLatin1String("proposalToolbar")));
+    }
 }
 
 void MainWindow::refreshAnnotations()

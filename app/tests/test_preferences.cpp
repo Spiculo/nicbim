@@ -195,6 +195,25 @@ private slots:
         QCOMPARE(q.workspaces().size(), 1);
     }
 
+    void toolbarVisibilityRoundTrip()
+    {
+        QTemporaryDir tmp;
+        const QString path = tmp.filePath("preferences.json");
+        {
+            kimbim::Preferences p(path);
+            QVERIFY(p.toolbarVisible("statusToolbar"));
+            QVERIFY(!p.toolbarVisible("proposalToolbar", false));
+            p.setToolbarVisible("statusToolbar", false);
+            p.setToolbarVisible("proposalToolbar", true);
+            QVERIFY(p.save());
+        }
+        kimbim::Preferences q(path);
+        QVERIFY(q.load());
+        QVERIFY(!q.toolbarVisible("statusToolbar"));
+        QVERIFY(q.toolbarVisible("proposalToolbar", false));
+        QVERIFY(q.toolbarVisible("unknownToolbar"));
+    }
+
     void preferencesScrollWhenTheWindowIsShort()
     {
         kimbim::Preferences p; // in memory

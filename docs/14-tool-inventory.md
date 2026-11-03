@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D134).**
+**Status as of `main` (2026-11-03, after D112–D135).**
 
 ## How to read it
 
@@ -333,7 +333,7 @@ release notes, so check before relying on a single cell.
 | Python console with the model API | RV(pyRevit) BB | ✅ | P1 | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | Visual programming | AC RV VW | ⬜ | new | Grasshopper, Dynamo, Marionette |
 | Plugins / add-ons | all | ⬜ | P2 | |
-| Customisable shortcuts, toolbars and workspaces | all | 🟡 | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. Toolbar customisation is still to do |
+| Customisable shortcuts, toolbars and workspaces | all | 🟡 | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. D135: View > *Toolbars* shows or hides each toolbar and remembers the choice |
 | UI languages | all | ✅ | P0 | English and Spanish |
 | AI assistant | AC RV VW | 🔮 | — | [08](08-future.md) |
 
@@ -361,4 +361,4 @@ What now most often stops an architect from finishing a real project, roughly in
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
 14. **The deeper documentation/visualisation tail** (§11, §16): D134 adds a live view crop region; 3D documents, a live view range, model view options by scale, rendering and VR are still to do.
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14), a live editable hotlink and toolbar customisation.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14) and a live editable hotlink.

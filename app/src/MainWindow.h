@@ -568,6 +568,7 @@ private:
     void applyViewPreferences(); // D92: the perspective field of view and the home view, from the preferences
     void refreshNorthArrow(); // D92: the plan north indicator, from true north and the preference
     void applyTitleBarPreferences(); // D92: which controls the title bar holds
+    void applyToolbarPreferences();   // D135: which toolbars the user hid
     void showAbout();
     void openDialog();
     void stopLoading();

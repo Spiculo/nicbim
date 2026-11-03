@@ -4823,6 +4823,16 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>&amp;Espacios de trabajo</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>&amp;Toolbars</source>
+      <translation>&amp;Barras de herramientas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1037" />
+      <source>(no toolbars)</source>
+      <translation>(no hay barras de herramientas)</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="970" />
       <source>&amp;Save current layout...</source>
       <translation>&amp;Guardar la disposición actual...</translation>
