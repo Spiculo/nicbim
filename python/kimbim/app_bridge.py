@@ -1073,6 +1073,7 @@ from . import solids as _solids  # noqa: E402
 from . import revisions as _revisions  # noqa: E402
 from . import areas as _areas  # noqa: E402
 from . import templates as _templates  # noqa: E402
+from . import guides as _guides  # noqa: E402
 _EXPORTS = {
     "authoring": (
         "add_grid_axis",
@@ -1256,6 +1257,7 @@ _EXPORTS = {
         "sheet_revision",
     ),
     "areas": ("area_plan", "massing_report"),
+    "guides": ("add_guide", "clear_guides", "guides", "remove_guide"),
     "templates": (
         "view_templates",
         "save_view_template",

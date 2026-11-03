@@ -781,6 +781,54 @@ void MainWindow::buildMenus()
     rotatePlane->setObjectName(QStringLiteral("actionWorkPlaneRotation"));
     rotatePlane->setToolTip(tr("Rotate the plan and the drawing/snapping frame; geometry follows the clicks"));
     connect(rotatePlane, &QAction::triggered, this, &MainWindow::editWorkPlaneRotation);
+    QAction* guideLine = view->addAction(tr("Add &guide line...")); // D202
+    guideLine->setObjectName(QStringLiteral("actionAddGuideLine"));
+    guideLine->setToolTip(tr("A permanent construction guide line the drawing tools snap to"));
+    connect(guideLine, &QAction::triggered, this, [this] {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Guide line"));
+        auto* form = new QFormLayout(&dialog);
+        auto number = [&](double value) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(-1e6, 1e6);
+            box->setDecimals(3);
+            box->setSuffix(tr(" m"));
+            box->setValue(value);
+            return box;
+        };
+        auto* x1 = number(0.0);
+        auto* y1 = number(0.0);
+        auto* x2 = number(10.0);
+        auto* y2 = number(0.0);
+        form->addRow(tr("From x:"), x1);
+        form->addRow(tr("From y:"), y1);
+        form->addRow(tr("To x:"), x2);
+        form->addRow(tr("To y:"), y2);
+        auto* guideButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(guideButtons);
+        connect(guideButtons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(guideButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        const QJsonObject r = bridge("add_guide", {QString::number(x1->value()), QString::number(y1->value()),
+                                                   QString::number(x2->value()), QString::number(y2->value())});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Guide line"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("Guide line added"));
+    });
+    QAction* clearGuides = view->addAction(tr("Clear guide &lines")); // D202
+    clearGuides->setObjectName(QStringLiteral("actionClearGuideLines"));
+    clearGuides->setToolTip(tr("Remove every permanent guide line"));
+    connect(clearGuides, &QAction::triggered, this, [this] {
+        const QJsonObject r = bridge("clear_guides");
+        if (!r.value("ok").toBool()) {
+            showError(tr("Clear guide lines"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("Guide lines cleared"));
+    });
     QAction* view3D = view->addAction(tr("&3D view"));
     view3D->setObjectName(QStringLiteral("action3DView"));
     view3D->setShortcut(Qt::Key_3);

@@ -87,6 +87,7 @@ DEFAULTS = {
     "revisions": [],  # D171: revision records {code, date, description}
     "sheet_sets": {},  # D172: named sheet subsets for batch publishing {name: [numbers]}
     "drafting_blocks": {},  # D196: reusable 2D blocks by name {shapes: [{kind, points, extra, pen}]}
+    "guide_lines": [],  # D202: permanent construction guide lines {id, x1, y1, x2, y2}
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -305,6 +306,14 @@ def _error(key: str, value) -> str | None:
                 if not (isinstance(s, dict) and isinstance(s.get("kind"), str)
                         and isinstance(s.get("points"), list) and len(s["points"]) >= 2):
                     return f"a shape of the 2D block {name} needs a kind and points"
+    if key == "guide_lines":  # D202
+        if not isinstance(value, list):
+            return "guide lines are a list"
+        for g in value:
+            if not (isinstance(g, dict) and isinstance(g.get("id"), str) and g["id"]
+                    and all(isinstance(g.get(k), (int, float)) and not isinstance(g.get(k), bool)
+                            for k in ("x1", "y1", "x2", "y2"))):
+                return "a guide line needs an id and two points"
     if key == "favourites":
         if not isinstance(value, dict) or not all(
                 isinstance(k, str) and k.strip() and isinstance(v, dict) and isinstance(v.get("tool"), str)
