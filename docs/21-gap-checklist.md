@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D164 plus explicit overrides for the final items.
+after D123–D165 plus explicit overrides for the final items.
 
-**Summary: 149 done, 57 deferred, 3 blocked.**
+**Summary: 150 done, 56 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -63,7 +63,7 @@ after D123–D164 plus explicit overrides for the final items.
 | 3. Selection | Find & Select / query (by property values) | **Done** | D78: Ctrl+F panel; class, kind, type, property, layer, level, status, material; AND/OR; saved criteria |
 | 3. Selection | Selection sets (saved selections) | **Done** | D78: in the project settings (versioned) |
 | 3. Selection | Marquee (area selection for 2D export or editing) | **Done** | D155: Edit > *Marquee selection* makes a dragged rectangle a crossing selection that includes touched hidden elements; off restores normal box selection. |
-| 3. Selection | Magic wand (pick a shape from existing lines or edges) | **Deferred** | Core done; remainder deferred. D84: fill from a closed shape or the area clicked in (fill_at) |
+| 3. Selection | Magic wand (pick a shape from existing lines or edges) | **Done** | D84/D165: Model > *Fill from selected shape* fills a selected closed polyline, circle or fill (magic wand); the Fill tool's Alt+click fills the closed shape around the click (`fill_at`). |
 | 3. Selection | Tab cycling through overlapping elements | **Done** | D89: Tab / Shift+Tab, the click selects the highlighted one |
 | 4. Editing tools (general) | Undo / redo | **Done** |  |
 | 4. Editing tools (general) | Move, drag to move | **Done** | Joined walls follow; Ctrl detaches (D54) |

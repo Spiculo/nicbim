@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D164).**
+**Status as of `main` (2026-11-03, after D112–D165).**
 
 ## How to read it
 
@@ -82,7 +82,7 @@ release notes, so check before relying on a single cell.
 | Find & Select / query (by property values) | AC RV VW BB | ✅ | P0 | D78: Ctrl+F panel; class, kind, type, property, layer, level, status, material; AND/OR; saved criteria |
 | Selection sets (saved selections) | AC VW BB | ✅ | new | D78: in the project settings (versioned) |
 | Marquee (area selection for 2D export or editing) | AC | ✅ | new | D155: Edit > *Marquee selection* makes a dragged rectangle a crossing selection that includes every touched element, hidden ones too (left-drag, or the same through mode used for 2D export); the ordinary box behaviour returns when it is off |
-| Magic wand (pick a shape from existing lines or edges) | AC VW | 🟡 | new | D84: fill from a closed shape or the area clicked in (fill_at) |
+| Magic wand (pick a shape from existing lines or edges) | AC VW | ✅ | new | D84/D165: Model > *Fill from selected shape* fills a selected closed polyline, circle or fill (magic wand); the Fill tool's Alt+click fills the closed shape around the click (`fill_at`) |
 | Tab cycling through overlapping elements | RV AC | ✅ | new | D89: Tab / Shift+Tab, the click selects the highlighted one |
 
 ## 4. Editing tools (general)

@@ -269,6 +269,25 @@ bool MainWindow::fillAt(QPointF p)
     return true;
 }
 
+bool MainWindow::fillFromShape()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select a closed shape to fill first"));
+        return false;
+    }
+    const QJsonObject r = bridge("fill_from_shape", {m_selection.first(),
+        compact(draftOptions(QStringLiteral("fill")))});
+    if (!r.value("ok").toBool()) {
+        m_status->showMessage(tr("Could not fill: %1").arg(r.value("error").toString()));
+        return false;
+    }
+    afterEdit(r);
+    refreshSnapData();
+    setSelection({r.value("guid").toString()});
+    m_status->showMessage(tr("Filled the selected shape"));
+    return true;
+}
+
 bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool remove)
 {
     auto send = [this](const QVector<QPointF>& pts) {

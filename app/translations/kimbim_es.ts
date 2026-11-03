@@ -5357,6 +5357,26 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Selección desagrupada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="2855" />
+      <source>Fill from selected &amp;shape</source>
+      <translation>Rellenar la &amp;forma seleccionada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2857" />
+      <source>Fill the selected closed polyline, circle or fill (magic wand)</source>
+      <translation>Rellenar la polilínea cerrada, el círculo o el relleno seleccionados (varita mágica)</translation>
+    </message>
+    <message>
+      <location filename="../src/DraftTools.cpp" line="275" />
+      <source>Select a closed shape to fill first</source>
+      <translation>Selecciona primero una forma cerrada que rellenar</translation>
+    </message>
+    <message>
+      <location filename="../src/DraftTools.cpp" line="286" />
+      <source>Filled the selected shape</source>
+      <translation>Forma seleccionada rellenada</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

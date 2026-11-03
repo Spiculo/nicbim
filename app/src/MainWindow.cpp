@@ -2852,6 +2852,10 @@ void MainWindow::buildModelingToolbar()
         connect(a, &QAction::triggered, this, [this, tool](bool on) { setTool(on ? tool : Tool::None); });
         m_toolActions.insert(int(d.tool), a);
     }
+    QAction* magicWand = model->addAction(tr("Fill from selected &shape")); // D165
+    magicWand->setObjectName(QStringLiteral("actionFillFromShape"));
+    magicWand->setToolTip(tr("Fill the selected closed polyline, circle or fill (magic wand)"));
+    connect(magicWand, &QAction::triggered, this, &MainWindow::fillFromShape);
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));

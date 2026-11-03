@@ -399,6 +399,7 @@ public:
     static bool isDraftTool(Tool tool);
     bool addDrafting(const QString& kind, const QVector<QPointF>& points, bool closed = false);
     bool fillAt(QPointF p); // Alt+click with the Fill tool: fill the closed shape around p
+    bool fillFromShape();   // D165: magic wand on the selected closed shape
     QJsonObject draftOptions(const QString& kind) const;
     // Stretch tool on a drafting shape (D84 grips): a click near one of its points picks it up, the
     // next click puts it down. False when nothing was near (the wall stretch goes on).
