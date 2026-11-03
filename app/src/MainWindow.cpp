@@ -3484,8 +3484,9 @@ void MainWindow::buildModelingToolbar()
     m_roofKind->addItem(tr("Shed"), QStringLiteral("shed"));
     m_roofKind->addItem(tr("Gable"), QStringLiteral("gable"));
     m_roofKind->addItem(tr("Hip"), QStringLiteral("hip"));
+    m_roofKind->addItem(tr("Custom slopes"), QStringLiteral("custom")); // D204: free-form roof
     m_roofKind->setCurrentIndex(2);
-    m_roofKind->setToolTip(tr("Roof kind"));
+    m_roofKind->setToolTip(tr("Roof kind; custom asks for a slope on each edge (0 = gable end)"));
     m_roofPitch = new QDoubleSpinBox(bar);
     m_roofPitch->setObjectName(QStringLiteral("roofPitch"));
     m_roofPitch->setRange(1.0, 85.0);
@@ -7604,10 +7605,37 @@ bool MainWindow::createRoof(const QVector<QPointF>& outline)
     QJsonArray pts;
     for (const QPointF& p : outline)
         pts.append(QJsonArray{p.x(), p.y()});
+    QString slopes;
+    if (m_roofKind->currentData().toString() == QLatin1String("custom")) { // D204: one slope per edge
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Roof slopes"));
+        auto* form = new QFormLayout(&dialog);
+        QVector<QDoubleSpinBox*> boxes;
+        for (int i = 0; i < outline.size(); ++i) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(0.0, 85.0);
+            box->setDecimals(0);
+            box->setSuffix(QStringLiteral("°"));
+            box->setValue(30.0);
+            box->setSpecialValueText(tr("Gable end"));
+            form->addRow(tr("Edge %1:").arg(i + 1), box);
+            boxes << box;
+        }
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return false;
+        QJsonArray values;
+        for (auto* box : boxes)
+            values.append(box->value());
+        slopes = QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact));
+    }
     auto num = [](double v) { return QString::number(v, 'g', 17); };
     const QJsonObject r = bridge("create_roof", {m_levels->activeStorey(),
         QString::fromUtf8(QJsonDocument(pts).toJson(QJsonDocument::Compact)), m_roofKind->currentData().toString(),
-        num(m_roofPitch->value()), QStringLiteral("0.25"), num(m_wallHeight->value()), QString()});
+        num(m_roofPitch->value()), QStringLiteral("0.25"), num(m_wallHeight->value()), slopes});
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Could not create the roof: %1").arg(r.value("error").toString()));
         return false;
