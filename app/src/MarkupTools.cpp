@@ -203,7 +203,7 @@ void MainWindow::markupPointer(QPointF p, double tolerance, bool click)
         const QVector<QPointF> pts = m_annotationPoints;
         m_annotationPoints.clear();
         const QString kind = m_tool == Tool::AngleDimension
-            ? (mode == QLatin1String("arc") ? QStringLiteral("arc") : QStringLiteral("angle")) : mode;
+            ? (mode == QLatin1String("arc") ? QStringLiteral("arc_length") : QStringLiteral("angle")) : mode;
         addSymbol(kind, pts);
         startMarkupTool(m_tool); // the first step's hint again
         break;

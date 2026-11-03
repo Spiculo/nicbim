@@ -100,12 +100,12 @@ def test_arc_length_dimension_measures_the_arc(plan):
 
     pts = [(0.0, 0.0), (1.0, 1.0), (2.0, 0.0), (1.0, -0.5)]  # a semicircle of radius 1
     assert symbols.arc_length_text(pts) == "3.14"
-    r = call("add_symbol", plan["l1"], "arc", json.dumps(pts), "{}")
+    r = call("add_symbol", plan["l1"], "arc_length", json.dumps(pts), "{}")
     assert r["ok"], r
-    assert listed(plan["l1"])[r["guid"]]["kind"] == "arc"
-    geom = symbols.geometry("arc", pts, "", 2.5, {}, 0.001)
+    assert listed(plan["l1"])[r["guid"]]["kind"] == "arc_length"
+    geom = symbols.geometry("arc_length", pts, "", 2.5, {}, 0.001)
     assert any(label["text"] == "3.14" for label in geom["labels"])
-    assert not call("add_symbol", plan["l1"], "arc", json.dumps(pts[:3]), "{}")["ok"]  # needs the text point
+    assert not call("add_symbol", plan["l1"], "arc_length", json.dumps(pts[:3]), "{}")["ok"]  # needs the text point
 
 
 def test_text_size_is_in_paper_millimetres(plan):
