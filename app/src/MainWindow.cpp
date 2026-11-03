@@ -50,6 +50,8 @@
 #include <QFormLayout>
 #include <QDateTimeEdit>
 #include <QDialogButtonBox>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QDialog>
 #include <QMenu>
 #include <QActionGroup>
@@ -1407,6 +1409,55 @@ void MainWindow::buildMenus()
         ShortcutsDialog dialog(this);
         dialog.exec();
     });
+    QAction* pluginsAction = help->addAction(tr("P&lugins...")); // D212
+    pluginsAction->setObjectName(QStringLiteral("actionPlugins"));
+    pluginsAction->setToolTip(tr("Python add-ons in the app's plugins folder: list, reload or open it"));
+    connect(pluginsAction, &QAction::triggered, this, [this] {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Plugins"));
+        auto* layout = new QVBoxLayout(&dialog);
+        auto* folder = new QLabel(&dialog);
+        folder->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        layout->addWidget(folder);
+        auto* list = new QListWidget(&dialog);
+        layout->addWidget(list);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+        auto* reload = buttons->addButton(tr("Reload"), QDialogButtonBox::ActionRole);
+        auto* open = buttons->addButton(tr("Open folder"), QDialogButtonBox::ActionRole);
+        layout->addWidget(buttons);
+        auto show = [&] {
+            const QJsonObject state = bridge("plugins_state");
+            folder->setText(state.value("folder").toString());
+            list->clear();
+            for (const auto& v : state.value("plugins").toArray()) {
+                const QJsonObject p = v.toObject();
+                auto* item = new QListWidgetItem(
+                    p.value("name").toString() + (p.value("loaded").toBool() ? tr(" — loaded") : tr(" — failed")), list);
+                if (!p.value("error").toString().isEmpty())
+                    item->setToolTip(p.value("error").toString());
+                if (!p.value("loaded").toBool())
+                    item->setForeground(QColor(160, 40, 40));
+            }
+        };
+        connect(reload, &QPushButton::clicked, &dialog, [&] {
+            const QJsonObject r = bridge("load_plugins");
+            show();
+            const int failed = int(r.value("errors").toArray().size());
+            if (failed)
+                m_status->showMessage(tr("%n plugin(s) failed; hover the red rows", nullptr, failed));
+        });
+        connect(open, &QPushButton::clicked, &dialog, [&] {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(folder->text()));
+        });
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        show();
+        dialog.exec();
+    });
+    const QJsonObject pluginStart = bridge("load_plugins");
+    for (const auto& v : pluginStart.value("errors").toArray()) {
+        const QJsonObject p = v.toObject();
+        m_status->showMessage(tr("Plugin %1 failed: %2").arg(p.value("name").toString(), p.value("error").toString()));
+    }
     QAction* connectAgent = help->addAction(tr("Connect an AI &agent..."));
     connectAgent->setObjectName(QStringLiteral("actionConnectAgent"));
     connect(connectAgent, &QAction::triggered, this, &MainWindow::connectAgentDialog);
