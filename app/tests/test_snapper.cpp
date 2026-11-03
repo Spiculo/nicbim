@@ -186,6 +186,22 @@ private slots:
         QCOMPARE(s.snap(QPointF(3.0, 3.0), 0.1).kind, Snap::Grid);
     }
 
+    void tangentToACircleFromThePreviousPoint()
+    {
+        Snapper s;
+        s.setCircles(Snapper::parseCircles(QJsonDocument::fromJson(
+            R"({"circles":[{"x":0,"y":0,"r":1,"guid":"C"}]})").object()));
+        const QPointF from(2.0, 0.0);
+        const double a = std::acos(0.5); // the tangent points from (2,0) are at 60 degrees
+        const QPointF expected(std::cos(a), std::sin(a));
+        const Snap hit = s.snap(expected + QPointF(0.02, 0.0), 0.1, &from);
+        QCOMPARE(hit.kind, Snap::Tangent);
+        QCOMPARE(hit.wallGuid, QStringLiteral("C"));
+        QVERIFY(std::abs(hit.point.x() - expected.x()) < 1e-6);
+        QVERIFY(std::abs(hit.point.y() - expected.y()) < 1e-6);
+        QCOMPARE(s.snap(expected + QPointF(0.02, 0.0), 0.1).kind == Snap::Tangent, false); // no tangent without a start
+    }
+
     void outsideToleranceNothingSticks()
     {
         const Snapper s = withWalls();

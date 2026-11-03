@@ -3824,12 +3824,14 @@ void MainWindow::applySnapData(const QJsonObject& data, quint64)
     const QVector<SnapWall> walls = Snapper::parse(data);
     const QVector<SnapLine> lines = Snapper::parseGrid(data);
     const QVector<SnapPoint> points = Snapper::parsePoints(data); // D84: drafting shapes' points
+    const QVector<SnapCircle> circles = Snapper::parseCircles(data); // D188: tangent snapping
     for (Snapper* s : {&m_wallTool->snapper(), &m_polygonTool->snapper(), &m_twoPointTool->snapper(),
              &m_rotateTool->snapper(), &m_gripTool->snapper(), &m_measure->tool()->snapper(), &m_modifyTool->snapper(),
              &m_draftTool->snapper()}) {
         s->setWalls(walls);
         s->setGridLines(lines);
         s->setPoints(points);
+        s->setCircles(circles);
     }
     if (m_tool == Tool::Split || m_tool == Tool::Trim || m_tool == Tool::Join) // D80: beams too
         m_modifyTool->setTargets(data, bridge("modify_targets", {m_levels->activeStorey()}));

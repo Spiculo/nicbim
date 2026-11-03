@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D187 plus explicit overrides for the final items.
+after D123–D188 plus explicit overrides for the final items.
 
-**Summary: 171 done, 35 deferred, 3 blocked.**
+**Summary: 172 done, 34 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -90,7 +90,7 @@ after D123–D187 plus explicit overrides for the final items.
 | 5. Input aids | Typed angles | **Done** | D89: the tracker's angle box (`<`), locks the direction |
 | 5. Input aids | Coordinate input (absolute and relative x, y; polar) | **Done** | D89: tracker beside the cursor in every point tool; Tab between boxes, `a`/`#` absolute |
 | 5. Input aids | Guide lines, temporary references, inference lines | **Deferred** | Core done; remainder deferred. D89: temporary guides (rest 0.5 s on a snap point), extensions and parallels; no dragged or permanent guide lines |
-| 5. Input aids | Snap to perpendicular, tangent, intersection, wall faces | **Deferred** | Core done; remainder deferred. D89: intersections and parallels added; no tangent |
+| 5. Input aids | Snap to perpendicular, tangent, intersection, wall faces | **Done** | D89 intersections and parallels; D188 tangent snapping from the previous point to drafting circles/arcs (`snap_data.circles` + `Snap::Tangent`); wall-face snapping is the dimension option. |
 | 5. Input aids | Work planes (custom drawing planes) | **Deferred** | Core done; remainder deferred. Free horizontal work plane at a user height independent of the active level: `work_plane` / `set_work_plane` in the bridge, kept in project settings (height, enabled, angle), and the viewport uses it for drawing/snapping when enabled. View > *Free work plane...* sets the height, View > *Work plane rotation...* rotates the pl... |
 | 5. Input aids | Tool presets / favourites (saved tool settings) | **Done** | D97: the Favourites button in the tool strip, kept in the project |
 | 6. Building elements | Walls: straight, layered, L/T joins | **Done** |  |

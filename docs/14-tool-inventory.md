@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D187).**
+**Status as of `main` (2026-11-03, after D112–D188).**
 
 ## How to read it
 
@@ -119,7 +119,7 @@ release notes, so check before relying on a single cell.
 | Typed angles | all | ✅ | P0 | D89: the tracker's angle box (`<`), locks the direction |
 | Coordinate input (absolute and relative x, y; polar) | AC VW | ✅ | new | D89: tracker beside the cursor in every point tool; Tab between boxes, `a`/`#` absolute |
 | Guide lines, temporary references, inference lines | AC VW SU | 🟡 | new | D89: temporary guides (rest 0.5 s on a snap point), extensions and parallels; no dragged or permanent guide lines |
-| Snap to perpendicular, tangent, intersection, wall faces | all | 🟡 | P0 | D89: intersections and parallels added; no tangent |
+| Snap to perpendicular, tangent, intersection, wall faces | all | ✅ | P0 | D89: intersections and parallels; D188 adds **tangent** snapping: `snap_data` publishes the drafting circles' centres and radii and the snapper returns the tangent points from the previous point (closest within tolerance). Wall-face snapping is the dimensions' option (Slice 15) |
 | Work planes (custom drawing planes) | AC RV VW SU | 🟡 | P0 | Free horizontal work plane at a user height independent of the active level: `work_plane` / `set_work_plane` in the bridge, kept in project settings (height, enabled, angle), and the viewport uses it for drawing/snapping when enabled. View > *Free work plane...* sets the height, View > *Work plane rotation...* rotates the plan and drawing/snapping frame in degrees, and View > *Use level work plane* returns to the level. Arbitrary tilted planes are still to do; D98 construction grid (spacing, angle, origin, grid snap) remains |
 | Tool presets / favourites (saved tool settings) | AC VW | ✅ | new | D97: the Favourites button in the tool strip, kept in the project |
 

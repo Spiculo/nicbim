@@ -688,7 +688,8 @@ def snap_data(storey_guid: str, mesh_vertices: str = "") -> str:
                                "kind": "endpoint", "guid": entry["guid"]})
     if str(mesh_vertices).lower() not in ("", "0", "false", "none"):
         points = points + _mesh_vertex_points(storey)
-    return B._dump({"walls": walls, "openings": openings, "grid": _grid_lines(storey), "points": points})
+    return B._dump({"walls": walls, "openings": openings, "grid": _grid_lines(storey),
+                    "points": points, "circles": drafting.snap_circles(storey)})
 
 
 # ---------------------------------------------------------------- slabs (Slice 5)

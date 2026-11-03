@@ -566,6 +566,32 @@ def add_drafting(storey_guid: str, kind: str, points_json: str, options_json: st
     return N.add_shape(storey, kind, points, extra, o.get("pen"))
 
 
+def snap_circles(storey) -> list:
+    """Snap circles of the level's drafting shapes (world metres): {x, y, r, guid} for circles and arcs."""
+    from . import annotations as N
+
+    out = []
+    for a in N.on_level(storey.GlobalId):
+        data = N._read(a)
+        if data is None or data[0] not in ("circle", "arc"):
+            continue
+        world = N.world_points(a)
+        if data[0] == "circle" and len(world) >= 2:
+            centre, on = world[0], world[1]
+            radius = math.dist(centre, on)
+        elif data[0] == "arc" and len(world) >= 3:
+            cc = circumcircle(*world[:3])
+            if cc is None:
+                continue
+            centre, radius = cc
+        else:
+            continue
+        if radius > 1e-9:
+            out.append({"x": round(float(centre[0]), 6), "y": round(float(centre[1]), 6),
+                        "r": round(float(radius), 6), "guid": a.GlobalId})
+    return out
+
+
 def fill_from_shape(guid: str, options_json: str = "") -> str:
     """A fill with the outline of a closed polyline, circle or fill (Archicad's magic wand on a
     picked shape), on the same level."""

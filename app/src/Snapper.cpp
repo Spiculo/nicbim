@@ -106,6 +106,17 @@ QVector<SnapPoint> Snapper::parsePoints(const QJsonObject& snapData)
     return out;
 }
 
+QVector<SnapCircle> Snapper::parseCircles(const QJsonObject& snapData)
+{
+    QVector<SnapCircle> out;
+    for (const auto& v : snapData.value("circles").toArray()) {
+        const QJsonObject o = v.toObject();
+        out.push_back({QPointF(o.value("x").toDouble(), o.value("y").toDouble()),
+                       o.value("r").toDouble(), o.value("guid").toString()});
+    }
+    return out;
+}
+
 QPointF Snapper::onGrid(QPointF p) const
 {
     if (m_snapStep > 0) { // D98: the snap grid's nodes, in its own frame
@@ -459,6 +470,25 @@ Snap Snapper::compute(QPointF p, double tolerance, const QPointF* from, bool ort
             }
             return any;
         });
+    if (s.kind == Snap::None && from && !m_circles.isEmpty()) { // D188: tangent from the previous point
+        double bestD = tolerance;
+        for (const SnapCircle& c : m_circles) {
+            const QPointF v = *from - c.c;
+            const double d = std::hypot(v.x(), v.y());
+            if (d <= c.r + 1e-9)
+                continue;
+            const double a = std::acos(std::min(1.0, std::max(-1.0, c.r / d)));
+            const double base = std::atan2(v.y(), v.x());
+            for (const double t : {base + a, base - a}) {
+                const QPointF q = c.c + QPointF(std::cos(t), std::sin(t)) * c.r;
+                const double dist = std::hypot(q.x() - p.x(), q.y() - p.y());
+                if (dist <= bestD) {
+                    bestD = dist;
+                    s = Snap{q, Snap::Tangent, c.guid};
+                }
+            }
+        }
+    }
     if (s.kind == Snap::None)
         s = best(Snap::OnWall, [&](const SnapWall& w, QPointF* q) {
             bool inside = false;

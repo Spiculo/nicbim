@@ -47,10 +47,18 @@ struct SnapPoint {
     QString guid;
 };
 
+// A drafting circle or arc (D188): tangents from the previous point are snap targets.
+struct SnapCircle {
+    QPointF c;
+    double r = 0.0;
+    QString guid;
+};
+
 struct Snap {
     enum Kind { None, Endpoint, Midpoint, Perpendicular, OnWall, Angle, Grid, GridCross, GridLine, FaceEnd, OnFace, Centre,
         UnderlayEnd, UnderlayMid, UnderlayCross, OnUnderlay, // D85: DXF underlay linework
         Intersection, GuideCross, GuideLine, Parallel, Tracked, Typed, // D89: input aids
+        Tangent, // D188: tangent from the previous point to a drafting circle
         Division }; // D98: Archicad's special snap points (divisions, a distance from the ends)
     QPointF point;
     Kind kind = None;
@@ -71,6 +79,7 @@ public:
     static QVector<SnapWall> parse(const QJsonObject& snapData);
     static QVector<SnapLine> parseGrid(const QJsonObject& snapData);
     static QVector<SnapPoint> parsePoints(const QJsonObject& snapData);
+    static QVector<SnapCircle> parseCircles(const QJsonObject& snapData);
     // Drafting shapes' points (D84): ends with the wall ends, middles with the wall middles, centres next.
     void setPoints(QVector<SnapPoint> points) { m_points = std::move(points); }
     const QVector<SnapPoint>& points() const { return m_points; }
@@ -78,6 +87,8 @@ public:
     const QVector<SnapLine>& gridLines() const { return m_lines; }
     void setWalls(QVector<SnapWall> walls) { m_walls = std::move(walls); }
     const QVector<SnapWall>& walls() const { return m_walls; }
+    void setCircles(QVector<SnapCircle> circles) { m_circles = std::move(circles); } // D188
+    const QVector<SnapCircle>& circles() const { return m_circles; }
     void setGrid(double step) { m_grid = step; }
     // D98: grid snap (Archicad's construction grid): a point no object snap takes rounds to the grid's
     // nodes, `step` apart along axes turned `angle` radians about `origin`, instead of 15 degree steps
@@ -123,6 +134,7 @@ private:
     QVector<SnapWall> m_walls;
     QVector<SnapLine> m_lines;
     QVector<SnapPoint> m_points;
+    QVector<SnapCircle> m_circles; // D188
     double m_grid = 0.01; // 10 mm
     QPointF m_gridOrigin{0, 0};
     double m_gridAngle = 0.0;

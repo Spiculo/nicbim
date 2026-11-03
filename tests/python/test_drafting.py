@@ -176,6 +176,13 @@ def test_grips_move_a_point_and_fill_from_a_closed_shape(plan):
     assert circle
 
 
+def test_snap_data_lists_drafting_circles(plan):
+    """D188: circles and arcs are snap targets (their centre and radius reach the snapper)."""
+    circle = call("add_drafting", plan["l1"], "circle", pts((5, 5), (6, 5)), "")["guid"]
+    circles = call("snap_data", plan["l1"])["circles"]
+    assert any(c["guid"] == circle and c["x"] == 5 and c["y"] == 5 and c["r"] == 1 for c in circles)
+
+
 def test_fill_patterns_are_a_project_settings_table(plan):
     assert "Brick" in call("fill_patterns")["names"]
     mine = {"Solid": {"solid": True, "lines": []}, "Tiles": {"lines": [{"angle": 0, "spacing": 3}, {"angle": 90, "spacing": 3}]}}
