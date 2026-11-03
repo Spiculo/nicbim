@@ -2450,10 +2450,27 @@ void Viewport::setWhiteModel(bool on)
     applyDisplayMode();
 }
 
+void Viewport::setSketch(bool on) // D206
+{
+    m_scene->sketch = on;
+    applyDisplayMode();
+}
+
+void Viewport::setXray(bool on) // D206
+{
+    m_scene->xray = on;
+    applyDisplayMode();
+}
+
 void Viewport::applyDisplayMode()
 {
     const int mode = m_scene->displayMode();
+    static const Quantity_Color paper(0.97, 0.96, 0.92, Quantity_TOC_RGB);
+    static const Quantity_Color normal(0.93, 0.94, 0.95, Quantity_TOC_RGB);
+    if (!m_view.IsNull())
+        m_view->SetBackgroundColor(m_scene->sketch ? paper : normal);
     for (const auto& b : m_scene->batches) {
+        b->setXray(m_scene->xray);
         b->SetDisplayMode(mode);
         m_context->SetDisplayMode(b, mode, false);
     }

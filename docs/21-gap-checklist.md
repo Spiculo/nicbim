@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D205 plus explicit overrides for the final items.
+after D123–D206 plus explicit overrides for the final items.
 
-**Summary: 188 done, 18 deferred, 3 blocked.**
+**Summary: 189 done, 17 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -49,7 +49,7 @@ after D123–D205 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Free clipping planes, several at once | **Done** | D95: the Cut planes panel (several, oblique, flip, offset) |
 | 2. Viewing and navigation | Saved views (layers, level, plan/3D, cut) | **Done** | D57 |
 | 2. Viewing and navigation | Lines-only / hidden-line display | **Done** | L |
-| 2. Viewing and navigation | Visual styles: shaded, textured, sketch, X-ray | **Deferred** | Core done; remainder deferred. Shaded, textured (D96), white model, lines only; no sketch or X-ray |
+| 2. Viewing and navigation | Visual styles: shaded, textured, sketch, X-ray | **Done** | D96: shaded, textured, white model, lines only; D206: *Sketch style* (paper surfaces and dark contours) and *X-ray* (see-through surfaces) in the View menu |
 | 2. Viewing and navigation | Shadows and sun position | **Done** | D96: View › Sun shadows, View › Sun... (azimuth/altitude or place, date, time), White model |
 | 2. Viewing and navigation | Hover info (name, type, level) | **Done** |  |
 | 2. Viewing and navigation | Colour by property, class or type | **Done** | D73 override rules (property, class, kind, layer, material) |

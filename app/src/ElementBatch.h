@@ -60,7 +60,7 @@ class ElementBatch : public AIS_InteractiveObject {
 public:
     // Display modes: shaded faces with border lines; element ids as flat colours (visibility
     // queries, never shown); lines only (hidden-line: faces in the background colour, black lines).
-    enum Mode { Shaded = 0, Ids = 1, LinesOnly = 2, White = 3 }; // White: D96, Archicad's white model
+    enum Mode { Shaded = 0, Ids = 1, LinesOnly = 2, White = 3, Sketch = 4 }; // White: D96; Sketch: D206
 
     explicit ElementBatch(MeshChunk chunk);
 
@@ -82,6 +82,7 @@ public:
     static Quantity_Color background() { return s_background; }
     // Previews skip border lines (computing them on every mouse move made drawing lag).
     void setShowEdges(bool show) { m_showEdges = show; }
+    void setXray(bool on) { m_xray = on; } // D206: surfaces see-through so every edge reads
 
     // Element ids as colours (Ids mode): 6 bits per channel stored as value*4+2, so +-1 of colour
     // rounding still decodes; 0 and off-grid colours (background, lines) decode to -1.
@@ -207,6 +208,7 @@ private:
     static Quantity_Color s_background;
     int m_idBase = 0;
     bool m_showEdges = true;
+    bool m_xray = false; // D206
 };
 
 } // namespace kimbim

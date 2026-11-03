@@ -63,7 +63,7 @@ release notes, so check before relying on a single cell.
 | Free clipping planes, several at once | AC RV BB | ✅ | P0 | D95: the Cut planes panel (several, oblique, flip, offset) |
 | Saved views (layers, level, plan/3D, cut) | AC RV VW BB | ✅ | P1 | D57 |
 | Lines-only / hidden-line display | all | ✅ | — | L |
-| Visual styles: shaded, textured, sketch, X-ray | all | 🟡 | new | Shaded, textured (D96), white model, lines only; no sketch or X-ray |
+| Visual styles: shaded, textured, sketch, X-ray | all | ✅ | new | D96: shaded, textured, white model, lines only; D206: *Sketch style* (paper surfaces and dark contours) and *X-ray* (see-through surfaces) in the View menu |
 | Shadows and sun position | AC RV VW SU | ✅ | new | D96: View › Sun shadows, View › Sun... (azimuth/altitude or place, date, time), White model |
 | Hover info (name, type, level) | AC RV VW | ✅ | — | |
 | Colour by property, class or type | AC RV VW BB | ✅ | P1 | D73 override rules (property, class, kind, layer, material) |

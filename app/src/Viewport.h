@@ -125,6 +125,10 @@ public:
     bool linesOnly() const { return m_scene->linesOnly; }
     void setWhiteModel(bool on); // D96: Archicad's white model 3D style
     bool whiteModel() const { return m_scene->whiteModel; }
+    void setSketch(bool on); // D206: paper-and-pencil style
+    bool sketch() const { return m_scene->sketch; }
+    void setXray(bool on); // D206: see-through surfaces
+    bool xray() const { return m_scene->xray; }
     void setShadows(bool on) { m_scene->setShadows(on); } // D96: sun shadows
     bool shadows() const { return m_scene->shadows(); }
     double planElevation() const { return m_planElevation; }

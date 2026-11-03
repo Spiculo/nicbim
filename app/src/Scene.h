@@ -45,10 +45,15 @@ public:
     QSet<QString> layerHidden, layerLocked;
     bool linesOnly = false;
     bool whiteModel = false; // D96: Archicad's white model 3D style (surfaces white, glass kept)
-    // D96: the display mode the 3D style gives every batch (lines only > white model > shaded).
+    bool sketch = false;     // D206: paper-and-pencil style
+    bool xray = false;       // D206: see-through surfaces so every edge reads
+    // D96/D206: the display mode the 3D style gives every batch (lines only > sketch > white > shaded).
     int displayMode() const
     {
-        return linesOnly ? ElementBatch::LinesOnly : whiteModel ? ElementBatch::White : ElementBatch::Shaded;
+        return linesOnly ? ElementBatch::LinesOnly
+             : sketch    ? ElementBatch::Sketch
+             : whiteModel ? ElementBatch::White
+                          : ElementBatch::Shaded;
     }
     void setShadows(bool on); // D96: the sun casts shadows (shadow map) in shaded and white views
     // D96: where the sun is (a unit vector towards it, world plan axes); below the horizon it only lights.

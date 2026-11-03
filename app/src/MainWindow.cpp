@@ -920,6 +920,16 @@ void MainWindow::buildMenus()
     white->setCheckable(true);
     white->setToolTip(tr("Show every surface white, as a study model (the contours and glass stay)"));
     connect(white, &QAction::toggled, m_viewport, &Viewport::setWhiteModel);
+    QAction* sketchStyle = view->addAction(tr("S&ketch style")); // D206
+    sketchStyle->setObjectName(QStringLiteral("actionSketchStyle"));
+    sketchStyle->setCheckable(true);
+    sketchStyle->setToolTip(tr("Paper-and-pencil style: paper surfaces and dark contours"));
+    connect(sketchStyle, &QAction::toggled, m_viewport, &Viewport::setSketch);
+    QAction* xray = view->addAction(tr("&X-ray")); // D206
+    xray->setObjectName(QStringLiteral("actionXray"));
+    xray->setCheckable(true);
+    xray->setToolTip(tr("See through the surfaces so every edge reads"));
+    connect(xray, &QAction::toggled, m_viewport, &Viewport::setXray);
     QAction* shadows = view->addAction(tr("Sun s&hadows"));
     shadows->setObjectName(QStringLiteral("actionShadows"));
     shadows->setCheckable(true);
@@ -9773,6 +9783,10 @@ bool MainWindow::applyView(const QString& name)
             findChild<QAction*>(QStringLiteral("actionLinesOnly"))->setChecked(data.value("linesOnly").toBool());
         if (data.contains("whiteModel"))
             findChild<QAction*>(QStringLiteral("actionWhiteModel"))->setChecked(data.value("whiteModel").toBool());
+        if (data.contains("sketch"))
+            findChild<QAction*>(QStringLiteral("actionSketchStyle"))->setChecked(data.value("sketch").toBool());
+        if (data.contains("xray"))
+            findChild<QAction*>(QStringLiteral("actionXray"))->setChecked(data.value("xray").toBool());
         if (data.contains("shadows"))
             findChild<QAction*>(QStringLiteral("actionShadows"))->setChecked(data.value("shadows").toBool());
         if (data.value("cut").isDouble()) {
