@@ -54,7 +54,7 @@ SKIPPED_TYPES = {"TEXT", "MTEXT", "ATTRIB", "ATTDEF", "HATCH", "MPOLYGON", "POIN
 FIELDS = {  # editable fields and their checks
     "name": str, "storey": str, "x": float, "y": float, "rotation": float, "scale": float, "base": list,
     "page": int, "opacity": float, "greyscale": bool, "tint": str, "visible": bool, "locked": bool,
-    "layer": str, "show_3d": bool, "dpi": int,
+    "layer": str, "show_3d": bool, "dpi": int, "vector": bool,
 }
 
 _segments_cache: dict = {}  # file name -> (coords float32 (n, 4), colours uint8 (n, 3), origin (2,), info)
@@ -343,6 +343,87 @@ def _pdf_pages(path) -> list[dict]:
         pdf.close()
 
 
+def _pdf_vector_segments(name: str, page: int):
+    """A PDF page's vector linework as segments (drawing units: PDF points, y up from the page's bottom
+    left), from the cache folder, the file, or PyMuPDF. (coords, colours, origin, info)."""
+    cache = _cache_dir() / f"{name}.p{page}.vector.v{CACHE_VERSION}.npz"
+    if cache.is_file():
+        try:
+            with np.load(cache, allow_pickle=False) as z:
+                info = json.loads(str(z["info"]))
+                return z["coords"], z["colours"], tuple(info["origin"]), info
+        except Exception:
+            pass
+    src = file_path(name)
+    if src is None:
+        raise FileNotFoundError(f"the underlay file {name} is missing")
+    import pymupdf
+
+    doc = pymupdf.open(str(src))
+    try:
+        if not 0 <= page < len(doc):
+            raise ValueError(f"the PDF has {len(doc)} page(s)")
+        pg = doc[page]
+        height = float(pg.rect.height)
+        rows, colours = [], []
+
+        def add(x1, y1, x2, y2, rgb):
+            rows.append((x1, height - y1, x2, height - y2))
+            colours.append(rgb)
+
+        def colour(d) -> tuple[int, int, int]:
+            value = d.get("color") or d.get("fill")
+            if not value or len(value) < 3:
+                return (0, 0, 0)
+            return tuple(max(0, min(255, int(round(c * 255)))) for c in value[:3])
+
+        def curve(p0, p1, p2, p3, rgb, steps=8):
+            last = p0
+            for k in range(1, steps + 1):
+                t = k / steps
+                mt = 1 - t
+                x = mt ** 3 * p0[0] + 3 * mt * mt * t * p1[0] + 3 * mt * t * t * p2[0] + t ** 3 * p3[0]
+                y = mt ** 3 * p0[1] + 3 * mt * mt * t * p1[1] + 3 * mt * t * t * p2[1] + t ** 3 * p3[1]
+                add(last[0], last[1], x, y, rgb)
+                last = (x, y)
+
+        for drawing in pg.get_drawings():
+            rgb = colour(drawing)
+            for item in drawing.get("items") or ():
+                op = item[0]
+                if op == "l":
+                    add(item[1].x, item[1].y, item[2].x, item[2].y, rgb)
+                elif op == "c":
+                    curve((item[1].x, item[1].y), (item[2].x, item[2].y),
+                          (item[3].x, item[3].y), (item[4].x, item[4].y), rgb)
+                elif op == "re":
+                    r = item[1]
+                    corners = [(r.x0, r.y0), (r.x1, r.y0), (r.x1, r.y1), (r.x0, r.y1)]
+                    for a, c in zip(corners, corners[1:] + corners[:1]):
+                        add(a[0], a[1], c[0], c[1], rgb)
+                elif op == "qu":
+                    q = item[1]
+                    corners = [(q.ul.x, q.ul.y), (q.ur.x, q.ur.y), (q.lr.x, q.lr.y), (q.ll.x, q.ll.y)]
+                    for a, c in zip(corners, corners[1:] + corners[:1]):
+                        add(a[0], a[1], c[0], c[1], rgb)
+        if not rows:
+            raise ValueError("the PDF page has no vector linework")
+        coords = np.asarray(rows, dtype=np.float32)
+        colour_array = np.asarray(colours, dtype=np.uint8)
+        ext = [float(coords[:, 0].min()), float(coords[:, 1].min()),
+               float(coords[:, 2].max()), float(coords[:, 3].max())]
+        info = {"origin": [0.0, 0.0], "units": 0.0254 / 72.0, "extents": ext, "skipped": 0}
+        try:
+            tmp = cache.with_suffix(".tmp.npz")
+            np.savez(tmp, coords=coords, colours=colour_array, info=np.array(json.dumps(info)))
+            tmp.replace(cache)
+        except OSError:
+            pass
+        return coords, colour_array, (0.0, 0.0), info
+    finally:
+        doc.close()
+
+
 def _image_size(path) -> tuple[int, int, float]:
     """(width, height, dpi) of a PNG or JPEG from its header (no image library needed)."""
     data = pathlib.Path(path).read_bytes()[:256 * 1024]
@@ -585,7 +666,9 @@ def add_underlay(path: str, options_json: str = "{}") -> str:
                 return _fail(f"the PDF has {len(pages)} page(s)")
             entry["page"] = page
             entry["scale"] = 0.0254 / 72 * 100  # 1:100
-            entry["base"] = [0.0, pages[page]["height"]]  # the page's bottom left (y runs down)
+            entry["vector"] = bool(options.get("vector"))
+            # Vector linework is y-up from the bottom-left corner; a raster page is y-down from its top.
+            entry["base"] = [0.0, 0.0] if entry["vector"] else [0.0, pages[page]["height"]]
             entry["size"] = [pages[page]["width"], pages[page]["height"]]
         else:
             w, h, dpi = _image_size(target)
@@ -675,10 +758,13 @@ def underlay_lines(id: str):
     from . import app_bridge as B
 
     u = next((u for u in _entries() if u.get("id") == id), None)
-    if u is None or u.get("kind") != "dxf":
+    if u is None or (u.get("kind") != "dxf" and not (u.get("kind") == "pdf" and u.get("vector"))):
         return None
     try:
-        coords, colours, origin, info = _segments(u["file"])
+        if u.get("kind") == "pdf":
+            coords, colours, origin, info = _pdf_vector_segments(u["file"], int(u.get("page", 0)))
+        else:
+            coords, colours, origin, info = _segments(u["file"])
     except Exception as ex:
         return (B._dump({"ok": False, "error": str(ex)}), b"", b"")
     meta = {"ok": True, "count": int(len(coords)), "origin": list(origin), "extents": info["extents"],
@@ -693,6 +779,8 @@ def underlay_raster(id: str) -> str:
     u = next((u for u in _entries() if u.get("id") == id), None)
     if u is None or u.get("kind") == "dxf":
         return _fail(f"no PDF or image underlay {id}")
+    if u.get("vector"):
+        return _fail("this PDF underlay is vector linework (use underlay_lines)")
     try:
         if u["kind"] == "image":
             p = file_path(u["file"])

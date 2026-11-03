@@ -46,6 +46,10 @@ typing_extensions = "*"
 # MCP server for AI agents (D102): the official Python SDK, MIT (pulls anyio, httpx, pydantic, starlette...)
 mcp = ">=2.3,<3"
 isodate = ">=0.7.2,<0.8"
+# Point clouds: LAZ decompression (lazrs, MIT) and PDF vector linework for underlays (PyMuPDF, AGPL-3.0,
+# compatible with this GPL-3.0 project through GPLv3 section 13). Guards in docs/decisions.md D132.
+lazrs-python = ">=0.8.2,<0.9"
+pymupdf = ">=2.0,<3"
 
 [pypi-dependencies]
 ifctester = "==0.9.0"

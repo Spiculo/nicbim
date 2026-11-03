@@ -192,6 +192,40 @@ def test_placing_a_pdf_page_renders_it(tmp_path):
     assert call("set_underlay", u["id"], json.dumps({"page": 0}))["underlay"]["size"] == [595.0, 842.0]
 
 
+def vector_pdf(path, w=200.0, h=100.0):
+    """A PDF with two vector shapes (a line and a rectangle) made with PyMuPDF."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=w, height=h)
+    page.draw_line((10, 10), (110, 10), color=(0, 0, 0), width=0.5)
+    page.draw_rect(pymupdf.Rect(20, 20, 60, 50), color=(1, 0, 0), width=0.5)
+    doc.save(str(path))
+    doc.close()
+    return path
+
+
+def test_a_pdf_can_be_placed_as_vector_linework(tmp_path):
+    assert call("new_project", "Under")["ok"]
+    storey = call("storeys")["storeys"][0]["guid"]
+    pdf = vector_pdf(tmp_path / "vectors.pdf")
+    r = call("add_underlay", str(pdf), json.dumps({"storey": storey, "vector": True}))
+    assert r["ok"], r
+    u = r["underlay"]
+    assert u["kind"] == "pdf" and u["vector"] is True
+    assert u["base"] == [0.0, 0.0] and u["size"] == [200.0, 100.0]
+    assert not call("underlay_raster", u["id"])["ok"]  # it is linework, not a page image
+    parts = b.underlay_lines(u["id"])
+    meta = json.loads(parts[0])
+    coords = np.frombuffer(parts[1], dtype="<f4").reshape(-1, 4)
+    assert meta["ok"] and meta["count"] >= 5  # one line plus the rectangle's four sides
+    assert coords[:, 1].max() <= 100.0 and coords[:, 1].min() >= 0.0  # y is up from the page bottom
+    # The same PDF as a raster page still renders.
+    raster = call("add_underlay", str(pdf), json.dumps({"storey": storey}))
+    assert raster["ok"] and raster["underlay"]["vector"] is False
+    assert call("underlay_raster", raster["underlay"]["id"])["ok"]
+
+
 # ---------------------------------------------------------------- placing and settings
 
 def test_place_dxf_on_a_level(tmp_path):

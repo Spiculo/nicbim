@@ -57,8 +57,41 @@ def las_file() -> bytes:
     return bytes(data)
 
 
+def laz_file() -> bytes:
+    """The same three points as `las_file`, compressed with lazrs."""
+    import io
+
+    import lazrs
+
+    records = b"".join(struct.pack("<3i", *p) + b"\x00" * 8
+                       for p in ((0, 0, 0), (100, 0, 0), (0, 100, 0)))
+    vlr = lazrs.LazVlr.new_for_compression(0, 0)
+    out = io.BytesIO()
+    compressor = lazrs.LasZipCompressor(out, vlr)
+    compressor.compress_many(records)
+    compressor.done()
+    header_size = 227
+    vlr_data = vlr.record_data()
+    offset = header_size + 54 + len(vlr_data)
+    data = bytearray(header_size)
+    data[0:4] = b"LASF"
+    data[24], data[25] = 1, 2
+    struct.pack_into("<H", data, 94, header_size)
+    struct.pack_into("<I", data, 96, offset)
+    data[104] = 0
+    struct.pack_into("<H", data, 105, 20)
+    struct.pack_into("<I", data, 107, 3)
+    struct.pack_into("<3d", data, 131, 0.01, 0.01, 0.01)
+    struct.pack_into("<3d", data, 155, 0.0, 0.0, 0.0)
+    struct.pack_into("<I", data, 100, 1)  # one VLR
+    vlr_block = (b"\x00\x00" + b"laszip encoded".ljust(16, b"\x00") + struct.pack("<HH", 22204, len(vlr_data))
+                 + b"LASzip VLR".ljust(32, b"\x00") + vlr_data)
+    return bytes(data) + vlr_block + out.getvalue()
+
+
 def test_pointcloud_formats():
-    assert call(P.pointcloud_formats) == {"ok": True, "formats": ["xyz", "pts", "csv", "txt", "las"]}
+    assert call(P.pointcloud_formats) == {"ok": True,
+                                          "formats": ["xyz", "pts", "csv", "txt", "las", "laz"]}
 
 
 def test_xyz_points_become_markers(tmp_path):
@@ -107,10 +140,21 @@ def test_uncompressed_las(tmp_path):
     assert issues() == []
 
 
-def test_laz_is_refused_clearly(tmp_path):
+def test_compressed_laz(tmp_path):
+    f, level = open_model()
+    r = call(P.import_pointcloud, write(tmp_path, "scan.laz", laz_file()), level,
+             json.dumps({"marker": 0.01}))
+    assert r["ok"], r
+    assert r["format"] == "laz" and r["points"] == 3
+    assert r["bounds"] == {"min": [-0.01, -0.01, 0.0], "max": [1.01, 1.01, 0.02]}
+    assert ifcopenshell.util.element.get_pset(f.by_guid(r["guid"]), P.PSET)["Format"] == "laz"
+    assert issues() == []
+
+
+def test_a_broken_laz_is_reported(tmp_path):
     _f, level = open_model()
-    r = call(P.import_pointcloud, write(tmp_path, "scan.laz", b"LASF"), level)
-    assert r["ok"] is False and "decompress" in r["error"]
+    r = call(P.import_pointcloud, write(tmp_path, "scan.laz", b"LASF" + b"\x00" * 300), level)
+    assert r["ok"] is False and "LAS" in r["error"]
 
 
 @pytest.mark.parametrize("name,content", [

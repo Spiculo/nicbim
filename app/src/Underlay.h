@@ -53,10 +53,11 @@ struct Underlay {
     int page = 0, dpi = 150;
     double opacity = 1.0;
     bool greyscale = false, visible = true, locked = false, show3d = false, missing = false;
+    bool vector = false; // D132: a PDF placed as vector linework instead of a raster page
 
     static Underlay fromJson(const QJsonObject& o);
     QJsonObject placementJson() const; // {x, y, rotation, scale} for set_underlay
-    bool isRaster() const { return kind == QLatin1String("pdf") || kind == QLatin1String("image"); }
+    bool isRaster() const { return !vector && (kind == QLatin1String("pdf") || kind == QLatin1String("image")); }
     // Display settings that change how it is drawn (a new presentation when any differs).
     QString displayKey() const;
 };

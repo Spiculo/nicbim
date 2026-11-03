@@ -56,12 +56,12 @@ def mesh(session, path, level="", name="", scale=1.0, rotation=0.0, position=Non
 
 @tool("import.pointcloud_formats", {})
 def pointcloud_formats(session):
-    """List the point-cloud file formats the importer reads (XYZ, PTS, CSV/TXT and uncompressed LAS)."""
+    """List the point-cloud file formats the importer reads (XYZ, PTS, CSV/TXT, LAS and LAZ)."""
     return {"formats": bridge(P.pointcloud_formats)["formats"]}
 
 
 @tool("import.pointcloud", {"required": ["path"], "properties": {
-    "path": {"type": "string", "description": "Path of the .xyz, .pts, .csv, .txt or .las file."},
+    "path": {"type": "string", "description": "Path of the .xyz, .pts, .csv, .txt, .las or .laz file."},
     "level": {"type": "string", "description": "Level name or GlobalId (default the first level)."},
     "name": {"type": "string", "description": "Object name (default the file name)."},
     "scale": {**_NUMBER, "description": "Uniform scale factor from the file's units to metres (default 1)."},

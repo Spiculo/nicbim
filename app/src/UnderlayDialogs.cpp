@@ -100,6 +100,9 @@ PlaceUnderlayDialog::PlaceUnderlayDialog(const QString& fileName, const QJsonObj
             const int pages = int(probe.value("pages").toArray().size());
             m_page->setRange(1, std::max(1, pages));
             form->addRow(tr("Page (of %1):").arg(pages), m_page);
+            m_vector = new QCheckBox(tr("Vector linework (sharper, selectable, no text)"));
+            m_vector->setObjectName(QStringLiteral("underlayVector"));
+            form->addRow(QString(), m_vector);
         } else {
             m_dpi = new QDoubleSpinBox;
             m_dpi->setObjectName(QStringLiteral("underlayDpi"));
@@ -158,6 +161,8 @@ QJsonObject PlaceUnderlayDialog::options() const
         o.insert("units", m_unit->currentData().toDouble());
     if (m_page)
         o.insert("page", m_page->value() - 1);
+    if (m_vector)
+        o.insert("vector", m_vector->isChecked());
     if (m_scale)
         o.insert("scale", rasterScale(m_kind, m_scale->value(), m_dpi ? m_dpi->value() : 0.0));
     return o;

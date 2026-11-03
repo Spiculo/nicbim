@@ -116,6 +116,7 @@ Underlay Underlay::fromJson(const QJsonObject& o)
     u.placement.at = QPointF(o.value("x").toDouble(), o.value("y").toDouble());
     u.placement.rotation = o.value("rotation").toDouble();
     u.placement.scale = o.value("scale").toDouble(1.0);
+    u.vector = o.value("vector").toBool();
     u.placement.yDown = u.isRaster();
     const QJsonArray size = o.value("size").toArray();
     u.size = QSizeF(size.at(0).toDouble(), size.at(1).toDouble());
@@ -137,9 +138,10 @@ QJsonObject Underlay::placementJson() const
 
 QString Underlay::displayKey() const
 {
-    return QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+    return QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
         .arg(file, QString::number(page), QString::number(dpi), QString::number(opacity, 'g', 6), greyscale ? "g" : "c", tint)
-        .arg(QString::number(placement.base.x(), 'g', 17), QString::number(placement.base.y(), 'g', 17), kind);
+        .arg(QString::number(placement.base.x(), 'g', 17), QString::number(placement.base.y(), 'g', 17), kind)
+        .arg(vector ? 1 : 0);
 }
 
 QColor underlayColour(const QColor& source, bool greyscale, const QColor& tint, double opacity, const QColor& background)

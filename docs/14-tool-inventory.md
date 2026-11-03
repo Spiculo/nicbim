@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D131).**
+**Status as of `main` (2026-11-03, after D112–D132).**
 
 ## How to read it
 
@@ -309,9 +309,9 @@ release notes, so check before relying on a single cell.
 | IFC export settings (what to export, property mapping) | AC RV VW | ✅ | new | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |
 | Re-import with reconciliation report | — | ✅ | P1 | D104: `kimbim versions import` matches by GlobalId, Tag, then a reviewed heuristic; dry run and JSON report |
 | DWG/DXF import (underlay and convert) | all | 🟡 | new | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings). No DWG yet, no convert to 2D elements. Architects receive most survey and consultant data as DWG |
-| PDF import | AC RV VW | 🟡 | new | D85: a PDF page as an underlay (an image); no vectors |
+| PDF import | AC RV VW | 🟡 | new | D85: a PDF page as an underlay (an image); D132: a PDF can be placed as **vector linework** (PyMuPDF paths, selectable/snappable, no text) instead of a rendered page |
 | SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; SketchUp `.skp`, binary FBX and live links are still to do |
-| Point clouds | AC RV VW | ⬜ | new |D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); LAZ and E57 are still to do |
+| Point clouds | AC RV VW | ⬜ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). E57 is still to do |
 | Rhino / Grasshopper live link | AC RV VW | ⬜ | new | |
 
 ## 19. Analysis and checking
@@ -358,7 +358,7 @@ What now most often stops an architect from finishing a real project, roughly in
 10. ✅ **BCF issues** (§17): D113 (topics, viewpoints, comments, BCF 2.1 import/export, Issues dialog); D119 restores a viewpoint camera and components.
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
 12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
-13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes and D124 COLLADA/glTF/GLB/ASCII FBX; D125 adds XYZ/PTS/CSV/LAS point clouds. SketchUp `.skp`, binary FBX, LAZ/E57, vector PDF and live links are still to do.
+13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, and D132 LAZ plus vector PDF underlays. SketchUp `.skp`, binary FBX, E57 and live links are still to do.
 14. **The deeper documentation/visualisation tail** (§11, §16): 3D documents, crop/view-range UI, model view options by scale, rendering and VR.
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are point clouds and more imports (13), the visualisation tail (14), live hotlinks and panel-level curtain-wall editing.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp`, binary FBX and E57), the visualisation tail (14), a live editable hotlink and toolbar customisation.

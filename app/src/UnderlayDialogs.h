@@ -34,6 +34,7 @@ public:
     QJsonObject options() const; // for app_bridge.add_underlay (storey added by the caller)
     QComboBox* unitBox() const { return m_unit; }
     QSpinBox* pageBox() const { return m_page; }
+    QCheckBox* vectorBox() const { return m_vector; }
     QSpinBox* scaleBox() const { return m_scale; }
     QDoubleSpinBox* dpiBox() const { return m_dpi; }
     QComboBox* layerBox() const { return m_layer; }
@@ -45,6 +46,7 @@ private:
     QString m_kind;
     QComboBox* m_unit = nullptr;
     QSpinBox* m_page = nullptr;
+    QCheckBox* m_vector = nullptr;
     QSpinBox* m_scale = nullptr;
     QDoubleSpinBox* m_dpi = nullptr;
     QDoubleSpinBox* m_x = nullptr;

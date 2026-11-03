@@ -8,8 +8,8 @@ viewport and in drawings. The full point count and the file's bounds are kept in
 
     Source, Format, Points, Imported, MarkerSize, Bounds (JSON)
 
-LAZ (compressed LAS) is refused with a clear message; decompress it first. Same protocol as
-app_bridge: strings in, JSON out, never raise.
+LAZ (compressed LAS) is read through lazrs (MIT); E57 is not read. Same protocol as app_bridge:
+strings in, JSON out, never raise.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from . import terrain
 
 PSET = "KIMBIM_PointCloud"
 OBJECT_TYPE = "Imported point cloud"
-FORMATS = ("xyz", "pts", "csv", "txt", "las")
+FORMATS = ("xyz", "pts", "csv", "txt", "las", "laz")
 _DEFAULT_MAX = 20_000
 
 
@@ -92,13 +92,12 @@ def _rows(text: str) -> list[tuple[float, float, float]]:
     return points
 
 
-def _las(data: bytes) -> list[tuple[float, float, float]]:
-    """Uncompressed LAS 1.2-1.4 points (the first return record of each point)."""
+def _las_header(data: bytes) -> dict:
+    """The LAS 1.2-1.4 header, offset to the points and its LASzip VLR (if any)."""
     if data[:4] != b"LASF":
         raise ValueError("not a LAS file")
     if len(data) < 227:
         raise ValueError("the LAS header is truncated")
-    _major, _minor = data[24], data[25]
     header_size = struct.unpack_from("<H", data, 94)[0]
     offset = struct.unpack_from("<I", data, 96)[0]
     point_format = data[104] & 0x3F
@@ -108,8 +107,33 @@ def _las(data: bytes) -> list[tuple[float, float, float]]:
         count = struct.unpack_from("<Q", data, 247)[0]
     sx, sy, sz = struct.unpack_from("<3d", data, 131)
     ox, oy, oz = struct.unpack_from("<3d", data, 155)
-    if offset < header_size or not record_length or offset + count * record_length > len(data):
+    vlr_data = None
+    try:
+        records = struct.unpack_from("<I", data, 100)[0]
+        cursor = header_size
+        for _ in range(records):
+            user = data[cursor + 2:cursor + 18].split(b"\x00", 1)[0]
+            record_id = struct.unpack_from("<H", data, cursor + 18)[0]
+            length = struct.unpack_from("<H", data, cursor + 20)[0]
+            payload = data[cursor + 54:cursor + 54 + length]
+            if record_id == 22204 or user == b"laszip encoded":
+                vlr_data = payload
+            cursor += 54 + length
+    except struct.error:
+        raise ValueError("the LAS variable-length records are truncated") from None
+    return {"header_size": header_size, "offset": offset, "point_format": point_format,
+            "record_length": record_length, "count": count,
+            "scale": (sx, sy, sz), "origin": (ox, oy, oz), "vlr": vlr_data}
+
+
+def _las_records(data: bytes, header: dict) -> list[tuple[float, float, float]]:
+    """Decode `count` LAS point records (X, Y, Z are the first three int32 fields)."""
+    count, record_length = header["count"], header["record_length"]
+    offset = header["offset"]
+    if offset < header["header_size"] or not record_length or offset + count * record_length > len(data):
         raise ValueError("the LAS point records are truncated")
+    sx, sy, sz = header["scale"]
+    ox, oy, oz = header["origin"]
     points = []
     for k in range(count):
         start = offset + k * record_length
@@ -118,10 +142,35 @@ def _las(data: bytes) -> list[tuple[float, float, float]]:
     return points
 
 
+def _las(data: bytes) -> list[tuple[float, float, float]]:
+    """Uncompressed LAS points."""
+    return _las_records(data, _las_header(data))
+
+
+def _laz(data: bytes) -> list[tuple[float, float, float]]:
+    """Compressed LAZ points (lazrs, MIT), using the file's LASzip VLR."""
+    import io
+
+    header = _las_header(data)
+    if not header["vlr"]:
+        raise ValueError("the LAZ file has no LASzip variable-length record")
+    try:
+        import lazrs
+
+        source = io.BytesIO(data[header["offset"]:])
+        decompressor = lazrs.LasZipDecompressor(source, header["vlr"])
+        raw = bytearray(header["record_length"] * header["count"])
+        decompressor.decompress_many(raw)
+    except ImportError:
+        raise ValueError("LAZ needs the lazrs-python package (not installed)") from None
+    except Exception as ex:  # noqa: BLE001
+        raise ValueError(f"the LAZ file could not be decompressed: {ex}") from None
+    # The decompressed records start at the same layout; point them at a synthetic LAS body.
+    return _las_records(bytes(raw), {**header, "offset": 0, "header_size": 0})
+
+
 def _read(path: str) -> tuple[list[tuple[float, float, float]], str]:
     suffix = pathlib.Path(path).suffix.lower().lstrip(".")
-    if suffix == "laz":
-        raise ValueError("LAZ is compressed; decompress it to LAS first")
     if suffix not in FORMATS:
         raise ValueError(f"unsupported point-cloud format: {suffix or 'none'} "
                          f"(expected {', '.join(FORMATS)})")
@@ -133,6 +182,8 @@ def _read(path: str) -> tuple[list[tuple[float, float, float]], str]:
         raise ValueError("the point-cloud file is empty")
     if suffix == "las":
         return _las(data), suffix
+    if suffix == "laz":
+        return _laz(data), suffix
     return _rows(data.decode("utf-8-sig", errors="replace")), suffix
 
 

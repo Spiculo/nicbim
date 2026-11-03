@@ -3427,8 +3427,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6116" />
-      <source>Point clouds (*.xyz *.pts *.csv *.txt *.las);;All files (*)</source>
-      <translation>Nubes de puntos (*.xyz *.pts *.csv *.txt *.las);;Todos los archivos (*)</translation>
+      <source>Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz);;All files (*)</source>
+      <translation>Nubes de puntos (*.xyz *.pts *.csv *.txt *.las *.laz);;Todos los archivos (*)</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6160" />
@@ -10821,6 +10821,11 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
       <location filename="../src/UnderlayDialogs.cpp" line="95" />
       <source>Lines:</source>
       <translation>Líneas:</translation>
+    </message>
+    <message>
+      <location filename="../src/UnderlayDialogs.cpp" line="104" />
+      <source>Vector linework (sharper, selectable, no text)</source>
+      <translation>Líneas vectoriales (más nítidas, seleccionables, sin texto)</translation>
     </message>
     <message>
       <location filename="../src/UnderlayDialogs.cpp" line="102" />

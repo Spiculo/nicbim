@@ -7050,7 +7050,7 @@ void MainWindow::importMeshDialog()
 void MainWindow::importPointCloudDialog()
 {
     const QString path = QFileDialog::getOpenFileName(this, tr("Import point cloud"), QString(),
-        tr("Point clouds (*.xyz *.pts *.csv *.txt *.las);;All files (*)"));
+        tr("Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz);;All files (*)"));
     if (path.isEmpty())
         return;
     const QJsonArray storeys = bridge("storeys").value("storeys").toArray();
