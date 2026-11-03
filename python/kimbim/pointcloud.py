@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Point-cloud import (XYZ, PTS, CSV/TXT and uncompressed LAS): a lightweight, visible scan.
+"""Point-cloud import (XYZ, PTS, CSV/TXT, LAS/LAZ and E57): a lightweight, visible scan.
 
 IFC has no point-cloud entity, so the imported scan is one `IfcBuildingElementProxy` (ObjectType
 "Imported point cloud") on a level with a tessellated body: each point becomes a small tetrahedron
@@ -8,15 +8,17 @@ viewport and in drawings. The full point count and the file's bounds are kept in
 
     Source, Format, Points, Imported, MarkerSize, Bounds (JSON)
 
-LAZ (compressed LAS) is read through lazrs (MIT); E57 is not read. Same protocol as app_bridge:
-strings in, JSON out, never raise.
+LAZ (compressed LAS) is read through lazrs (MIT); E57 through the C++ `e57dump` bridge built on
+libe57format (BSD-3). Same protocol as app_bridge: strings in, JSON out, never raise.
 """
 from __future__ import annotations
 
 import json
 import math
+import os
 import pathlib
 import struct
+import subprocess
 
 import ifcopenshell.api.geometry
 import ifcopenshell.api.pset
@@ -30,7 +32,7 @@ from . import terrain
 
 PSET = "KIMBIM_PointCloud"
 OBJECT_TYPE = "Imported point cloud"
-FORMATS = ("xyz", "pts", "csv", "txt", "las", "laz")
+FORMATS = ("xyz", "pts", "csv", "txt", "las", "laz", "e57")
 _DEFAULT_MAX = 20_000
 
 
@@ -169,6 +171,43 @@ def _laz(data: bytes) -> list[tuple[float, float, float]]:
     return _las_records(bytes(raw), {**header, "offset": 0, "header_size": 0})
 
 
+def _e57dump() -> str:
+    """The E57 bridge: KIMBIM_E57DUMP, the build folder, or the packaged helper."""
+    env = (os.environ.get("KIMBIM_E57DUMP") or "").strip()
+    if env:
+        return env
+    root = pathlib.Path(__file__).resolve().parents[2]
+    names = ("e57dump.exe", "e57dump") if os.name == "nt" else ("e57dump",)
+    for folder in (root / "build" / "e57dump", root / "e57dump", root / "tools" / "e57dump"):
+        for name in names:
+            candidate = folder / name
+            if candidate.is_file():
+                return str(candidate)
+    return ""
+
+
+def _e57(path: str) -> list[tuple[float, float, float]]:
+    """Read every scan in an E57 file through the C++ libe57format bridge (binary float32 stream)."""
+    helper = _e57dump()
+    if not helper:
+        raise ValueError("E57 needs the e57dump helper (run `pixi run e57dump-build`)")
+    try:
+        process = subprocess.run([helper, path], capture_output=True)
+    except OSError as ex:
+        raise ValueError(f"the E57 helper could not run: {ex}") from None
+    if process.returncode != 0:
+        message = process.stderr.decode("utf-8", errors="replace").strip()
+        raise ValueError(message or "the E57 file could not be read")
+    data = process.stdout
+    if len(data) < 8:
+        raise ValueError("the E57 helper returned no points")
+    count = struct.unpack_from("<Q", data, 0)[0]
+    if not count or len(data) < 8 + count * 12:
+        raise ValueError("the E57 file has no points")
+    values = struct.unpack_from(f"<{count * 3}f", data, 8)
+    return [(values[i], values[i + 1], values[i + 2]) for i in range(0, len(values), 3)]
+
+
 def _read(path: str) -> tuple[list[tuple[float, float, float]], str]:
     suffix = pathlib.Path(path).suffix.lower().lstrip(".")
     if suffix not in FORMATS:
@@ -184,6 +223,8 @@ def _read(path: str) -> tuple[list[tuple[float, float, float]], str]:
         return _las(data), suffix
     if suffix == "laz":
         return _laz(data), suffix
+    if suffix == "e57":
+        return _e57(path), suffix
     return _rows(data.decode("utf-8-sig", errors="replace")), suffix
 
 

@@ -266,6 +266,13 @@ def main() -> int:
     else:
         print(f"warning: {bridge} is missing; the portable build will decompose in Python "
               "(run `pixi run ifcdump-build` before packaging)")
+    # E57 point clouds go through this small libe57format bridge.
+    e57 = ROOT / "build" / "e57dump" / ("e57dump.exe" if os.name == "nt" else "e57dump")
+    if e57.exists():
+        (package / "e57dump").mkdir(exist_ok=True)
+        shutil.copy2(e57, package / "e57dump" / e57.name)
+    else:
+        print(f"warning: {e57} is missing; E57 import will need `pixi run e57dump-build` before packaging")
     copy_tree(ROOT / "python" / "kimbim", package / "python" / "kimbim")
     samples = package / "samples"
     samples.mkdir(exist_ok=True)

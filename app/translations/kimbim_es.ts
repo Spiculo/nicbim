@@ -3748,8 +3748,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6116" />
-      <source>Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz);;All files (*)</source>
-      <translation>Nubes de puntos (*.xyz *.pts *.csv *.txt *.las *.laz);;Todos los archivos (*)</translation>
+      <source>Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz *.e57);;All files (*)</source>
+      <translation>Nubes de puntos (*.xyz *.pts *.csv *.txt *.las *.laz *.e57);;Todos los archivos (*)</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6160" />

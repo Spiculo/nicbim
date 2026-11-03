@@ -2,7 +2,10 @@
 """Point-cloud import: XYZ/PTS/CSV text, uncompressed LAS, decimation to markers, the proxy and its
 KIMBIM_PointCloud property set, IFC2X3 fallback, error reports and a saved-model validation."""
 import json
+import os
+import pathlib
 import struct
+import subprocess
 
 import ifcopenshell
 import ifcopenshell.util.element
@@ -91,7 +94,7 @@ def laz_file() -> bytes:
 
 def test_pointcloud_formats():
     assert call(P.pointcloud_formats) == {"ok": True,
-                                          "formats": ["xyz", "pts", "csv", "txt", "las", "laz"]}
+                                          "formats": ["xyz", "pts", "csv", "txt", "las", "laz", "e57"]}
 
 
 def test_xyz_points_become_markers(tmp_path):
@@ -148,6 +151,27 @@ def test_compressed_laz(tmp_path):
     assert r["format"] == "laz" and r["points"] == 3
     assert r["bounds"] == {"min": [-0.01, -0.01, 0.0], "max": [1.01, 1.01, 0.02]}
     assert ifcopenshell.util.element.get_pset(f.by_guid(r["guid"]), P.PSET)["Format"] == "laz"
+    assert issues() == []
+
+
+def e57_file(tmp_path):
+    root = pathlib.Path(__file__).resolve().parents[2]
+    helper = root / "build" / "e57dump" / ("e57dump.exe" if os.name == "nt" else "e57dump")
+    if not helper.is_file():
+        pytest.skip("e57dump is not built (run `pixi run e57dump-build`)")
+    path = tmp_path / "scan.e57"
+    subprocess.run([str(helper), "--write-simple", str(path)], check=True, capture_output=True)
+    return path
+
+
+def test_e57_scan(tmp_path):
+    f, level = open_model()
+    path = e57_file(tmp_path)
+    r = call(P.import_pointcloud, str(path), level, json.dumps({"marker": 0.05}))
+    assert r["ok"], r
+    assert r["format"] == "e57" and r["points"] == 3
+    assert r["bounds"] == {"min": [-0.05, -0.05, 0.0], "max": [1.05, 1.05, 0.1]}
+    assert ifcopenshell.util.element.get_pset(f.by_guid(r["guid"]), P.PSET)["Format"] == "e57"
     assert issues() == []
 
 

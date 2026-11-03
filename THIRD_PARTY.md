@@ -21,6 +21,7 @@ KimBim is GPL-3.0-or-later. These are the components it uses, how each is linked
 | pypdfium2 (and PDFium) | Apache-2.0 / BSD-3-Clause (PDFium: BSD-3-Clause, Apache-2.0) | PDF underlay pages rendered to images (D85) | Dynamic |
 | PyMuPDF (and MuPDF) | AGPL-3.0-or-later (combines with GPL-3.0-or-later under GPLv3 §13) | PDF vector linework for vector underlays (D132) | Dynamic |
 | lazrs-python (and lazrs) | MIT / Apache-2.0 | LAZ (compressed LAS) point-cloud import (D132) | Dynamic |
+| libe57format | BSD-3-Clause | E57 point-cloud import through the `e57dump` C++ bridge (D148) | Dynamic (helper executable) |
 | pyassimp (and Assimp) | BSD-3-Clause | Binary FBX mesh import (D133) | Dynamic |
 | MCP Python SDK (`mcp`, `mcp-types`) 2.3 | MIT | `kimbim mcp`: the agent tools as an MCP server for AI clients (D102) | Dynamic (Python module) |
 | anyio, httpx, pydantic, starlette, sse-starlette, uvicorn, jsonschema, PyJWT, rich, typer, opentelemetry-api, cryptography, pywin32 (and their dependencies) | MIT / BSD-3-Clause / Apache-2.0 / PSF-2.0 | Dependencies of the MCP SDK (only its stdio server is used) | Dynamic |
