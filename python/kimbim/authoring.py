@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import math
+import uuid
 
 import ifcopenshell
 import ifcopenshell.api.aggregate
@@ -115,6 +116,80 @@ def set_locked(guids_json: str, locked=True) -> str:
             pset = f.by_id(data["id"]) if data else ifcopenshell.api.pset.add_pset(f, product=e, name=LOCK_PSET)
             ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={"Locked": value})
         return len(elements), [e.GlobalId for e in elements], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump(r)
+
+
+# D162: plain groups. The group id lives in a pset so other IFC tools keep it; moving or deleting one
+# member takes the others along (the group behaves as one unit) until it is ungrouped.
+GROUP_PSET = "KIMBIM_Group"
+
+
+def group_of(element) -> str:
+    data = ifcopenshell.util.element.get_pset(element, GROUP_PSET) or {}
+    return str(data.get("Group") or "")
+
+
+def _with_groups(elements) -> list:
+    """`elements` plus every member of the groups they belong to (D162)."""
+    groups = {group_of(e) for e in elements} - {""}
+    if not groups:
+        return elements
+    out = list(elements)
+    seen = {e.id() for e in out}
+    for e in B._model.by_type("IfcProduct"):
+        if e.id() not in seen and group_of(e) in groups:
+            out.append(e)
+            seen.add(e.id())
+    return out
+
+
+def group_elements(guids_json: str, name: str = "") -> str:
+    """Put two or more products in a new group; moving or deleting one takes the others along (D162)."""
+    if B._model is None:
+        return _fail("no model open")
+    elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
+    if len(elements) < 2:
+        return _fail("select at least two elements to group")
+    group = uuid.uuid4().hex
+
+    def action():
+        f = B._model
+        for e in elements:
+            data = ifcopenshell.util.element.get_pset(e, GROUP_PSET)
+            pset = f.by_id(data["id"]) if data else ifcopenshell.api.pset.add_pset(f, product=e, name=GROUP_PSET)
+            ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={"Group": group, "Name": name or "Group"})
+        return len(elements), [e.GlobalId for e in elements], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "group": group})
+
+
+def ungroup_elements(guids_json: str) -> str:
+    """Break the groups of the selected products; they become independent again (D162)."""
+    if B._model is None:
+        return _fail("no model open")
+    elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
+    groups = {group_of(e) for e in elements} - {""}
+    if not groups:
+        return _fail("the selection is not in a group")
+    members = [e for e in B._model.by_type("IfcProduct") if group_of(e) in groups]
+
+    def action():
+        f = B._model
+        for e in members:
+            data = ifcopenshell.util.element.get_pset(e, GROUP_PSET)
+            if data:
+                ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(data["id"]),
+                                                properties={"Group": None, "Name": None})
+        return len(members), [e.GlobalId for e in members], []
 
     try:
         r = B._run(action)
@@ -428,6 +503,7 @@ def _delete_cascade(elements) -> tuple:
     # opening, and its host wall gets its hole closed (re-meshed).
     from . import stairs
 
+    elements = _with_groups(elements)  # D162: deleting one member deletes the group
     openings, hosts = stairs.cascade(elements)  # D88: a stair's parts, railings and floor opening
     for e in list(elements):
         for rel in getattr(e, "HasOpenings", ()) or ():
@@ -1969,6 +2045,7 @@ def _transform(guids_json: str, transform_si, detach=False) -> str:
     if B._model is None:
         return _fail("no model open")
     elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct") and getattr(e, "ObjectPlacement", None)]
+    elements = _with_groups(elements)  # D162: a group moves as one unit
     if not elements:
         return _fail("nothing to move")
     moved = set(elements)

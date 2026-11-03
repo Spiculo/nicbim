@@ -701,6 +701,10 @@ void MainWindow::buildMenus()
         ->setToolTip(tr("Stop the selected elements from being moved, deleted or resized"));
     editAction(tr("&Unlock selection"), "actionUnlock", QKeySequence(), [this] { setSelectionLocked(false); }) // D160
         ->setToolTip(tr("Allow the selected elements to be moved, deleted and resized again"));
+    editAction(tr("&Group"), "actionGroup", QKeySequence(), [this] { groupSelection(false); }) // D162
+        ->setToolTip(tr("Group the selection so it moves and deletes as one unit"));
+    editAction(tr("&Ungroup"), "actionUngroup", QKeySequence(), [this] { groupSelection(true); }) // D162
+        ->setToolTip(tr("Break the selection's groups"));
     editAction(tr("&Offset..."), "actionOffset", QKeySequence(), [this] { offsetDialog(); });
     editAction(tr("Resi&ze..."), "actionResize", QKeySequence(), [this] { // D98: Archicad's Resize
         if (m_selection.isEmpty()) {
@@ -8709,6 +8713,23 @@ void MainWindow::setSelectionLocked(bool locked)
     }
     afterEdit(r);
     m_status->showMessage(locked ? tr("Selection locked") : tr("Selection unlocked"));
+}
+
+void MainWindow::groupSelection(bool ungroup)
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select what to group first"));
+        return;
+    }
+    const QJsonObject r = ungroup
+        ? bridge("ungroup_elements", {jsonList(m_selection)})
+        : bridge("group_elements", {jsonList(m_selection), QString()});
+    if (!r.value("ok").toBool()) {
+        showError(ungroup ? tr("Ungroup") : tr("Group"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    m_status->showMessage(ungroup ? tr("Selection ungrouped") : tr("Selection grouped"));
 }
 
 void MainWindow::overallDimensionDialog()

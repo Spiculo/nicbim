@@ -203,6 +203,28 @@ def test_locked_elements_refuse_moves_and_deletes(room):
     assert call("delete_elements", g(slab))["ok"]
 
 
+def test_group_moves_and_deletes_together(room):
+    def exists(guid):
+        try:
+            return b._model.by_guid(guid) is not None
+        except RuntimeError:
+            return False
+
+    slab, wall = room["slab"], room["w2"]
+    assert call("group_elements", g(slab, wall))["ok"]
+    start = axis(wall)[0][0]
+    assert call("move_elements", g(slab), 1, 0, 0)["ok"]
+    assert axis(wall)[0][0] == pytest.approx(start + 1, abs=1e-6)
+    assert call("delete_elements", g(slab))["ok"]
+    assert not exists(slab) and not exists(wall)
+    assert call("undo")["ok"]
+    assert exists(slab) and exists(wall)
+    assert call("ungroup_elements", g(slab))["ok"]
+    moved = axis(wall)[0][0]
+    assert call("move_elements", g(slab), 1, 0, 0)["ok"]
+    assert axis(wall)[0][0] == pytest.approx(moved, abs=1e-9)
+
+
 def test_round_corners_geometry():
     from kimbim import editing as E
 

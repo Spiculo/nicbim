@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D161 plus explicit overrides for the final items.
+after D123–D162 plus explicit overrides for the final items.
 
-**Summary: 146 done, 60 deferred, 3 blocked.**
+**Summary: 147 done, 59 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -83,7 +83,7 @@ after D123–D161 plus explicit overrides for the final items.
 | 4. Editing tools (general) | Edit by polygon points (add, move, delete vertices; curve an edge) | **Deferred** | Core done; remainder deferred. D98: Stretch tool on slabs and 2D shapes: move, add at an edge's middle, Ctrl+click delete; no curved edges |
 | 4. Editing tools (general) | Solid element operations (subtract, intersect, add) | **Deferred** | Core done; remainder deferred. Edit > *Solid cut*, *Solid intersection* and *Solid union* take the selected elements (target first, then one or more tools) and run `kimbim.solids.boolean_elements`, which folds `IfcBooleanResult` DIFFERENCE/INTERSECTION/UNION in the target's Body representation (one undo step). `kimbim.solids.boolean_batch` applies one ope... |
 | 4. Editing tools (general) | Lock / pin elements | **Done** | D160: Edit > *Lock selection* / *Unlock selection* writes `KIMBIM_Lock` (`Locked`); locked elements refuse moves, deletes, align/resize/offset/fillet and dimension edits until unlocked; agent `elements.lock`. |
-| 4. Editing tools (general) | Group / ungroup | **Deferred** | Core done; remainder deferred. Models (D58) do the repeated-unit job; no plain groups |
+| 4. Editing tools (general) | Group / ungroup | **Done** | D162: Edit > *Group* / *Ungroup* stores a `KIMBIM_Group` id (agent `elements.group` / `elements.ungroup`); moving or deleting one member moves/deletes the whole group. Models (D58) remain the repeated-unit tool. |
 | 5. Input aids | Snapping (endpoint, midpoint, on element, grid) | **Done** |  |
 | 5. Input aids | Ortho / angle steps | **Done** | 15° steps, Shift = ortho |
 | 5. Input aids | Typed lengths | **Done** |  |

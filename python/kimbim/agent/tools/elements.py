@@ -180,6 +180,24 @@ def lock(session, elements, locked=True):
     return {"elements": len(guids)}
 
 
+@tool("elements.group", {"required": ["elements"], "properties": {
+    "elements": SELECTOR,
+    "name": {"type": "string", "description": "Optional group name."}}}, writes=True)
+def group(session, elements, name=""):
+    """Group elements so moving or deleting one moves or deletes them all."""
+    guids = session.resolve(elements)
+    r = bridge(A.group_elements, _guids(guids), name or "")
+    return {"elements": len(guids), "group": r.get("group", "")}
+
+
+@tool("elements.ungroup", {"required": ["elements"], "properties": {"elements": SELECTOR}}, writes=True)
+def ungroup(session, elements):
+    """Break the groups of the selected elements."""
+    guids = session.resolve(elements)
+    bridge(A.ungroup_elements, _guids(guids))
+    return {"elements": len(guids)}
+
+
 @tool("elements.move", {"required": ["elements"], "properties": {
     "elements": SELECTOR, "dx": _NUMBER, "dy": _NUMBER, "dz": _NUMBER}}, writes=True)
 def move(session, elements, dx=0, dy=0, dz=0):

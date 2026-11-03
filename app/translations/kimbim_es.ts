@@ -5312,6 +5312,51 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Selección desbloqueada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="704" />
+      <source>&amp;Group</source>
+      <translation>&amp;Agrupar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="706" />
+      <source>&amp;Ungroup</source>
+      <translation>&amp;Desagrupar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="705" />
+      <source>Group the selection so it moves and deletes as one unit</source>
+      <translation>Agrupar la selección para que se mueva y elimine como una unidad</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="707" />
+      <source>Break the selection's groups</source>
+      <translation>Deshacer los grupos de la selección</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8786" />
+      <source>Select what to group first</source>
+      <translation>Selecciona primero qué agrupar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8792" />
+      <source>Group</source>
+      <translation>Agrupar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8792" />
+      <source>Ungroup</source>
+      <translation>Desagrupar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8796" />
+      <source>Selection grouped</source>
+      <translation>Selección agrupada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8796" />
+      <source>Selection ungrouped</source>
+      <translation>Selección desagrupada</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

@@ -1110,6 +1110,8 @@ _EXPORTS = {
         "set_wall_axis",
         "set_dimension",
         "set_locked",
+        "group_elements",
+        "ungroup_elements",
         "set_wall_height",
         "slide_openings",
         "slab_outline_from_walls",
