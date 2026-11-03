@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D126).**
+**Status as of `main` (2026-11-03, after D112–D127).**
 
 ## How to read it
 
@@ -295,7 +295,7 @@ release notes, so check before relying on a single cell.
 | Milestones, object history, before/after | — | ✅ | P0 | Slice 20 (M5) |
 | Combine options with conflict UI | — | ✅ | P1 | Slice 22 (D69), M5 exit |
 | Several people on one project (Teamwork, Worksharing, Project Sharing) | AC RV VW | 🔮 | P2 | Git remotes first ([08](08-future.md)) |
-| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it. Not a live editable hotlink |
+| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. Not a live editable hotlink (linked elements cannot be edited in place) |
 | Copy / monitor linked elements | RV | ⬜ | new | |
 | BCF issues (import, export, viewpoints) | AC RV VW BB | ✅ | new | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | Markups and comments in the model | AC RV VW | ⬜ | new | |
@@ -357,7 +357,7 @@ What now most often stops an architect from finishing a real project, roughly in
 9. ✅ **Terrain** (§7): D114 (points or contours, IFC4/IFC2X3, Model › Terrain..., agent tools). D116 adds building pads (flatten/clear); cut-and-fill volumes, hardscape/plants and an interactive point/contour tool are still to do.
 10. ✅ **BCF issues** (§17): D113 (topics, viewpoints, comments, BCF 2.1 import/export, Issues dialog); D119 restores a viewpoint camera and components.
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
-12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). A live, editable hotlink and copy/monitor are still future.
+12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes and D124 COLLADA/glTF/GLB/ASCII FBX; D125 adds XYZ/PTS/CSV/LAS point clouds. SketchUp `.skp`, binary FBX, LAZ/E57, vector PDF and live links are still to do.
 14. **The deeper documentation/visualisation tail** (§11, §16): 3D documents, crop/view-range UI, model view options by scale, rendering and VR.
 

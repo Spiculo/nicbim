@@ -45,6 +45,21 @@ def list_links(session):
     return {"links": bridge(L.list_links)["links"]}
 
 
+@tool("links.stale", {})
+def stale(session):
+    """List linked models whose source file changed, is missing or is unreadable since the last update."""
+    return {"links": bridge(L.stale_links)["links"]}
+
+
+@tool("links.refresh", {"properties": {
+    "guids": {"type": "array", "items": {"type": "string"},
+              "description": "Only these linked models (default every changed one)."}}}, writes=True)
+def refresh(session, guids=None):
+    """Rebuild every linked model whose source file changed; unchanged links are left alone."""
+    r = bridge(L.refresh_links, json.dumps(guids) if guids else "")
+    return {"refreshed": r["refreshed"], "skipped": r["skipped"], "errors": r["errors"]}
+
+
 @tool("links.update", {"required": ["guid"], "properties": {"guid": _GUID}}, writes=True)
 def update(session, guid):
     """Re-read a linked model's file and rebuild its geometry (same GlobalId)."""

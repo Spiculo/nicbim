@@ -3168,6 +3168,31 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <translation>Desvincular</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="6375" />
+      <source>Update changed</source>
+      <translation>Actualizar cambiados</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6338" />
+      <source>Status</source>
+      <translation>Estado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6363" />
+      <source>Changed</source>
+      <translation>Cambiado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6363" />
+      <source>Missing</source>
+      <translation>Falta</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6363" />
+      <source>Unreadable</source>
+      <translation>Ilegible</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="6396" />
       <source>Remove the link to "%1"?</source>
       <translation>¿Quitar el vínculo con «%1»?</translation>

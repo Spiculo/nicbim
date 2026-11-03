@@ -1454,6 +1454,8 @@ _EXPORTS = {
     "links": (
         "link_model",
         "list_links",
+        "refresh_links",
+        "stale_links",
         "set_link_transform",
         "unlink",
         "update_link",

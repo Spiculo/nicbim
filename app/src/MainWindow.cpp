@@ -7142,8 +7142,8 @@ void MainWindow::linksDialog()
     dialog.resize(760, 360);
     auto* layout = new QVBoxLayout(&dialog);
     auto* table = new QTableWidget(&dialog);
-    table->setColumnCount(4);
-    table->setHorizontalHeaderLabels({tr("Name"), tr("Path"), tr("Elements"), tr("Updated")});
+    table->setColumnCount(5);
+    table->setHorizontalHeaderLabels({tr("Name"), tr("Path"), tr("Elements"), tr("Updated"), tr("Status")});
     table->horizontalHeader()->setStretchLastSection(true);
     table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -7155,17 +7155,31 @@ void MainWindow::linksDialog()
     QJsonArray links;
     auto refresh = [&] {
         links = bridge("list_links").value("links").toArray();
+        QJsonObject stale;
+        for (const auto& value : bridge("stale_links").value("links").toArray()) {
+            const QJsonObject entry = value.toObject();
+            if (entry.value("changed").toBool())
+                stale.insert(entry.value("guid").toString(), entry.value("reason").toString());
+        }
         table->setRowCount(links.size());
         for (int i = 0; i < links.size(); ++i) {
             const QJsonObject link = links[i].toObject();
+            const QString guid = link.value("guid").toString();
             auto* name = new QTableWidgetItem(link.value("name").toString());
-            name->setData(Qt::UserRole, link.value("guid").toString());
+            name->setData(Qt::UserRole, guid);
             table->setItem(i, 0, name);
             auto* path = new QTableWidgetItem(link.value("path").toString());
             path->setToolTip(link.value("path").toString());
             table->setItem(i, 1, path);
             table->setItem(i, 2, new QTableWidgetItem(QString::number(link.value("elements").toInt())));
             table->setItem(i, 3, new QTableWidgetItem(link.value("updated").toString()));
+            QString status;
+            if (stale.contains(guid)) {
+                const QString reason = stale.value(guid).toString();
+                status = reason == QLatin1String("missing") ? tr("Missing")
+                        : reason == QLatin1String("unreadable") ? tr("Unreadable") : tr("Changed");
+            }
+            table->setItem(i, 4, new QTableWidgetItem(status));
         }
         if (table->rowCount())
             table->selectRow(0);
@@ -7175,13 +7189,25 @@ void MainWindow::linksDialog()
         const int row = table->currentRow();
         return row >= 0 && row < links.size() ? links[row].toObject() : QJsonObject();
     };
+    auto* updateChanged = new QPushButton(tr("Update changed"), &dialog);
     auto* update = new QPushButton(tr("Update"), &dialog);
     auto* remove = new QPushButton(tr("Unlink"), &dialog);
     auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(updateChanged);
     buttons->addWidget(update);
     buttons->addWidget(remove);
     buttons->addStretch(1);
     buttons->addWidget(close);
+    connect(updateChanged, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject r = bridge("refresh_links", {QString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Linked models"), r.value("error").toString());
+            return;
+        }
+        if (!r.value("refreshed").toArray().isEmpty())
+            afterEdit(r);
+        refresh();
+    });
     connect(update, &QPushButton::clicked, &dialog, [&] {
         const QJsonObject link = current();
         if (link.isEmpty())

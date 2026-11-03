@@ -215,10 +215,51 @@ def test_errors(tmp_path):
     assert call(L.unlink, "not-a-guid")["ok"] is False
 
 
+def test_stale_links_and_refresh(tmp_path):
+    f, _level = open_model()
+    src = source(tmp_path)
+    r = call(L.link_model, str(src))
+    assert r["ok"], r
+    assert call(L.stale_links)["links"][0]["changed"] is False
+
+    changed = ifcopenshell.open(str(src))
+    wall = changed.by_type("IfcWall")[0]
+    matrix = np.eye(4)
+    matrix[0][3] = 20.0
+    ifcopenshell.api.geometry.edit_object_placement(changed, product=wall, matrix=matrix, is_si=True)
+    changed.write(str(src))
+
+    stale = call(L.stale_links)["links"]
+    assert len(stale) == 1 and stale[0]["changed"] is True and stale[0]["reason"] == "changed"
+    steps = len(B._ids)
+    refreshed = call(L.refresh_links)
+    assert refreshed["ok"], refreshed
+    assert refreshed["refreshed"] == [r["guid"]]
+    assert len(B._ids) == steps + 1  # one undo step
+    assert call(L.stale_links)["links"][0]["changed"] is False
+    # A second pass leaves the unchanged link alone.
+    again = call(L.refresh_links)
+    assert again["refreshed"] == [] and again["skipped"] == [r["guid"]]
+
+    # A missing source is reported, not silently skipped.
+    src.unlink()
+    missing = call(L.stale_links)["links"][0]
+    assert missing["changed"] is True and missing["reason"] == "missing"
+    failed = call(L.refresh_links)
+    assert failed["errors"] and failed["errors"][0]["guid"] == r["guid"]
+
+    # The agent tools are registered.
+    from kimbim.agent import catalogue
+    from kimbim.agent.tools import links  # noqa: F401
+    assert "links.stale" in catalogue.TOOLS and not catalogue.TOOLS["links.stale"].writes
+    assert "links.refresh" in catalogue.TOOLS and catalogue.TOOLS["links.refresh"].writes
+
+
 def test_no_model_open():
     B._model = None
     assert call(L.link_model, "x.ifc")["ok"] is False
     assert call(L.list_links) == {"ok": True, "links": []}
+    assert call(L.stale_links) == {"ok": True, "links": []}
 
 def test_the_bridge_wires_linked_models(tmp_path):
     _f, _level = open_model()

@@ -295,6 +295,61 @@ def update_link(guid: str) -> str:
                     "bounds": _bounds(points)})
 
 
+def stale_links() -> str:
+    """Every linked model whose source file no longer matches the baked geometry: guid, name, path,
+    changed (bool), reason ("changed", "missing" or "unreadable")."""
+    if B._model is None:
+        return B._dump({"ok": True, "links": []})
+    out = []
+    for element, data in _links():
+        path = str(data.get("Path") or "")
+        entry = {"guid": element.GlobalId, "name": element.Name or "", "path": path,
+                 "changed": False, "reason": ""}
+        try:
+            source = pathlib.Path(path)
+            if not source.is_file():
+                entry.update(changed=True, reason="missing")
+            elif hashlib.sha1(source.read_bytes()).hexdigest() != str(data.get("SourceHash") or ""):
+                entry.update(changed=True, reason="changed")
+        except OSError:
+            entry.update(changed=True, reason="unreadable")
+        out.append(entry)
+    return B._dump({"ok": True, "links": out})
+
+
+def refresh_links(guids_json: str = "") -> str:
+    """Re-read every changed linked file (or only the given GlobalIds) and rebuild its proxy in place.
+    One undo step per refreshed link; unchanged links are left alone."""
+    if B._model is None:
+        return A._fail("no model open")
+    wanted = None
+    if guids_json:
+        try:
+            data = json.loads(guids_json)
+            wanted = set(data) if isinstance(data, list) else None
+        except (TypeError, ValueError):
+            return A._fail("guids must be a JSON list")
+        if wanted is None:
+            return A._fail("guids must be a JSON list")
+    stale = {entry["guid"]: entry for entry in json.loads(stale_links())["links"] if entry["changed"]}
+    refreshed, skipped, errors = [], [], []
+    for element, _data in _links():
+        guid = element.GlobalId
+        if wanted is not None and guid not in wanted:
+            skipped.append(guid)
+            continue
+        if guid not in stale:
+            skipped.append(guid)
+            continue
+        result = json.loads(update_link(guid))
+        if result.get("ok"):
+            refreshed.append(guid)
+        else:
+            errors.append({"guid": guid, "error": result.get("error", "")})
+    return B._dump({"ok": True, "refreshed": refreshed, "skipped": skipped, "errors": errors,
+                    "changed": len(stale)})
+
+
 def set_link_transform(guid: str, transform_json: str) -> str:
     """Move, rotate or scale a linked model and rebuild it (one undo step)."""
     if B._model is None:
