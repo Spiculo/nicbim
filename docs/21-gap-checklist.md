@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D195 plus explicit overrides for the final items.
+after D123–D196 plus explicit overrides for the final items.
 
-**Summary: 178 done, 28 deferred, 3 blocked.**
+**Summary: 179 done, 27 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -166,7 +166,7 @@ after D123–D195 plus explicit overrides for the final items.
 | 11. Drawings (views made from the model) | Drawings update when the model changes | **Done** | Every edit marks the affected drawings stale; the out-of-date bar offers *Regenerate* and a drawing regenerates when brought to the front. `tests/python/test_drawings.py::test_editing_a_wall_makes_drawings_stale_and_regenerating_shows_it` checks stale → regenerate → undo. |
 | 12. 2D drafting | Lines, polylines, arcs, circles, splines | **Done** | D84: line, polyline, arc/circle, rectangle; D98: splines; snaps, typed lengths, grips; in plans, drawings, sheets, DXF |
 | 12. 2D drafting | Fills / hatches (regions) | **Done** | D84: IfcAnnotationFillArea + IfcFillAreaStyleHatching; pattern table in project settings; pens fg/bg; area label; magic wand (Alt+click) |
-| 12. 2D drafting | 2D symbols / blocks | **Deferred** |  |
+| 12. 2D drafting | 2D symbols / blocks | **Done** | D196: Model > *Create 2D block...* saves the selected drafting shapes under a name in the project settings; *Insert 2D block...* places it on the active level, rotated and scaled, each shape keeping its pen and line type; one undo step, blocks travel with the project |
 | 12. 2D drafting | Detail components (repeating patterns such as insulation, brick) | **Done** | D195: the built-in *Brick* (staggered courses) and *Insulation* (short arc loops; *Zigzag* variant) fill patterns draw repeating detail components in any fill (D73/D84/D93), on screen, in drawings/sheets and DXF; they are fills rather than placed library parts |
 | 12. 2D drafting | Image and PDF underlays (trace over a scan) | **Done** | D85: PDF page (pypdfium2) or PNG/JPEG on a level at 1:N, calibrated by two points; opacity, greyscale, tint, layer, lock, also in 3D; stored in the project and its versions |
 | 13. Annotation | Text labels | **Done** | Screen-sized; paper-unit size is open (doc 13) |

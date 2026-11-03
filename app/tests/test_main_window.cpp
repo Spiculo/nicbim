@@ -3239,7 +3239,7 @@ private slots:
                  "actionWallOpening", "actionOverallDimension", "actionElevate",
                  "actionLock", "actionUnlock", "actionGroup", "actionUngroup", "actionFillFromShape",
                  "actionGridDimension", "actionPublishSheetSet", "actionNewRevision", "actionAreaPlan",
-                 "actionAttributeManager", "actionKeynotes"})
+                 "actionAttributeManager", "actionKeynotes", "actionMake2DBlock", "actionInsert2DBlock"})
             QVERIFY2(action(w, name), name);
     }
 

@@ -206,6 +206,36 @@ def test_drafting_lines_trim_extend_split_and_corner(plan):
     assert not call("split_element", line, 0, 0, "1")["ok"]  # outside the line
 
 
+def test_2d_blocks_save_and_insert_with_style(plan):
+    """D196: selected drafting shapes become a named block that inserts anywhere, rotated and scaled."""
+    from kimbim import annotations
+
+    line = call("add_drafting", plan["l1"], "line", pts((0, 0), (4, 0)), "")["guid"]
+    arc = call("add_drafting", plan["l1"], "arc", pts((0, 0), (1, 1), (2, 0)),
+               json.dumps({"line_type": "Dashed", "pen": 5}))["guid"]
+    r = call("save_block", "Door symbol", g(line, arc))
+    assert r["ok"], r
+    assert {b["name"]: b["shapes"] for b in call("blocks")["blocks"]}["Door symbol"] == 2
+
+    ins = call("insert_block", "Door symbol", plan["l1"], 10, 5, 90, 2)
+    assert ins["ok"], ins
+    assert len(ins["guids"]) == 2
+    inserted = annotations.world_points(b._model.by_guid(ins["guids"][0]))
+    assert [[round(v, 6) for v in p] for p in inserted] == [[10, 5], [10, 13]]  # rotated 90°, scaled 2
+    style = call("annotations", plan["l1"])["annotations"]
+    arc_row = next(a for a in style if a["guid"] == ins["guids"][1])
+    assert arc_row["line_type"] == "Dashed" and arc_row["pen"] == 5
+
+    assert call("undo")["ok"]
+    for guid in ins["guids"]:
+        with pytest.raises(RuntimeError):
+            b._model.by_guid(guid)
+
+    assert call("delete_block", "Door symbol")["ok"]
+    assert call("blocks")["blocks"] == []
+    assert not call("insert_block", "Door symbol", plan["l1"], 0, 0)["ok"]
+
+
 def test_snap_data_lists_drafting_circles(plan):
     """D188: circles and arcs are snap targets (their centre and radius reach the snapper)."""
     circle = call("add_drafting", plan["l1"], "circle", pts((5, 5), (6, 5)), "")["guid"]

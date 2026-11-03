@@ -86,6 +86,7 @@ DEFAULTS = {
     "agent_scripts": False,  # D102: agents may run Python scripts (script.run); only the architect sets it
     "revisions": [],  # D171: revision records {code, date, description}
     "sheet_sets": {},  # D172: named sheet subsets for batch publishing {name: [numbers]}
+    "drafting_blocks": {},  # D196: reusable 2D blocks by name {shapes: [{kind, points, extra, pen}]}
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -291,6 +292,19 @@ def _error(key: str, value) -> str | None:
         from . import sun
 
         return sun.error(value)
+    if key == "drafting_blocks":  # D196
+        if not isinstance(value, dict):
+            return "2D blocks are a table by name"
+        for name, block in value.items():
+            if not (isinstance(name, str) and name.strip() and isinstance(block, dict)):
+                return "2D blocks are a table by name"
+            shapes = block.get("shapes")
+            if not (isinstance(shapes, list) and shapes):
+                return f"the 2D block {name} holds at least one shape"
+            for s in shapes:
+                if not (isinstance(s, dict) and isinstance(s.get("kind"), str)
+                        and isinstance(s.get("points"), list) and len(s["points"]) >= 2):
+                    return f"a shape of the 2D block {name} needs a kind and points"
     if key == "favourites":
         if not isinstance(value, dict) or not all(
                 isinstance(k, str) and k.strip() and isinstance(v, dict) and isinstance(v.get("tool"), str)

@@ -1383,9 +1383,13 @@ _EXPORTS = {
     ),
     "drafting": (
         "add_drafting",
+        "blocks",
+        "delete_block",
         "fill_at",
         "fill_from_shape",
         "fill_patterns",
+        "insert_block",
+        "save_block",
         "set_annotation_points",
         "set_drafting_style",
     ),

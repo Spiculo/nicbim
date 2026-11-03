@@ -694,6 +694,137 @@ def set_annotation_points(guid: str, points_json: str) -> str:
     return B._dump(B._run(action))
 
 
+BLOCKS = "drafting_blocks"  # D196: reusable 2D blocks in the project settings
+
+
+def blocks() -> str:
+    """The project's saved 2D blocks: [{name, shapes}]."""
+    from . import app_bridge as B
+    from . import settings as S
+
+    table = S.current().get(BLOCKS, {})
+    out = [{"name": name, "shapes": len(block.get("shapes") or [])}
+           for name, block in sorted(table.items()) if isinstance(block, dict)]
+    return B._dump({"ok": True, "blocks": out})
+
+
+def save_block(name, guids_json) -> str:
+    """Save drafting shapes as a reusable 2D block, relative to their lower-left corner."""
+    from . import annotations as N
+    from . import app_bridge as B
+    from . import authoring as A
+    from . import settings as S
+
+    name = str(name or "").strip()
+    if not name:
+        return A._fail("type a block name")
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        guids = json.loads(guids_json)
+    except ValueError:
+        return A._fail("bad selection")
+    if not isinstance(guids, list):
+        return A._fail("bad selection")
+    shapes, xs, ys = [], [], []
+    for guid in guids:
+        a = A._by_guid(guid)
+        data = N._read(a) if a is not None and a.is_a("IfcAnnotation") else None
+        if data is None or data[0] not in KINDS:
+            continue
+        pts = N.world_points(a)
+        if len(pts) < 2:
+            continue
+        shapes.append({"kind": data[0], "points": pts, "extra": N.extra_of(a), "pen": int(data[4])})
+        xs += [float(p[0]) for p in pts]
+        ys += [float(p[1]) for p in pts]
+    if not shapes:
+        return A._fail("select one or more drafting shapes")
+    ox, oy = min(xs), min(ys)
+    for shape in shapes:
+        shape["points"] = [[round(float(x) - ox, 6), round(float(y) - oy, 6)] for x, y in shape["points"]]
+    table = dict(S.current().get(BLOCKS) or {})
+    table[name] = {"shapes": shapes}
+    r = json.loads(S.set_project_settings(json.dumps({BLOCKS: table})))
+    return B._dump({**r, "block": {"name": name, "shapes": len(shapes)}})
+
+
+def delete_block(name) -> str:
+    """Forget a saved 2D block (shapes already placed stay)."""
+    from . import app_bridge as B
+    from . import settings as S
+
+    name = str(name or "").strip()
+    table = dict(S.current().get(BLOCKS) or {})
+    if name not in table:
+        return B._dump({"ok": False, "error": f"unknown 2D block {name}"})
+    del table[name]
+    return S.set_project_settings(json.dumps({BLOCKS: table}))
+
+
+def insert_block(name, storey_guid, x, y, rotation=0.0, scale=1.0) -> str:
+    """Place a saved 2D block on a level at (x, y), rotated (degrees) and scaled; one undo step."""
+    import ifcopenshell.api.geometry
+    import ifcopenshell.api.root
+    import ifcopenshell.api.spatial
+    import numpy as np
+
+    from . import annotations as N
+    from . import app_bridge as B
+    from . import authoring as A
+    from . import layers
+    from . import settings as S
+
+    name = str(name or "").strip()
+    block = (S.current().get(BLOCKS) or {}).get(name)
+    if not isinstance(block, dict) or not block.get("shapes"):
+        return A._fail(f"unknown 2D block {name}")
+    storey = A._by_guid(storey_guid)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return A._fail("unknown level")
+    try:
+        x, y = float(x), float(y)
+        rotation, scale = float(rotation or 0.0), float(scale or 1.0)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    if scale <= 0:
+        return A._fail("the block's scale must be positive")
+    rad = math.radians(rotation)
+    ca, sa = math.cos(rad), math.sin(rad)
+    made = []
+
+    def action():
+        f = B._model
+        for shape in block["shapes"]:
+            kind = shape.get("kind")
+            if kind not in KINDS:
+                continue
+            pts = [(x + scale * (float(px) * ca - float(py) * sa),
+                    y + scale * (float(px) * sa + float(py) * ca)) for px, py in shape.get("points") or []]
+            if len(pts) < 2:
+                continue
+            extra = {k: v for k, v in (shape.get("extra") or {}).items() if k in EXTRA}
+            extra.setdefault("LineType", "Solid")
+            annotation = ifcopenshell.api.root.create_entity(f, ifc_class="IfcAnnotation",
+                                                             name=(name or kind.capitalize())[:60])
+            annotation.ObjectType = kind.upper()
+            ifcopenshell.api.spatial.assign_container(f, products=[annotation], relating_structure=storey)
+            matrix = np.eye(4)
+            matrix[0][3], matrix[1][3], matrix[2][3] = pts[0][0], pts[0][1], A._elevation(storey)
+            ifcopenshell.api.geometry.edit_object_placement(f, product=annotation, matrix=matrix, is_si=True)
+            local = [(px - pts[0][0], py - pts[0][1]) for px, py in pts]
+            N._set(annotation, kind, "", local, pen=shape.get("pen"), extra=extra)
+            layers.assign_active(annotation)
+            made.append(annotation.GlobalId)
+        return len(made), made, []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made})
+
+
 def fill_patterns() -> str:
     """The fill patterns (the project's table or the built-ins), names in order."""
     from . import app_bridge as B

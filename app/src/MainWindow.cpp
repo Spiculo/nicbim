@@ -3014,6 +3014,65 @@ void MainWindow::buildModelingToolbar()
     magicWand->setObjectName(QStringLiteral("actionFillFromShape"));
     magicWand->setToolTip(tr("Fill the selected closed polyline, circle or fill (magic wand)"));
     connect(magicWand, &QAction::triggered, this, &MainWindow::fillFromShape);
+    QAction* makeBlock = model->addAction(tr("Create 2D &block...")); // D196
+    makeBlock->setObjectName(QStringLiteral("actionMake2DBlock"));
+    makeBlock->setToolTip(tr("Save the selected drafting shapes as a reusable block"));
+    connect(makeBlock, &QAction::triggered, this, [this] {
+        if (m_selection.isEmpty()) {
+            m_status->showMessage(tr("Select the drafting shapes to save as a block"));
+            return;
+        }
+        bool ok = false;
+        const QString name = QInputDialog::getText(this, tr("Create 2D block"), tr("Block name:"),
+                                                   QLineEdit::Normal, QString(), &ok).trimmed();
+        if (!ok || name.isEmpty())
+            return;
+        const QJsonObject r = bridge("save_block", {name, jsonList(m_selection)});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Create 2D block"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("2D block \"%1\" saved").arg(name));
+    });
+    QAction* insertBlock = model->addAction(tr("Insert 2D b&lock...")); // D196
+    insertBlock->setObjectName(QStringLiteral("actionInsert2DBlock"));
+    insertBlock->setToolTip(tr("Place a saved 2D block at the centre of the plan view"));
+    connect(insertBlock, &QAction::triggered, this, [this] {
+        QStringList names;
+        for (const auto& v : bridge("blocks").value("blocks").toArray())
+            names << v.toObject().value("name").toString();
+        if (names.isEmpty()) {
+            m_status->showMessage(tr("No 2D blocks yet: save one with Create 2D block"));
+            return;
+        }
+        bool ok = false;
+        const QString name = QInputDialog::getItem(this, tr("Insert 2D block"), tr("Block:"), names, 0, false, &ok);
+        if (!ok || name.isEmpty())
+            return;
+        double x = 0.0, y = 0.0;
+        if (m_viewport && m_viewport->isPlanView()) {
+            gp_Pnt point;
+            const QSize size = m_viewport->size();
+            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
+                x = point.X();
+                y = point.Y();
+            }
+        }
+        const QJsonObject r = bridge("insert_block", {name, m_levels->activeStorey(),
+            QString::number(x, 'g', 17), QString::number(y, 'g', 17), QStringLiteral("0"), QStringLiteral("1")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Insert 2D block"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        QStringList inserted;
+        for (const auto& v : r.value("guids").toArray())
+            inserted << v.toString();
+        if (m_viewport)
+            m_viewport->selectGuids(inserted);
+        setSelection(inserted);
+        m_status->showMessage(tr("2D block \"%1\" inserted").arg(name));
+    });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));
