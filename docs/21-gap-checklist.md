@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D207 plus explicit overrides for the final items.
+after D123–D208 plus explicit overrides for the final items.
 
-**Summary: 189 done, 17 deferred, 3 blocked.**
+**Summary: 190 done, 16 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -110,7 +110,7 @@ after D123–D207 plus explicit overrides for the final items.
 | 6. Building elements | Slanted, tapered, segmented columns and beams | **Done** | D205: the Column/Beam tool strip gains *Lean X/Y* (columns), *End rise* (beams), *Taper* (top size as a fraction; IFC4) and *Segments* (precast pieces); the engine builds the leaning/sloping placement, tapered solids and stacked segments and returns all their ids |
 | 6. Building elements | Grids | **Done** | D98: Grid system (numbered and lettered axes at once) |
 | 6. Building elements | Stairs: straight flight | **Done** |  |
-| 6. Building elements | Stairs: landings, L/U shapes, spiral, by sketch | **Deferred** | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; D207: spiral stairs (one wedge step per riser about a central well, left or right). Winders remain |
+| 6. Building elements | Stairs: landings, L/U shapes, spiral, by sketch | **Done** | D88: L, U and by sketch with landings, risers from the height, code warnings, floor opening and plan symbol; D207: spiral stairs (one wedge step per riser about a central well, either turn); D208: *Winders* on L stairs (three winder steps about the inner corner instead of a flat landing) |
 | 6. Building elements | Railings | **Done** | D88: on a stair or ramp's sides (they follow it) or by path; posts, top rail, balusters |
 | 6. Building elements | Ramps | **Done** | D88: straight and L, slope with a 1:12 warning, plan arrow |
 | 6. Building elements | Roofs: flat | **Done** | Slice 19 (D66) |

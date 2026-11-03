@@ -884,7 +884,8 @@ private:
     std::optional<QPointF> m_markupHover;
     DraftTool* m_pathTool = nullptr;      // D88: a stair's walking line, a railing's path
     QComboBox* m_stairKind = nullptr;     // stair / ramp
-    QComboBox* m_stairShape = nullptr;    // straight, L, U, sketch
+    QComboBox* m_stairShape = nullptr;    // straight, L, U, sketch, spiral
+    QCheckBox* m_stairWinder = nullptr;   // D208: L stairs with three winder steps
     QComboBox* m_stairTurn = nullptr;     // left / right
     QDoubleSpinBox* m_stairWidth = nullptr;
     QDoubleSpinBox* m_stairTread = nullptr;

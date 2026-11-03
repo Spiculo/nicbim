@@ -6,6 +6,7 @@
 // the stairs' symbols (walking line, break line, the part above the cut dashed, UP) as plan-only
 // annotations named after the stair, and a click on a flight, a landing or the symbol selects the stair.
 #include <QComboBox>
+#include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -121,6 +122,9 @@ void MainWindow::setupStairTools(ToolOptionsBar* bar)
         tr("Target riser height: the riser count comes from the height to the next level"));
     m_stairLanding = metres(bar, "stairLanding", 0.0, 10.0, 0.0, tr("Landing "), tr("Landing depth (0: the stair's width)"));
     m_stairLanding->setSpecialValueText(tr("Landing: as wide"));
+    m_stairWinder = new QCheckBox(tr("Winders"), bar); // D208
+    m_stairWinder->setObjectName(QStringLiteral("stairWinder"));
+    m_stairWinder->setToolTip(tr("Turn the corner with three winder steps instead of a flat landing"));
     m_rampSlope = metres(bar, "rampSlope", 0.5, 50.0, 8.0, tr("Slope "), tr("Ramp slope (warning above the project's limit, 1:12)"),
         QStringLiteral(" %"), 1);
     m_rampRise = metres(bar, "rampRise", 0.05, 20.0, 0.5, tr("Rise "), tr("How high the ramp goes"));
@@ -131,7 +135,7 @@ void MainWindow::setupStairTools(ToolOptionsBar* bar)
     m_railingMode->setToolTip(tr("Click a stair or ramp for railings on both its sides, or click a path"));
     m_railingHeight = metres(bar, "railingHeight", 0.3, 3.0, 0.9, tr("Height "), tr("Railing height"));
     for (QWidget* w : std::initializer_list<QWidget*>{m_stairKind, m_stairShape, m_stairTurn, m_stairWidth, m_stairTread,
-             m_stairRiser, m_stairLanding, m_rampSlope, m_rampRise, m_railingMode, m_railingHeight}) {
+             m_stairRiser, m_stairLanding, m_stairWinder, m_rampSlope, m_rampRise, m_railingMode, m_railingHeight}) {
         w->setVisible(false);
         bar->addField(w);
     }
@@ -194,6 +198,7 @@ void MainWindow::startStairTool(Tool tool)
     m_stairTread->setVisible(stair && !ramp);
     m_stairRiser->setVisible(stair && !ramp);
     m_stairLanding->setVisible(stair && (shape == QLatin1String("L") || shape == QLatin1String("U")));
+    m_stairWinder->setVisible(stair && shape == QLatin1String("L")); // D208
     m_rampSlope->setVisible(ramp);
     m_rampRise->setVisible(ramp);
     m_railingMode->setVisible(tool == Tool::Railing);
@@ -213,7 +218,7 @@ void MainWindow::startStairTool(Tool tool)
 QJsonObject MainWindow::stairOptions() const
 {
     QJsonObject o{{"shape", m_stairShape->currentData().toString()}, {"turn", m_stairTurn->currentData().toString()},
-        {"landing", m_stairLanding->value()}};
+        {"landing", m_stairLanding->value()}, {"winder", m_stairWinder->isChecked()}};
     if (m_stairKind->currentData().toString() == QLatin1String("ramp"))
         o.insert("slope", m_rampSlope->value());
     else {

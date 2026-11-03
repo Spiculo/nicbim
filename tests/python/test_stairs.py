@@ -197,6 +197,22 @@ def test_a_spiral_stair_is_built_and_validates(levels):
     assert errors() == []
 
 
+def test_l_stair_winders_turn_with_three_steps(levels):
+    """D208: an L stair can turn with three winder steps instead of a flat landing."""
+    lay = stairs.stair_layout("L", 3.0, 1.0, 0.175, 0.28, winder=True)
+    assert lay["winder"] and len(lay["flights"]) == 2 and len(lay["landings"]) == 3
+    assert [round(step["z"], 4) for step in lay["landings"]] == pytest.approx([1.5, 1.667, 1.833], abs=1e-3)
+    # the winders sit between the flights in the walking line
+    zs = [p[2] for p in lay["walk"]]
+    assert zs == sorted(zs)
+    r = call("create_stair", levels["l1"], 1.0, 1.0, 0.0, 1.0, 3.0, json.dumps({"shape": "L", "winder": True}))
+    assert r["ok"], r
+    assert r["flights"] == 2 and r["landings"] == 3
+    winders = [p for p in parts(r["guid"]) if p.Name.startswith("Winder")]
+    assert len(winders) == 3
+    assert errors() == []
+
+
 def test_every_shape_and_a_ramp_validate(levels):
     for shape, extra in (("straight", {}), ("U", {"turn": "right"}), ("sketch", {"points": [[0, 8], [3, 8], [3, 11]]})):
         assert call("create_stair", levels["l1"], 0, 0, 0, 1.0, 3.0, json.dumps({"shape": shape, **extra}))["ok"]

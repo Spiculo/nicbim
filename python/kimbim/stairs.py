@@ -177,7 +177,7 @@ def _split(total: int, weights: list[float], minimum: int) -> list[int]:
 
 def stair_layout(shape: str, height: float, width: float, riser: float, tread: float, landing: float = 0.0,
                  turn: str = "left", points=None, split: int | None = None, well: float | None = None,
-                 turns: float = 1.0) -> dict:
+                 turns: float = 1.0, winder: bool = False) -> dict:
     """Flights and landings of a stair in its own frame (metres): the walking line starts at (0, 0) at
     the base, the first flight climbs along +X. Flights: start (walking line, first riser), dir, length,
     risers, tread, z0 (its base), z1/z0 walking heights at its ends; landings: polygon, z (top). D207:
@@ -192,6 +192,8 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
     ld = landing if landing > 0 else width
     flights, landings, walk = [], [], []
     spiral_tread = None
+    winder_tread = None
+    walk_done = False
     x = np.array([1.0, 0.0])
 
     def add_flight(start, d, k, z0, g):
@@ -206,7 +208,12 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
     elif shape in ("L", "U"):
         if n < 4:
             raise ValueError("an L or U stair needs at least 4 risers")
-        n1 = math.ceil(n / 2)
+        if shape == "L" and winder:
+            if n < 7:
+                raise ValueError("winders need at least 7 risers")
+            n1 = math.ceil((n - 3) / 2)
+        else:
+            n1 = math.ceil(n / 2)
         if split is not None:  # D92: an editable split of the risers between the flights
             n1 = int(split)
             if not 2 <= n1 <= n - 2:
@@ -216,10 +223,30 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
         zl = n1 * r
         if shape == "L":
             cx = l1 + ld - width / 2
-            poly = [(l1, -side * width / 2), (l1 + ld, -side * width / 2), (l1 + ld, side * width / 2), (l1, side * width / 2)]
-            landings.append({"polygon": [np.array(p) for p in poly], "z": zl,
-                             "walk": [np.array([cx, 0.0])]})
-            add_flight((cx, side * width / 2), (0.0, side), n - n1, zl, tread)
+            if winder:  # D208: three winder steps about the inner corner
+                pivot = np.array([l1, side * width / 2])
+                start_a = -side * math.pi / 2
+                sweep = side * math.pi / 2
+                for k in range(3):
+                    a0 = start_a + sweep * k / 3
+                    a1 = start_a + sweep * (k + 1) / 3
+                    poly = [pivot] + [pivot + np.array([width * math.cos(a), width * math.sin(a)])
+                                      for a in np.linspace(a0, a1, 4)]
+                    mid = (a0 + a1) / 2
+                    landings.append({"polygon": poly, "z": zl + (k + 1) * r,
+                                     "walk": [pivot + np.array([width / 2 * math.cos(mid),
+                                                                width / 2 * math.sin(mid)])]})
+                winder_tread = (width / 2) * abs(sweep) / 3
+                f2 = add_flight((cx, side * width / 2), (0.0, side), n - n1 - 3, zl + 3 * r, tread)
+                walk_done = True
+                walk = [(*f1["start"], f1["walk0"]), (*(f1["start"] + f1["dir"] * f1["length"]), f1["z1"])]
+                walk += [(*landing["walk"][0], landing["z"]) for landing in landings]
+                walk += [(*f2["start"], f2["walk0"]), (*(f2["start"] + f2["dir"] * f2["length"]), f2["z1"])]
+            else:
+                poly = [(l1, -side * width / 2), (l1 + ld, -side * width / 2), (l1 + ld, side * width / 2), (l1, side * width / 2)]
+                landings.append({"polygon": [np.array(p) for p in poly], "z": zl,
+                                 "walk": [np.array([cx, 0.0])]})
+                add_flight((cx, side * width / 2), (0.0, side), n - n1, zl, tread)
         else:
             gap = U_GAP if well is None else float(well)  # D92: an editable well width
             if gap < 0:
@@ -283,16 +310,19 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
                 landings.append({"polygon": _corner_landing(pts[i + 1], dirs[i], dirs[i + 1], width), "z": z,
                                  "walk": [pts[i + 1]]})
     # The walking line: each flight from its first riser to its top, through the landings.
-    for i, f in enumerate(flights):
-        walk.append((*f["start"], f["walk0"]))
-        walk.append((*(f["start"] + f["dir"] * f["length"]), f["z1"]))
-        if i < len(landings):
-            walk += [(*p, landings[i]["z"]) for p in landings[i]["walk"]]
+    if not walk_done:
+        for i, f in enumerate(flights):
+            walk.append((*f["start"], f["walk0"]))
+            walk.append((*(f["start"] + f["dir"] * f["length"]), f["z1"]))
+            if i < len(landings):
+                walk += [(*p, landings[i]["z"]) for p in landings[i]["walk"]]
     treads = [f["tread"] for f in flights]
+    if winder_tread:
+        treads.append(winder_tread)
     if not treads and spiral_tread:
         treads = [spiral_tread]
     return {"risers": n, "riser": r, "tread": min(treads), "flights": flights, "landings": landings,
-            "spiral": shape == "spiral",
+            "spiral": shape == "spiral", "winder": shape == "L" and winder,
             "walk": [tuple(float(v) for v in p) for p in walk], "width": width, "height": height}
 
 
@@ -619,7 +649,7 @@ def _layout_of(e, data=None) -> dict:
                         float(data["Riser"]), float(data["Tread"]), float(data.get("LandingDepth") or 0.0),
                         data.get("Turn") or "left", points,
                         int(split) if split not in (None, "", 0) else None,
-                        data.get("WellWidth"))
+                        data.get("WellWidth"), winder=bool(data.get("Winder")))
 
 
 def _build(whole, lay) -> list:
@@ -669,7 +699,7 @@ def _build(whole, lay) -> list:
                 "RiserHeight": fl["riser"] / s, "TreadLength": fl["tread"] / s, "WaistThickness": THICKNESS / s})
         changed.append(part)
     for i, landing in enumerate(lay["landings"]):
-        step_name = "Step" if lay.get("spiral") else "Landing"
+        step_name = "Winder" if lay.get("winder") else "Step" if lay.get("spiral") else "Landing"
         if i < len(old_landings):
             part = old_landings[i]
             A._replace_body(part, _landing_body(f, landing["polygon"]))
@@ -740,7 +770,8 @@ def _make(kind: str, storey, x, y, angle, params: dict) -> dict:
                       params["Turn"]) if kind == "ramp" else \
         stair_layout(params["Shape"], params["Height"], params["Width"], params["Riser"], params["Tread"],
                      params["LandingDepth"], params["Turn"], json.loads(params.get("Points") or "[]"),
-                     params.get("FlightSplit") or None, params.get("WellWidth"))
+                     params.get("FlightSplit") or None, params.get("WellWidth"),
+                     winder=params.get("Winder") is True)
     if kind == "ramp":
         whole = ifcopenshell.api.root.create_entity(f, ifc_class="IfcRamp", name="Ramp")
     else:
@@ -816,11 +847,13 @@ def create_stair(storey_guid: str, x, y, angle, width, height, options_json: str
             local = [[round((px - x) * c - (py - y) * sn, 9), round((px - x) * sn + (py - y) * c, 9)] for px, py in world]
         if width <= 0 or height <= 0:
             raise ValueError("the stair needs a width and a height")
-        lay = stair_layout(shape, height, width, riser, tread, landing, turn, local, split, well)
+        lay = stair_layout(shape, height, width, riser, tread, landing, turn, local, split, well,
+                           winder=o.get("winder") is True)
     except (TypeError, ValueError) as ex:
         return A._fail(str(ex))
     params = {"Shape": shape, "Turn": turn, "Width": width, "Height": height, "Riser": riser, "Tread": tread,
               "TreadMode": mode, "LandingDepth": landing, "Points": json.dumps(local),
+              "Winder": o.get("winder", False) is not False,
               "CutSlab": o.get("cut_slab", True) is not False, "Opening": opening}
     if split is not None:
         params["FlightSplit"] = split
