@@ -424,6 +424,34 @@ def _pdf_vector_segments(name: str, page: int):
         doc.close()
 
 
+def _pdf_text_spans(name: str, page: int) -> list[dict]:
+    """A PDF page's text spans: [{text, x, y, size}] in PDF points, y up from the page's bottom left."""
+    src = file_path(name)
+    if src is None:
+        raise FileNotFoundError(f"the underlay file {name} is missing")
+    import pymupdf
+
+    doc = pymupdf.open(str(src))
+    try:
+        if not 0 <= page < len(doc):
+            raise ValueError(f"the PDF has {len(doc)} page(s)")
+        pg = doc[page]
+        height = float(pg.rect.height)
+        out = []
+        for block in (pg.get_text("dict") or {}).get("blocks") or ():
+            for line in block.get("lines") or ():
+                for span in line.get("spans") or ():
+                    text = (span.get("text") or "").strip()
+                    if not text:
+                        continue
+                    x, y = span.get("origin") or (0.0, 0.0)
+                    out.append({"text": text, "x": float(x), "y": float(height - y),
+                                "size": float(span.get("size") or 10.0)})
+        return out
+    finally:
+        doc.close()
+
+
 def _image_size(path) -> tuple[int, int, float]:
     """(width, height, dpi) of a PNG or JPEG from its header (no image library needed)."""
     data = pathlib.Path(path).read_bytes()[:256 * 1024]
@@ -773,8 +801,9 @@ def underlay_lines(id: str):
 
 
 def convert_to_drafting(id: str, options_json: str = "") -> str:
-    """D199: turn a DXF/DWG or vector-PDF underlay's linework into drafting lines on its level, at
-    the underlay's placement; one undo step. Options: `pen` (default: the current pen)."""
+    """D200: turn a DXF/DWG or vector-PDF underlay into editable 2D elements on its level, at the
+    underlay's placement: its linework as drafting lines and, for a PDF, its text as free text. One
+    undo step. Options: `pen` (default: the current pen), `text` (PDF only, default true)."""
     from . import annotations as N
     from . import app_bridge as B
     from . import authoring as A
@@ -818,7 +847,13 @@ def convert_to_drafting(id: str, options_json: str = "") -> str:
         ly = ((by - dy) if y_down else (dy - by)) * scale
         return (atx + lx * ca - ly * sa, aty + lx * sa + ly * ca)
 
-    made = []
+    texts = []
+    if u.get("kind") == "pdf" and options.get("text", True):
+        try:
+            texts = _pdf_text_spans(u["file"], int(u.get("page", 0)))[:500]
+        except Exception:
+            texts = []
+    made, made_text = [], []
 
     def action():
         for row in coords:
@@ -828,10 +863,16 @@ def convert_to_drafting(id: str, options_json: str = "") -> str:
             annotation = N.shape_in_action(storey, "line", [p1, p2], {"LineType": "Solid"}, pen,
                                            f"{u.get('name', 'Drawing')} line")
             made.append(annotation.GlobalId)
-        return len(made), made, []
+        for span in texts:
+            point = world(span["x"], span["y"])
+            annotation = N.shape_in_action(storey, "text", [point], {}, pen,
+                                           f"{u.get('name', 'Drawing')} text",
+                                           text=span["text"], size=max(0.01, span["size"] * scale))
+            made_text.append(annotation.GlobalId)
+        return len(made) + len(made_text), made + made_text, []
 
-    if not made and len(coords) == 0:
-        return _fail("the underlay has no linework")
+    if len(coords) == 0 and not texts:
+        return _fail("the underlay has no linework or text")
     try:
         r = B._run(action)
     except Exception as ex:

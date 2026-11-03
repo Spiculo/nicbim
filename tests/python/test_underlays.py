@@ -416,6 +416,36 @@ def test_trace_shows_the_level_below():
     assert not json.loads(U.trace_lines(l1["guid"], "below")[0])["ok"]  # nothing below the lowest level
 
 
+def vector_text_pdf(path):
+    """A one-page PDF with a line and the word ROOM (text and vector linework)."""
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page(width=200, height=100)
+    page.draw_line((10, 10), (190, 10))
+    page.insert_text((20, 50), "ROOM", fontsize=12)
+    doc.save(str(path))
+    doc.close()
+    return path
+
+
+def test_a_vector_pdf_converts_its_text(tmp_path):
+    """D200: PDF text becomes editable free text at the page's placement, with the linework."""
+    assert call("new_project", "PDF")["ok"]
+    storey = call("storeys")["storeys"][0]["guid"]
+    r = call("add_underlay", str(vector_text_pdf(tmp_path / "p.pdf")),
+             json.dumps({"storey": storey, "vector": True}))
+    assert r["ok"], r
+    converted = call("convert_to_drafting", r["underlay"]["id"])
+    assert converted["ok"], converted
+    annotations = call("annotations", storey)["annotations"]
+    texts = [a for a in annotations if a["kind"] == "text"]
+    assert any("ROOM" in (a.get("text") or "") for a in texts)
+    assert texts[0]["size"] > 0
+    assert [a for a in annotations if a["kind"] == "line"]
+    assert call("undo")["ok"]  # linework and text go together
+
+
 def test_a_dxf_underlay_converts_to_2d_lines(tmp_path):
     """D199: the underlay's linework becomes editable drafting lines at its placement, one undo step."""
     assert call("new_project", "Convert")["ok"]

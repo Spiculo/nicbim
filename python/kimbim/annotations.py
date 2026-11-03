@@ -573,8 +573,9 @@ def mirror(annotation, point) -> bool:
     return True
 
 
-def shape_in_action(storey, kind: str, points, extra: dict, pen=None, name: str = ""):
-    """Inside an action: create a drafting shape or symbol on `storey` (world metres), no new undo
+def shape_in_action(storey, kind: str, points, extra: dict, pen=None, name: str = "", text: str = "",
+                    size=None):
+    """Inside an action: create a drafting shape/free text on `storey` (world metres), no new undo
     step. Returns the annotation."""
     f = B._model
     origin = points[0]
@@ -586,8 +587,8 @@ def shape_in_action(storey, kind: str, points, extra: dict, pen=None, name: str 
     matrix = np.eye(4)
     matrix[0][3], matrix[1][3], matrix[2][3] = origin[0], origin[1], A._elevation(storey)
     ifcopenshell.api.geometry.edit_object_placement(f, product=annotation, matrix=matrix, is_si=True)
-    _set(annotation, kind, "", local, pen=pen if pen is not None else settings.current().get("current_pen"),
-         extra=extra)
+    _set(annotation, kind, text, local, size=size,
+         pen=pen if pen is not None else settings.current().get("current_pen"), extra=extra)
     from . import layers
 
     layers.assign_active(annotation)
