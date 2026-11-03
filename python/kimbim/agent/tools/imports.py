@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Mesh import tools (D102, D124): read OBJ, STL, PLY, COLLADA, glTF/GLB and ASCII FBX files as one proxy
+"""Mesh import tools (D102, D124): read OBJ, STL, PLY, COLLADA, glTF/GLB and FBX files as one proxy
 element on a level. The path is a local file; scale is a factor, rotation is degrees about Z and position
 is [x, y, z] in project units or strings with units. The bridge takes world metres."""
 from __future__ import annotations
@@ -25,7 +25,7 @@ def _number(value, name: str) -> float:
 
 @tool("import.formats", {})
 def formats(session):
-    """List the mesh file formats the importer reads (OBJ, STL, PLY, COLLADA, glTF/GLB and ASCII FBX)."""
+    """List the mesh file formats the importer reads (OBJ, STL, PLY, COLLADA, glTF/GLB and FBX)."""
     return {"formats": bridge(M.mesh_formats)["formats"]}
 
 
@@ -39,7 +39,7 @@ def formats(session):
                  "description": "[x, y, z] in project units or strings with units (default the origin)."}}},
     writes=True)
 def mesh(session, path, level="", name="", scale=1.0, rotation=0.0, position=None):
-    """Import a mesh (OBJ, STL, PLY, COLLADA, glTF/GLB or ASCII FBX) as a proxy on a level, scaled,
+    """Import a mesh (OBJ, STL, PLY, COLLADA, glTF/GLB or FBX) as a proxy on a level, scaled,
     rotated about Z and moved."""
     storey = level_guid(level) if level else ""
     options = {"scale": _number(scale, "scale"), "rotation": _number(rotation, "rotation")}

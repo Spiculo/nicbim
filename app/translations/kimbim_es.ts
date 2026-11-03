@@ -3379,8 +3379,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="567" />
-      <source>Import an OBJ, STL, PLY, COLLADA, glTF or ASCII FBX mesh as an object on a level</source>
-      <translation>Importar una malla OBJ, STL, PLY, COLLADA, glTF o FBX ASCII como objeto en un nivel</translation>
+      <source>Import an OBJ, STL, PLY, COLLADA, glTF or FBX mesh as an object on a level</source>
+      <translation>Importar una malla OBJ, STL, PLY, COLLADA, glTF o FBX como objeto en un nivel</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6040" />

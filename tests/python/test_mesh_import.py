@@ -259,12 +259,28 @@ def test_ascii_fbx_triangle(tmp_path):
     assert issues() == []
 
 
-def test_binary_fbx_is_refused_clearly(tmp_path):
+def test_binary_fbx_is_read_with_assimp(tmp_path):
+    import pyassimp
+    import pyassimp.postprocess as pp
+
+    source = write(tmp_path, "cube.obj", obj_cube())
+    target = tmp_path / "cube.fbx"
+    with pyassimp.load(source, processing=pp.aiProcess_Triangulate) as scene:
+        pyassimp.export(scene, str(target), "fbx")
+    assert target.read_bytes()[:23].startswith(b"Kaydara FBX Binary")
+    f, level = open_model()
+    r = call(M.import_mesh, str(target), level)
+    assert r["ok"], r
+    assert r["format"] == "fbx" and r["triangles"] == 12
+    assert r["bounds"] == {"min": [0.0, 0.0, 0.0], "max": [1.0, 1.0, 1.0]}
+    assert issues() == []
+
+
+def test_a_broken_binary_fbx_is_reported(tmp_path):
     _f, level = open_model()
     r = call(M.import_mesh, write(tmp_path, "binary.fbx",
                                   b"Kaydara FBX Binary  \x00\x1a\x00" + b"\x00" * 64), level)
-    assert r["ok"] is False
-    assert "ASCII FBX" in r["error"]
+    assert r["ok"] is False and "FBX" in r["error"]
 
 
 def test_obj_cube_scaled_rotated_and_contained(tmp_path):

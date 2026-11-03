@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Generic mesh import (SketchUp, Rhino, OBJ, STL, PLY, COLLADA, glTF and ASCII FBX): a triangulated
+"""Generic mesh import (SketchUp, Rhino, OBJ, STL, PLY, COLLADA, glTF and FBX): a triangulated
 object from a mesh file.
 
 The file is parsed here (no extra dependency), polygons are fanned into triangles, COLLADA/glTF node
@@ -565,9 +565,9 @@ def _fbx_array(block: str, name: str) -> list[float]:
 
 
 def _fbx(text: str) -> tuple[list, list]:
-    """ASCII FBX: vertices and polygon indices (the binary format is refused with a clear message)."""
+    """ASCII FBX: vertices and polygon indices (binary FBX goes through Assimp in `_read`)."""
     if text[:23].startswith("Kaydara FBX Binary") or "\x00" in text[:200]:
-        raise ValueError("binary FBX is not supported; export the model as ASCII FBX or glTF")
+        raise ValueError("this is a binary FBX file")
     lines = text.splitlines()
     points, faces = [], []
     for index, line in enumerate(lines):
@@ -602,6 +602,32 @@ def _fbx(text: str) -> tuple[list, list]:
     return points, faces
 
 
+def _fbx_assimp(path: str) -> tuple[list, list]:
+    """Binary FBX (and any other Assimp format): triangles through pyassimp (BSD-3), transforms baked."""
+    try:
+        import pyassimp
+        import pyassimp.postprocess as pp
+    except ImportError:
+        raise ValueError("binary FBX needs pyassimp (not installed)") from None
+    processing = pp.aiProcess_Triangulate | pp.aiProcess_PreTransformVertices
+    try:
+        with pyassimp.load(str(path), processing=processing) as scene:
+            points, faces = [], []
+            for mesh in scene.meshes:
+                vertices = np.asarray(mesh.vertices, dtype=float).reshape(-1)
+                base = len(points)
+                points.extend(tuple(float(v) for v in vertices[k:k + 3])
+                              for k in range(0, len(vertices) - 2, 3))
+                for face in mesh.faces:
+                    corners = [int(i) for i in np.asarray(face).reshape(-1)]
+                    faces.extend([[base + i for i in triangle] for triangle in _fan(corners)])
+    except BaseException as ex:  # noqa: BLE001 - pyassimp raises AssimpError (a BaseException)
+        raise ValueError(f"the FBX file could not be read: {ex}") from None
+    if not faces:
+        raise ValueError("the FBX file has no polygon geometry")
+    return points, faces
+
+
 def _format(path: str) -> str:
     suffix = pathlib.Path(path).suffix.lower().lstrip(".")
     if suffix not in FORMATS:
@@ -629,6 +655,8 @@ def _read(path: str) -> tuple[list, list, str]:
             points, faces = _dae(data.decode("utf-8-sig", errors="replace"))
         elif fmt in ("gltf", "glb"):
             points, faces = _gltf(data, path)
+        elif data[:23].startswith(b"Kaydara FBX Binary"):
+            points, faces = _fbx_assimp(path)
         else:
             points, faces = _fbx(data.decode("utf-8-sig", errors="replace"))
     except ValueError:
@@ -688,7 +716,7 @@ def mesh_formats() -> str:
 
 
 def import_mesh(path: str, level_guid: str = "", options_json: str = "") -> str:
-    """Import a mesh file (OBJ, STL, PLY, COLLADA, glTF/GLB, ASCII FBX) as one proxy.
+    """Import a mesh file (OBJ, STL, PLY, COLLADA, glTF/GLB, FBX) as one proxy.
     Options: {name, scale, rotation, x, y, z}."""
     if B._model is None:
         return A._fail("no model open")

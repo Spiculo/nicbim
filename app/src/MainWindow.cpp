@@ -556,7 +556,7 @@ void MainWindow::buildMenus()
     connect(exportIfc, &QAction::triggered, this, &MainWindow::exportIfcDialog);
     QAction* importMesh = file->addAction(tr("Import &mesh...")); // general mesh import
     importMesh->setObjectName(QStringLiteral("actionImportMesh"));
-    importMesh->setToolTip(tr("Import an OBJ, STL, PLY, COLLADA, glTF or ASCII FBX mesh as an object on a level"));
+    importMesh->setToolTip(tr("Import an OBJ, STL, PLY, COLLADA, glTF or FBX mesh as an object on a level"));
     connect(importMesh, &QAction::triggered, this, &MainWindow::importMeshDialog);
     QAction* importCloud = file->addAction(tr("Import point c&loud...")); // D125
     importCloud->setObjectName(QStringLiteral("actionImportPointCloud"));
