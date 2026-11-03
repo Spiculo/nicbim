@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D145).**
+**Status as of `main` (2026-11-03, after D112–D146).**
 
 ## How to read it
 
@@ -282,7 +282,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Real-time textured 3D | all | ✅ | new | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
-| Photorealistic rendering | AC RV VW | ⬜ | new | Archicad CineRender, Revit cloud render, Twinmotion link. Could export to Blender |
+| Photorealistic rendering | AC RV VW | ⬜ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size (the app's shaded OCCT view, not a path tracer); photorealistic rendering is still to do |
 | AI visualiser (sketch to image) | AC VW | 🔮 | new | |
 | Sun / shadow studies, animations | all | 🟡 | new | D96: sun shadows for a place, date and time; no animations |
 | Walkthrough video, VR | AC RV VW | ⬜ | P2 | |
@@ -310,8 +310,8 @@ release notes, so check before relying on a single cell.
 | Re-import with reconciliation report | — | ✅ | P1 | D104: `kimbim versions import` matches by GlobalId, Tag, then a reviewed heuristic; dry run and JSON report |
 | DWG/DXF import (underlay and convert) | all | 🟡 | new | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings). No DWG yet, no convert to 2D elements. Architects receive most survey and consultant data as DWG |
 | PDF import | AC RV VW | 🟡 | new | D85: a PDF page as an underlay (an image); D132: a PDF can be placed as **vector linework** (PyMuPDF paths, selectable/snappable, no text) instead of a rendered page |
-| SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; D133 adds binary FBX through Assimp. SketchUp `.skp` and live links are still to do |
-| Point clouds | AC RV VW | ⬜ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). E57 is still to do |
+| SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; D133 adds binary FBX through Assimp. SketchUp `.skp` and live links are still to do. Re-checked 2026-11-03: conda-forge has no SketchUp package; `.skp` needs Trimble's proprietary SDK |
+| Point clouds | AC RV VW | ⬜ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). E57 is still to do. Re-checked 2026-11-03: conda-forge has only `libe57format` (C++); `pye57` is not on conda-forge and would need a wrapper |
 | Rhino / Grasshopper live link | AC RV VW | ⬜ | new | |
 
 ## 19. Analysis and checking
@@ -359,6 +359,6 @@ What now most often stops an architect from finishing a real project, roughly in
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
 12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
-14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents and D138 adds model view options by drawing scale; rendering and VR are still to do.
+14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents, D138 model view options by drawing scale and D146 high-resolution image export; photorealistic rendering and VR are still to do.
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14: rendering and VR); D140–D143 give live links, editable copies, attribute/property and geometry sync.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14: photorealistic rendering and VR; high-resolution image export is in); D140-D143 give live links, editable copies, attribute/property and geometry sync.

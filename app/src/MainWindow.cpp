@@ -566,6 +566,10 @@ void MainWindow::buildMenus()
     exportIfc->setObjectName(QStringLiteral("actionExportIfc"));
     exportIfc->setToolTip(tr("Export the model, a selection, a level or some classes to an IFC file"));
     connect(exportIfc, &QAction::triggered, this, &MainWindow::exportIfcDialog);
+    QAction* exportImage = file->addAction(tr("Export &image...")); // D146: a high-resolution render
+    exportImage->setObjectName(QStringLiteral("actionExportImage"));
+    exportImage->setToolTip(tr("Render the active view to a PNG or JPEG at the size you choose"));
+    connect(exportImage, &QAction::triggered, this, &MainWindow::exportImageDialog);
     QAction* importMesh = file->addAction(tr("Import &mesh...")); // general mesh import
     importMesh->setObjectName(QStringLiteral("actionImportMesh"));
     importMesh->setToolTip(tr("Import an OBJ, STL, PLY, COLLADA, glTF or FBX mesh as an object on a level"));
@@ -7243,6 +7247,41 @@ void MainWindow::keynotesDialog()
     connect(refreshButton, &QPushButton::clicked, &dialog, [&] { refresh(); });
     connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
     dialog.exec();
+}
+
+void MainWindow::exportImageDialog()
+{
+    if (!m_viewport) {
+        m_status->showMessage(tr("Open a view first"));
+        return;
+    }
+    const QString path = QFileDialog::getSaveFileName(this, tr("Export image"), QString(),
+        tr("PNG image (*.png);;JPEG image (*.jpg *.jpeg)"));
+    if (path.isEmpty())
+        return;
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Image size"));
+    auto* form = new QFormLayout(&dialog);
+    auto* width = new QSpinBox(&dialog);
+    width->setRange(128, 16384);
+    width->setValue(1920);
+    auto* height = new QSpinBox(&dialog);
+    height->setRange(128, 16384);
+    height->setValue(1080);
+    form->addRow(tr("Width (px):"), width);
+    form->addRow(tr("Height (px):"), height);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QImage image = m_viewport->renderImage(width->value(), height->value());
+    if (image.isNull() || !image.save(path)) {
+        showError(tr("Export image"), tr("The image could not be rendered or saved."));
+        return;
+    }
+    m_status->showMessage(tr("Image exported: %1").arg(QDir::toNativeSeparators(path)));
 }
 
 void MainWindow::importMeshDialog()

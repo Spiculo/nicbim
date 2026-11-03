@@ -3640,6 +3640,51 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="565" />
+      <source>Export &amp;image...</source>
+      <translation>Exportar &amp;imagen...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="561" />
+      <source>Render the active view to a PNG or JPEG at the size you choose</source>
+      <translation>Renderizar la vista activa a PNG o JPEG con el tamaño que elijas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6944" />
+      <source>Export image</source>
+      <translation>Exportar imagen</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6945" />
+      <source>PNG image (*.png);;JPEG image (*.jpg *.jpeg)</source>
+      <translation>Imagen PNG (*.png);;Imagen JPEG (*.jpg *.jpeg)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6950" />
+      <source>Image size</source>
+      <translation>Tamaño de la imagen</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6957" />
+      <source>Width (px):</source>
+      <translation>Ancho (px):</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6959" />
+      <source>Height (px):</source>
+      <translation>Alto (px):</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6968" />
+      <source>The image could not be rendered or saved.</source>
+      <translation>No se pudo renderizar o guardar la imagen.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6970" />
+      <source>Image exported: %1</source>
+      <translation>Imagen exportada: %1</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="557" />
       <source>Import &amp;mesh...</source>
       <translation>Importar &amp;malla...</translation>
     </message>

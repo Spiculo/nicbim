@@ -635,6 +635,7 @@ private:
     void refreshLinksIfStale();
     void curtainWallDialog();
     void terrainPadDialog();
+    void exportImageDialog();
     void importMeshDialog();
     void importPointCloudDialog();
     void attributesDialog();

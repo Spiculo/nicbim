@@ -14,6 +14,7 @@
 #include <QToolButton>
 #include <QImage>
 #include <QFileSystemWatcher>
+#include <QImage>
 #include <QtTest>
 
 #include <algorithm>
@@ -3176,7 +3177,8 @@ private slots:
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
-                 "actionDrawingScale", "actionAttributeManager", "actionKeynotes"})
+                 "actionDrawingScale", "actionExportImage",
+                 "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
 
