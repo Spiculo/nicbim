@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D183 plus explicit overrides for the final items.
+after D123–D184 plus explicit overrides for the final items.
 
-**Summary: 167 done, 39 deferred, 3 blocked.**
+**Summary: 168 done, 38 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -163,7 +163,7 @@ after D123–D183 plus explicit overrides for the final items.
 | 11. Drawings (views made from the model) | 3D documents / axonometric drawings | **Done** | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
 | 11. Drawings (views made from the model) | Crop regions, view range, depth | **Deferred** | Core done; remainder deferred. D61 depth (infinite / limited / zero) is in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional botto... |
 | 11. Drawings (views made from the model) | Model view options (detail level by scale) | **Done** | D138: every drawing has a scale (1–1000); at 1:200 and coarser the project's `model_view_options.coarse_hidden_classes` (default furniture, furnishings, sanitary and appliances) are left out of plans, sections, elevations and 3D documents. Finer drawings keep everything; the table is a versioned project setting |
-| 11. Drawings (views made from the model) | Drawings update when the model changes | **Deferred** | Core done; remainder deferred. Out-of-date bar + Regenerate; regenerated when brought to the front |
+| 11. Drawings (views made from the model) | Drawings update when the model changes | **Done** | Every edit marks the affected drawings stale; the out-of-date bar offers *Regenerate* and a drawing regenerates when brought to the front. `tests/python/test_drawings.py::test_editing_a_wall_makes_drawings_stale_and_regenerating_shows_it` checks stale → regenerate → undo. |
 | 12. 2D drafting | Lines, polylines, arcs, circles, splines | **Done** | D84: line, polyline, arc/circle, rectangle; D98: splines; snaps, typed lengths, grips; in plans, drawings, sheets, DXF |
 | 12. 2D drafting | Fills / hatches (regions) | **Done** | D84: IfcAnnotationFillArea + IfcFillAreaStyleHatching; pattern table in project settings; pens fg/bg; area label; magic wand (Alt+click) |
 | 12. 2D drafting | 2D symbols / blocks | **Deferred** |  |
