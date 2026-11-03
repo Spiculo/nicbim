@@ -5470,6 +5470,56 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>hoy</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="616" />
+      <source>Publish sheet &amp;set...</source>
+      <translation>Publicar &amp;juego de láminas...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="618" />
+      <source>Publish a chosen set of sheets (or save the choice as a named set)</source>
+      <translation>Publicar un conjunto elegido de láminas (o guardar la elección como un conjunto)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7085" />
+      <source>Publish sheet set</source>
+      <translation>Publicar conjunto de láminas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7091" />
+      <source>All sheets</source>
+      <translation>Todas las láminas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7098" />
+      <source>save the checked sheets as a set (optional)</source>
+      <translation>guardar las láminas marcadas como conjunto (opcional)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7099" />
+      <source>Set:</source>
+      <translation>Conjunto:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7100" />
+      <source>Save as:</source>
+      <translation>Guardar como:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7131" />
+      <source>Select at least one sheet.</source>
+      <translation>Selecciona al menos una lámina.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7137" />
+      <source>Sheet set</source>
+      <translation>Conjunto de láminas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7143" />
+      <source>Publish sheet set as PDF</source>
+      <translation>Publicar conjunto de láminas como PDF</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

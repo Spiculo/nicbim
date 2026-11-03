@@ -232,6 +232,56 @@ def sheets() -> str:
     return B._dump({"sheets": out})
 
 
+SHEET_SETS = "sheet_sets"  # D172: named subsets of sheets for batch publishing
+
+
+def sheet_sets() -> str:
+    """The project's named sheet sets: [{name, sheets: [number]}] by name."""
+    from . import settings
+
+    data = settings.current().get(SHEET_SETS, {})
+    sets = []
+    if isinstance(data, dict):
+        for name in sorted(data):
+            numbers = data[name]
+            if isinstance(numbers, list):
+                sets.append({"name": name, "sheets": [str(n) for n in numbers]})
+    return B._dump({"ok": True, "sets": sets})
+
+
+def save_sheet_set(name: str, numbers_json: str) -> str:
+    """Save (or replace) a named set of existing sheet numbers."""
+    from . import settings
+
+    name = str(name or "").strip()
+    if not name:
+        return A._fail("type a set name")
+    try:
+        numbers = [str(n) for n in json.loads(numbers_json)]
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    known = {_number(s) for s in _sheets()} if B._model is not None else set()
+    missing = [n for n in numbers if n not in known]
+    if missing:
+        return A._fail(f"unknown sheet(s): {', '.join(missing)}")
+    data = settings.current().get(SHEET_SETS, {})
+    data = dict(data) if isinstance(data, dict) else {}
+    data[name] = numbers
+    return settings.set_project_settings(json.dumps({SHEET_SETS: data}))
+
+
+def delete_sheet_set(name: str) -> str:
+    """Remove a named set (the sheets themselves stay)."""
+    from . import settings
+
+    data = settings.current().get(SHEET_SETS, {})
+    data = dict(data) if isinstance(data, dict) else {}
+    if name not in data:
+        return A._fail("unknown sheet set")
+    data.pop(name)
+    return settings.set_project_settings(json.dumps({SHEET_SETS: data}))
+
+
 _sizes: dict[str, tuple] = {}  # drawing GlobalId -> (model state, size): the last size measured
 
 

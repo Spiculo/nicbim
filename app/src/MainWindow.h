@@ -654,6 +654,7 @@ private:
     void roomScheduleDialog();
     void exportSheetDialog(bool pdf);
     void exportAllSheetsDialog();
+    void publishSheetSetDialog(); // D172: publish a chosen set of sheets
     void exportDxfDialog(); // D83: File > Export DXF... (DxfExport.cpp)
     void addUnderlayActions(QMenu* file); // D85 (Underlays.cpp)
     void drawingClick(QPointF p, Qt::KeyboardModifiers modifiers);

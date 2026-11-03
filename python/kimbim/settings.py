@@ -85,6 +85,7 @@ DEFAULTS = {
     "agent_changes": "option",  # D102: agent edits go to a design option, "direct", or "agent_decides"
     "agent_scripts": False,  # D102: agents may run Python scripts (script.run); only the architect sets it
     "revisions": [],  # D171: revision records {code, date, description}
+    "sheet_sets": {},  # D172: named sheet subsets for batch publishing {name: [numbers]}
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}

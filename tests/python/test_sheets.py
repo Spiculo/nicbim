@@ -63,6 +63,21 @@ def test_changing_the_client_or_address_leaves_no_orphans():
     assert call("project_info")["client"] == "" and call("project_info")["address"] == ""
 
 
+def test_sheet_sets_for_batch_publishing(house):
+    """D172: named sheet subsets for publishing, validated against the sheets."""
+    a = call("add_sheet", "A3", "Planta")["number"]
+    b = call("add_sheet", "A3", "Sección")["number"]
+    assert call("save_sheet_set", "Issue 1", json.dumps([a]))["ok"]
+    assert call("sheet_sets")["sets"] == [{"name": "Issue 1", "sheets": [a]}]
+    assert not call("save_sheet_set", "", json.dumps([a]))["ok"]
+    assert not call("save_sheet_set", "Bad", json.dumps(["NOPE"]))["ok"]
+    assert call("save_sheet_set", "Both", json.dumps([a, b]))["ok"]
+    assert [s["name"] for s in call("sheet_sets")["sets"]] == ["Both", "Issue 1"]
+    assert call("delete_sheet_set", "Issue 1")["ok"]
+    assert [s["name"] for s in call("sheet_sets")["sets"]] == ["Both"]
+    assert not call("delete_sheet_set", "Issue 1")["ok"]
+
+
 def test_revisions_and_sheet_revision(house):
     """D171: revisions are project records; a sheet carries one in its title block."""
     r = call("save_revision", "A", "2026-11-03", "First issue")

@@ -614,6 +614,10 @@ void MainWindow::buildMenus()
     allPdf->setObjectName(QStringLiteral("actionExportAllSheetsPdf"));
     allPdf->setToolTip(tr("Publish every sheet as a separate PDF in one folder"));
     connect(allPdf, &QAction::triggered, this, &MainWindow::exportAllSheetsDialog);
+    QAction* setPdf = file->addAction(tr("Publish sheet &set...")); // D172
+    setPdf->setObjectName(QStringLiteral("actionPublishSheetSet"));
+    setPdf->setToolTip(tr("Publish a chosen set of sheets (or save the choice as a named set)"));
+    connect(setPdf, &QAction::triggered, this, &MainWindow::publishSheetSetDialog);
     QAction* svgExport = file->addAction(tr("Export sheet as S&VG..."));
     svgExport->setObjectName(QStringLiteral("actionExportSheetSvg"));
     connect(svgExport, &QAction::triggered, this, [this] { exportSheetDialog(false); });
@@ -7055,6 +7059,105 @@ void MainWindow::exportAllSheetsDialog()
     for (const auto& value : sheets) {
         const QJsonObject sheet = value.toObject();
         const QString number = sheet.value("number").toString();
+        const QString base = sheetFileName(number);
+        QString name = base;
+        for (int suffix = 2; used.contains(name.toLower()); ++suffix)
+            name = QStringLiteral("%1-%2").arg(base).arg(suffix);
+        used.insert(name.toLower());
+        if (exportSheet(number, folder.filePath(name + QStringLiteral(".pdf"))))
+            ++done;
+        else
+            failed << number;
+    }
+    if (failed.isEmpty())
+        m_status->showMessage(tr("Exported %1 sheet(s) to %2").arg(done).arg(folderPath));
+    else
+        showError(tr("Some sheets were not exported"), failed.join(QStringLiteral(", ")));
+}
+
+void MainWindow::publishSheetSetDialog()
+{
+    const QJsonArray sheets = bridge("sheets").value("sheets").toArray();
+    if (sheets.isEmpty()) {
+        showError(tr("No sheets"), tr("Add a sheet in the Sheets panel first."));
+        return;
+    }
+    const QJsonArray sets = bridge("sheet_sets").value("sets").toArray();
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Publish sheet set"));
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* form = new QFormLayout();
+    auto* setCombo = new QComboBox(&dialog);
+    setCombo->addItem(tr("All sheets"), QString());
+    for (const auto& value : sets) {
+        const QJsonObject set = value.toObject();
+        setCombo->addItem(set.value("name").toString(), set.value("name").toString());
+    }
+    auto* saveAs = new QLineEdit(&dialog);
+    saveAs->setPlaceholderText(tr("save the checked sheets as a set (optional)"));
+    form->addRow(tr("Set:"), setCombo);
+    form->addRow(tr("Save as:"), saveAs);
+    layout->addLayout(form);
+    auto* list = new QListWidget(&dialog);
+    for (const auto& value : sheets) {
+        const QJsonObject sheet = value.toObject();
+        auto* item = new QListWidgetItem(QStringLiteral("%1 — %2").arg(sheet.value("number").toString(),
+            sheet.value("title").toString()), list);
+        item->setData(Qt::UserRole, sheet.value("number").toString());
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Checked);
+    }
+    layout->addWidget(list);
+    auto applySet = [sets, setCombo, list] {
+        const QString chosen = setCombo->currentData().toString();
+        QSet<QString> wanted;
+        for (const auto& value : sets) {
+            const QJsonObject set = value.toObject();
+            if (set.value("name").toString() == chosen)
+                for (const auto& number : set.value("sheets").toArray())
+                    wanted.insert(number.toString());
+        }
+        for (int i = 0; i < list->count(); ++i) {
+            auto* item = list->item(i);
+            item->setCheckState(chosen.isEmpty() || wanted.contains(item->data(Qt::UserRole).toString())
+                                    ? Qt::Checked : Qt::Unchecked);
+        }
+    };
+    connect(setCombo, &QComboBox::currentIndexChanged, &dialog, applySet);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    QStringList numbers;
+    for (int i = 0; i < list->count(); ++i)
+        if (list->item(i)->checkState() == Qt::Checked)
+            numbers << list->item(i)->data(Qt::UserRole).toString();
+    if (numbers.isEmpty()) {
+        showError(tr("Publish sheet set"), tr("Select at least one sheet."));
+        return;
+    }
+    if (!saveAs->text().trimmed().isEmpty()) {
+        const QJsonObject saved = bridge("save_sheet_set", {saveAs->text().trimmed(),
+            QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(numbers)).toJson(QJsonDocument::Compact))});
+        if (!saved.value("ok").toBool()) {
+            showError(tr("Sheet set"), saved.value("error").toString());
+            return;
+        }
+    }
+    const QString folderPath = QFileDialog::getExistingDirectory(this, tr("Publish sheet set as PDF"));
+    if (folderPath.isEmpty())
+        return;
+    const QDir folder(folderPath);
+    QSet<QString> used;
+    QStringList failed;
+    int done = 0;
+    for (const auto& value : sheets) {
+        const QJsonObject sheet = value.toObject();
+        const QString number = sheet.value("number").toString();
+        if (!numbers.contains(number))
+            continue;
         const QString base = sheetFileName(number);
         QString name = base;
         for (int suffix = 2; used.contains(name.toLower()); ++suffix)

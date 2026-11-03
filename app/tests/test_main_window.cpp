@@ -3236,7 +3236,7 @@ private slots:
                  "actionAlign", "actionMarqueeSelection", "actionCeiling",
                  "actionWallOpening", "actionOverallDimension", "actionElevate",
                  "actionLock", "actionUnlock", "actionGroup", "actionUngroup", "actionFillFromShape",
-                 "actionGridDimension",
+                 "actionGridDimension", "actionPublishSheetSet", "actionNewRevision",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }

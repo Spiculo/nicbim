@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D171 plus explicit overrides for the final items.
+after D123–D172 plus explicit overrides for the final items.
 
-**Summary: 155 done, 51 deferred, 3 blocked.**
+**Summary: 156 done, 50 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -188,7 +188,7 @@ after D123–D171 plus explicit overrides for the final items.
 | 14. Sheets and output | Drawing and sheet lists (auto-numbered) | **Done** | D112: Sheets › Place drawing list / Place sheet list (natural sort, live from the project; dragged and removed like drawings) |
 | 14. Sheets and output | Revisions / issue management | **Done** | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools. |
 | 14. Sheets and output | Print, PDF export | **Done** | Slice 16: PDF and SVG per sheet (Qt, vector) |
-| 14. Sheets and output | Batch publishing (sets of sheets to PDF/DWG) | **Deferred** | Core done; remainder deferred. File › *Export all sheets as PDF...* publishes every sheet to a folder (one PDF per sheet, collision-safe names); `kimbim-app --export-sheets OUT_DIR model.ifc [--sheets A01,A02]` does it headless. File › *Export DXF...* with the DWG format, or `app_bridge.export_dwg`, batch-converts every ticked drawing/sheet through LibreD... |
+| 14. Sheets and output | Batch publishing (sets of sheets to PDF/DWG) | **Done** | Export all sheets as PDF (one per sheet), headless `--export-sheets`, and DXF/DWG batch export are in; D172 adds *Publish sheet set...* with named sheet subsets (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`). DWG needs LibreDWG installed (DXF always works). |
 | 14. Sheets and output | DWG/DXF export | **Deferred** | Core done; remainder deferred. D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. DWG not yet (open question) |
 | 15. Schedules and quantities | Element schedules (doors, windows, walls), editable | **Done** | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
 | 15. Schedules and quantities | Room / area schedules | **Done** | D77: the Rooms schedule (every IfcSpace) |
