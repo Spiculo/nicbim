@@ -634,6 +634,7 @@ private:
     void rebuildLinkWatch();   // D140: keep the linked files watched for live edits
     void refreshLinksIfStale();
     void splitView();          // D153: another viewport beside the active one
+    void alignDialog();        // D154: align the selection's edges or centres
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();

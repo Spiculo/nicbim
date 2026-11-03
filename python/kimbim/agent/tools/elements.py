@@ -412,6 +412,21 @@ def fillet(session, elements, size, mode="fillet"):
     return {"elements": len(guids), "mode": mode}
 
 
+@tool("elements.align", {"required": ["elements", "axis", "mode"], "properties": {
+    "elements": SELECTOR,
+    "axis": {"type": "string", "enum": ["x", "y", "z"], "description": "Align on X (left/right), Y (bottom/top) or Z (height)."},
+    "mode": {"type": "string", "enum": ["min", "max", "center"],
+             "description": "Align the minimum edges, the maximum edges or the centres."},
+    "reference": {"type": "string", "description": "Optional GlobalId to align to; it stays put."}}}, writes=True)
+def align(session, elements, axis, mode, reference=""):
+    """Align the selected elements on an axis at their min/max/center, to the selection or a reference."""
+    guids = session.resolve(elements)
+    if not guids:
+        raise AgentError("bad_input", hint="select elements to align")
+    r = bridge(E.align_elements, json.dumps(guids), axis, mode, reference or "")
+    return {"changed": r.get("changed", []), "axis": axis, "mode": mode}
+
+
 @tool("elements.resize", {"required": ["elements", "factor"], "properties": {
     "elements": SELECTOR,
     "factor": {"type": "number", "description": "Scale factor, more than 0 and not 1."},

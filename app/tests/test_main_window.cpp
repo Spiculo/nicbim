@@ -3216,7 +3216,7 @@ private slots:
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
                  "actionDrawingScale", "actionExportImage", "actionWalkMode", "actionSplitView",
-                 "actionAttributeManager", "actionKeynotes"})
+                 "actionAlign", "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
 

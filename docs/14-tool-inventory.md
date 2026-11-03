@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D153).**
+**Status as of `main` (2026-11-03, after D112–D154).**
 
 ## How to read it
 
@@ -100,7 +100,7 @@ release notes, so check before relying on a single cell.
 | Array: linear, rectangular, polar | all | ✅ | P1 | Slice 17: linear and polar (Ctrl+U); D115: rectangular grid (nx by ny, the original in the first cell) |
 | Offset (parallel copy) | all | ✅ | new | Slice 17: walls (parallel copy), slabs (grow/shrink) |
 | Trim, extend to boundary, split, join | all | 🟡 | new | D80: walls and beams (split, trim/extend to an element, a grid line or a corner, join/merge, unjoin; Shift+S, Shift+T, Shift+J). D98: curved walls split. Not yet: 2D lines, trimming curved walls |
-| Align (to an edge or face) | RV VW | ⬜ | new | |
+| Align (to an edge or face) | RV VW | ✅ | new | D154: Edit > *Align...* aligns the selected elements on X, Y or Z at their minimum, maximum or centre, to the selection combined bounds (or a reference element through `editing.align_elements`/`elements.align`); one undo step |
 | Elevate (change vertical position) | AC RV | 🟡 | new | Wall height; no general elevate |
 | Resize / scale | AC VW SU | ✅ | new | D98: Edit › Resize (about the selection's middle) |
 | Pick up and inject settings (eyedropper / match properties) | AC RV VW | ✅ | new | D97: Edit › Pick up / Inject settings (Ctrl+Alt+C / V) |

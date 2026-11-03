@@ -694,6 +694,7 @@ void MainWindow::buildMenus()
     editAction(tr("&Mirror"), "actionMirror", QKeySequence(Qt::CTRL | Qt::Key_M), [this](bool on) { setTool(on ? Tool::Mirror : Tool::None); })
         ->setToolTip(tr("Mirror the selection: click two points of the mirror line (hold Ctrl on the second click to mirror a copy)"));
     editAction(tr("Multi&ply..."), "actionMultiply", QKeySequence(Qt::CTRL | Qt::Key_U), [this] { multiplyDialog(); });
+    editAction(tr("&Align..."), "actionAlign", QKeySequence(), [this] { alignDialog(); }); // D154
     editAction(tr("&Offset..."), "actionOffset", QKeySequence(), [this] { offsetDialog(); });
     editAction(tr("Resi&ze..."), "actionResize", QKeySequence(), [this] { // D98: Archicad's Resize
         if (m_selection.isEmpty()) {
@@ -8566,6 +8567,43 @@ void MainWindow::multiplyDialog()
     else
         multiplySelection(QStringLiteral("polar"), {{"cx", cx->value()}, {"cy", cy->value()},
             {"angle", angle->value() * M_PI / 180.0}, {"count", count->value()}});
+}
+
+void MainWindow::alignDialog()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select what to align first"));
+        return;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Align"));
+    auto* form = new QFormLayout(&dialog);
+    auto* choice = new QComboBox(&dialog);
+    choice->addItem(tr("Left edges (X)"), QStringList{QStringLiteral("x"), QStringLiteral("min")});
+    choice->addItem(tr("Right edges (X)"), QStringList{QStringLiteral("x"), QStringLiteral("max")});
+    choice->addItem(tr("Bottom edges (Y)"), QStringList{QStringLiteral("y"), QStringLiteral("min")});
+    choice->addItem(tr("Top edges (Y)"), QStringList{QStringLiteral("y"), QStringLiteral("max")});
+    choice->addItem(tr("Horizontal centres (X)"), QStringList{QStringLiteral("x"), QStringLiteral("center")});
+    choice->addItem(tr("Vertical centres (Y)"), QStringList{QStringLiteral("y"), QStringLiteral("center")});
+    choice->addItem(tr("Lowest point (Z)"), QStringList{QStringLiteral("z"), QStringLiteral("min")});
+    choice->addItem(tr("Highest point (Z)"), QStringList{QStringLiteral("z"), QStringLiteral("max")});
+    form->addRow(tr("Alignment:"), choice);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QStringList pair = choice->currentData().toStringList();
+    const QJsonArray guids = QJsonArray::fromStringList(m_selection);
+    const QJsonObject r = bridge("align_elements",
+        {QString::fromUtf8(QJsonDocument(guids).toJson(QJsonDocument::Compact)), pair.value(0), pair.value(1)});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Align"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    m_status->showMessage(tr("Aligned %n element(s)", nullptr, r.value("changed").toArray().size()));
 }
 
 void MainWindow::offsetDialog()

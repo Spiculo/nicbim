@@ -5115,6 +5115,74 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>&amp;Align...</source>
+      <translation>&amp;Alinear...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8700" />
+      <source>Select what to align first</source>
+      <translation>Selecciona primero qué alinear</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8704" />
+      <source>Align</source>
+      <translation>Alinear</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8720" />
+      <source>Alignment:</source>
+      <translation>Alineación:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8708" />
+      <source>Left edges (X)</source>
+      <translation>Bordes izquierdos (X)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8709" />
+      <source>Right edges (X)</source>
+      <translation>Bordes derechos (X)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8710" />
+      <source>Bottom edges (Y)</source>
+      <translation>Bordes inferiores (Y)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8711" />
+      <source>Top edges (Y)</source>
+      <translation>Bordes superiores (Y)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8712" />
+      <source>Horizontal centres (X)</source>
+      <translation>Centros horizontales (X)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8713" />
+      <source>Vertical centres (Y)</source>
+      <translation>Centros verticales (Y)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8714" />
+      <source>Lowest point (Z)</source>
+      <translation>Punto más bajo (Z)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8715" />
+      <source>Highest point (Z)</source>
+      <translation>Punto más alto (Z)</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../src/MainWindow.cpp" line="8731" />
+      <source>Aligned %n element(s)</source>
+      <translation>
+        <numerusform>Elemento alineado</numerusform>
+        <numerusform>Elementos alineados</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="992" />
       <source>Split view side by side</source>
       <translation>Dividir la vista en paralelo</translation>
     </message>

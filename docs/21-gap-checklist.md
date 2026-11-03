@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D153 plus explicit overrides for the final items.
+after D123–D154 plus explicit overrides for the final items.
 
-**Summary: 138 done, 68 deferred, 3 blocked.**
+**Summary: 139 done, 67 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -76,7 +76,7 @@ after D123–D153 plus explicit overrides for the final items.
 | 4. Editing tools (general) | Array: linear, rectangular, polar | **Done** | Slice 17: linear and polar (Ctrl+U); D115: rectangular grid (nx by ny, the original in the first cell) |
 | 4. Editing tools (general) | Offset (parallel copy) | **Done** | Slice 17: walls (parallel copy), slabs (grow/shrink) |
 | 4. Editing tools (general) | Trim, extend to boundary, split, join | **Deferred** | Core done; remainder deferred. D80: walls and beams (split, trim/extend to an element, a grid line or a corner, join/merge, unjoin; Shift+S, Shift+T, Shift+J). D98: curved walls split. Not yet: 2D lines, trimming curved walls |
-| 4. Editing tools (general) | Align (to an edge or face) | **Deferred** |  |
+| 4. Editing tools (general) | Align (to an edge or face) | **Done** | D154: Edit > *Align...* aligns on X/Y/Z at min/max/centre to the selection's combined bounds (or a reference element); one undo step. |
 | 4. Editing tools (general) | Elevate (change vertical position) | **Deferred** | Core done; remainder deferred. Wall height; no general elevate |
 | 4. Editing tools (general) | Resize / scale | **Done** | D98: Edit › Resize (about the selection's middle) |
 | 4. Editing tools (general) | Pick up and inject settings (eyedropper / match properties) | **Done** | D97: Edit › Pick up / Inject settings (Ctrl+Alt+C / V) |

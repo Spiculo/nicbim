@@ -10,7 +10,7 @@ import ifcopenshell.validate
 import pytest
 
 from kimbim import app_bridge as b
-from kimbim import authoring, layers
+from kimbim import authoring, editing, layers
 
 
 def call(fn, *args):
@@ -223,6 +223,33 @@ def test_resize_scales_lengths_and_keeps_thicknesses(room):
     assert not call("resize_elements", g(room["w1"]), 0, 0, 1)["ok"]
     call("undo")
     assert axis(room["w1"]) == [[0, 0], [6, 0]]
+    assert not valid()
+
+
+def test_align_edges_centres_and_z(room):
+    slab_type = call("slab_types")["types"][0]["guid"]
+    guids = []
+    for x in (0.0, 5.0, 10.0):
+        guids.append(call("create_slab", room["l1"], slab_type,
+                          json.dumps([[x, 0], [x + 1, 0], [x + 1, 2], [x, 2]]), 0.0)["guid"])
+
+    r = call("align_elements", g(*guids), "x", "min")
+    assert r["ok"], r
+    assert len(r["changed"]) == 2  # the leftmost slab is already at the target
+    lows = [editing._element_bounds(b._model.by_guid(x))[0][0] for x in guids]
+    assert max(lows) - min(lows) == pytest.approx(0.0, abs=1e-6)
+
+    r = call("align_elements", g(*guids), "y", "center")
+    assert r["ok"], r
+    centres = [(lambda b: (b[0][1] + b[1][1]) / 2)(editing._element_bounds(b._model.by_guid(x)))
+               for x in guids]
+    assert max(centres) - min(centres) == pytest.approx(0.0, abs=1e-6)
+
+    r = call("align_elements", g(*guids), "z", "max")
+    assert r["ok"], r
+    highs = [editing._element_bounds(b._model.by_guid(x))[1][2] for x in guids]
+    assert max(highs) - min(highs) == pytest.approx(0.0, abs=1e-6)
+    assert not call("align_elements", g(*guids), "q", "min")["ok"]
     assert not valid()
 
 

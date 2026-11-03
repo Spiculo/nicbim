@@ -1231,6 +1231,7 @@ _EXPORTS = {
         "remove_sheet_symbol",
     ),
     "editing": (
+        "align_elements",
         "array_elements",
         "copy_elements",
         "duplicate_elements",

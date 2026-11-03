@@ -10,9 +10,11 @@ import json
 import math
 
 import ifcopenshell.api.geometry
+import ifcopenshell.geom
 import ifcopenshell.util.element
 import ifcopenshell.util.placement
 import ifcopenshell.util.representation
+import ifcopenshell.util.unit
 import numpy as np
 
 from . import app_bridge as B
@@ -625,6 +627,95 @@ def offset_elements(guids_json: str, distance) -> str:
     except Exception as ex:
         return A._fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "guids": made["copies"]})
+
+
+def _element_bounds(element):
+    """(min, max) world points from the element's mesh; its placement point when it has no shape."""
+    try:
+        settings = ifcopenshell.geom.settings()
+        settings.set("use-world-coords", True)
+        shape = ifcopenshell.geom.create_shape(settings, element)
+        verts = np.asarray(shape.geometry.verts, dtype=float).reshape(-1, 3)
+        if len(verts):
+            return verts.min(axis=0), verts.max(axis=0)
+    except Exception:  # noqa: BLE001 - an element without a mesh still has a placement
+        pass
+    if getattr(element, "ObjectPlacement", None) is None:
+        return None
+    matrix = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
+    point = matrix[:3, 3] * ifcopenshell.util.unit.calculate_unit_scale(element.file)
+    return point, point
+
+
+def align_elements(guids_json: str, axis: str, mode: str, reference_guid: str = "") -> str:
+    """Align the selected elements on X, Y or Z at their min, max or center.
+
+    The target is the combined bounds of the selection, or `reference_guid`'s bounds (that element
+    stays put). Elements carried by another selected element (a door in a selected wall) are not moved
+    twice. One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    axis = str(axis or "").lower()
+    mode = str(mode or "").lower()
+    if axis not in ("x", "y", "z") or mode not in ("min", "max", "center"):
+        return A._fail("axis must be x, y or z and mode min, max or center")
+    selected = [e for e in B._elements(json.dumps(guids_json) if isinstance(guids_json, list) else guids_json)
+                if e.is_a("IfcProduct") and getattr(e, "ObjectPlacement", None) is not None]
+    if not selected:
+        return A._fail("select elements to align")
+    selected_set = set(selected)
+    elements = []
+    for e in selected:
+        parent = A._placement_parent(e)
+        if parent is not None and parent in selected_set:
+            continue  # the parent's move carries it
+        elements.append(e)
+    bounds = {}
+    for e in elements:
+        b = _element_bounds(e)
+        if b is not None:
+            bounds[e] = b
+    if not bounds:
+        return A._fail("the selection has no geometry or placement")
+    reference = None
+    if reference_guid:
+        reference = A._by_guid(reference_guid)
+        if reference not in bounds:
+            return A._fail("the reference is not a positioned element")
+    index = {"x": 0, "y": 1, "z": 2}[axis]
+    if reference is not None:
+        lo, hi = bounds[reference]
+        target = lo[index] if mode == "min" else hi[index] if mode == "max" else (lo[index] + hi[index]) / 2
+    else:
+        lows = [b[0][index] for b in bounds.values()]
+        highs = [b[1][index] for b in bounds.values()]
+        target = min(lows) if mode == "min" else max(highs) if mode == "max" \
+            else (min(lows) + max(highs)) / 2
+    deltas = {}
+    for e, (lo, hi) in bounds.items():
+        if e is reference:
+            continue
+        value = lo[index] if mode == "min" else hi[index] if mode == "max" else (lo[index] + hi[index]) / 2
+        delta = target - value
+        if abs(delta) > 1e-9:
+            deltas[e] = delta
+    if not deltas:
+        return B._dump({"ok": True, "changed": [], "delta": 0.0})
+
+    def action():
+        scale = ifcopenshell.util.unit.calculate_unit_scale(B._model)
+        for e, delta in deltas.items():
+            matrix = ifcopenshell.util.placement.get_local_placement(e.ObjectPlacement).copy()
+            matrix[:3, 3] *= scale
+            matrix[index, 3] += delta
+            ifcopenshell.api.geometry.edit_object_placement(B._model, product=e, matrix=matrix, is_si=True)
+        return len(deltas), [e.GlobalId for e in deltas], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:  # noqa: BLE001
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "changed": [e.GlobalId for e in deltas], "delta": target})
 
 
 def resize_elements(guids_json: str, cx, cy, factor) -> str:
