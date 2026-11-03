@@ -260,6 +260,37 @@ def test_splitting_a_curved_wall(project):
 
 
 
+def test_trimming_and_extending_a_curved_wall(project):
+    """D191: a curved wall trims to a boundary on its own circle, keeping the clicked side, and
+    extends its end to it."""
+    from kimbim import curved_walls
+
+    def arc(guid):
+        return curved_walls.ends_world(b._model.by_guid(guid))
+
+    def wall():
+        return call("create_curved_wall", project["level"], project["Exterior 300"],
+                    5, 0, 0, 5, -5, 0, 3.0, "")["guid"]
+
+    g = wall()
+    assert call("trim_extend", g, 4, 2, "", 0, -10, 0, 10, "1")["ok"]  # keep the start side
+    a, e = arc(g)
+    assert a == pytest.approx([5, 0], abs=1e-6) and e == pytest.approx([0, 5], abs=1e-6)
+
+    g = wall()
+    assert call("trim_extend", g, -3, 3, "", 0, -10, 0, 10, "1")["ok"]  # keep the end side
+    a, e = arc(g)
+    assert a == pytest.approx([0, 5], abs=1e-6) and e == pytest.approx([-5, 0], abs=1e-6)
+
+    g = call("create_curved_wall", project["level"], project["Exterior 300"],
+             5, 0, 3.5355, 3.5355, 0, 5, 3.0, "")["guid"]
+    assert call("trim_extend", g, 0.5, 4.9, "", -1, -10, -1, 10, "1")["ok"]  # extend past the end
+    _a, e = arc(g)
+    assert e[0] == pytest.approx(-1.0, abs=1e-6) and e[1] == pytest.approx(math.sqrt(24), abs=1e-2)
+
+    assert not call("trim_extend", g, 0.5, 4.9, "", 0, 20, 10, 20, "1")["ok"]  # never reaches the circle
+
+
 def _on_line(points, q0, q1, tol=2e-3):
     d = np.asarray(q1) - np.asarray(q0)
     n = np.array([d[1], -d[0]]) / np.linalg.norm(d)

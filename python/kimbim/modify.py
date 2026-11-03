@@ -279,6 +279,21 @@ def _line(e):
     return None
 
 
+def _drafting_line(e):
+    """((x1, y1), (x2, y2)) world metres of a drafting LINE annotation (D84), or None."""
+    if e is None or not e.is_a("IfcAnnotation"):
+        return None
+    from . import annotations as N
+
+    data = N._read(e)
+    if data is None or data[0] != "line":
+        return None
+    pts = N.world_points(e)
+    if len(pts) < 2:
+        return None
+    return (tuple(pts[0]), tuple(pts[1]))
+
+
 def _check(e, what="this") -> str:
     if e is None:
         return f"{what} is not a wall or beam"
@@ -425,6 +440,31 @@ def _visible(elements) -> list:
 
 # ---------------------------------------------------------------- split
 
+def _split_drafting(e, line, click) -> str:
+    """D191: split a drafting line at `click` (world metres): the original keeps its start, a copy
+    gets the rest, with the same pen and line type."""
+    from . import annotations as N
+
+    length = math.dist(*line)
+    t = _param(click, *line)
+    at = t * length
+    if at < END_MARGIN or at > length - END_MARGIN:
+        return A._fail("split inside the line, not at its end")
+    p1, p2 = _vec(line[0]), _vec(line[1])
+    point = p1 + (p2 - p1) * t
+    made = {}
+
+    def action():
+        storey = ifcopenshell.util.element.get_container(e)
+        (_, copy), = A._copy_elements([e], storey, np.eye(4))
+        N.replace_points(copy, [tuple(point), tuple(p2)])
+        N.replace_points(e, [tuple(p1), tuple(point)])
+        made["piece"] = copy.GlobalId
+        return 1, [e.GlobalId, copy.GlobalId], []
+
+    return _finish(action, made)
+
+
 def split_element(guid: str, x, y, join="1") -> str:
     """Split a wall or beam at the point of its axis nearest (x, y): the element keeps its GlobalId
     and the part from its start; a new element of the same type, properties, layer and status gets
@@ -435,13 +475,17 @@ def split_element(guid: str, x, y, join="1") -> str:
     if B._model is None:
         return A._fail("no model open")
     e = A._by_guid(guid)
-    error = _check(e)
-    if error:
-        return A._fail(error)
+    drafting = _drafting_line(e)
+    if drafting is None:
+        error = _check(e)
+        if error:
+            return A._fail(error)
     try:
         x, y = _num(x, y)
     except (TypeError, ValueError) as ex:
         return A._fail(str(ex))
+    if drafting is not None:  # D191: a drafting line splits into two lines
+        return _split_drafting(e, drafting, (x, y))
     if e.is_a("IfcWall") and curved_walls.is_curved(e):  # D97: two arcs of the same circle
         return _split_curved(e, (x, y))
     line = _line(e)
@@ -563,6 +607,115 @@ def _finish(action, made):
 
 # ---------------------------------------------------------------- trim / extend
 
+def _trim_drafting(e, line, click, b1, b2) -> str:
+    """D191: trim or extend a drafting line to a boundary line (world metres)."""
+    from . import annotations as N
+
+    t = _intersect(line[0], line[1], b1, b2)
+    if t is None:
+        return A._fail("the line is parallel to the boundary")
+    p1, p2 = _vec(line[0]), _vec(line[1])
+    q = p1 + (p2 - p1) * t
+    k = _end_to(e, line, t, _param(click, *line))
+    new = (q, p2) if k == 0 else (p1, q)
+    if float(np.linalg.norm(new[1] - new[0])) < 1e-6:
+        return A._fail("the line would have no length")
+
+    def action():
+        N.replace_points(e, [tuple(new[0]), tuple(new[1])])
+        return 1, [e.GlobalId], []
+
+    return _finish(action, {})
+
+
+def _trim_drafting_corner(a, la, click_a, b, lb, click_b) -> str:
+    """D191: trim or extend two drafting lines to the point where they cross."""
+    from . import annotations as N
+
+    ta, tb = _intersect(*la, *lb), _intersect(*lb, *la)
+    if ta is None:
+        return A._fail("the two are parallel: they never meet")
+    news = []
+    for e, line, t, click in ((a, la, ta, click_a), (b, lb, tb, click_b)):
+        p1, p2 = _vec(line[0]), _vec(line[1])
+        q = p1 + (p2 - p1) * t
+        k = _end_to(e, line, t, _param(click, *line))
+        news.append((e, (q, p2) if k == 0 else (p1, q)))
+
+    def action():
+        for e, new in news:
+            N.replace_points(e, [tuple(new[0]), tuple(new[1])])
+        return len(news), [e.GlobalId for e, _ in news], []
+
+    return _finish(action, {})
+
+
+def _trim_curved(e, b1, b2, click) -> str:
+    """D191: trim or extend a curved wall to a boundary line, keeping its circle and radius.
+    The boundary may cross the arc twice: the crossing nearest the clicked side is the cut."""
+    from . import curved_walls
+
+    arc = curved_walls.arc_of(e)
+    fr = curved_walls.frame(*arc) if arc else None
+    if fr is None:
+        return A._fail("the curved wall's arc is invalid")
+    (cx, cy), radius, a0, sweep = fr
+    m = ifcopenshell.util.placement.get_local_placement(e.ObjectPlacement)
+    s = A._scale()
+    inv = np.linalg.inv(m)
+
+    def local(p):
+        return (inv @ np.array([p[0] / s, p[1] / s, 0.0, 1.0]))[:2] * s
+
+    l1, l2 = local(b1), local(b2)
+    d = l2 - l1
+    off = l1 - np.array([cx, cy])
+    qa = float(d @ d)
+    qb = 2.0 * float(off @ d)
+    qc = float(off @ off) - radius * radius
+    disc = qb * qb - 4.0 * qa * qc
+    if qa < 1e-12 or disc < 0.0:
+        return A._fail("the boundary does not reach the wall's arc")
+    turn = 1.0 if sweep > 0 else -1.0
+    length = abs(sweep)
+
+    def signed(angle):
+        u = ((angle - a0) * turn) % (2.0 * math.pi)
+        return min((u, u - 2.0 * math.pi), key=lambda v: abs(v - min(max(v, 0.0), length)))
+
+    cuts = []
+    for t in ((-qb - math.sqrt(disc)) / (2.0 * qa), (-qb + math.sqrt(disc)) / (2.0 * qa)):
+        p = l1 + d * t
+        cuts.append(signed(math.atan2(p[1] - cy, p[0] - cx)))
+    click_local = local(click)
+    click_u = signed(math.atan2(click_local[1] - cy, click_local[0] - cx))
+    inside = [u for u in cuts if -1e-9 <= u <= length + 1e-9]
+    if inside:  # the boundary crosses the wall: keep the side that was clicked
+        u = min(inside, key=lambda v: abs(v - click_u))
+        start, end = (0.0, u) if click_u < u else (u, length)
+    else:  # extend the end nearest the click to the boundary
+        u = min(cuts, key=lambda v: abs(v - click_u))
+        if u < 0.0:
+            start, end = u, length
+        elif u > length:
+            start, end = 0.0, u
+        else:
+            return A._fail("the boundary does not cross the wall")
+    if (end - start) * radius < A.MIN_WALL_LENGTH:
+        return A._fail("the wall would have no length")
+
+    def world_at(u):
+        angle = a0 + turn * u
+        point = (cx + radius * math.cos(angle), cy + radius * math.sin(angle))
+        w = (m @ np.array([point[0] / s, point[1] / s, 0.0, 1.0]))[:2] * s
+        return [float(w[0]), float(w[1])]
+
+    old_start, old_end = curved_walls.ends_world(e)
+    p1 = old_start if abs(start) < 1e-9 else world_at(start)
+    p2 = old_end if abs(end - length) < 1e-9 else world_at(end)
+    return curved_walls.set_ends(e, p1, p2)
+
+
 def _end_to(e, line, t, keep_t):
     """Which end moves when e's line is cut or extended at parameter t, keeping the side of keep_t:
     returns 0 (start) or 1 (end)."""
@@ -647,23 +800,25 @@ def trim_extend(guid: str, x, y, boundary_guid: str = "", bx1=0, by1=0, bx2=0, b
     the trim would leave outside: "refuse" (default), "delete" it or "keep" it."""
     from . import curved_walls
 
-    if (why := curved_walls.refusal_of(guid)) is not None:  # D97: straight walls only
-        return A._fail(why)
     if B._model is None:
         return A._fail("no model open")
     if holes not in ("refuse", "delete", "keep"):
         return A._fail(f"unknown opening choice {holes}")
     e = A._by_guid(guid)
-    error = _check(e)
-    if error:
-        return A._fail(error)
+    drafting = _drafting_line(e)
+    curved = e is not None and e.is_a("IfcWall") and curved_walls.is_curved(e)
+    if drafting is None and not curved:
+        error = _check(e)
+        if error:
+            return A._fail(error)
     boundary = A._by_guid(boundary_guid) if boundary_guid else None
     try:
         x, y = _num(x, y)
         if boundary is not None:
-            if _line(boundary) is None:
-                return A._fail("the boundary is not a wall or beam")
-            b1, b2 = (_vec(p) for p in _line(boundary))
+            bline = _drafting_line(boundary) or _line(boundary)
+            if bline is None:
+                return A._fail("the boundary is not a wall, beam or line")
+            b1, b2 = (_vec(p) for p in bline)
         else:
             b1, b2 = _vec(_num(bx1, by1)), _vec(_num(bx2, by2))
     except (TypeError, ValueError) as ex:
@@ -672,6 +827,10 @@ def trim_extend(guid: str, x, y, boundary_guid: str = "", bx1=0, by1=0, bx2=0, b
         return A._fail("pick another element as the boundary")
     if np.linalg.norm(b2 - b1) < EPS:
         return A._fail("the boundary has no length")
+    if drafting is not None:  # D191: a drafting line trims/extends like a straight element
+        return _trim_drafting(e, drafting, (x, y), b1, b2)
+    if curved:  # D191: a curved wall keeps its circle and its radius
+        return _trim_curved(e, b1, b2, (x, y))
     line = _line(e)
     t = _intersect(line[0], line[1], b1, b2)
     if t is None:
@@ -712,6 +871,17 @@ def trim_corner(guid1: str, x1, y1, guid2: str, x2, y2, join="1", holes="refuse"
     if holes not in ("refuse", "delete", "keep"):
         return A._fail(f"unknown opening choice {holes}")
     a, b = A._by_guid(guid1), A._by_guid(guid2)
+    da, db = _drafting_line(a), _drafting_line(b)
+    if da is not None or db is not None:  # D191: two drafting lines trim to their corner
+        if da is None or db is None:
+            return A._fail("trim two lines, walls or beams of the same kind")
+        if a is b:
+            return A._fail("pick two different elements")
+        try:
+            x1, y1, x2, y2 = _num(x1, y1, x2, y2)
+        except (TypeError, ValueError) as ex:
+            return A._fail(str(ex))
+        return _trim_drafting_corner(a, da, (x1, y1), b, db, (x2, y2))
     for e, what in ((a, "the first element"), (b, "the second element")):
         error = _check(e, what)
         if error:
@@ -965,9 +1135,10 @@ def unjoin_elements(guids_json: str) -> str:
 
 
 def modify_targets(storey_guid: str) -> str:
-    """Beams on a level as plan lines (walls and grid lines come from snap_data), for picking."""
+    """Beams and drafting lines on a level as plan lines (walls and grid lines come from snap_data),
+    for picking."""
     storey = A._by_guid(storey_guid) if B._model is not None else None
-    beams = []
+    beams, lines = [], []
     for rel in getattr(storey, "ContainsElements", ()) or () if storey is not None else ():
         for e in rel.RelatedElements:
             if e.is_a("IfcBeam"):
@@ -976,4 +1147,9 @@ def modify_targets(storey_guid: str) -> str:
                     beams.append({"guid": e.GlobalId, "x1": round(float(axis[0][0]), 6), "y1": round(float(axis[0][1]), 6),
                                   "x2": round(float(axis[1][0]), 6), "y2": round(float(axis[1][1]), 6),
                                   "width": round(_width(e), 6)})
-    return B._dump({"beams": beams})
+                continue
+            line = _drafting_line(e)  # D191: 2D lines are trim/split targets too
+            if line is not None:
+                lines.append({"guid": e.GlobalId, "x1": round(float(line[0][0]), 6), "y1": round(float(line[0][1]), 6),
+                              "x2": round(float(line[1][0]), 6), "y2": round(float(line[1][1]), 6)})
+    return B._dump({"beams": beams, "lines": lines})

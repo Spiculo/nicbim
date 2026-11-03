@@ -41,6 +41,12 @@ void ModifyTool::setTargets(const QJsonObject& snapData, const QJsonObject& beam
             QPointF(o.value("x1").toDouble(), o.value("y1").toDouble()),
             QPointF(o.value("x2").toDouble(), o.value("y2").toDouble()), o.value("width").toDouble()});
     }
+    for (const auto& v : beams.value("lines").toArray()) { // D191: drafting lines
+        const QJsonObject o = v.toObject();
+        m_targets.push_back({o.value("guid").toString(), QStringLiteral("line"),
+            QPointF(o.value("x1").toDouble(), o.value("y1").toDouble()),
+            QPointF(o.value("x2").toDouble(), o.value("y2").toDouble()), 0.0});
+    }
     for (const SnapLine& l : Snapper::parseGrid(snapData))
         m_targets.push_back({QString(), QStringLiteral("grid"), l.a, l.b, 0.0});
 }

@@ -99,7 +99,7 @@ release notes, so check before relying on a single cell.
 | Mirror | all | ✅ | P1 | Slice 17 (Ctrl+M; Ctrl mirrors a copy) |
 | Array: linear, rectangular, polar | all | ✅ | P1 | Slice 17: linear and polar (Ctrl+U); D115: rectangular grid (nx by ny, the original in the first cell) |
 | Offset (parallel copy) | all | ✅ | new | Slice 17: walls (parallel copy), slabs (grow/shrink) |
-| Trim, extend to boundary, split, join | all | 🟡 | new | D80: walls and beams (split, trim/extend to an element, a grid line or a corner, join/merge, unjoin; Shift+S, Shift+T, Shift+J). D98: curved walls split. Not yet: 2D lines, trimming curved walls |
+| Trim, extend to boundary, split, join | all | ✅ | new | D80: walls and beams (split, trim/extend to an element, a grid line or a corner, join/merge, unjoin; Shift+S, Shift+T, Shift+J). D98: curved walls split; D191: 2D lines trim/extend, split and corner, and curved walls trim/extend on their arc |
 | Align (to an edge or face) | RV VW | ✅ | new | D154: Edit > *Align...* aligns the selected elements on X, Y or Z at their minimum, maximum or centre, to the selection combined bounds (or a reference element through `editing.align_elements`/`elements.align`); one undo step |
 | Elevate (change vertical position) | AC RV | ✅ | P2 | D159: Edit > *Elevate...* moves the selection up or down by a distance without changing its plan position (hosted doors/windows follow); the `move_elements` `dz` path |
 | Resize / scale | AC VW SU | ✅ | new | D98: Edit › Resize (about the selection's middle) |

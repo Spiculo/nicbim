@@ -176,6 +176,36 @@ def test_grips_move_a_point_and_fill_from_a_closed_shape(plan):
     assert circle
 
 
+def test_drafting_lines_trim_extend_split_and_corner(plan):
+    """D191: 2D lines are trim/extend, split and corner targets like walls and beams."""
+    from kimbim import annotations
+
+    def points(guid):
+        return [[round(float(v), 6) for v in p] for p in annotations.world_points(b._model.by_guid(guid))]
+
+    line = call("add_drafting", plan["l1"], "line", pts((1, 0), (4, 0)), "")["guid"]
+    assert call("trim_extend", line, 9, 0, "", 6, -5, 6, 5, "1")["ok"]  # extend the east end
+    assert points(line) == [[1, 0], [6, 0]]
+    assert call("trim_extend", line, 9, 0, "", 5, -5, 5, 5, "1")["ok"]  # keep the clicked east side
+    assert points(line) == [[5, 0], [6, 0]]
+
+    r = call("split_element", line, 5.5, 0, "1")
+    assert r["ok"], r
+    assert points(line) == [[5, 0], [5.5, 0]]
+    assert points(r["piece"]) == [[5.5, 0], [6, 0]]
+
+    a = call("add_drafting", plan["l1"], "line", pts((0, 2), (4, 2)), "")["guid"]
+    line_b = call("add_drafting", plan["l1"], "line", pts((2, 0), (2, 6)), "")["guid"]
+    assert call("trim_corner", a, 3, 2, line_b, 2, 5, "1")["ok"]
+    assert points(a) == [[2, 2], [4, 2]]
+    assert points(line_b) == [[2, 2], [2, 6]]
+
+    targets = call("modify_targets", plan["l1"])
+    assert {t["guid"] for t in targets["lines"]} >= {line, a, line_b}
+    assert not call("trim_extend", a, 3, 2, "", 0, 4, 5, 4, "1")["ok"]  # a parallel boundary is refused
+    assert not call("split_element", line, 0, 0, "1")["ok"]  # outside the line
+
+
 def test_snap_data_lists_drafting_circles(plan):
     """D188: circles and arcs are snap targets (their centre and radius reach the snapper)."""
     circle = call("add_drafting", plan["l1"], "circle", pts((5, 5), (6, 5)), "")["guid"]
