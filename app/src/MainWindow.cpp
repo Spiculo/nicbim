@@ -2880,6 +2880,17 @@ void MainWindow::buildModelingToolbar()
     overallDim->setObjectName(QStringLiteral("actionOverallDimension"));
     overallDim->setToolTip(tr("One dimension across the selected elements' combined bounds"));
     connect(overallDim, &QAction::triggered, this, &MainWindow::overallDimensionDialog);
+    // D166: a dimension chain between the level's grid axes.
+    QAction* gridDim = model->addAction(tr("Dimension &grid..."));
+    gridDim->setObjectName(QStringLiteral("actionGridDimension"));
+    gridDim->setToolTip(tr("A dimension chain between the level's grid axes"));
+    connect(gridDim, &QAction::triggered, this, [this] {
+        bool ok = false;
+        const double offset = QInputDialog::getDouble(this, tr("Dimension grid"),
+            tr("Distance of the dimension line from the grid (m):"), 0.8, 0.0, 100.0, 2, &ok);
+        if (ok)
+            gridDimension(offset);
+    });
     model->addSeparator();
     model->addAction(m_levels->addLevelAction()); // D75: also in the level drop-down
     model->addAction(m_levels->levelsAction());   // D79: the levels table, also in the drop-down
@@ -9458,6 +9469,23 @@ bool MainWindow::autoDimension(double offset)
     }
     afterEdit(r);
     m_status->showMessage(tr("%n dimension chain(s) added", nullptr, r.value("guids").toArray().size()));
+    return true;
+}
+
+bool MainWindow::gridDimension(double offset)
+{
+    if (m_levels->activeStorey().isEmpty()) {
+        m_status->showMessage(tr("Open a plan view first"));
+        return false;
+    }
+    const QJsonObject r = bridge("grid_dimension", {m_levels->activeStorey(),
+        QString::number(offset, 'g', 17), QStringLiteral("auto")});
+    if (!r.value("ok").toBool()) {
+        m_status->showMessage(r.value("error").toString());
+        return false;
+    }
+    afterEdit(r);
+    m_status->showMessage(tr("%n grid dimension chain(s) added", nullptr, 1));
     return true;
 }
 

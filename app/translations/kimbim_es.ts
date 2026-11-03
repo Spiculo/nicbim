@@ -5377,6 +5377,39 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Forma seleccionada rellenada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="2883" />
+      <source>Dimension &amp;grid...</source>
+      <translation>Dimensión de &amp;ejes...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2885" />
+      <source>A dimension chain between the level's grid axes</source>
+      <translation>Una cadena de dimensiones entre los ejes de la planta</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2887" />
+      <source>Dimension grid</source>
+      <translation>Dimensionar ejes</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2888" />
+      <source>Distance of the dimension line from the grid (m):</source>
+      <translation>Distancia de la línea de dimensión desde los ejes (m):</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="9465" />
+      <source>Open a plan view first</source>
+      <translation>Abre primero una vista de planta</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../src/MainWindow.cpp" line="9476" />
+      <source>%n grid dimension chain(s) added</source>
+      <translation>
+        <numerusform>Cadena de dimensiones de ejes añadida</numerusform>
+        <numerusform>Cadenas de dimensiones de ejes añadidas</numerusform>
+      </translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

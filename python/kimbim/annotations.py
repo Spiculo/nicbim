@@ -336,6 +336,52 @@ def overall_dimension(guids_json: str, offset=0.8, axis: str = "auto") -> str:
     return B._dump({**r, "guid": made["annotation"].GlobalId, "axis": axis})
 
 
+def grid_dimension(storey_guid: str, offset=0.8, axis: str = "auto") -> str:
+    """A dimension chain between the level's grid axes (D166): along X (vertical axes), Y (horizontal
+    axes) or auto (the direction with more axes), the line `offset` metres outside the grid. One undo
+    step."""
+    if B._model is None:
+        return A._fail("no model open")
+    storey = A._by_guid(storey_guid)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return A._fail("unknown level")
+    try:
+        offset = float(offset)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    if axis not in ("auto", "x", "y"):
+        return A._fail("axis must be x, y or auto")
+    grid = A._grid_lines(storey)
+    if len(grid) < 2:
+        return A._fail("the level has no grid to dimension")
+    vertical = sorted({round((g["x1"] + g["x2"]) / 2, 6) for g in grid if abs(g["x2"] - g["x1"]) < 1e-6})
+    horizontal = sorted({round((g["y1"] + g["y2"]) / 2, 6) for g in grid if abs(g["y2"] - g["y1"]) < 1e-6})
+    if axis == "auto":
+        axis = "x" if len(vertical) >= len(horizontal) else "y"
+    stops = vertical if axis == "x" else horizontal
+    if len(stops) < 2:
+        return A._fail(f"the level has no grid axes across {axis.upper()}")
+    rise = max(max(g["y1"], g["y2"]) for g in grid)
+    reach = max(max(g["x1"], g["x2"]) for g in grid)
+    if axis == "x":
+        points = [(x, rise) for x in stops] + [(stops[0], rise + offset)]
+    else:
+        points = [(reach, y) for y in stops] + [(reach + offset, stops[0])]
+    origin = points[0]
+    local = [(x - origin[0], y - origin[1]) for x, y in points]
+    made = {}
+
+    def action():
+        made["annotation"] = _new(storey, "dimension", _measure(local), origin, local)
+        return 1, [made["annotation"].GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["annotation"].GlobalId, "axis": axis, "labels": len(stops) - 1})
+
+
 def _fills(wall):
     """(door/window, opening, along, width) in a wall."""
     out = []

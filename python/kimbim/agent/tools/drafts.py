@@ -153,3 +153,14 @@ def overall_dimension(session, elements, offset="0.8m", axis="auto"):
     """Add one overall dimension across the selection's combined plan bounds."""
     r = bridge(N.overall_dimension, json.dumps(list(elements)), lengths(session, offset)[0], axis)
     return {"guids": [r["guid"]], "axis": r.get("axis")}
+
+
+@tool("annotation.grid_dimension", {"required": ["level"], "properties": {
+    "level": _LEVEL,
+    "offset": {"type": ["number", "string"], "description": "Distance outside the grid (default 0.8 m)."},
+    "axis": {"type": "string", "enum": ["auto", "x", "y"],
+             "description": "Which axes to measure: x, y or auto (the one with more axes)."}}}, writes=True)
+def grid_dimension(session, level, offset="0.8m", axis="auto"):
+    """Add one dimension chain between a level's grid axes."""
+    r = bridge(N.grid_dimension, level_guid(level), lengths(session, offset)[0], axis)
+    return {"guids": [r["guid"]], "axis": r.get("axis"), "labels": r.get("labels")}

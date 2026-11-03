@@ -41,6 +41,21 @@ def test_grid_system_turns_and_continues_the_labels(level):
     assert (g["4"]["x1"], g["4"]["y1"], g["4"]["x2"], g["4"]["y2"]) == pytest.approx((11, 2, 9, 2))  # turned 90 degrees
 
 
+def test_grid_dimension_chain(level):
+    """D166: an automatic dimension chain between the grid axes, outside the grid."""
+    assert call("add_grid_system", level, 0, 0, 0, json.dumps([4, 8]), json.dumps([3, 6]), 1.0)["ok"]
+    r = call("grid_dimension", level, 0.8, "x")
+    assert r["ok"] and r["axis"] == "x", r
+    dim = next(a for a in call("annotations", level)["annotations"] if a["guid"] == r["guid"])
+    assert dim["kind"] == "dimension"
+    assert dim["text"].split() == ["4.00", "8.00"]  # the vertical axes at x = 0, 4, 12
+    assert dim["points"][-1][1] == pytest.approx(10.8)  # the grid's top (9 + 1) + 0.8
+    y = call("grid_dimension", level, 0.8, "y")
+    assert y["ok"] and y["axis"] == "y", y
+    assert not call("grid_dimension", level, 0.8, "z")["ok"]
+    assert not call("grid_dimension", "nope", 0.8, "x")["ok"]
+
+
 def test_grid_system_rejects_bad_input(level):
     assert not call("add_grid_system", level, 0, 0, 0, json.dumps([0]), json.dumps([]), 1.0)["ok"]
     assert not call("add_grid_system", "nope", 0, 0, 0, json.dumps([1]), "[]", 1.0)["ok"]

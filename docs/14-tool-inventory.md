@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D165).**
+**Status as of `main` (2026-11-03, after D112–D166).**
 
 ## How to read it
 
@@ -243,7 +243,7 @@ release notes, so check before relying on a single cell.
 | Marks (circle with a tag) | AC | ✅ | P1 | |
 | Dimension chains, overall dimensions | all | ✅ | P1 | D158: Slice 15 chains (Shift+click); Model > *Overall dimension...* adds one dimension across the selected elements' combined bounds on X, Y or the longer side, offset outside; agent `annotation.overall_dimension` |
 | Snap dimensions to wall faces, openings and layers | all | 🟡 | P1 | Slice 15: wall faces; openings and layer lines later |
-| Automatic dimensioning of walls and openings | AC RV VW | 🟡 | new | D98: Model › Dimension selected walls (a chain per straight wall: ends and openings); no overall or grid chains yet |
+| Automatic dimensioning of walls and openings | AC RV VW | ✅ | new | D98: Model › *Dimension selected walls* (a chain per straight wall: ends and openings); D158 adds the selection's overall dimension; D166 adds *Dimension grid* (a chain between the level's grid axes, offset outside) |
 | Angle, radius, arc-length, level and spot-elevation dimensions | all | ✅ | P1 | D87: angle, radius, diameter, level (plan: slab top or level; sections: story levels) and spot elevation; D161 adds the arc-length mode of the angle-dimension tool (start, a point on the arc, end, text point) |
 | Associative labels and tags (show a property, follow the element) | all | ✅ | P1 | D87: Tag tool and Tag all; templates of schedule fields; styles (door/window marker, wall tag, room stamp, mark, label) in project settings; IfcRelAssignsToProduct |
 | Leaders and arrows | all | ✅ | P1 | Slice 15: Leader tool (Shift+A) |

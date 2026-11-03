@@ -251,6 +251,7 @@ public:
     bool deleteFavourite(const QString& name);
     QStringList favouriteNames(bool forThisTool = true) const;
     bool autoDimension(double offset); // D98: the selected walls, `offset` metres out from their faces
+    bool gridDimension(double offset); // D166: a dimension chain between the level's grid axes
     void overallDimensionDialog();     // D158: one dimension across the selection's combined bounds
     bool resizeSelection(double factor); // D98: Archicad's Resize, about the selection's middle
     bool placePicture3d(const QString& path, double widthMetres, QPointF at); // D98: Archicad's Picture object

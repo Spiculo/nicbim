@@ -1164,6 +1164,7 @@ _EXPORTS = {
         "add_annotation",
         "auto_dimension",
         "overall_dimension",
+        "grid_dimension",
         "annotations",
         "set_annotation_pen",
         "set_annotation_size",
