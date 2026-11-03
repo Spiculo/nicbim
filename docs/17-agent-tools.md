@@ -273,7 +273,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `terrain_pads` | `kimbim terrain pads` | List a terrain's building pads: outline points and elevation. |  |
 <!-- tools:end -->
 
-The list is generated from the catalogue (112 exposed tools today). What is still missing on the agent side — in the
+The list is generated from the catalogue (158 exposed tools today). What is still missing on the agent side — in the
 tool surface, the client/transport setup and remote sessions — is listed in
 [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
 

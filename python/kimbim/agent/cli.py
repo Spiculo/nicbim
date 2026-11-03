@@ -165,6 +165,8 @@ def build_parser() -> argparse.ArgumentParser:
         if name.startswith("_") or name == "script.run":  # `kimbim script run` below does both
             continue
         g, verb = name.split(".", 1)
+        if name == "versions.save":
+            verb = "save_version"  # the people command `versions save FILE -m M` already owns that verb
         lp = group(g).add_parser(verb.replace("_", "-"), help=_h(_first_sentence(t.description)),
                                  description=t.description)
         props = t.params.get("properties", {})
@@ -978,8 +980,11 @@ def tools_markdown() -> str:
     names = sorted((n for n in TOOLS if not n.startswith("_")),
                    key=lambda n: (order.index(n.split(".")[0]) if n.split(".")[0] in order else len(order), n))
     lines = ["| Tool (MCP) | Command line | What it does | Changes the model |", "|---|---|---|---|"]
+    # `versions.save` is the CLI's `versions save-version`; the people command owns `versions save`.
     for name in names:
         group, verb = name.split(".", 1)
+        if name == "versions.save":
+            verb = "save_version"
         what = _first_sentence(TOOLS[name].description).replace("|", "\\|")
         lines.append(f"| `{name.replace('.', '_')}` | `kimbim {group} {verb.replace('_', '-')}` | {what} | "
                      f"{'yes' if TOOLS[name].writes else ''} |")

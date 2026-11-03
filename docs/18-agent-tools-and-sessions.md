@@ -7,10 +7,10 @@ add for full *user -> agent* parity, and how sessions should be stored. The day-
 
 ## 1. What the agent has today
 
-112 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
+158 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
 over the `kimbim` CLI and MCP. Every write is one undo step; every change goes through a task and (by default) a
 reviewable design option. `dry_run` reports without changing. The count is the exposed set (`_owner_save` is
-internal): 113 registered, 112 listed by `kimbim help --markdown` and `list_tools`.
+internal): 159 registered, 158 listed by `kimbim help --markdown` and `list_tools`.
 
 | Group | Tools | Covers |
 |---|---|---|
@@ -250,7 +250,7 @@ around them.
 
 ### Wired today
 
-- One catalogue (`kimbim.agent.catalogue`, **112 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
+- One catalogue (`kimbim.agent.catalogue`, **158 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
 - The **Assistant is the primary consumer**: *View › Panels › Assistant* gets the whole catalogue with no setup.
 - Two execution modes: **live** (the app hosts the session; each write is an undo step) and **offline** (a background
   worker keeps the project open), plus the `kimbim group verb` CLI for scripts and batch work.
@@ -268,23 +268,27 @@ The Assistant needs none of this. These are the external-agent paths and what is
 | MCP clients | `kimbim setup` writes Claude Desktop, Claude Code and opencode | Verified configs for other MCP clients (Cursor, VS Code, Windsurf, Zed, Continue…); they can start `kimbim mcp` by hand, but setup does not write their files |
 | Transport | stdio only (`kimbim mcp`) | HTTP/SSE or streamable HTTP for a remote agent, and authentication for it (local stdio needs none) |
 | Config writer | Merges JSON, keeps other servers and settings; refuses a commented `opencode.jsonc` and prints a paste-ready snippet | In-place JSONC editing |
-| MCP surface | 112 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
+| MCP surface | 158 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
 
 ### Tool surface still to integrate
 
 These are the §2 gaps that remain after the 2026-10-31/11-01 round (terrain, building pads, mesh import, attributes,
 keynotes, models, links, issues, IFC export options are already in):
 
-1. **Construction**: roof, stair, ramp, railing, grid/grid system, slab opening, wall settings and profiles.
-2. **Drafting and annotations**: line, polyline, arc/circle, rectangle, fill, text, dimensions, marks, leaders, tags,
-   revision clouds, north arrows, scale bars.
-3. **Documentation**: drawing settings/rename/delete, sheet data/title block/placements/legends/symbols/purpose,
-   schedule definitions, DWG export.
-4. **Attributes and graphics**: assigning materials, surfaces and composites; classifications; types write;
-   layer management; renovation filters; visibility, overrides and pen sets (some gated).
-5. **Project control**: explicit `versions.save` and milestones, option creation (not acceptance), saved views, cut
-   planes, hide/isolate, measure and trace reference.
-6. **Underlays and pictures in 3D**.
+1. **Construction**: done (D129): roofs, stairs, ramps, railings, grids/grid systems, slab openings and wall
+   heights (`create.roof/stair/ramp/railing/grid/grid_axis/slab_opening`, `elements.set_wall_height`). Wall
+   profiles and the `configure` settings still have no tools.
+2. **Drafting and annotations**: done (D129): lines, polylines, arcs, circles, rectangles, fills, text,
+   dimensions, marks, leaders, tags and the symbol pack (revision clouds, north arrows, scale bars,
+   angle/radius/diameter/level/spot).
+3. **Documentation**: drawings and sheets are covered; drawing rename/delete, title-block/legend/symbol editing,
+   schedule definitions and DWG export still have no tools.
+4. **Attributes and graphics**: done (D130): materials and composites, classifications, layer management,
+   purposes, graphics state and tables. Types write, renovation filters and some visibility/override switches
+   are still gated.
+5. **Project control**: done for `versions.save`, milestones, option creation and switching (D130); saved views,
+   cut planes, hide/isolate, measure and trace reference still have no tools (the app owns that view state).
+6. **Underlays and pictures in 3D**: still to do.
 
 ### Sessions and remote
 

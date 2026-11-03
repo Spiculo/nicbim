@@ -79,6 +79,49 @@ def options(session):
     return bridge(V.options)
 
 
+@tool("versions.save", {"required": ["message"], "properties": {
+    "message": {"type": "string", "description": "What changed and why, for the architect."}}}, writes=True)
+def save(session, message):
+    """Save the open model as a new version in the current option (the pre-commit checks run first)."""
+    _versioned()
+    r = bridge(V.save_version, message)
+    r.pop("ok", None)
+    return r
+
+
+@tool("versions.create_option", {"required": ["name"], "properties": {
+    "name": {"type": "string", "description": "A short option name, e.g. \"Facade B\"."}}}, writes=True)
+def create_option(session, name):
+    """Create a design option from the current version and switch to it."""
+    _versioned()
+    return bridge(V.create_option, name)
+
+
+@tool("versions.switch_option", {"required": ["name"], "properties": {
+    "name": {"type": "string", "description": "An option name (versions.options lists them)."}}})
+def switch_option(session, name):
+    """Switch the open model to another design option."""
+    _versioned()
+    return bridge(V.switch_option, name)
+
+
+@tool("versions.milestone_create", {"required": ["name"], "properties": {
+    "name": {"type": "string", "description": "Milestone name (Concept, Schematic, DD...)."},
+    "message": {"type": "string", "description": "An optional message."}}}, writes=True)
+def milestone_create(session, name, message=""):
+    """Tag the current version as a milestone."""
+    _versioned()
+    return bridge(V.create_milestone, name, message)
+
+
+@tool("versions.milestone_delete", {"required": ["name"], "properties": {
+    "name": {"type": "string"}}}, writes=True)
+def milestone_delete(session, name):
+    """Delete a milestone tag (the version stays)."""
+    _versioned()
+    return bridge(V.delete_milestone, name)
+
+
 @tool("versions.milestones", {})
 def milestones(session):
     """List the milestones (named versions such as Concept or Schematic design)."""
