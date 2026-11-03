@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D202 plus explicit overrides for the final items.
+after D123–D203 plus explicit overrides for the final items.
 
-**Summary: 185 done, 21 deferred, 3 blocked.**
+**Summary: 186 done, 20 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -231,4 +231,4 @@ after D123–D202 plus explicit overrides for the final items.
 | 20. Automation and customisation | Plugins / add-ons | **Deferred** |  |
 | 20. Automation and customisation | Customisable shortcuts, toolbars and workspaces | **Done** | Help › *Keyboard shortcuts* lists, rebinds and resets keys (per user); View › *Workspaces* saves and reapplies panel layouts (D131); View › *Toolbars* shows/hides and remembers them (D135). `test_shortcuts.cpp` and `test_preferences.cpp` verify all three. |
 | 20. Automation and customisation | UI languages | **Done** | English and Spanish |
-| 20. Automation and customisation | AI assistant | **Deferred** | [08](08-future.md) |
+| 20. Automation and customisation | AI assistant | **Done** | D203: the in-app Assistant panel (View > Panels > Assistant) drives the same live agent tools as the CLI and MCP server, with Anthropic or OpenAI-compatible providers and keys in the OS credential store; the whole tool catalogue, review bar, undo steps and session worktrees are in place. Tests: `tests/python/test_agent_credentials.py`, `test_agent_modify.py`, `test_agent_sessions.py` |

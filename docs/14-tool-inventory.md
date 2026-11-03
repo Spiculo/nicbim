@@ -335,7 +335,7 @@ release notes, so check before relying on a single cell.
 | Plugins / add-ons | all | ⬜ | P2 | |
 | Customisable shortcuts, toolbars and workspaces | all | ✅ | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. D135: View > *Toolbars* shows or hides each toolbar and remembers the choice. D187 verifies all three with `test_shortcuts.cpp` (rebind/reset) and `test_preferences.cpp` (workspace and toolbar round-trips) |
 | UI languages | all | ✅ | P0 | English and Spanish |
-| AI assistant | AC RV VW | 🔮 | — | [08](08-future.md) |
+| AI assistant | AC RV VW | ✅ | — | D203: the in-app Assistant panel drives the same live agent tools as the CLI and MCP server, with Anthropic or OpenAI-compatible providers, keys in the OS credential store, a review bar, undo steps and session worktrees (`tests/python/test_agent_credentials.py`, `test_agent_modify.py`, `test_agent_sessions.py`) |
 
 ---
 
