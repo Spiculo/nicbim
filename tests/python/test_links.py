@@ -7,7 +7,9 @@ import json
 import ifcopenshell
 import ifcopenshell.api.geometry
 import ifcopenshell.util.element
+import ifcopenshell.util.placement
 import ifcopenshell.util.representation
+import ifcopenshell.util.unit
 import ifcopenshell.validate
 import numpy as np
 import pytest
@@ -273,6 +275,19 @@ def test_monitored_copies_sync_and_report_conflicts(tmp_path):
     assert len(synced["applied"]) == 1 and synced["applied"][0]["guid"] == host.GlobalId
     assert host.Name == "From source v2"
     assert call(L.monitor_status)["sources"][0]["changed"] is False
+
+    # A geometry/placement change is applied too.
+    source_model = ifcopenshell.open(str(src))
+    source_wall = source_model.by_type("IfcWall")[0]
+    matrix = ifcopenshell.util.placement.get_local_placement(source_wall.ObjectPlacement)
+    matrix[0][3] += 5.0
+    ifcopenshell.api.geometry.edit_object_placement(source_model, product=source_wall, matrix=matrix, is_si=True)
+    source_model.write(str(src))
+    moved = call(L.sync_monitored, "safe", False)
+    assert len(moved["applied"]) == 1
+    host_matrix = ifcopenshell.util.placement.get_local_placement(host.ObjectPlacement)
+    expected = float(matrix[0][3]) / ifcopenshell.util.unit.calculate_unit_scale(f)
+    assert float(host_matrix[0][3]) == pytest.approx(expected, abs=1e-3)
 
     # A local edit and a source edit conflict: safe leaves the host alone.
     host.Name = "Edited here"

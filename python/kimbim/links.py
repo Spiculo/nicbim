@@ -28,6 +28,7 @@ import ifcopenshell.api.spatial
 import ifcopenshell.geom
 import ifcopenshell.util.element
 import ifcopenshell.util.placement
+import ifcopenshell.util.unit
 import numpy as np
 
 from . import app_bridge as B
@@ -228,25 +229,62 @@ def _transform_matrix(transform: dict) -> np.ndarray:
                      [0.0, 0.0, scale, transform["z"]], [0.0, 0.0, 0.0, 1.0]])
 
 
+def _geometry_signature(product) -> str:
+    """A stable hash of a product's **local** mesh (no placement), for geometry change detection."""
+    try:
+        settings = ifcopenshell.geom.settings()
+        shape = ifcopenshell.geom.create_shape(settings, product)
+        verts = np.round(np.asarray(shape.geometry.verts, dtype=float), 6).tobytes()
+        faces = np.asarray(shape.geometry.faces, dtype=np.int32).tobytes()
+        return hashlib.sha1(verts + faces).hexdigest()
+    except Exception:  # noqa: BLE001 - a product without a shape has the empty signature
+        return hashlib.sha1(b"").hexdigest()
+
+
 def _signature(product) -> str:
-    """A stable hash of a product's attributes, types and property sets (for monitor comparisons)."""
+    """A stable hash of a product's attributes, property sets and local geometry."""
     try:
         info = product.get_info(recursive=False)
-        # References (Representation, ObjectPlacement, OwnerHistory) are entities whose ids need not
-        # survive a rewrite; monitor attributes and properties, which is what copy/monitor syncs.
         info = {k: v for k, v in info.items()
                 if k not in ("id", "Representation", "ObjectPlacement", "OwnerHistory")
                 and isinstance(v, (str, int, float, bool, type(None)))}
         props = {k: v for k, v in ifcopenshell.util.element.get_psets(product, psets_only=True).items()
                  if not k.startswith("KIMBIM_")}
-        payload = json.dumps({"info": info, "psets": props}, sort_keys=True, default=str, separators=(",", ":"))
+        placement = None
+        if product.ObjectPlacement is not None:
+            placement = np.round(ifcopenshell.util.placement.get_local_placement(product.ObjectPlacement), 6).tolist()
+        payload = json.dumps({"info": info, "psets": props, "geometry": _geometry_signature(product),
+                              "placement": placement}, sort_keys=True, default=str, separators=(",", ":"))
     except Exception:  # noqa: BLE001 - a malformed product must not break the report
         payload = repr(product)
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
 
-def _apply_source(element, product) -> None:
-    """Copy a source product's attributes and non-KimBim property sets onto its host copy."""
+def _replace_geometry(element, product, transform: dict) -> None:
+    """Replace a host copy's representations and placement with the source product's (link placement applied)."""
+    if product.Representation is not None:
+        definition = ifcopenshell.util.element.copy_deep(B._model, product.Representation)
+        reps = list(definition.Representations or ())
+        if element.Representation is not None:
+            for old in list(element.Representation.Representations or ()):
+                ifcopenshell.api.geometry.unassign_representation(B._model, product=element, representation=old)
+                ifcopenshell.api.geometry.remove_representation(B._model, representation=old)
+        for rep in reps:
+            ifcopenshell.api.geometry.assign_representation(B._model, product=element, representation=rep)
+        try:
+            B._model.remove(definition)  # the representations are assigned now; drop the empty shell
+        except Exception:  # noqa: BLE001
+            pass
+    if product.ObjectPlacement is not None:
+        local = ifcopenshell.util.placement.get_local_placement(product.ObjectPlacement)
+        local[:3, 3] *= ifcopenshell.util.unit.calculate_unit_scale(product.file)
+        ifcopenshell.api.geometry.edit_object_placement(
+            B._model, product=element, matrix=_transform_matrix(transform) @ local, is_si=True)
+
+
+def _apply_source(element, product, transform: dict) -> None:
+    """Copy a source product's attributes, property sets, geometry and placement onto its host copy."""
+    _replace_geometry(element, product, transform)
     for name, value in product.get_info(recursive=False).items():
         if name in ("id", "type", "GlobalId", "Representation", "ObjectPlacement", "OwnerHistory"):
             continue
@@ -342,6 +380,7 @@ def explode_link(guid: str, options_json: str = "") -> str:
                 continue
             if new.ObjectPlacement is not None:
                 local = ifcopenshell.util.placement.get_local_placement(new.ObjectPlacement)
+                local[:3, 3] *= ifcopenshell.util.unit.calculate_unit_scale(source)
                 ifcopenshell.api.geometry.edit_object_placement(
                     f, product=new, matrix=matrix @ local, is_si=True)
             ifcopenshell.api.spatial.assign_container(f, products=[new], relating_structure=container)
@@ -350,7 +389,7 @@ def explode_link(guid: str, options_json: str = "") -> str:
                 "Source": path, "SourceGuid": product.GlobalId, "SourceClass": product.is_a(),
                 "SourceName": product.Name or "", "SourceHash": source_hash,
                 "SourceSignature": _signature(product), "HostSignature": _signature(new),
-                "Synced": _now(), "Link": guid})
+                "Transform": json.dumps(transform), "Synced": _now(), "Link": guid})
             copies.append(new)
         if not copies:
             raise ValueError("no source product could be copied")
@@ -409,8 +448,8 @@ def monitor_status() -> str:
 def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
     """Bring host copies up to date with their source files.
 
-    A copy whose source changed but whose host was not edited takes the source's **attributes and
-    properties** (not geometry); a copy edited in the host and in the source is a **conflict**:
+    A copy whose source changed but whose host was not edited takes the source's **attributes,
+    properties, local geometry and placement**; a copy edited in the host and in the source is a **conflict**:
     `strategy` "safe" leaves it alone, "source" lets the source win, "host" keeps the host edits and
     resolves it. Removed source elements are reported (or their host copies deleted with
     `remove_orphans`); added source elements cannot be matched and are reported. One undo step."""
@@ -445,14 +484,15 @@ def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
                               "name": element.Name or "", "class": product.is_a()})
             continue
         if host_changed and strategy == "host":
-            applies.append((element, product, source_sig, "host_kept"))
+            applies.append((element, product, source_sig, "host_kept", source,
+                            _parse_transform(data.get("Transform"))))
             continue
-        applies.append((element, product, source_sig, "synced"))
+        applies.append((element, product, source_sig, "synced", source, _parse_transform(data.get("Transform"))))
     made = {}
 
     def action():
-        for element, product, source_sig, state in applies:
-            _apply_source(element, product)
+        for element, product, source_sig, state, _source, transform in applies:
+            _apply_source(element, product, transform)
             pset = B._own_pset(element, MONITOR_PSET)
             if pset is not None:
                 ifcopenshell.api.pset.edit_pset(B._model, pset=pset, properties={
@@ -463,7 +503,7 @@ def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
                 element = B._model.by_guid(item["guid"])
                 ifcopenshell.api.root.remove_product(B._model, product=element)
         return len(applies) + (len(removed) if remove_orphans else 0), \
-            [e.GlobalId for e, _p, _s, _st in applies], \
+            [e.GlobalId for e, *_rest in applies], \
             [item["guid"] for item in removed] if remove_orphans else []
 
     try:
@@ -472,7 +512,7 @@ def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
         return A._fail(f"{type(ex).__name__}: {ex}")
     made["applied"] = [{"guid": element.GlobalId, "source_guid": product.GlobalId,
                         "name": element.Name or "", "state": state}
-                       for element, product, _sig, state in applies]
+                       for element, product, _sig, state, _source, _transform in applies]
     try:
         for source in json.loads(monitor_status())["sources"]:
             for item in source.get("added") or []:
