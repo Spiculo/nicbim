@@ -40,7 +40,7 @@ from .objbuild import ObjectError, _translate
 PSET = "KIMBIM_LibraryObject"
 PARAMETERS = "Parameters"  # the Properties panel group (its edits go to set_object_parameter)
 CATEGORIES = (("furniture", "Furniture"), ("lighting", "Lighting"), ("sanitary", "Sanitary"), ("kitchen", "Kitchen"),
-              ("site", "People, trees and cars"), ("office", "Office library"),
+              ("site", "People, plants and cars"), ("office", "Office library"),
               ("project", "Project"))
 
 BUNDLED = pathlib.Path(__file__).with_name("bundled_objects")

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D191 plus explicit overrides for the final items.
+after D123–D192 plus explicit overrides for the final items.
 
-**Summary: 174 done, 32 deferred, 3 blocked.**
+**Summary: 175 done, 31 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -127,7 +127,7 @@ after D123–D191 plus explicit overrides for the final items.
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
 | 7. Site | Building pad / cut-and-fill | **Done** | D116 flattens a polygonal terrain part to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad against the pre-pad surface (`pad_cut_fill`, agent `terrain.pad_volumes`), shown in the dialog's status line. |
 | 7. Site | Hardscape, paths, parking | **Deferred** |  |
-| 7. Site | Plants and landscape | **Deferred** |  |
+| 7. Site | Plants and landscape | **Done** | D192: bundled *Shrub* and *Hedge* objects in the site category (tree was already there), with IFC geographic/proxy types, body and plan symbol; plant objects place on any level like the rest of the library |
 | 7. Site | North direction, sun study | **Done** | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |
 | 8. Objects and libraries | Library browser (thumbnails, search, categories) | **Done** | D86: Library panel |
 | 8. Objects and libraries | Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | **Done** | D86/D99: 23 objects as `.kimobj`, a material per part (D97); the chair fully customisable; D167 adds a *Lighting* category with floor and table lamps (IfcLightFixtureType). |

@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "shrub",
+ "name": {"en": "Shrub", "es": "Arbusto"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcGeographicElementType", "USERDEFINED", "SHRUB"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "SHRUB"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.2},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.8},
+  {"key": "trunk", "kind": "length", "label": {"en": "Trunk diameter", "es": "Diámetro del tronco"}, "default": 0.08}
+ ],
+ "parts": [
+  {"id": "trunk", "cylinder": {"cx": "width / 2", "cy": "width / 2", "z": 0, "r": "trunk / 2", "h": "height * 0.3"}},
+  {"id": "lower", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.8", "width / 2 * 0.8"], "n": 10}], "z": "height * 0.15", "h": "height * 0.35"}},
+  {"id": "upper", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.55", "width / 2 * 0.55"], "n": 10}], "z": "height * 0.5", "h": "height * 0.4"}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width / 2"}},
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "trunk / 2"}}
+ ]
+}
