@@ -566,6 +566,17 @@ def _people(group, top) -> None:
     uni.add_argument("--dest", default="", help="the installation folder (default: the user's application folder)")
     uni.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
     uni.set_defaults(handler=_uninstall)
+    sg = top.add_parser("sign", help="code-sign the packaged app with your certificate",
+                        description="Sign kimbim-app with a .pfx/.p12 certificate (signtool on Windows, "
+                                    "osslsigncode on Linux). The password can come from KIMBIM_SIGN_PASSWORD.")
+    sg.add_argument("--exe", default="", help="the app executable (default: dist/KimBim's)")
+    sg.add_argument("--certificate", default="", help="the .pfx/.p12 certificate (required)")
+    sg.add_argument("--password", default=None, help="certificate password (prefer KIMBIM_SIGN_PASSWORD)")
+    sg.add_argument("--timestamp", default="http://timestamp.digicert.com", help="RFC 3161 timestamp URL")
+    sg.add_argument("--tool", default="", help="signtool/osslsigncode path (default: PATH)")
+    sg.add_argument("--verify", action="store_true", help="verify the signature after signing")
+    sg.add_argument("--dry-run", action="store_true", help="print the command without signing")
+    sg.set_defaults(handler=_sign)
     hp = top.add_parser("help", help=GROUP_HELP["help"], description=GROUP_HELP["help"] + ".")
     hp.add_argument("--markdown", action="store_true", help="print the agent tools as a Markdown table")
     hp.set_defaults(handler=_help)
@@ -994,6 +1005,40 @@ def _uninstall(ns) -> int:
     for action in result["actions"]:
         print(action)
     print("dry run: nothing changed" if result["dry_run"] else f"removed {result['path']}")
+    return 0
+
+
+def _sign(ns) -> int:
+    from .. import installer, signing
+
+    exe = ns.exe
+    if not exe:
+        try:
+            exe = str(installer.app_executable(installer.default_source()))
+        except ValueError as e:
+            print(_t("cli_error", message=e), file=sys.stderr)
+            return 1
+    if not ns.certificate:
+        print(_t("cli_error", message="give --certificate (a .pfx/.p12 file)"), file=sys.stderr)
+        return 1
+    try:
+        result = signing.plan(exe, ns.certificate, password=ns.password, timestamp=ns.timestamp,
+                              tool=ns.tool or None, verify=ns.verify)
+        print(result["display"])
+        if ns.verify:
+            print(result["verify_display"])
+        if ns.dry_run:
+            print("dry run: nothing signed")
+            return 0
+        signing.sign(exe, ns.certificate, password=ns.password, timestamp=ns.timestamp,
+                     tool=ns.tool or None)
+        print(f"signed {exe}")
+        if ns.verify:
+            signing.verify(exe, tool=ns.tool or None)
+            print("signature verified")
+    except (OSError, ValueError) as e:
+        print(_t("cli_error", message=e), file=sys.stderr)
+        return 1
     return 0
 
 
