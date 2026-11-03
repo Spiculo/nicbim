@@ -38,6 +38,19 @@ def area(points):
     return abs(sum(points[i][0] * points[(i + 1) % n][1] - points[(i + 1) % n][0] * points[i][1] for i in range(n))) / 2
 
 
+def test_area_plan_gross_and_rentable(flat):
+    """D182: gross is the rooms' union, rentable their sum."""
+    assert call("create_room", flat["l1"], 2.0, 3.0, "Living room")["ok"]
+    assert call("create_room", flat["l1"], 7.0, 3.0, "Kitchen")["ok"]
+    plan = call("area_plan", flat["l1"])
+    assert plan["ok"], plan
+    rooms = call("rooms", flat["l1"])["rooms"]
+    assert plan["rentable"] == pytest.approx(sum(r["area"] for r in rooms), abs=1e-3)
+    assert plan["gross"] == pytest.approx(plan["rentable"], abs=1e-3)
+    assert len(plan["rooms"]) == 2 and {r["name"] for r in plan["rooms"]} == {"Living room", "Kitchen"}
+    assert not call("area_plan", "nope")["ok"]
+
+
 def test_room_from_a_click_inside_walls(flat):
     r = call("create_room", flat["l1"], 2.0, 3.0, "Living room")
     assert r["ok"], r

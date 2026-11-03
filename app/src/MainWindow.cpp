@@ -629,6 +629,10 @@ void MainWindow::buildMenus()
     QAction* schedule = file->addAction(tr("&Room schedule..."));
     schedule->setObjectName(QStringLiteral("actionRoomSchedule"));
     connect(schedule, &QAction::triggered, this, &MainWindow::roomScheduleDialog);
+    QAction* areaPlan = file->addAction(tr("&Area plan...")); // D182
+    areaPlan->setObjectName(QStringLiteral("actionAreaPlan"));
+    areaPlan->setToolTip(tr("Gross and rentable areas of the active level, with each room"));
+    connect(areaPlan, &QAction::triggered, this, &MainWindow::areaPlanDialog);
     QAction* schedules = file->addAction(tr("Sc&hedules..."));
     schedules->setObjectName(QStringLiteral("actionSchedules"));
     schedules->setToolTip(tr("Doors, windows, walls, slabs, columns, beams, rooms or your own schedules, with quantities"));
@@ -7360,6 +7364,38 @@ bool MainWindow::roomAt(QPointF p, const QString& name)
 void MainWindow::roomScheduleDialog()
 {
     openSchedules(QStringLiteral("rooms")); // the room schedule is one of the schedules (D77)
+}
+
+void MainWindow::areaPlanDialog()
+{
+    const QJsonObject r = bridge("area_plan", {m_levels->activeStorey()});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Area plan"), r.value("error").toString());
+        return;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Area plan"));
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* totals = new QFormLayout();
+    totals->addRow(tr("Gross area:"), new QLabel(tr("%1 m²").arg(r.value("gross").toDouble(), 0, 'f', 2), &dialog));
+    totals->addRow(tr("Rentable area:"), new QLabel(tr("%1 m²").arg(r.value("rentable").toDouble(), 0, 'f', 2), &dialog));
+    layout->addLayout(totals);
+    const QJsonArray items = r.value("rooms").toArray();
+    auto* table = new QTableWidget(items.size(), 3, &dialog);
+    table->setHorizontalHeaderLabels({tr("Number"), tr("Name"), tr("Area (m²)")});
+    table->verticalHeader()->setVisible(false);
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    for (int i = 0; i < items.size(); ++i) {
+        const QJsonObject room = items.at(i).toObject();
+        table->setItem(i, 0, new QTableWidgetItem(room.value("number").toString()));
+        table->setItem(i, 1, new QTableWidgetItem(room.value("name").toString()));
+        table->setItem(i, 2, new QTableWidgetItem(QString::number(room.value("area").toDouble(), 'f', 2)));
+    }
+    layout->addWidget(table);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+    dialog.exec();
 }
 
 SchedulesDialog* MainWindow::openSchedules(const QString& scheme)

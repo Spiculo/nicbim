@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D181 plus explicit overrides for the final items.
+after D123–D182 plus explicit overrides for the final items.
 
-**Summary: 165 done, 41 deferred, 3 blocked.**
+**Summary: 166 done, 40 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -119,7 +119,7 @@ after D123–D181 plus explicit overrides for the final items.
 | 6. Building elements | Curtain walls (grids, mullions, panels) | **Done** | D109/D116/D126/D169/D170: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, a panel building material, and copy-to-all/move-bay panel commands. |
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
 | 6. Building elements | Zones / rooms / spaces (auto from walls, area, name, number) | **Done** | Slice 18 (D65): Room tool (Z), stamps, room schedule |
-| 6. Building elements | Area plans (gross, rentable) | **Deferred** |  |
+| 6. Building elements | Area plans (gross, rentable) | **Done** | D182: File > *Area plan...* shows the level's gross area (rooms' union or slab footprint) and rentable area (sum of rooms), with each room's area (`area_plan`, agent `areas.plan`). |
 | 6. Building elements | Generic object (extrusion, revolve, mesh import) | **Deferred** | Core done; remainder deferred. D120: File > *Import mesh...* brings OBJ, ASCII/binary STL and ASCII PLY as `IfcBuildingElementProxy` bodies (scale/rotation/position); extrusion/revolve authoring is still part of the parametric object system ([16](16-parametric-objects.md)) |
 | 6. Building elements | Morph / free-form modelling, push/pull | **Deferred** | Massing and odd shapes |
 | 6. Building elements | Conceptual massing with floor areas | **Deferred** |  |

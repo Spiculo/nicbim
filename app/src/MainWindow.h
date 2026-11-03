@@ -652,6 +652,7 @@ private:
     void keynotesDialog();
     void projectInfoDialog();
     void roomScheduleDialog();
+    void areaPlanDialog(); // D182: gross and rentable areas
     void exportSheetDialog(bool pdf);
     void exportAllSheetsDialog();
     void publishSheetSetDialog(); // D172: publish a chosen set of sheets

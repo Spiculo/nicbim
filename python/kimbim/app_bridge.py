@@ -1071,6 +1071,7 @@ from . import keynotes as _keynotes  # noqa: E402
 from . import attributes as _attributes  # noqa: E402
 from . import solids as _solids  # noqa: E402
 from . import revisions as _revisions  # noqa: E402
+from . import areas as _areas  # noqa: E402
 _EXPORTS = {
     "authoring": (
         "add_grid_axis",
@@ -1251,6 +1252,7 @@ _EXPORTS = {
         "set_sheet_revision",
         "sheet_revision",
     ),
+    "areas": ("area_plan",),
     "editing": (
         "align_elements",
         "array_elements",

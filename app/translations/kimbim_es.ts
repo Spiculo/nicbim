@@ -5550,6 +5550,31 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>La profundidad limitada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="632" />
+      <source>&amp;Area plan...</source>
+      <translation>&amp;Plan de áreas...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="634" />
+      <source>Gross and rentable areas of the active level, with each room</source>
+      <translation>Superficies bruta y alquilable del nivel activo, con cada habitación</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7370" />
+      <source>Area plan</source>
+      <translation>Plan de áreas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7379" />
+      <source>Gross area:</source>
+      <translation>Superficie bruta:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7380" />
+      <source>Rentable area:</source>
+      <translation>Superficie alquilable:</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

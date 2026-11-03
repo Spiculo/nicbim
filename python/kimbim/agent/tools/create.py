@@ -242,3 +242,9 @@ def room(session, level, at, name=""):
     x, y = point(session, at, "at")
     r = bridge(rooms.create_room, level_guid(level), x, y, name)
     return {"guids": [r["guid"]]}
+
+
+@tool("areas.plan", {"required": ["level"], "properties": {"level": _LEVEL}})
+def area_plan(session, level):
+    """Gross and rentable areas of a level (m2), with each room's area."""
+    return bridge(B.area_plan, level_guid(level))
