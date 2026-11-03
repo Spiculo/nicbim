@@ -1521,7 +1521,7 @@ _EXPORTS = {
         "worksheets",
     ),
     "curved_walls": ("create_curved_wall",),
-    "sun": ("sun_state",),
+    "sun": ("sun_state", "sun_frames"),
     "configure": (
         "flip_walls",
         "inject",

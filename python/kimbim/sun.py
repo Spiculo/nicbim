@@ -53,6 +53,57 @@ def position(latitude: float, longitude: float, when: dt.datetime, utc_offset: f
     return azimuth % 360, altitude
 
 
+MAX_FRAMES = 240  # D198: a sun animation stops at this many frames
+
+
+def frames(start: str, end: str, step, settings: dict | None = None) -> list[dict]:
+    """Sun positions for a time range: `start`/`end` HH:MM, `step` whole minutes. Each frame carries
+    its time, azimuth, altitude and plan direction (for the 3D light), at most MAX_FRAMES."""
+    from . import settings as S
+    from . import symbols
+
+    try:
+        begin_time = dt.time.fromisoformat(str(start))
+        end_time = dt.time.fromisoformat(str(end))
+        minutes = int(step)
+    except (TypeError, ValueError):
+        raise ValueError("the times are HH:MM and the step is whole minutes") from None
+    if not 1 <= minutes <= 1440:
+        raise ValueError("the step must be between 1 and 1440 minutes")
+    st = {**DEFAULT, **((settings or S.current()).get("sun") or {})}
+    day = dt.date.fromisoformat(str(st["date"]))
+    begin = dt.datetime.combine(day, begin_time)
+    finish = dt.datetime.combine(day, end_time)
+    if finish < begin:
+        finish += dt.timedelta(days=1)
+    north = math.radians(symbols.true_north_angle())
+    out = []
+    when = begin
+    while when <= finish:
+        if len(out) >= MAX_FRAMES:
+            raise ValueError(f"too many frames (limit {MAX_FRAMES})")
+        azimuth, altitude = position(float(st["latitude"]), float(st["longitude"]), when, float(st["utc_offset"]))
+        bearing = math.radians(azimuth) - north
+        alt = math.radians(max(altitude, 0.0))
+        out.append({"time": when.strftime("%H:%M"), "azimuth": round(azimuth, 3), "altitude": round(altitude, 3),
+                    "up": altitude > 0,
+                    "direction": [round(math.sin(bearing) * math.cos(alt), 9),
+                                  round(math.cos(bearing) * math.cos(alt), 9), round(math.sin(alt), 9)]})
+        when += dt.timedelta(minutes=minutes)
+    return out
+
+
+def sun_frames(start: str, end: str, step) -> str:
+    """The sun animation's frames for the project's place and date: {ok, frames} or {ok: false}."""
+    from . import app_bridge as B
+
+    try:
+        data = frames(start, end, step)
+    except ValueError as ex:
+        return B._dump({"ok": False, "error": str(ex)})
+    return B._dump({"ok": True, "frames": data})
+
+
 def sun(settings: dict | None = None) -> dict:
     """{azimuth, altitude, direction [x, y, z] (plan, towards the sun), up (above the horizon)} for
     the project's sun setting."""

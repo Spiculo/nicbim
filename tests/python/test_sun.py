@@ -26,6 +26,22 @@ def test_solar_position_matches_known_values():
     assert az == pytest.approx(90, abs=2) and alt == pytest.approx(0, abs=1.5)
 
 
+def test_sun_animation_frames():
+    """D198: a time range yields ordered sun frames with a plan direction for the 3D light."""
+    assert call("new_project", "Sun")["ok"]
+    assert call("set_project_settings", json.dumps({"sun": {
+        "mode": "time", "latitude": 51.5, "longitude": -0.13, "date": "2026-06-21", "time": "09:00",
+        "utc_offset": 1}}))["ok"]
+    r = call("sun_frames", "09:00", "11:00", 60)
+    assert r["ok"], r
+    assert [f["time"] for f in r["frames"]] == ["09:00", "10:00", "11:00"]
+    assert r["frames"][0]["altitude"] < r["frames"][2]["altitude"]  # rising towards noon
+    assert all(len(f["direction"]) == 3 for f in r["frames"])
+    assert not call("sun_frames", "09:00", "11:00", 0)["ok"]
+    assert not call("sun_frames", "9", "11:00", 60)["ok"]
+    assert not call("sun_frames", "09:00", "13:00", 1)["ok"]  # over the 240-frame limit
+
+
 def test_the_sun_setting_turns_with_true_north():
     assert call("new_project", "Sun")["ok"]
     assert call("set_project_settings", json.dumps({"sun": {"mode": "custom", "azimuth": 90, "altitude": 30}}))["ok"]

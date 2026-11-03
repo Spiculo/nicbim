@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D197 plus explicit overrides for the final items.
+after D123–D198 plus explicit overrides for the final items.
 
-**Summary: 180 done, 26 deferred, 3 blocked.**
+**Summary: 181 done, 25 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -200,7 +200,7 @@ after D123–D197 plus explicit overrides for the final items.
 | 16. Visualisation | Real-time textured 3D | **Done** | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
 | 16. Visualisation | Photorealistic rendering | **Done** | D146 image export, D147 ray tracing, D149 path tracing. Offline CPU render farm is future. |
 | 16. Visualisation | AI visualiser (sketch to image) | **Deferred** |  |
-| 16. Visualisation | Sun / shadow studies, animations | **Deferred** | Core done; remainder deferred. D96: sun shadows for a place, date and time; no animations |
+| 16. Visualisation | Sun / shadow studies, animations | **Done** | D96: sun shadows for a place, date and time; D198: View > *Sun animation...* renders PNG frames as the sun moves over a time range, at the chosen size and folder |
 | 16. Visualisation | Walkthrough video, VR | **Blocked** | OpenXR SDK is available, but there is no runtime/headset in the environment; deferred (docs/20-vr-feasibility.md). |
 | 17. Collaboration and versions | Save version, History, Compare (colours and list) | **Done** | KimBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |
 | 17. Collaboration and versions | Milestones, object history, before/after | **Done** | Slice 20 (M5) |

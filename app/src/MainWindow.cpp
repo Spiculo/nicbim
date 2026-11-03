@@ -43,6 +43,7 @@
 #include <QHBoxLayout>
 #include <QSlider>
 #include <QSpinBox>
+#include <QTimeEdit>
 #include <QVBoxLayout>
 #include <QListWidget>
 #include <QDir>
@@ -880,6 +881,10 @@ void MainWindow::buildMenus()
     sunAction->setObjectName(QStringLiteral("actionSun"));
     sunAction->setToolTip(tr("Where the sun is: an azimuth and altitude, or a place, date and time"));
     connect(sunAction, &QAction::triggered, this, &MainWindow::sunDialog);
+    QAction* sunAnimation = view->addAction(tr("Sun &animation...")); // D198
+    sunAnimation->setObjectName(QStringLiteral("actionSunAnimation"));
+    sunAnimation->setToolTip(tr("Render the active view frame by frame as the sun moves over a time range"));
+    connect(sunAnimation, &QAction::triggered, this, &MainWindow::sunAnimationDialog);
     QAction* trueWeights = view->addAction(tr("&True line weights"));
     trueWeights->setObjectName(QStringLiteral("actionTrueLineWeights"));
     trueWeights->setCheckable(true);
@@ -10943,6 +10948,98 @@ void MainWindow::sunDialog()
         {"altitude", altitude->value()}, {"latitude", latitude->value()}, {"longitude", longitude->value()},
         {"date", when->date().toString(Qt::ISODate)}, {"time", when->time().toString(QStringLiteral("HH:mm"))},
         {"utc_offset", offset->value()}});
+}
+
+void MainWindow::sunAnimationDialog()
+{
+    if (!m_viewport) {
+        m_status->showMessage(tr("Open a 3D view first"));
+        return;
+    }
+    const QJsonObject current = m_settings.value("sun").toObject();
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Sun animation"));
+    auto* form = new QFormLayout(&dialog);
+    auto* start = new QTimeEdit(QTime::fromString(
+        current.value("time").toString(QStringLiteral("09:00")), QStringLiteral("HH:mm")), &dialog);
+    start->setObjectName(QStringLiteral("sunAnimationStart"));
+    start->setDisplayFormat(QStringLiteral("HH:mm"));
+    auto* end = new QTimeEdit(QTime(17, 0), &dialog);
+    end->setObjectName(QStringLiteral("sunAnimationEnd"));
+    end->setDisplayFormat(QStringLiteral("HH:mm"));
+    auto* step = new QSpinBox(&dialog);
+    step->setObjectName(QStringLiteral("sunAnimationStep"));
+    step->setRange(1, 240);
+    step->setValue(30);
+    step->setSuffix(tr(" min"));
+    auto* width = new QSpinBox(&dialog);
+    width->setRange(128, 8192);
+    width->setValue(1280);
+    auto* height = new QSpinBox(&dialog);
+    height->setRange(128, 8192);
+    height->setValue(720);
+    auto* folder = new QLineEdit(&dialog);
+    auto* browse = new QToolButton(&dialog);
+    browse->setText(tr("..."));
+    auto* folderRow = new QHBoxLayout;
+    folderRow->addWidget(folder);
+    folderRow->addWidget(browse);
+    auto* folderWidget = new QWidget(&dialog);
+    folderWidget->setLayout(folderRow);
+    form->addRow(tr("From:"), start);
+    form->addRow(tr("To:"), end);
+    form->addRow(tr("Every:"), step);
+    form->addRow(tr("Width (px):"), width);
+    form->addRow(tr("Height (px):"), height);
+    form->addRow(tr("Folder:"), folderWidget);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(browse, &QToolButton::clicked, &dialog, [&] {
+        const QString chosen = QFileDialog::getExistingDirectory(&dialog, tr("Sun animation folder"), folder->text());
+        if (!chosen.isEmpty())
+            folder->setText(chosen);
+    });
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    QString destination = folder->text().trimmed();
+    if (destination.isEmpty()) {
+        destination = QFileDialog::getExistingDirectory(this, tr("Sun animation folder"));
+        if (destination.isEmpty())
+            return;
+    }
+    const QJsonObject r = bridge("sun_frames", {start->time().toString(QStringLiteral("HH:mm")),
+                                                end->time().toString(QStringLiteral("HH:mm")),
+                                                QString::number(step->value())});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Sun animation"), r.value("error").toString());
+        return;
+    }
+    const QJsonArray frames = r.value("frames").toArray();
+    QProgressDialog progress(tr("Rendering the sun animation..."), tr("Cancel"), 0, int(frames.size()), this);
+    progress.setWindowModality(Qt::WindowModal);
+    int written = 0;
+    for (const auto& value : frames) {
+        if (progress.wasCanceled())
+            break;
+        const QJsonObject frame = value.toObject();
+        const QJsonArray direction = frame.value("direction").toArray();
+        if (direction.size() == 3)
+            m_viewport->scene()->setSunDirection(direction[0].toDouble(), direction[1].toDouble(), direction[2].toDouble());
+        progress.setLabelText(tr("Frame %1 of %2 (%3)")
+            .arg(written + 1).arg(frames.size()).arg(frame.value("time").toString()));
+        const QImage image = m_viewport->renderImage(width->value(), height->value());
+        const QString file = QDir(destination).filePath(
+            QStringLiteral("sun-%1.png").arg(written, 3, 10, QLatin1Char('0')));
+        if (!image.isNull() && image.save(file))
+            written++;
+        progress.setValue(written);
+        QApplication::processEvents();
+    }
+    applySun(); // put the project's own sun back
+    m_status->showMessage(tr("%n sun frame(s) written to %1", nullptr, written)
+        .arg(QDir::toNativeSeparators(destination)));
 }
 
 bool MainWindow::setSun(const QJsonObject& sun)

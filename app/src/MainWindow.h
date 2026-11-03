@@ -258,6 +258,7 @@ public:
     bool setSun(const QJsonObject& sun);  // D96: the project's sun (sun.py's setting), applied to the 3D light
     void applySun();
     void sunDialog();
+    void sunAnimationDialog(); // D198: render frames as the sun moves over a time range
     bool pickUpSettings(); // D97: Archicad's eyedropper, from the one selected element
     bool injectSettings(); // and syringe, into the selection
     // D98: Archicad's Grid System on the active level (one undo step).
