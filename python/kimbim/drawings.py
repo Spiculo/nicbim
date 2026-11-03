@@ -156,6 +156,7 @@ def drawings() -> str:
             out.append({"guid": d.GlobalId, "name": d.Name or "", "kind": s["kind"], "depth": s["depth"],
                         "auto": s["auto"], "side": s.get("side") or "", "points": s["points"], "look": s["look"],
                         "bulges": s.get("bulges") or [], "tilt": float(s.get("tilt", 0.0)),
+                        "crop": s.get("crop"),
                         "scale": int(s.get("scale") or (G.DETAIL_SCALE if detail else G.SCALE)),
                         **({"region": s.get("region") or [], "source_level": s.get("storey", "")} if detail else {}),
                         **({"storey": s["storey"], "elevation": round(G.storey_elevation(storey), 6),
@@ -384,6 +385,37 @@ def set_drawing_scale(guid: str, scale) -> str:
         G.write_settings(B._model, d, s)
 
     return _edit(guid, change)
+
+
+def set_drawing_crop(guid: str, x0=None, y0=None, x1=None, y1=None) -> str:
+    """Crop a drawing's view to a rectangle in paper millimetres (x0, y0, x1, y1); all zero clears
+    the crop. One undo step."""
+    values = [x0, y0, x1, y1]
+    rect = None
+    if not all(v in (None, "", 0, 0.0) for v in values):
+        try:
+            ax, ay, bx, by = (float(v) for v in values)
+        except (TypeError, ValueError):
+            return A._fail("bad crop")
+        if not all(math.isfinite(v) for v in (ax, ay, bx, by)):
+            return A._fail("bad crop")
+        ax, bx = sorted((ax, bx))
+        ay, by = sorted((ay, by))
+        if bx - ax < 1e-6 or by - ay < 1e-6:
+            return A._fail("the crop rectangle is too small")
+        rect = [ax, ay, bx, by]
+
+    def change(d):
+        s = G.settings_of(d)
+        if s is None:
+            raise ValueError("not a drawing")
+        s["crop"] = rect
+        G.write_settings(B._model, d, s)
+
+    try:
+        return _edit(guid, change)
+    except ValueError as ex:
+        return A._fail(str(ex))
 
 
 def set_drawing_depth(guid: str, depth) -> str:
@@ -988,7 +1020,8 @@ def raw_drawing(guid: str, include_json: str = "", hidden=()) -> dict:
     s = G.settings_of(d)
     view_depth = resolve_view_depth(s.get("storey", ""), s) if s and s.get("kind") in ("plan", "detail") \
         else G.PLAN_DEPTH
-    key = (*_state_key(), include_json or "", plan_symbols, view_depth)  # state, elements, D91's choices
+    key = (*_state_key(), include_json or "", plan_symbols, view_depth,
+           tuple(s.get("crop") or ()))  # state, elements, D91's choices, D190's crop
     hit = _cache.get(guid, {}).get(key)
     if hit is not None:
         return {"ok": True, "svg": _drafted(hit, d), "cached": True}
@@ -1164,7 +1197,8 @@ def generate_plan_drawing(guid: str, geometry_json: str) -> str:
     detail = s["kind"] == "detail"
     scale = max(1, int(s.get("scale") or (G.DETAIL_SCALE if detail else G.SCALE)))
     hidden = hidden_by_scale(scale)
-    key = (*_state_key(), "plan", scale, tuple(sorted(hidden)), hash(geometry_json))
+    key = (*_state_key(), "plan", scale, tuple(sorted(hidden)), hash(geometry_json),
+           tuple(s.get("crop") or ()))
     hit = _cache.get(guid, {}).get(key)
     if hit is None:
         try:
@@ -1183,7 +1217,10 @@ def generate_plan_drawing(guid: str, geometry_json: str) -> str:
     if detail:  # content in metres: a pen's millimetres are that many metres over the scale
         svg = graphics.style_svg(_drafted(hit, d), graphics.resolve(), 1000.0 / scale)
     else:
-        svg = graphics.style_svg(G.crop(_drafted(hit, d)), graphics.resolve(), 1.0)
+        svg = G.crop(_drafted(hit, d))
+        if s.get("crop"):  # D190: the hand crop overrides the automatic tight fit
+            svg = G.crop_to(svg, s["crop"])
+        svg = graphics.style_svg(svg, graphics.resolve(), 1.0)
     return B._dump({"ok": True, "svg": svg, "cached": False})
 
 
@@ -1264,7 +1301,8 @@ def generate_view_drawing(guid: str, geometry_json: str) -> str:
         return A._fail("not a section, elevation or 3D document")
     scale = max(1, int(s.get("scale") or G.SCALE))
     hidden = hidden_by_scale(scale)
-    key = (*_state_key(), "view", scale, tuple(sorted(hidden)), hash(geometry_json))
+    key = (*_state_key(), "view", scale, tuple(sorted(hidden)), hash(geometry_json),
+           tuple(s.get("crop") or ()))
     hit = _cache.get(guid, {}).get(key)
     if hit is None:
         try:
@@ -1277,5 +1315,8 @@ def generate_view_drawing(guid: str, geometry_json: str) -> str:
         while len(entries) > _CACHE_SIZE:
             entries.pop(next(iter(entries)))
         hit = svg
-    svg = graphics.style_svg(G.crop(_drafted(hit, d)), graphics.resolve(), 1.0)
+    svg = G.crop(_drafted(hit, d))
+    if s.get("crop"):  # D190: the hand crop overrides the automatic tight fit
+        svg = G.crop_to(svg, s["crop"])
+    svg = graphics.style_svg(svg, graphics.resolve(), 1.0)
     return B._dump({"ok": True, "svg": svg, "cached": False})

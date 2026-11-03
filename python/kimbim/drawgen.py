@@ -257,6 +257,17 @@ def _region_of(value) -> list:
     return out
 
 
+def _crop_of(value) -> list | None:
+    """A drawing's hand crop (paper mm, [x0, y0, x1, y1]) from its pset's JSON; None when unset."""
+    r = _json_list(value)
+    if len(r) != 4 or not all(isinstance(v, (int, float)) for v in r):
+        return None
+    x0, y0, x1, y1 = (float(v) for v in r)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return [x0, y0, x1, y1]
+
+
 def _path_world(drawing, local):
     """Stored local marker points (u along the camera's X, v along its horizontal look normal) to
     world plan metres. Moving or rotating the drawing moves its path with it."""
@@ -281,14 +292,16 @@ def settings_of(drawing) -> dict | None:
         up = _json_list(data.get("Up")) or [0.0, 0.0, 1.0]
         return {"kind": "3d", "points": [], "look": [], "depth": None, "auto": False, "side": "",
                 "direction": [float(v) for v in direction[:3]], "up": [float(v) for v in up[:3]],
-                "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0}
+                "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0,
+                "crop": _crop_of(data.get("Crop"))}
     if data["Kind"] in ("plan", "detail"):
         depth = data.get("ViewDepth")
         out = {"kind": data["Kind"], "points": [], "look": [], "depth": None, "auto": True, "side": "",
                "storey": (data.get("Storey") if data["Kind"] == "plan" else data.get("SourceLevel")) or "",
                "cut": float(data.get("Cut") or PLAN_CUT),
                "view_depth": None if depth is None or depth < 0 else float(depth),
-               "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0}
+               "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0,
+               "crop": _crop_of(data.get("Crop"))}
         if data["Kind"] == "detail":
             out["region"] = _region_of(data.get("Region"))
             out["scale"] = int(data.get("Scale") or DETAIL_SCALE)
@@ -303,7 +316,8 @@ def settings_of(drawing) -> dict | None:
     return {"kind": data["Kind"], "points": points, "look": look,
             "depth": None if depth is None or depth < 0 else float(depth), "auto": bool(data.get("Auto")),
             "side": data.get("Side") or "", "scale": int(data.get("Scale") or SCALE), "bulges": bulges,
-            "tilt": float(data.get("Tilt") or 0.0), "base": float(data.get("Base") or 0.0)}
+            "tilt": float(data.get("Tilt") or 0.0), "base": float(data.get("Base") or 0.0),
+            "crop": _crop_of(data.get("Crop"))}
 
 
 def auto_marker(side: str, bounds):
@@ -459,6 +473,8 @@ def write_settings(f, drawing, s):
     pset = f.by_id(pset["id"]) if pset else ifcopenshell.api.pset.add_pset(f, product=drawing, name=PSET)
     props = {"Kind": s["kind"], "Depth": -1.0 if s["depth"] is None else float(s["depth"]), "Auto": bool(s["auto"]),
              "Tilt": float(s.get("tilt", 0.0)), "Base": float(s.get("base", 0.0)),
+             "Crop": (json.dumps([round(float(v), 3) for v in s["crop"]], separators=(",", ":"))
+                      if s.get("crop") else ""),
              "Scale": int(s.get("scale") or (DETAIL_SCALE if s["kind"] == "detail" else SCALE)),
              **({"Side": s["side"]} if s.get("side") else {})}
     if s["kind"] == "3d":
@@ -1223,6 +1239,22 @@ def crop(svg: str, margin: float = 5.0) -> str:
                   svg, count=1)
 
 
+def crop_to(svg: str, rect) -> str:
+    """Override the SVG's viewBox with a hand-drawn rectangle (paper mm, x0, y0, x1, y1)."""
+    try:
+        x0, y0, x1, y1 = (float(v) for v in rect)
+    except (TypeError, ValueError):
+        return svg
+    x0, x1 = sorted((x0, x1))
+    y0, y1 = sorted((y0, y1))
+    w, h = x1 - x0, y1 - y0
+    if w <= 1e-9 or h <= 1e-9:
+        return svg
+    return re.sub(r'<svg([^>]*?) width="[^"]*" height="[^"]*" viewBox="[^"]*"',
+                  f'<svg\\1 width="{w:.2f}mm" height="{h:.2f}mm" viewBox="{x0:.3f} {y0:.3f} {w:.3f} {h:.3f}"',
+                  svg, count=1)
+
+
 def detail_frame(f, drawing, s, svg: str) -> str:
     """Frame a detail: its plan's content in world metres (x, -y: SVG's y grows downward), the viewBox
     the region's bounding box in metres and the width/height the region at the detail's scale in mm,
@@ -1269,7 +1301,7 @@ def generate(f, drawing, include=None, bounds=None, plan_symbols: bool = True,
     t0 = time.perf_counter()
     s = settings_of(drawing)
     detail = s is not None and s["kind"] == "detail"
-    scale = max(1, int(s.get("scale") or DETAIL_SCALE)) if detail else SCALE
+    scale = max(1, int(s.get("scale") or (DETAIL_SCALE if detail else SCALE))) if s is not None else SCALE
     products = drawn_products(f)
     if s is not None and s["kind"] in ("plan", "detail"):
         # D91: an object's own depth below may reach further than the view's: open the camera for it.
@@ -1288,8 +1320,9 @@ def generate(f, drawing, include=None, bounds=None, plan_symbols: bool = True,
         wanted = set(include)
         products = [p for p in products if p.GlobalId in wanted]
     gs = ifcopenshell.geom.settings(ELEMENT_HIERARCHY=True)
-    # A detail is drawn at its own scale (1:20), so the page is bigger in mm by the same factor.
-    page = f"{round(1189 * SCALE / scale)}x{round(841 * SCALE / scale)}" if detail else "1189x841"
+    # A detail or a drawing at another scale is drawn at that scale, so the page grows in mm.
+    page = (f"{round(1189 * SCALE / scale)}x{round(841 * SCALE / scale)}"
+            if scale != SCALE else "1189x841")
     opts = {
         "dimensionality": W.CURVES_SURFACES_AND_SOLIDS, "iterator-output": W.NATIVE,
         "apply-default-materials": True, "elevation-ref-guid": drawing.GlobalId,
@@ -1321,6 +1354,8 @@ def generate(f, drawing, include=None, bounds=None, plan_symbols: bool = True,
     if s is not None:
         svg = overlay(f, drawing, s, svg, set(include) if include is not None else None, plan_symbols)
     svg = detail_frame(f, drawing, s, svg) if detail else crop(svg)
+    if not detail and s is not None and s.get("crop"):
+        svg = crop_to(svg, s["crop"])
     return svg, {"elements": count, "prepare_s": round(t1 - t0, 3), "geometry_s": round(t2 - t1, 3),
                  "hlr_s": round(t3 - t2, 3), "total_s": round(time.perf_counter() - t0, 3)}
 

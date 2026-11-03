@@ -843,6 +843,14 @@ void MainWindow::buildMenus()
         regenerateDrawing(key);
         m_status->showMessage(tr("Drawing scale 1:%1").arg(scale));
     });
+    QAction* drawingCrop = view->addAction(tr("Crop &drawing...")); // D190
+    drawingCrop->setObjectName(QStringLiteral("actionCropDrawing"));
+    drawingCrop->setToolTip(tr("Crop the active drawing to a rectangle of the page (paper millimetres)"));
+    connect(drawingCrop, &QAction::triggered, this, &MainWindow::cropDrawingDialog);
+    QAction* clearDrawingCropAction = view->addAction(tr("Clear drawing crop")); // D190
+    clearDrawingCropAction->setObjectName(QStringLiteral("actionClearDrawingCrop"));
+    clearDrawingCropAction->setToolTip(tr("Show the whole drawing again"));
+    connect(clearDrawingCropAction, &QAction::triggered, this, &MainWindow::clearDrawingCrop);
     QAction* through = view->addAction(tr("Select &hidden elements too"));
     through->setObjectName(QStringLiteral("actionSelectThrough"));
     through->setCheckable(true);
@@ -1917,6 +1925,91 @@ void MainWindow::clearCropRegion()
     it->crop = Bnd_Box();
     applyCutsTo(m_viewport, *it);
     m_status->showMessage(tr("Crop region cleared"));
+}
+
+void MainWindow::cropDrawingDialog()
+{
+    const QString key = currentViewKey();
+    if (!m_drawingViews.contains(key)) {
+        m_status->showMessage(tr("Open a drawing first: its page is what this crops"));
+        return;
+    }
+    double x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0;
+    for (const auto& v : bridge("drawings").value("drawings").toArray()) {
+        const QJsonObject d = v.toObject();
+        if (d.value("guid").toString() != key)
+            continue;
+        const QJsonArray crop = d.value("crop").toArray();
+        if (crop.size() == 4) {
+            x0 = crop.at(0).toDouble();
+            y0 = crop.at(1).toDouble();
+            x1 = crop.at(2).toDouble();
+            y1 = crop.at(3).toDouble();
+        }
+    }
+    if (x1 <= x0 || y1 <= y0) { // no crop yet: offer the top-left quarter of an A1 page
+        x0 = 0.0;
+        y0 = 0.0;
+        x1 = 594.0;
+        y1 = 420.0;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Crop drawing"));
+    auto* form = new QFormLayout(&dialog);
+    auto spin = [&](double value) {
+        auto* box = new QDoubleSpinBox(&dialog);
+        box->setRange(-1e6, 1e6);
+        box->setDecimals(1);
+        box->setSuffix(tr(" mm"));
+        box->setValue(value);
+        return box;
+    };
+    auto* left = spin(std::min(x0, x1));
+    auto* top = spin(std::min(y0, y1));
+    auto* right = spin(std::max(x0, x1));
+    auto* bottom = spin(std::max(y0, y1));
+    form->addRow(tr("Left:"), left);
+    form->addRow(tr("Top:"), top);
+    form->addRow(tr("Right:"), right);
+    form->addRow(tr("Bottom:"), bottom);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    if (right->value() - left->value() < 1e-6 || bottom->value() - top->value() < 1e-6) {
+        showError(tr("Crop drawing"), tr("The crop needs a positive width and height."));
+        return;
+    }
+    const QJsonObject r = bridge("set_drawing_crop",
+        {key, QString::number(left->value()), QString::number(top->value()),
+         QString::number(right->value()), QString::number(bottom->value())});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Crop drawing"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    regenerateDrawing(key);
+    m_status->showMessage(tr("Drawing cropped"));
+}
+
+void MainWindow::clearDrawingCrop()
+{
+    const QString key = currentViewKey();
+    if (!m_drawingViews.contains(key)) {
+        m_status->showMessage(tr("Open a drawing first: its crop is what this clears"));
+        return;
+    }
+    const QJsonObject r = bridge("set_drawing_crop", {key, QStringLiteral("0"), QStringLiteral("0"),
+                                                       QStringLiteral("0"), QStringLiteral("0")});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Clear drawing crop"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    regenerateDrawing(key);
+    m_status->showMessage(tr("Drawing crop cleared"));
 }
 
 void MainWindow::viewRangeDialog()

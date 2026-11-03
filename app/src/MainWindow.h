@@ -740,6 +740,8 @@ private:
     void horizontalCutDialog();
     void cropRegionDialog(); // D134: crop the active view to an X/Y rectangle
     void clearCropRegion();
+    void cropDrawingDialog(); // D190: crop the active drawing to a paper rectangle
+    void clearDrawingCrop();
     void viewRangeDialog(); // D136: the active view's top and bottom
     void clearViewRange();
     CutTool m_cutTool = CutTool::None;

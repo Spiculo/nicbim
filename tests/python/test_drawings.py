@@ -98,6 +98,36 @@ def test_model_view_options_and_drawing_scale():
     assert furniture.GlobalId not in svg and 'ifc:guid="other"' in svg
 
 
+def test_a_drawing_can_be_cropped_to_a_paper_rectangle():
+    """D190: a hand crop replaces the automatic tight fit; clearing it restores the whole drawing."""
+    assert call("new_project", "Casa")["ok"]
+    plan = drawings()["Level 1 Floor Plan"]
+    assert plan["crop"] is None
+    assert call("set_drawing_crop", plan["guid"], 10, 20, 210, 120)["ok"]
+    updated = drawing(plan["guid"])
+    assert updated["crop"] == pytest.approx([10.0, 20.0, 210.0, 120.0])
+    pset = ifcopenshell.util.element.get_pset(b._model.by_guid(plan["guid"]), "KIMBIM_Drawing")
+    assert pset["Crop"] == "[10.0,20.0,210.0,120.0]"
+
+    geom = {"cut": [{"guid": plan["guid"], "loops": [[[0, 0], [4, 0], [4, 3], [0, 3]]]}],
+            "proj": [{"guid": plan["guid"], "loops": [[[5, 0], [7, 0], [7, 2], [5, 2]]]}],
+            "bounds": [0, 0, 7, 3]}
+    r = call("generate_plan_drawing", plan["guid"], json.dumps(geom))
+    assert r["ok"], r
+    assert 'viewBox="10.000 20.000 200.000 100.000"' in r["svg"]
+    assert 'width="200.00mm" height="100.00mm"' in r["svg"]
+
+    # out-of-order corners are normalised; a degenerate rectangle is refused
+    assert call("set_drawing_crop", plan["guid"], 210, 120, 10, 20)["ok"]
+    assert drawing(plan["guid"])["crop"] == pytest.approx([10.0, 20.0, 210.0, 120.0])
+    assert call("set_drawing_crop", plan["guid"], 10, 10, 10, 20)["ok"] is False
+
+    assert call("set_drawing_crop", plan["guid"], 0, 0, 0, 0)["ok"]
+    assert drawing(plan["guid"])["crop"] is None
+    r = call("generate_plan_drawing", plan["guid"], json.dumps(geom))
+    assert r["ok"] and 'viewBox="10.000 20.000' not in r["svg"]
+
+
 def test_a_3d_document_stores_its_direction_and_up():
     assert call("new_project", "Casa")["ok"]
     r = call("create_3d", json.dumps([1, -1, -1]), json.dumps([0, 0, 1]), "Axonometric")

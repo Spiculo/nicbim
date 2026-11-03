@@ -215,7 +215,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Floor plan drawings (one per story, cut plane, symbols) | all | ✅ | P1 | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
-| Section views (marker in plan, linked view) | all | 🟡 | P1 | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; SVG from IfcOpenShell's serializer, in a tab (D60, D61). Not yet: scale setting, detail level, cropping by hand |
+| Section views (marker in plan, linked view) | all | ✅ | P1 | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; D138 scale and detail level; D190 the scale in generation and a hand crop (View > *Crop drawing...*). SVG from IfcOpenShell's serializer, in a tab (D60, D61) |
 | Elevations (building, interior) | all | ✅ | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). D173 adds a depth choice to the Section/Elevation tool strip (infinite, cut only or a limited depth); a limited depth gives an interior elevation |
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |

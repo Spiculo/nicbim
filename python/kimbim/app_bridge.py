@@ -1194,6 +1194,7 @@ _EXPORTS = {
         "generate_view_drawing",
         "rename_drawing",
         "set_drawing_base",
+        "set_drawing_crop",
         "set_drawing_depth",
         "set_drawing_hlr",
         "set_drawing_path",

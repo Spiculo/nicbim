@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D188 plus explicit overrides for the final items.
+after D123–D190 plus explicit overrides for the final items.
 
-**Summary: 172 done, 34 deferred, 3 blocked.**
+**Summary: 173 done, 33 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -156,7 +156,7 @@ after D123–D188 plus explicit overrides for the final items.
 | 10. Attributes and graphics standards | Surfaces / textures for 3D and rendering | **Done** | D96: surfaces (colour, transparency, shine, picture texture, box-mapped) per face in 3D, per-side overrides (D97); no rendering |
 | 10. Attributes and graphics standards | Attribute manager (import/export standards between projects) | **Done** | D121: Graphics > *Attribute manager...* exports/imports pens, line types, fills, styles, purposes, layers, materials, surfaces and composites (merge or replace, group selection) |
 | 11. Drawings (views made from the model) | Floor plan drawings (one per story, cut plane, symbols) | **Done** | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
-| 11. Drawings (views made from the model) | Section views (marker in plan, linked view) | **Deferred** | Core done; remainder deferred. Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; SVG from IfcOpenShell's serializer, in a tab (D60, D61). Not yet: scale setting, detail level, cropping by hand |
+| 11. Drawings (views made from the model) | Section views (marker in plan, linked view) | **Done** | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; D138 scale and detail level; D190 the drawing scale in generation and a hand crop (View > *Crop drawing...*). SVG from IfcOpenShell's serializer, in a tab (D60, D61) |
 | 11. Drawings (views made from the model) | Elevations (building, interior) | **Done** | Template N/S/E/W elevations, *Create elevations*, Elevation tool (Shift+V); D173 adds the depth choice to the tool strip (infinite, cut only or a limited depth, the last being an interior elevation). |
 | 11. Drawings (views made from the model) | Detail views (enlarged, cropped, with extra 2D) | **Done** | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | 11. Drawings (views made from the model) | Drafting views (2D only) | **Done** | D98: worksheets |
