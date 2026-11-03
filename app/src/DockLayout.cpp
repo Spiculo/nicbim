@@ -157,6 +157,21 @@ ads::CDockWidget* DockLayout::addView(const QString& key, const QString& title, 
     return dock;
 }
 
+ads::CDockWidget* DockLayout::addViewBeside(const QString& key, const QString& title, QWidget* widget,
+    bool closable, const QString& referenceKey)
+{
+    ads::CDockWidget* dock = makeDock(key, title, widget);
+    dock->setFeature(ads::CDockWidget::DockWidgetClosable, closable);
+    ads::CDockWidget* reference = m_manager->findDockWidget(referenceKey);
+    ads::CDockAreaWidget* area = reference && reference->dockAreaWidget()
+        ? reference->dockAreaWidget() : m_center.data();
+    m_manager->addDockWidget(ads::RightDockWidgetArea, dock, area);
+    m_views << key;
+    if (m_current.isEmpty())
+        m_current = key;
+    return dock;
+}
+
 QWidget* DockLayout::view(const QString& key) const
 {
     ads::CDockWidget* dock = m_views.contains(key) ? m_manager->findDockWidget(key) : nullptr;

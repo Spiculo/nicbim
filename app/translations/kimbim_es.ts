@@ -5115,6 +5115,21 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>Split view side by side</source>
+      <translation>Dividir la vista en paralelo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="992" />
+      <source>Open another viewport of this view beside it; each keeps its own camera and cuts</source>
+      <translation>Abrir otra ventana de esta vista al lado; cada una conserva su cámara y cortes</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6163" />
+      <source>Split view %1</source>
+      <translation>Vista dividida %1</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="985" />
       <source>&amp;Walk mode</source>
       <translation>Modo &amp;caminata</translation>
     </message>

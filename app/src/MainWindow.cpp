@@ -18,6 +18,8 @@
 #include "TitleBar.h"
 #include "ViewHost.h"
 
+#include <Graphic3d_Camera.hxx>
+
 #include <QApplication>
 #include <QScreen>
 #include <QCloseEvent>
@@ -1025,6 +1027,11 @@ void MainWindow::buildMenus()
     connect(view, &QMenu::aboutToShow, this, [this, walk] {
         walk->setChecked(m_viewport && m_viewport->isWalkMode());
     });
+    QAction* split = view->addAction(tr("Split view side by side")); // D153
+    split->setObjectName(QStringLiteral("actionSplitView"));
+    split->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Backslash));
+    split->setToolTip(tr("Open another viewport of this view beside it; each keeps its own camera and cuts"));
+    connect(split, &QAction::triggered, this, &MainWindow::splitView);
     QAction* perspective = view->addAction(tr("P&erspective"));
         perspective->setObjectName(QStringLiteral("actionPerspective"));
         perspective->setCheckable(true);
@@ -6126,6 +6133,37 @@ Viewport* MainWindow::openPlanTab(const QString& storey)
     m_dock->addView(key, tr("%1 plan").arg(name), host, true, newViewPlacement());
     m_dock->raise(key); // activateView(): the level, the cut, the chrome, the annotations
     return view;
+}
+
+void MainWindow::splitView()
+{
+    const QString sourceKey = currentViewKey();
+    ViewHost* source = m_hosts.value(sourceKey);
+    if (!source)
+        return; // a drawing or sheet has no 3D/plan viewport to split
+    QString base = source->storey().isEmpty() ? QStringLiteral("3d:split")
+                                              : QStringLiteral("plan:") + source->storey() + QStringLiteral(":split");
+    int n = 2;
+    while (m_hosts.contains(QStringLiteral("%1%2").arg(base).arg(n)))
+        ++n;
+    const QString key = QStringLiteral("%1%2").arg(base).arg(n);
+    auto* view = new Viewport(m_scene);
+    view->setSelectThrough(source->viewport()->selectThrough());
+    auto* host = new ViewHost(view);
+    host->setStorey(source->storey());
+    m_hosts.insert(key, host);
+    for (const auto& c : std::as_const(m_viewConnectors))
+        c(view);
+    if (source->storey().isEmpty()) {
+        const Handle(Graphic3d_Camera) cam = source->viewport()->view()->Camera();
+        view->setCamera(cam->Eye(), cam->Center(), cam->Up(), !cam->IsOrthographic(),
+                        cam->FOVy(), cam->Scale());
+    } else {
+        view->setPlanView(source->viewport()->planElevation());
+    }
+    m_cuts.insert(view, m_cuts.value(source->viewport()));
+    m_dock->addViewBeside(key, tr("Split view %1").arg(n), host, true, sourceKey);
+    m_dock->raise(key);
 }
 
 void MainWindow::closePlanTabs(const QStringList& keep)

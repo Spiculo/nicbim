@@ -35,6 +35,9 @@ public:
     // Center views (3D, plans, drawings, sheets), keyed ("3d", "plan:<guid>", "<drawing guid>", "sheet:A01").
     ads::CDockWidget* addView(const QString& key, const QString& title, QWidget* widget, bool closable,
         Placement placement = Placement::AfterCurrent);
+    // D153: another view in a new area to the right of `referenceKey` (side-by-side split).
+    ads::CDockWidget* addViewBeside(const QString& key, const QString& title, QWidget* widget, bool closable,
+        const QString& referenceKey);
     QWidget* view(const QString& key) const;     // nullptr if none
     QString keyOf(const QWidget* widget) const;  // "" if none
     QStringList viewKeys() const;                // in creation order

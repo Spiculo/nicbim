@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D152 plus explicit overrides for the final items.
+after D123–D153 plus explicit overrides for the final items.
 
-**Summary: 137 done, 69 deferred, 3 blocked.**
+**Summary: 138 done, 68 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -54,7 +54,7 @@ after D123–D152 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Hover info (name, type, level) | **Done** |  |
 | 2. Viewing and navigation | Colour by property, class or type | **Done** | D73 override rules (property, class, kind, layer, material) |
 | 2. Viewing and navigation | Show multiple levels at once (ghost story / underlay) | **Done** | D98: View › Trace reference (level below or above, snappable); Level above/below Ctrl+Up/Down |
-| 2. Viewing and navigation | Split views / several windows side by side | **Deferred** |  |
+| 2. Viewing and navigation | Split views / several windows side by side | **Done** | D153: View > *Split view side by side* (Ctrl+\\) duplicates the active 3D or plan view in a new area, copying its camera/plan and cuts; drawings and sheets are not split. |
 | 2. Viewing and navigation | Navigator / project browser (tree of views, sheets) | **Deferred** | Core done; remainder deferred. Model tree, levels, views; no sheets |
 | 3. Selection | Click, Ctrl/Shift add and toggle | **Done** |  |
 | 3. Selection | Box selection (visible only; Alt goes through) | **Done** | D52 |

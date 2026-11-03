@@ -2069,6 +2069,24 @@ private slots:
         QVERIFY(w.close());
     }
 
+    // D153: a split view is a second viewport beside the active one, with its own key and camera.
+    void splitViewCreatesASecondViewport()
+    {
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        QVERIFY(w.newProject());
+        const QStringList before = w.dockLayout()->viewKeys();
+        action(w, "actionSplitView")->trigger();
+        const QStringList after = w.dockLayout()->viewKeys();
+        QCOMPARE(after.size(), before.size() + 1);
+        const QString key = after.last();
+        QVERIFY(key.startsWith(QLatin1String("3d:split")));
+        QVERIFY(w.dockLayout()->view(key));
+        QVERIFY(w.viewport());
+        QVERIFY(w.viewport()->isWalkMode() == false);
+        emit w.dockLayout()->closeRequested(key);
+        QCOMPARE(w.dockLayout()->viewKeys().size(), before.size());
+    }
+
     // D152: walk mode is a first-person camera: W/S move it and Esc leaves.
     void walkModeMovesTheCamera()
     {
@@ -3197,7 +3215,7 @@ private slots:
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
-                 "actionDrawingScale", "actionExportImage", "actionWalkMode",
+                 "actionDrawingScale", "actionExportImage", "actionWalkMode", "actionSplitView",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }

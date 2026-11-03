@@ -633,6 +633,7 @@ private:
     void linksDialog();
     void rebuildLinkWatch();   // D140: keep the linked files watched for live edits
     void refreshLinksIfStale();
+    void splitView();          // D153: another viewport beside the active one
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();
