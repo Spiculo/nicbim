@@ -181,7 +181,7 @@ release notes, so check before relying on a single cell.
 | Parametric object authoring | AC RV VW | ✅ | new | D99: `.kimobj` definitions (parameters, formulas, parts, anchors, repeats, variants), stored on their types; D101: the Object Editor (new objects, edit office and project objects, *Customise a copy* of bundled or placed ones, save to the project or the office library). Archicad GDL, Revit Family Editor, Vectorworks plug-in objects. Design: [16](16-parametric-objects.md) |
 | Office libraries (shared folder or repo) | AC RV VW | ✅ | P1 | D99: a configured folder of `.kimobj` files and IFC type files, listed, placed and versioned (D100); a git repo is a normal folder synchronized by git. Tested by `tests/python/test_library.py::test_office_library_kimobj_and_ifc_types` |
 | Online object catalogues (BIMobject and others) | AC RV VW | 🔮 | new | |
-| Paste between projects (with types and materials) | all | ⬜ | P1 | |
+| Paste between projects (with types and materials) | all | ✅ | P1 | D193: Ctrl+C records the source project; Ctrl+V in another project appends the elements with their types, materials, properties and geometry (`project.append_asset`), placing them on the active level at their plan position and level height, in one undo step |
 
 ## 9. Organising the model
 

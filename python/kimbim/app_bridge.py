@@ -1270,6 +1270,7 @@ _EXPORTS = {
         "mirror_elements",
         "resize_elements",
         "offset_elements",
+        "paste_from_project",
         "set_slab_outline",
         "slab_outline",
         "slab_outlines",

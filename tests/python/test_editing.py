@@ -82,6 +82,30 @@ def test_paste_onto_another_level_and_duplicate(room):
     assert d["ok"] and axis(d["guids"][0])[1] == [axis(room["w2"])[1][0] + 1, axis(room["w2"])[1][1] + 1]
 
 
+def test_paste_an_element_from_another_project(room, tmp_path):
+    """D193: copy in one project and paste in another brings its type, material and geometry."""
+    path = str(tmp_path / "source.ifc")
+    assert call("save", path)["ok"]
+    assert call("new_project", "Other")["ok"]
+    upper = call("add_storey", "Upper", 3.0)["guid"]
+    r = call("paste_from_project", path, g(room["w1"], room["slab"]), upper)
+    assert r["ok"], r
+    assert len(r["guids"]) == 2
+    from ifcopenshell.util.element import get_container
+
+    wall = b._model.by_guid(r["guids"][0])
+    assert wall.is_a("IfcWall") and get_container(wall).GlobalId == upper
+    assert ifcopenshell.util.element.get_type(wall).Name.startswith("Exterior 300")
+    assert ifcopenshell.util.element.get_material(wall) is not None  # the layered type's material
+    z = ifcopenshell.util.placement.get_local_placement(wall.ObjectPlacement)[2][3] * authoring._scale()
+    assert z == pytest.approx(3.0, abs=1e-6)  # moved onto the target level
+
+    assert call("undo")["ok"]
+    for guid in r["guids"]:
+        with pytest.raises(RuntimeError):
+            b._model.by_guid(guid)
+
+
 def test_mirror_in_place_keeps_guids_and_flips_the_door(room):
     door = b._model.by_guid(room["door"])
     hand = door.OperationType or ifcopenshell.util.element.get_type(door).OperationType

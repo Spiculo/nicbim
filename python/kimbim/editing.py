@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import json
 import math
+import os
 
 import ifcopenshell.api.geometry
+import ifcopenshell.api.project
+import ifcopenshell.api.spatial
 import ifcopenshell.geom
 import ifcopenshell.util.element
 import ifcopenshell.util.placement
@@ -91,6 +94,75 @@ def copy_elements(guids_json: str, dx, dy, dz=0.0, storey_guid: str = "") -> str
 def duplicate_elements(guids_json: str) -> str:
     """Archicad's Duplicate (Ctrl+D): a copy next to the original, offset by 1 m in x and y."""
     return copy_elements(guids_json, *DUPLICATE_OFFSET)
+
+
+def paste_from_project(path: str, guids_json: str, storey_guid: str = "") -> str:
+    """D193: paste elements copied in another project, with their types, materials, properties and
+    geometry. They land on `storey_guid` at their own plan position and level height. One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        guids = json.loads(guids_json)
+    except ValueError:
+        return A._fail("bad list of elements")
+    if not isinstance(guids, list) or not guids:
+        return A._fail("nothing to paste")
+    if not path or not os.path.isfile(path):
+        return A._fail("the copied project is no longer there")
+    target = A._by_guid(storey_guid) if storey_guid else None
+    if target is None or not target.is_a("IfcBuildingStorey"):
+        return A._fail("unknown level")
+    try:
+        source = ifcopenshell.open(path)
+    except Exception as ex:
+        return A._fail(f"could not open the copied project: {ex}")
+    source_scale = ifcopenshell.util.unit.calculate_unit_scale(source)
+
+    def elevation(storey) -> float:
+        if storey is None:
+            return 0.0
+        if storey.ObjectPlacement is not None:
+            return float(ifcopenshell.util.placement.get_local_placement(storey.ObjectPlacement)[2][3]) * source_scale
+        return float(storey.Elevation or 0.0) * source_scale
+
+    wanted = []
+    for guid in guids:
+        try:
+            e = source.by_guid(guid)
+        except (RuntimeError, TypeError):
+            continue
+        if e is not None and e.is_a("IfcProduct") and not e.is_a("IfcOpeningElement"):
+            wanted.append(e)
+    if not wanted:
+        return A._fail("the copied elements are not in that project")
+    target_z, scale = A._elevation(target), A._scale()
+    reuse: dict = {}
+    made = []
+
+    def action():
+        for e in wanted:
+            source_type = ifcopenshell.util.element.get_type(e)
+            if source_type is not None:  # bring the shared type (and its material) once
+                ifcopenshell.api.project.append_asset(B._model, library=source, element=source_type,
+                                                       reuse_identities=reuse)
+            container = ifcopenshell.util.element.get_container(e)
+            src_z = elevation(container) if container is not None and container.is_a("IfcBuildingStorey") else 0.0
+            c = ifcopenshell.api.project.append_asset(B._model, library=source, element=e, reuse_identities=reuse)
+            if c is None:
+                continue
+            if c.ObjectPlacement is not None and abs(target_z - src_z) > 1e-9:
+                m = ifcopenshell.util.placement.get_local_placement(c.ObjectPlacement)
+                m[2][3] += (target_z - src_z) / scale
+                ifcopenshell.api.geometry.edit_object_placement(B._model, product=c, matrix=m, is_si=False)
+            ifcopenshell.api.spatial.assign_container(B._model, products=[c], relating_structure=target)
+            made.append(c.GlobalId)
+        return len(made), made, []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made})
 
 
 def array_elements(guids_json: str, kind: str, params_json: str) -> str:

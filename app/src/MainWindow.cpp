@@ -8918,6 +8918,7 @@ bool MainWindow::copySelection(QPointF delta)
 void MainWindow::copyToClipboard()
 {
     m_clipboard = m_selection;
+    m_clipboardSource = m_path; // D193: paste in another project brings types and materials
     m_status->showMessage(tr("%n element(s) copied", nullptr, int(m_clipboard.size())));
 }
 
@@ -8925,6 +8926,17 @@ bool MainWindow::paste()
 {
     if (m_clipboard.isEmpty())
         return false;
+    if (!m_clipboardSource.isEmpty() && m_clipboardSource != m_path) { // D193: another project
+        const QJsonObject r = bridge("paste_from_project",
+            {m_clipboardSource, jsonList(m_clipboard), m_levels->activeStorey()});
+        if (!r.value("ok").toBool()) {
+            m_status->showMessage(tr("Could not paste: %1").arg(r.value("error").toString()));
+            return false;
+        }
+        afterCopy(r);
+        m_status->showMessage(tr("Pasted from %1").arg(QFileInfo(m_clipboardSource).fileName()));
+        return true;
+    }
     const QJsonObject r = bridge("copy_elements", {jsonList(m_clipboard), QStringLiteral("0"), QStringLiteral("0"),
         QStringLiteral("0"), m_levels->activeStorey()});
     if (!r.value("ok").toBool()) {

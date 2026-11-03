@@ -941,6 +941,7 @@ private:
     QVector<QPointF> m_annotationPoints; // the dimension/section tool's clicks so far
     QVector<double> m_sectionBulges;     // D110: one bulge per segment of the marker being drawn
     QStringList m_clipboard;            // Ctrl+C
+    QString m_clipboardSource;          // D193: the project the clipboard came from
     DockLayout* m_dock = nullptr;     // center views and side panels (D71)
     QHash<QString, ViewHost*> m_hosts; // model views by key: "3d", "plan:<guid>"
     QWidget* m_cutColumn = nullptr;    // the plan-cut slider, in the active model view
