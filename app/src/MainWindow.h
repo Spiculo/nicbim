@@ -29,6 +29,7 @@
 #include <Bnd_Box.hxx>
 
 class QAction;
+class QFileSystemWatcher;
 class QProgressDialog;
 namespace kimbim {
 
@@ -630,6 +631,8 @@ private:
     void issuesDialog();
     void linkModelDialog();
     void linksDialog();
+    void rebuildLinkWatch();   // D140: keep the linked files watched for live edits
+    void refreshLinksIfStale();
     void curtainWallDialog();
     void terrainPadDialog();
     void importMeshDialog();
@@ -778,6 +781,8 @@ private:
     void connectAgentDialog();
     ProposalBar* m_proposalBar = nullptr;
     QToolBar* m_proposalToolbar = nullptr;
+    QFileSystemWatcher* m_linkWatcher = nullptr; // D140: changed linked IFCs refresh themselves
+    QTimer* m_linkRefreshTimer = nullptr;
     QTimer* m_agentPoll = nullptr;
     bool m_agentLive = false;
     int m_agentPollTicks = 0;

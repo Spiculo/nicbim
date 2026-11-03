@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D139).**
+**Status as of `main` (2026-11-03, after D112–D140).**
 
 ## How to read it
 
@@ -295,7 +295,7 @@ release notes, so check before relying on a single cell.
 | Milestones, object history, before/after | — | ✅ | P0 | Slice 20 (M5) |
 | Combine options with conflict UI | — | ✅ | P1 | Slice 22 (D69), M5 exit |
 | Several people on one project (Teamwork, Worksharing, Project Sharing) | AC RV VW | 🔮 | P2 | Git remotes first ([08](08-future.md)) |
-| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. Not a live editable hotlink (linked elements cannot be edited in place) |
+| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. D140: linked files are watched; *Open source* opens the linked IFC in a second KimBim window, and saving it refreshes the host automatically. Linked elements are still not editable in place |
 | Copy / monitor linked elements | RV | ⬜ | new | |
 | BCF issues (import, export, viewpoints) | AC RV VW BB | ✅ | new | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | Markups and comments in the model | AC RV VW | ⬜ | new | |
@@ -361,4 +361,4 @@ What now most often stops an architect from finishing a real project, roughly in
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
 14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents and D138 adds model view options by drawing scale; rendering and VR are still to do.
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14) and a live editable hotlink.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14: rendering and VR) and in-place editing of linked elements (D140 makes the source live).

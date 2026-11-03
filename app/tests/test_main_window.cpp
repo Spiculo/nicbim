@@ -13,6 +13,7 @@
 #include <QStandardPaths>
 #include <QToolButton>
 #include <QImage>
+#include <QFileSystemWatcher>
 #include <QtTest>
 
 #include <algorithm>
@@ -3185,6 +3186,7 @@ private slots:
         kimbim::MainWindow w(nullptr, true);
         QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuWorkspaces")));
         QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuToolbars")));
+        QVERIFY(w.findChild<QFileSystemWatcher*>(QStringLiteral("linkWatcher"))); // D140
     }
 
     // BCF viewpoints restore the camera: eye, target, up and projection.

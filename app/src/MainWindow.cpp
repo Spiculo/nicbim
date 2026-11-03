@@ -83,6 +83,8 @@
 #include <QTabWidget>
 #include <QProgressDialog>
 #include <QPushButton>
+#include <QFileSystemWatcher>
+#include <QProcess>
 #include <QTimer>
 #include <QHeaderView>
 #include <QTableWidget>
@@ -308,6 +310,15 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     buildCutsToolbar();    // the level and the cuts, after the menus
     buildModelingToolbar();
     applyToolbarPreferences(); // D135: the toolbars the user chose to hide
+    // D140: a linked IFC edited in another window reloads itself here.
+    m_linkWatcher = new QFileSystemWatcher(this);
+    m_linkWatcher->setObjectName(QStringLiteral("linkWatcher"));
+    m_linkRefreshTimer = new QTimer(this);
+    m_linkRefreshTimer->setSingleShot(true);
+    m_linkRefreshTimer->setInterval(700); // editors often write in several bursts
+    connect(m_linkRefreshTimer, &QTimer::timeout, this, &MainWindow::refreshLinksIfStale);
+    connect(m_linkWatcher, &QFileSystemWatcher::fileChanged, this, [this] { m_linkRefreshTimer->start(); });
+    connect(m_linkWatcher, &QFileSystemWatcher::directoryChanged, this, [this] { m_linkRefreshTimer->start(); });
     buildVersions();       // the Versions menu and the title bar's Versions button
     buildPalette();
     applyShortcutOverrides(this); // saved user rebindings, after every menu/tool action exists
@@ -7440,6 +7451,7 @@ void MainWindow::linkModelDialog()
         return;
     }
     afterEdit(r);
+    rebuildLinkWatch();
     m_status->showMessage(tr("Linked model: %n element(s)", nullptr, r.value("elements").toInt()));
 }
 
@@ -7493,19 +7505,33 @@ void MainWindow::linksDialog()
             table->selectRow(0);
     };
     refresh();
+    rebuildLinkWatch();
     auto current = [&]() -> QJsonObject {
         const int row = table->currentRow();
         return row >= 0 && row < links.size() ? links[row].toObject() : QJsonObject();
     };
+    auto* openSource = new QPushButton(tr("Open source"), &dialog); // D140: edit the linked file live
+    openSource->setToolTip(tr("Open the linked IFC in a second KimBim window; saving it updates this link"));
     auto* updateChanged = new QPushButton(tr("Update changed"), &dialog);
     auto* update = new QPushButton(tr("Update"), &dialog);
     auto* remove = new QPushButton(tr("Unlink"), &dialog);
     auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(openSource);
     buttons->addWidget(updateChanged);
     buttons->addWidget(update);
     buttons->addWidget(remove);
     buttons->addStretch(1);
     buttons->addWidget(close);
+    connect(openSource, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject link = current();
+        const QString path = link.value("path").toString();
+        if (path.isEmpty() || !QFileInfo::exists(path)) {
+            showError(tr("Linked models"), tr("The linked file is missing."));
+            return;
+        }
+        if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), {path}))
+            showError(tr("Linked models"), tr("Could not start another KimBim window."));
+    });
     connect(updateChanged, &QPushButton::clicked, &dialog, [&] {
         const QJsonObject r = bridge("refresh_links", {QString()});
         if (!r.value("ok").toBool()) {
@@ -7545,6 +7571,46 @@ void MainWindow::linksDialog()
     });
     connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
     dialog.exec();
+}
+
+void MainWindow::rebuildLinkWatch()
+{
+    if (!m_linkWatcher)
+        return;
+    QStringList paths;
+    for (const auto& value : bridge("list_links").value("links").toArray()) {
+        const QString path = value.toObject().value("path").toString();
+        if (!path.isEmpty() && QFileInfo::exists(path))
+            paths << path;
+    }
+    paths.removeDuplicates();
+    const QStringList watched = m_linkWatcher->files();
+    if (!watched.isEmpty())
+        m_linkWatcher->removePaths(watched);
+    if (!paths.isEmpty())
+        m_linkWatcher->addPaths(paths);
+}
+
+void MainWindow::refreshLinksIfStale()
+{
+    const QJsonObject stale = bridge("stale_links");
+    int changed = 0;
+    for (const auto& value : stale.value("links").toArray())
+        if (value.toObject().value("changed").toBool())
+            ++changed;
+    if (!changed)
+        return;
+    const QJsonObject r = bridge("refresh_links", {QString()});
+    if (!r.value("ok").toBool()) {
+        m_status->showMessage(tr("Could not refresh the linked models: %1").arg(r.value("error").toString()));
+        return;
+    }
+    if (!r.value("refreshed").toArray().isEmpty()) {
+        afterEdit(r);
+        m_status->showMessage(tr("Refreshed %n linked model(s) after their file changed", nullptr,
+                                 r.value("refreshed").toArray().size()));
+    }
+    rebuildLinkWatch();
 }
 
 void MainWindow::exportIfcDialog()
@@ -10066,6 +10132,7 @@ void MainWindow::completeOpen(quint64 token)
     if (token != m_openToken)
         return;
     closeLoadProgress();
+    rebuildLinkWatch(); // D140: this model's links
     m_needsOpenRefresh = false;
     m_status->showMessage(tr("%n element(s) loaded in %1 s", nullptr, m_openElements)
                                  .arg(double(m_loadTimer.elapsed()) / 1000.0, 0, 'f', 1));

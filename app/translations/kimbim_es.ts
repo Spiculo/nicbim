@@ -3339,6 +3339,39 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6375" />
+      <source>Open source</source>
+      <translation>Abrir el origen</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7537" />
+      <source>Open the linked IFC in a second KimBim window; saving it updates this link</source>
+      <translation>Abrir el IFC vinculado en otra ventana de KimBim; al guardarlo se actualiza este vínculo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7555" />
+      <source>The linked file is missing.</source>
+      <translation>Falta el archivo vinculado.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7558" />
+      <source>Could not start another KimBim window.</source>
+      <translation>No se pudo abrir otra ventana de KimBim.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7610" />
+      <source>Could not refresh the linked models: %1</source>
+      <translation>No se pudieron actualizar los modelos vinculados: %1</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../src/MainWindow.cpp" line="7616" />
+      <source>Refreshed %n linked model(s) after their file changed</source>
+      <translation>
+        <numerusform>Modelo vinculado actualizado tras cambiar su archivo</numerusform>
+        <numerusform>Modelos vinculados actualizados tras cambiar sus archivos</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7498" />
       <source>Update changed</source>
       <translation>Actualizar cambiados</translation>
     </message>
