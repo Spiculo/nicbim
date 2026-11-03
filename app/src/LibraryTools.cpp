@@ -138,6 +138,24 @@ LibraryPanel* MainWindow::libraryPanel()
         m_prefs.save();
         applyLibraryPaths();
     });
+    connect(m_library, &LibraryPanel::downloadRequested, this, [this] { // D216
+        bool ok = false;
+        const QString url = QInputDialog::getText(this, tr("Download object"),
+            tr("Link (.kimobj or .ifc):"), QLineEdit::Normal, QString(), &ok).trimmed();
+        if (!ok || url.isEmpty())
+            return;
+        const QString folder = QFileDialog::getExistingDirectory(this, tr("Save the object in"),
+            m_prefs.value(QStringLiteral("office_library")).toString());
+        if (folder.isEmpty())
+            return;
+        const QJsonObject r = bridge("download_object", {url, folder});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Download object"), r.value("error").toString());
+            return;
+        }
+        applyLibraryPaths();
+        m_status->showMessage(tr("Downloaded %1").arg(r.value("name").toString()));
+    });
     return m_library;
 }
 

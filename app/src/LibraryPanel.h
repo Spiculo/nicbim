@@ -52,6 +52,7 @@ signals:
     void currentChanged();
     void officeLibraryRequested(); // choose the office library folder
     void ifcLibraryRequested();    // load an IFC type library file
+    void downloadRequested();      // D216: download an object from a web link
 
 private:
     QTreeWidgetItem* itemOf(const QString& id) const;

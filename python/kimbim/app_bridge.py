@@ -1555,6 +1555,7 @@ _EXPORTS = {
         "purge_materials",
     ),
     "library": (
+        "download_object",
         "library_objects",
         "library_updates",
         "object_form",

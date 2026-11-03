@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D215 plus explicit overrides for the final items.
+after D123–D216 plus explicit overrides for the final items.
 
-**Summary: 196 done, 10 deferred, 3 blocked.**
+**Summary: 197 done, 9 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -136,7 +136,7 @@ after D123–D215 plus explicit overrides for the final items.
 | 8. Objects and libraries | Saved object versions (project types, shared through the office library, quick switcher, last used) | **Done** | D100: `kimbim-versions.ifc` in the office folder; a click places the last version, a right click in the Object tool switches |
 | 8. Objects and libraries | Parametric object authoring | **Done** | D99: `.kimobj` definitions (parameters, formulas, parts, anchors, repeats, variants), stored on their types; D101: the Object Editor (new objects, edit office and project objects, *Customise a copy* of bundled or placed ones, save to the project or the office library). Archicad GDL, Revit Family Editor, Vectorworks plug-in objects. Design: [16](16-paramet... |
 | 8. Objects and libraries | Office libraries (shared folder or repo) | **Done** | D99: a configured folder of `.kimobj` files and IFC type files, listed, placed and versioned; a git repo is a normal folder synchronized by git. Tested by `tests/python/test_library.py::test_office_library_kimobj_and_ifc_types`. |
-| 8. Objects and libraries | Online object catalogues (BIMobject and others) | **Deferred** |  |
+| 8. Objects and libraries | Online object catalogues (BIMobject and others) | **Done** | D216: the Library panel's *Download...* fetches a `.kimobj` or `.ifc` object from an http(s) or file link (5 MB limit), validates it, saves it in the office folder (or a chosen one) and reloads the library; catalogue-specific accounts and APIs remain external |
 | 8. Objects and libraries | Paste between projects (with types and materials) | **Done** | D193: Ctrl+C records the source project; Ctrl+V in another project appends the elements with their types, materials, properties and geometry through `project.append_asset`, places them on the active level at their plan position and level height, and undoes in one step |
 | 9. Organising the model | Layers (shown, locked, active) | **Done** | D57 |
 | 9. Organising the model | Layer combinations / view templates | **Done** | D73 layer combinations/purposes and saved-view layer states; D186 adds named view templates (layer state, drawing scale, purpose) saved and applied from View › View templates, deletable. |

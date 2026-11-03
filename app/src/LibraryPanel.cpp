@@ -110,9 +110,15 @@ LibraryPanel::LibraryPanel(QWidget* parent)
     auto* ifc = new QPushButton(tr("Load IFC types..."), this);
     ifc->setObjectName(QStringLiteral("libraryIfc"));
     ifc->setToolTip(tr("Add the types of an IFC file (e.g. IfcFurnitureType definitions) to the office library"));
+    auto* download = new QPushButton(tr("Download..."), this); // D216
+    download->setObjectName(QStringLiteral("libraryDownload"));
+    download->setToolTip(tr("Download a .kimobj or .ifc object from a web link into the office library"));
     row->addWidget(office);
     row->addWidget(ifc);
+    row->addWidget(download);
     layout->addLayout(row);
+
+    connect(download, &QPushButton::clicked, this, &LibraryPanel::downloadRequested);
 
     connect(m_search, &QLineEdit::textChanged, this, &LibraryPanel::setFilter);
     connect(m_tree, &QTreeWidget::currentItemChanged, this, [this](QTreeWidgetItem* item) {

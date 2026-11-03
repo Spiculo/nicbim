@@ -260,6 +260,63 @@ def load_office(folder: str = "", files=()) -> None:
             removed = True
 
 
+MAX_DOWNLOAD = 5 * 1024 * 1024  # bytes; D216
+
+
+def download_object(url: str, folder: str = "") -> str:
+    """D216: download a `.kimobj` or `.ifc` object file from a web link into the office library."""
+    from urllib.parse import unquote, urlparse
+    import urllib.request
+
+    import ifcopenshell
+
+    from . import app_bridge as B
+    from . import documents
+
+    url = str(url or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https", "file"):
+        return B._dump({"ok": False, "error": "the link must start with http://, https:// or file://"})
+    name = pathlib.Path(unquote(parsed.path)).name or "object.kimobj"
+    suffix = pathlib.Path(name).suffix.lower()
+    if suffix not in (".kimobj", ".ifc"):
+        return B._dump({"ok": False, "error": "only .kimobj or .ifc object files can be downloaded"})
+    destination = folder or _office_paths.get("folder") or str(documents.data_dir() / "library")
+    try:
+        os.makedirs(destination, exist_ok=True)
+        with urllib.request.urlopen(url, timeout=20) as response:
+            data = response.read(MAX_DOWNLOAD + 1)
+    except Exception as ex:
+        return B._dump({"ok": False, "error": f"could not download the object: {ex}"})
+    if len(data) > MAX_DOWNLOAD:
+        return B._dump({"ok": False, "error": "the object file is larger than 5 MB"})
+    stem = pathlib.Path(name).stem
+    target = pathlib.Path(destination) / name
+    n = 1
+    while target.exists():
+        target = pathlib.Path(destination) / f"{stem}-{n}{suffix}"
+        n += 1
+    try:
+        target.write_bytes(data)
+        if suffix == ".kimobj":
+            definition = objects.load_file(str(target), "office", check=True)
+            ref, label = definition.ref, definition.name
+        else:
+            opened = ifcopenshell.open(str(target))
+            types = opened.by_type("IfcTypeObject")
+            if not types:
+                raise ValueError("the IFC has no type objects")
+            ref, label = str(target), (types[0].Name or target.name)
+    except Exception as ex:
+        target.unlink(missing_ok=True)
+        return B._dump({"ok": False, "error": f"not a valid object file: {ex}"})
+    reloaded = False
+    if _office_paths.get("folder") and os.path.abspath(destination) == os.path.abspath(_office_paths["folder"]):
+        load_office(_office_paths["folder"], _office_paths["files"])
+        reloaded = True
+    return B._dump({"ok": True, "path": str(target), "ref": ref, "name": label, "reloaded": reloaded})
+
+
 def office_definition(entry: dict):
     """The definition an office version (D100) was made from: the text stored on its type, or None."""
     try:
