@@ -90,6 +90,10 @@ DEFAULTS = {
     "guide_lines": [],  # D202: permanent construction guide lines {id, x1, y1, x2, y2}
     "cost_rates": {},  # D213: cost estimate rates by type name {rate, unit}
     "construction_phases": [],  # D214: 4D phases {id, name, start, end}
+    "energy_settings": {"wall_u": 0.25, "roof_u": 0.20, "floor_u": 0.25, "window_u": 1.40,
+                        "glazing_transmittance": 0.70, "air_changes": 0.50,
+                        "heating_degree_days": 2200.0, "lighting_power_density": 8.0,
+                        "occupancy_hours": 2500.0},  # D222: early-stage energy/daylight inputs
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -299,6 +303,17 @@ def _error(key: str, value) -> str | None:
             v = value.get(name, 0.0)
             if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
                 return f"the work plane's {name} must be between {lo:g} and {hi:g}"
+    if key == "energy_settings":  # D222
+        if not isinstance(value, dict):
+            return "the energy settings are a table of U-values and use figures"
+        ranges = {"wall_u": (0.0, 5.0), "roof_u": (0.0, 5.0), "floor_u": (0.0, 5.0),
+                  "window_u": (0.0, 5.0), "glazing_transmittance": (0.0, 1.0),
+                  "air_changes": (0.0, 20.0), "heating_degree_days": (0.0, 10000.0),
+                  "lighting_power_density": (0.0, 50.0), "occupancy_hours": (0.0, 8760.0)}
+        for name, (lo, hi) in ranges.items():
+            v = value.get(name, 0.0)
+            if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
+                return f"the energy setting {name} must be between {lo:g} and {hi:g}"
     if key == "sun":
         from . import sun
 

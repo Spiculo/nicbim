@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D221 plus explicit overrides for the final items.
+after D123–D222 plus explicit overrides for the final items.
 
-**Summary: 202 done, 4 deferred, 3 blocked.**
+**Summary: 203 done, 3 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -224,7 +224,7 @@ after D123–D221 plus explicit overrides for the final items.
 | 19. Analysis and checking | IDS checks | **Done** | IfcTester; IDS files kept in the project; HTML/JSON report (D81) |
 | 19. Analysis and checking | Clash detection | **Done** | Hard and clearance between classes or Find & Select criteria (D81); no BCF yet |
 | 19. Analysis and checking | Model checks (duplicates, overlaps, rooms without a number) | **Done** | Duplicates, rooms, zero-length walls, not on a level, hostless openings (D81) |
-| 19. Analysis and checking | Energy evaluation, daylight | **Deferred** |  |
+| 19. Analysis and checking | Energy evaluation, daylight | **Done** | D222: `energy.energy_report` gives a steady-state heating/lighting estimate and average daylight factor per level from the envelope and rooms, with `energy_settings` U-values/use figures; Model > *Energy and daylight...* shows the table, total and inputs. Early-stage comparison, not a compliance calculation. |
 | 19. Analysis and checking | Structural analytical model | **Deferred** | Probably out of scope for architects |
 | 20. Automation and customisation | Python console with the model API | **Done** | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | 20. Automation and customisation | Visual programming | **Deferred** | Grasshopper, Dynamo, Marionette |

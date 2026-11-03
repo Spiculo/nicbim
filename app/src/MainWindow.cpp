@@ -29,6 +29,7 @@
 #include <QFile>
 #include <QDoubleSpinBox>
 #include <QLabel>
+#include <QGroupBox>
 #include <QPainter>
 #include <QPixmap>
 #include <QToolBar>
@@ -3351,6 +3352,111 @@ void MainWindow::buildModelingToolbar()
         afterEdit(r);
         m_status->showMessage(
             tr("Face %1 moved %2 m").arg(face->currentText()).arg(distance->value()));
+    });
+    QAction* energyAction = model->addAction(tr("&Energy and daylight...")); // D222
+    energyAction->setObjectName(QStringLiteral("actionEnergyReport"));
+    energyAction->setToolTip(tr("Early-stage heating, lighting and daylight estimate from the model envelope"));
+    connect(energyAction, &QAction::triggered, this, [this] {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Energy and daylight"));
+        dialog.resize(820, 560);
+        auto* layout = new QVBoxLayout(&dialog);
+        auto* table = new QTableWidget(&dialog);
+        table->setColumnCount(7);
+        table->setHorizontalHeaderLabels({tr("Level"), tr("Floor m²"), tr("Glazing %"),
+            tr("Heating kWh"), tr("Lighting kWh"), tr("Daylight %"), tr("Notes")});
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        layout->addWidget(table, 1);
+        auto* totalLabel = new QLabel(&dialog);
+        layout->addWidget(totalLabel);
+        auto* note = new QLabel(tr("Steady-state early-stage estimate, not a compliance calculation."), &dialog);
+        note->setWordWrap(true);
+        layout->addWidget(note);
+        auto* settingsBox = new QGroupBox(tr("Inputs"), &dialog);
+        auto* form = new QFormLayout(settingsBox);
+        layout->addWidget(settingsBox);
+        const QJsonObject initial = bridge("energy_settings").value("settings").toObject();
+        auto spin = [&](const char* key, double lo, double hi, double step) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(lo, hi);
+            box->setDecimals(2);
+            box->setSingleStep(step);
+            box->setValue(initial.value(QLatin1String(key)).toDouble());
+            box->setObjectName(QStringLiteral("energy_") + QLatin1String(key));
+            return box;
+        };
+        auto* wallU = spin("wall_u", 0.0, 5.0, 0.05);
+        auto* roofU = spin("roof_u", 0.0, 5.0, 0.05);
+        auto* floorU = spin("floor_u", 0.0, 5.0, 0.05);
+        auto* windowU = spin("window_u", 0.0, 5.0, 0.1);
+        auto* transmittance = spin("glazing_transmittance", 0.0, 1.0, 0.05);
+        auto* airChanges = spin("air_changes", 0.0, 20.0, 0.1);
+        auto* degreeDays = spin("heating_degree_days", 0.0, 10000.0, 100.0);
+        auto* lightingPower = spin("lighting_power_density", 0.0, 50.0, 0.5);
+        auto* occupancy = spin("occupancy_hours", 0.0, 8760.0, 100.0);
+        auto* units = new QWidget(settingsBox);
+        auto* unitRow = new QHBoxLayout(units);
+        unitRow->setContentsMargins(0, 0, 0, 0);
+        struct Field { const char* label; QDoubleSpinBox* box; };
+        for (const Field& field : {Field{QT_TR_NOOP("Wall U (W/m²K)"), wallU},
+                 Field{QT_TR_NOOP("Roof U"), roofU}, Field{QT_TR_NOOP("Floor U"), floorU},
+                 Field{QT_TR_NOOP("Window U"), windowU}, Field{QT_TR_NOOP("Glazing transmittance"), transmittance},
+                 Field{QT_TR_NOOP("Air changes/h"), airChanges}, Field{QT_TR_NOOP("Heating degree days"), degreeDays},
+                 Field{QT_TR_NOOP("Lighting W/m²"), lightingPower}, Field{QT_TR_NOOP("Occupied h/year"), occupancy}})
+            unitRow->addWidget(new QLabel(tr(field.label) + QStringLiteral(":"), units)), unitRow->addWidget(field.box);
+        form->addRow(units);
+        auto* save = new QPushButton(tr("Save and recalculate"), &dialog);
+        form->addRow(save);
+        auto refresh = [&] {
+            const QJsonObject report = bridge("energy_report");
+            if (!report.value("ok").toBool()) {
+                totalLabel->setText(report.value("error").toString());
+                return;
+            }
+            const QJsonArray levels = report.value("levels").toArray();
+            table->setRowCount(levels.size());
+            for (int i = 0; i < levels.size(); ++i) {
+                const QJsonObject row = levels[i].toObject();
+                table->setItem(i, 0, new QTableWidgetItem(row.value("name").toString()));
+                table->setItem(i, 1, new QTableWidgetItem(QString::number(row.value("floor_area").toDouble(), 'f', 1)));
+                table->setItem(i, 2, new QTableWidgetItem(QString::number(row.value("glazing_ratio").toDouble() * 100.0, 'f', 1)));
+                table->setItem(i, 3, new QTableWidgetItem(QString::number(row.value("heating_kwh").toDouble(), 'f', 0)));
+                table->setItem(i, 4, new QTableWidgetItem(QString::number(row.value("lighting_kwh").toDouble(), 'f', 0)));
+                table->setItem(i, 5, new QTableWidgetItem(QString::number(row.value("daylight_factor").toDouble(), 'f', 1)));
+                QStringList notes;
+                for (const auto& warning : row.value("warnings").toArray())
+                    notes << warning.toString();
+                auto* noteItem = new QTableWidgetItem(notes.join(QStringLiteral("; ")));
+                noteItem->setToolTip(notes.join(QStringLiteral("\n")));
+                table->setItem(i, 6, noteItem);
+            }
+            const QJsonObject total = report.value("total").toObject();
+            totalLabel->setText(tr("Total: %1 m² floor, %2 kWh heating, %3 kWh lighting")
+                                    .arg(total.value("floor_area").toDouble(), 0, 'f', 1)
+                                    .arg(total.value("heating_kwh").toDouble(), 0, 'f', 0)
+                                    .arg(total.value("lighting_kwh").toDouble(), 0, 'f', 0));
+        };
+        connect(save, &QPushButton::clicked, &dialog, [&] {
+            QJsonObject values{{"wall_u", wallU->value()}, {"roof_u", roofU->value()},
+                {"floor_u", floorU->value()}, {"window_u", windowU->value()},
+                {"glazing_transmittance", transmittance->value()}, {"air_changes", airChanges->value()},
+                {"heating_degree_days", degreeDays->value()}, {"lighting_power_density", lightingPower->value()},
+                {"occupancy_hours", occupancy->value()}};
+            const QJsonObject r = bridge("set_energy_settings",
+                {QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact))});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Energy and daylight"), r.value("error").toString());
+                return;
+            }
+            setWindowModified(isDirty());
+            refresh();
+        });
+        auto* close = new QPushButton(tr("Close"), &dialog);
+        connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+        layout->addWidget(close, 0, Qt::AlignRight);
+        refresh();
+        dialog.exec();
     });
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));

@@ -1529,6 +1529,11 @@ _EXPORTS = {
         "remove_mesh_link",
         "stale_mesh_links",
     ),
+    "energy": (
+        "energy_report",
+        "energy_settings",
+        "set_energy_settings",
+    ),
     "bcf": (
         "add_comment",
         "create_issue",
