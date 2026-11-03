@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D175).**
+**Status as of `main` (2026-11-03, after D112–D176).**
 
 ## How to read it
 
@@ -204,7 +204,7 @@ release notes, so check before relying on a single cell.
 |------|-----|--------|-----|-------|
 | Layered (composite) wall and slab types | all | ✅ | P0 | |
 | Material editor (cut fill, surface, physical data) | all | ✅ | P0 | D96: Graphics › Building materials / Surfaces / Composites; IFC materials, styles and psets |
-| Pen sets / line weights by scale | AC RV VW | 🟡 | new | D73: pen sets (255 pens), element styles, purposes; weights don't change with the scale yet |
+| Pen sets / line weights by scale | AC RV VW | ✅ | new | D73: pen sets (255 pens), element styles, purposes. D176: a pen keeps its paper weight at any drawing or placed scale (the sheet divides the weight by its scaling factor), tested by `tests/python/test_sheets.py::test_sheet_weights_do_not_scale` |
 | Graphic overrides and model view options (visibility by kind, rules) | AC RV VW | ✅ | new | D73: visibility sets, override rules (property, layer, material), layer combinations in purposes. D138: model view options hide small furnishings at coarse drawing scales |
 | Line types and fill patterns (hatches) | all | ✅ | new | D73: line types (dash patterns in mm); D84: fill patterns; D96: cut fills hatched on screen, in print and DXF |
 | Surfaces / textures for 3D and rendering | all | ✅ | new | D96: surfaces (colour, transparency, shine, picture texture, box-mapped) per face in 3D, per-side overrides (D97); no rendering |

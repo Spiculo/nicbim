@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D175 plus explicit overrides for the final items.
+after D123–D176 plus explicit overrides for the final items.
 
-**Summary: 159 done, 47 deferred, 3 blocked.**
+**Summary: 160 done, 46 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -150,7 +150,7 @@ after D123–D175 plus explicit overrides for the final items.
 | 9. Organising the model | Design options | **Done** | KimBim uses branches (D56); Archicad and Revit store options inside one file |
 | 10. Attributes and graphics standards | Layered (composite) wall and slab types | **Done** |  |
 | 10. Attributes and graphics standards | Material editor (cut fill, surface, physical data) | **Done** | D96: Graphics › Building materials / Surfaces / Composites; IFC materials, styles and psets |
-| 10. Attributes and graphics standards | Pen sets / line weights by scale | **Deferred** | Core done; remainder deferred. D73: pen sets (255 pens), element styles, purposes; weights don't change with the scale yet |
+| 10. Attributes and graphics standards | Pen sets / line weights by scale | **Done** | D73 pen sets, element styles and purposes; the pen keeps its paper weight at any drawing or placed scale (the sheet divides by its scaling factor), tested by `tests/python/test_sheets.py::test_sheet_weights_do_not_scale`. |
 | 10. Attributes and graphics standards | Graphic overrides and model view options (visibility by kind, rules) | **Done** | D73: visibility sets, override rules (property, layer, material), layer combinations in purposes. D138: model view options hide small furnishings at coarse drawing scales |
 | 10. Attributes and graphics standards | Line types and fill patterns (hatches) | **Done** | D73: line types (dash patterns in mm); D84: fill patterns; D96: cut fills hatched on screen, in print and DXF |
 | 10. Attributes and graphics standards | Surfaces / textures for 3D and rendering | **Done** | D96: surfaces (colour, transparency, shine, picture texture, box-mapped) per face in 3D, per-side overrides (D97); no rendering |
