@@ -400,15 +400,20 @@ def push(remote: str = "origin", branch: str = "") -> str:
         return _fail(str(ex))
 
 
-def pull(remote: str = "origin", branch: str = "") -> str:
+def pull(remote: str = "origin", branch: str = "", merge: bool = False,
+         resolutions_json: str = "") -> str:
     if _project is None:
         return _fail("this model isn't versioned")
     try:
-        out = _project.pull(remote or "origin", branch)
+        resolutions = json.loads(resolutions_json or "{}")
+        if not isinstance(resolutions, dict):
+            raise ValueError("resolutions must be an object")
+        merge_flag = merge if isinstance(merge, bool) else str(merge).lower() in ("1", "true", "yes")
+        out = _project.pull(remote or "origin", branch, merge=merge_flag, resolutions=resolutions)
         _forget_working()
         _history_changed()
         return B._dump({"ok": True, **out})
-    except KimbimError as ex:
+    except (KimbimError, ValueError) as ex:
         return _fail(str(ex))
 
 

@@ -667,8 +667,12 @@ class Project:
         return {"remote": remote, "branch": branch, "url": next(
             (r["url"] for r in self.remotes() if r["name"] == remote), "")}
 
-    def pull(self, remote: str = "origin", branch: str = "") -> dict:
-        """Fetch a remote branch and fast-forward the current one (a diverged branch is refused)."""
+    def pull(self, remote: str = "origin", branch: str = "", merge: bool = False,
+             resolutions: dict | None = None) -> dict:
+        """Fetch a remote branch and fast-forward the current one. With `merge`, a diverged branch is
+        combined through KimBim's record merge (never git's text merge) and committed with two parents;
+        without it, a diverged branch is refused. Conflicts raise MergeConflicts (use `merge_preview`
+        with resolutions to review them)."""
         branch = branch or self.current_branch()
         ref = f"refs/remotes/{remote}/{branch}"
         self._git("fetch", "--prune", remote, f"+refs/heads/{branch}:{ref}")
@@ -680,9 +684,19 @@ class Project:
             try:
                 self._git("merge-base", "--is-ancestor", head, ref)
             except KimbimError:
-                raise KimbimError(
-                    f"{branch} has diverged from {remote}/{branch}; push your versions or combine them in an option"
-                ) from None
+                if not merge:
+                    raise KimbimError(
+                        f"{branch} has diverged from {remote}/{branch}; push your versions or combine them in an option"
+                    ) from None
+                try:
+                    cid = self.merge(ref, f"Pull {remote}/{branch}", resolutions)
+                except MergeConflicts as ex:
+                    raise KimbimError(
+                        f"{branch} has diverged from {remote}/{branch} and "
+                        f"{len(ex.result.unresolved)} conflict(s) need a choice"
+                    ) from None
+                return {"remote": remote, "branch": branch, "status": "merged",
+                        "head": self.head_commit(), "id": cid}
             self._git("update-ref", f"refs/heads/{branch}", ref)
             result = "fast_forward"
         return {"remote": remote, "branch": branch, "status": result, "head": self.head_commit()}

@@ -4544,7 +4544,13 @@ void MainWindow::pullRemote()
         m_status->showMessage(tr("No Git remote: add one with `kimbim versions remotes --add origin=URL`"));
         return;
     }
-    const QJsonObject r = bridge("pull", {remote});
+    QJsonObject r = bridge("pull", {remote});
+    if (!r.value("ok").toBool() && r.value("error").toString().contains(QLatin1String("diverged"))) {
+        if (QMessageBox::question(this, tr("Pull from remote"),
+                tr("The remote and this option have diverged. Combine them with KimBim's record merge?"))
+            == QMessageBox::Yes)
+            r = bridge("pull", {remote, QString(), QStringLiteral("true")}); // D128: merge-aware pull
+    }
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Pull failed: %1").arg(r.value("error").toString()));
         return;

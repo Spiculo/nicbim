@@ -91,6 +91,45 @@ def test_diverged_branches_are_refused(tmp_path):
         other.pull()
 
 
+def test_diverged_pull_can_merge_with_kimbim_records(tmp_path):
+    import ifcopenshell
+
+    project, model, _first = make_project(tmp_path)
+    remote = bare_remote(tmp_path)
+    project.add_remote("origin", str(remote))
+    project.push()
+
+    other = Project.init(tmp_path / "other")
+    other.add_remote("origin", str(remote))
+    other.pull()
+
+    # The remote changes one wall; the local option changes the other: a clean record merge.
+    walls = model.by_type("IfcWall")
+    remote_wall, local_wall = walls[0], walls[1]
+    remote_wall.Name = "From source"
+    changed = tmp_path / "source.ifc"
+    model.write(str(changed))
+    project.commit(changed, "Source change")
+    project.push()
+
+    base = other.export(tmp_path / "other-base.ifc")
+    f = ifcopenshell.open(str(base))
+    f.by_guid(local_wall.GlobalId).Name = "From other"
+    changed = tmp_path / "other.ifc"
+    f.write(str(changed))
+    other.commit(changed, "Other change")
+
+    out = other.pull(merge=True)
+    assert out["status"] == "merged", out
+    assert out["head"] == other.head_commit()
+    merge = other.log(limit=1)[0]
+    assert len(merge.parents) == 2  # a KimBim merge commit, not git's text merge
+
+    merged = ifcopenshell.open(str(other.export(tmp_path / "merged.ifc")))
+    names = sorted(w.Name for w in merged.by_type("IfcWall"))
+    assert names == ["From other", "From source"]
+
+
 def test_remote_management(tmp_path):
     project, _, _ = make_project(tmp_path)
     assert project.remotes() == []

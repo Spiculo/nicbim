@@ -450,9 +450,11 @@ def _people(group, top) -> None:
     s = leaf("versions", "push", _push, help="push the current option to a Git remote (people only)")
     s.add_argument("remote", nargs="?", default="origin")
     s.add_argument("--branch", default="", help="the branch (default: the current option)")
-    s = leaf("versions", "pull", _pull, help="fast-forward the current option from a Git remote (people only)")
+    s = leaf("versions", "pull", _pull, help="pull the current option from a Git remote (people only)")
     s.add_argument("remote", nargs="?", default="origin")
     s.add_argument("--branch", default="", help="the branch (default: the current option)")
+    s.add_argument("--merge", action="store_true",
+                   help="combine a diverged remote through KimBim's record merge instead of refusing")
     s = leaf("versions", "show", _show, help="print one canonical record")
     s.add_argument("key")
     s.add_argument("--rev", default="HEAD")
@@ -636,7 +638,7 @@ def _push(ns) -> int:
 
 def _pull(ns) -> int:
     proj = Project.open(discover(ns.g_project))
-    result = proj.pull(ns.remote, ns.branch)
+    result = proj.pull(ns.remote, ns.branch, merge=ns.merge)
     print(f"pulled {result['branch']} from {result['remote']} ({result['status']}, {result['head'][:10]})")
     return 0
 

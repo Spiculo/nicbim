@@ -6928,6 +6928,11 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
       <translation>Traer del remoto</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="4544" />
+      <source>The remote and this option have diverged. Combine them with KimBim's record merge?</source>
+      <translation>El remoto y esta opción han divergido. ¿Combinarlos con la fusión de registros de KimBim?</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="4235" />
       <source>Pull failed: %1</source>
       <translation>La recepción falló: %1</translation>
