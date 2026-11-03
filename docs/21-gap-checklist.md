@@ -3,7 +3,7 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D149 plus explicit overrides for the final items.
+after D123–D151 plus explicit overrides for the final items.
 
 **Summary: 136 done, 70 deferred, 3 blocked.**
 
