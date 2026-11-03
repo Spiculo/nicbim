@@ -808,14 +808,18 @@ void MainWindow::buildMenus()
     levelPlane->setObjectName(QStringLiteral("actionUseLevelWorkPlane"));
     connect(levelPlane, &QAction::triggered, this, [this] {
         bridge("set_work_plane", {QString::number(workPlaneZ()), QStringLiteral("false"),
-            QString::number(workPlaneAngle())});
-        m_viewport->setWorkPlaneZ(m_levels->activeElevation());
+            QString::number(workPlaneAngle()), QStringLiteral("0"), QStringLiteral("0")});
+        applyWorkPlane();
         m_status->showMessage(tr("Drawing on the active level"));
     });
     QAction* rotatePlane = view->addAction(tr("Work plane &rotation..."));
     rotatePlane->setObjectName(QStringLiteral("actionWorkPlaneRotation"));
     rotatePlane->setToolTip(tr("Rotate the plan and the drawing/snapping frame; geometry follows the clicks"));
     connect(rotatePlane, &QAction::triggered, this, &MainWindow::editWorkPlaneRotation);
+    QAction* tiltPlane = view->addAction(tr("Work plane &tilt...")); // D219
+    tiltPlane->setObjectName(QStringLiteral("actionWorkPlaneTilt"));
+    tiltPlane->setToolTip(tr("Tilt the drawing/snapping plane about a horizontal axis (0-85 degrees)"));
+    connect(tiltPlane, &QAction::triggered, this, &MainWindow::editWorkPlaneTilt);
     QAction* guideLine = view->addAction(tr("Add &guide line...")); // D202
     guideLine->setObjectName(QStringLiteral("actionAddGuideLine"));
     guideLine->setToolTip(tr("A permanent construction guide line the drawing tools snap to"));
@@ -1702,17 +1706,14 @@ void MainWindow::buildCutsToolbar()
             return;
         }
         updateCutSliderRange();
-        const QJsonObject freePlane = bridge("work_plane");
-        m_viewport->setWorkPlaneZ(freePlane.value("ok").toBool() && freePlane.value("enabled").toBool()
-                ? freePlane.value("z").toDouble() : elevation);
-        m_viewport->setPlanRotation(workPlaneAngle());
+        applyWorkPlane();
         // A plan tab keeps its level and its camera (D71); only a 3D view put in plan mode follows.
         if (m_viewport->isPlanView() && m_hosts.value(m_dock->current()) && m_hosts.value(m_dock->current())->storey().isEmpty())
             m_viewport->setPlanView(elevation);
         if (m_viewport->isDrawingMode()) {
             m_wallTool->finish();
             m_polygonTool->cancel();
-            m_viewport->setDrawingMode(true, elevation);
+            m_viewport->setDrawingMode(true, workPlaneZ());
             refreshSnapData();
         }
         applyCuts();
@@ -1988,7 +1989,7 @@ void MainWindow::startCutTool(CutTool tool)
         m_status->showMessage(tr("Cut from a face: click a model face; the kept side is away from the camera"));
     } else {
         m_viewport->setFacePickMode(false);
-        m_viewport->setDrawingMode(true, m_levels->activeElevation());
+        m_viewport->setDrawingMode(true, workPlaneZ());
         m_viewport->setFocus();
         m_status->showMessage(tool == CutTool::Vertical ? tr("Vertical cut: click where the cut line starts")
                                                          : tr("Oblique cut: click where the cut line starts"));
@@ -4751,7 +4752,7 @@ void MainWindow::setTool(Tool tool)
         return;
     }
     { StepTimer _(m_timings, "tool:snap"); refreshSnapData(); }
-    { StepTimer _(m_timings, "tool:drawingMode"); m_viewport->setDrawingMode(true, m_levels->activeElevation()); }
+    { StepTimer _(m_timings, "tool:drawingMode"); m_viewport->setDrawingMode(true, workPlaneZ()); }
     m_viewport->setFocus();
     switch (tool) {
     case Tool::Wall:
@@ -5011,12 +5012,13 @@ void MainWindow::editWorkPlane()
     if (!ok)
         return;
     const QJsonObject result = bridge("set_work_plane", {QString::number(z), QStringLiteral("true"),
-        QString::number(workPlaneAngle())});
+        QString::number(workPlaneAngle()), QString::number(workPlaneTilt()),
+        QString::number(workPlaneBearing())});
     if (!result.value("ok").toBool()) {
         showError(tr("Work plane"), result.value("error").toString());
         return;
     }
-    m_viewport->setWorkPlaneZ(z);
+    applyWorkPlane();
     m_status->showMessage(tr("Drawing at work plane %1 m").arg(z));
 }
 
@@ -5024,6 +5026,36 @@ double MainWindow::workPlaneAngle()
 {
     const QJsonObject plane = bridge("work_plane");
     return plane.value("ok").toBool() ? plane.value("angle").toDouble() : 0.0;
+}
+
+double MainWindow::workPlaneTilt()
+{
+    const QJsonObject plane = bridge("work_plane");
+    return plane.value("ok").toBool() ? plane.value("tilt").toDouble() : 0.0;
+}
+
+double MainWindow::workPlaneBearing()
+{
+    const QJsonObject plane = bridge("work_plane");
+    return plane.value("ok").toBool() ? plane.value("bearing").toDouble() : 0.0;
+}
+
+gp_Dir MainWindow::workPlaneNormal()
+{
+    // D219: tilt is the angle from the level (0-85 degrees); bearing is where the normal leans,
+    // measured counter-clockwise from +X. At 0 the normal is straight up.
+    const double tilt = workPlaneTilt() * M_PI / 180.0;
+    const double bearing = workPlaneBearing() * M_PI / 180.0;
+    return gp_Dir(std::sin(tilt) * std::cos(bearing), std::sin(tilt) * std::sin(bearing), std::cos(tilt));
+}
+
+void MainWindow::applyWorkPlane()
+{
+    if (!m_viewport)
+        return;
+    m_viewport->setWorkPlaneZ(workPlaneZ());
+    m_viewport->setPlanRotation(workPlaneAngle());
+    m_viewport->setWorkPlaneNormal(workPlaneNormal());
 }
 
 void MainWindow::editWorkPlaneRotation()
@@ -5038,13 +5070,63 @@ void MainWindow::editWorkPlaneRotation()
     const QJsonObject result = bridge("set_work_plane",
         {QString::number(workPlaneZ()), plane.value("enabled").toBool() ? QStringLiteral("true")
                                                                     : QStringLiteral("false"),
-            QString::number(degrees * M_PI / 180.0)});
+            QString::number(degrees * M_PI / 180.0), QString::number(workPlaneTilt()),
+            QString::number(workPlaneBearing())});
     if (!result.value("ok").toBool()) {
         showError(tr("Work plane"), result.value("error").toString());
         return;
     }
-    m_viewport->setPlanRotation(degrees * M_PI / 180.0);
+    applyWorkPlane();
     m_status->showMessage(tr("Plan rotated %1 degrees").arg(degrees));
+}
+
+void MainWindow::editWorkPlaneTilt()
+{
+    // D219: one dialog for the two numbers that orient the plane; 0/0 is level.
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Work plane tilt"));
+    auto* form = new QFormLayout(&dialog);
+    auto* tilt = new QDoubleSpinBox(&dialog);
+    tilt->setRange(0.0, 85.0);
+    tilt->setDecimals(1);
+    tilt->setSuffix(tr(" deg"));
+    tilt->setValue(workPlaneTilt());
+    tilt->setToolTip(tr("Angle from the level: 0 draws on a horizontal plane"));
+    auto* bearing = new QDoubleSpinBox(&dialog);
+    bearing->setRange(0.0, 360.0);
+    bearing->setDecimals(1);
+    bearing->setSuffix(tr(" deg"));
+    bearing->setWrapping(true);
+    bearing->setValue(workPlaneBearing());
+    bearing->setToolTip(tr("Direction the plane's normal leans, counter-clockwise from +X"));
+    auto* reset = new QPushButton(tr("Level"), &dialog);
+    form->addRow(tr("Tilt:"), tilt);
+    form->addRow(tr("Bearing:"), bearing);
+    form->addRow(reset);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(reset, &QPushButton::clicked, &dialog, [tilt, bearing] {
+        tilt->setValue(0.0);
+        bearing->setValue(0.0);
+    });
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QJsonObject plane = bridge("work_plane");
+    const QJsonObject result = bridge("set_work_plane",
+        {QString::number(workPlaneZ()), QStringLiteral("true"), QString::number(workPlaneAngle()),
+            QString::number(tilt->value()), QString::number(bearing->value())});
+    if (!result.value("ok").toBool()) {
+        showError(tr("Work plane"), result.value("error").toString());
+        return;
+    }
+    applyWorkPlane();
+    if (tilt->value() <= 0.0)
+        m_status->showMessage(tr("Work plane is level at %1 m").arg(workPlaneZ()));
+    else
+        m_status->showMessage(
+            tr("Work plane tilted %1 degrees towards %2 degrees").arg(tilt->value()).arg(bearing->value()));
 }
 
 double MainWindow::workPlaneZ()
@@ -6920,6 +7002,7 @@ void MainWindow::activateView(const QString& key)
         m_cutLabel->setText(formatLength(m_cutHeight->value()));
         m_viewport->setWorkPlaneZ(workPlaneZ());
         m_viewport->setPlanRotation(workPlaneAngle());
+        m_viewport->setWorkPlaneNormal(workPlaneNormal());
         applyCuts();
         refreshAnnotations(); // this view's level notes, grid and markers
         refreshNorthArrow();  // D92: the plan north indicator
@@ -11742,8 +11825,7 @@ void MainWindow::finishOpen(quint64 token)
         refreshLevels();
     }
     updateCutSliderRange();
-    m_viewport->setWorkPlaneZ(workPlaneZ());
-    m_viewport->setPlanRotation(workPlaneAngle());
+    applyWorkPlane();
     applyCuts();
     {
         StepTimer _(m_timings, "finish:layers");

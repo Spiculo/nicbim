@@ -93,6 +93,23 @@ private slots:
         kimbim::Viewport v;
         gp_Pnt p;
         QVERIFY(!v.pointOnPlane(10, 10, 0.0, &p)); // headless: no projection to intersect
+        QVERIFY(!v.pointOnWorkPlane(10, 10, &p));
+    }
+
+    // D219: a tilted work plane has one elevation per plan point; a level plane is constant.
+    void workPlaneElevationFollowsTheTilt()
+    {
+        kimbim::Viewport v;
+        v.setWorkPlaneZ(2.0);
+        QVERIFY(std::abs(v.workPlaneNormal().Z() - 1.0) < 1e-9); // level by default
+        QCOMPARE(v.workPlaneElevationAt(10.0, -5.0), 2.0);
+        v.setWorkPlaneNormal(gp_Dir(0.0, 1.0, 1.0)); // 45 degrees towards +Y
+        QVERIFY(std::abs(v.workPlaneNormal().Z() - std::sqrt(0.5)) < 1e-9);
+        QVERIFY(std::abs(v.workPlaneElevationAt(0.0, 0.0) - 2.0) < 1e-9);
+        QVERIFY(std::abs(v.workPlaneElevationAt(0.0, 1.0) - 1.0) < 1e-9);
+        QVERIFY(std::abs(v.workPlaneElevationAt(7.0, -1.0) - 3.0) < 1e-9);
+        v.setWorkPlaneNormal(gp_Dir(1.0, 0.0, 0.0)); // a vertical plane has no single plan elevation
+        QCOMPARE(v.workPlaneElevationAt(4.0, 4.0), 2.0);
     }
 
     void middlePansShiftMiddleOrbitsLeftBoxSelects()

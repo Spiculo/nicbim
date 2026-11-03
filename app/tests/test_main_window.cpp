@@ -3318,16 +3318,22 @@ private slots:
         QAction* levelPlane = w.findChild<QAction*>(QStringLiteral("actionUseLevelWorkPlane"));
         QVERIFY(freePlane && levelPlane);
         QVERIFY(w.findChild<QAction*>(QStringLiteral("actionWorkPlaneRotation")));
+        QAction* tiltPlane = w.findChild<QAction*>(QStringLiteral("actionWorkPlaneTilt")); // D219
+        QVERIFY(tiltPlane);
         QVERIFY(w.newProject());
         w.viewport()->setPlanView(0);
         w.viewport()->setPlanRotation(M_PI / 2);
         QVERIFY(std::abs(w.viewport()->planRotation() - M_PI / 2) < 1e-9);
         const gp_Dir up = w.viewport()->view()->Camera()->Up();
         QVERIFY(std::abs(up.X() + 1.0) < 1e-6 && std::abs(up.Y()) < 1e-6);
-        kimbim::PythonEngine::instance().callJson("set_work_plane", {QStringLiteral("2.5"), QStringLiteral("true")});
+        kimbim::PythonEngine::instance().callJson("set_work_plane",
+            {QStringLiteral("2.5"), QStringLiteral("true"), QStringLiteral("0"),
+                QStringLiteral("30"), QStringLiteral("45")});
         levelPlane->trigger();
         const QJsonObject state = kimbim::PythonEngine::instance().callJson("work_plane", {}).object();
         QVERIFY(!state.value("enabled").toBool());
+        QCOMPARE(state.value("tilt").toDouble(), 0.0); // D219: "use level" is level again
+        QCOMPARE(state.value("bearing").toDouble(), 0.0);
     }
     // Edit menu: the three solid operations are wired (the bridge operations are covered in Python).
     void solidCutAction()

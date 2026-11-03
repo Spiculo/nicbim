@@ -211,8 +211,13 @@ public:
     double heightToNextLevel();
     double workPlaneZ();
     double workPlaneAngle();
+    double workPlaneTilt();    // D219: tilt from the level, in degrees
+    double workPlaneBearing(); // D219: the tilt direction, in degrees from +X
+    gp_Dir workPlaneNormal();  // D219: the upward normal for the current tilt/bearing
+    void applyWorkPlane();     // D219: push height, plan rotation and normal to the viewport
     void editWorkPlane();
     void editWorkPlaneRotation();
+    void editWorkPlaneTilt();
     // Versioned projects (Slice 8, docs/03).
     bool enableVersioning(const QString& folder, const QString& message = QString());
     // D72: files. openPath picks by kind: a folder (project folder), .kim, or .ifc (per preference).

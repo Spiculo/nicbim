@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D218 plus explicit overrides for the final items.
+after D123–D219 plus explicit overrides for the final items.
 
-**Summary: 199 done, 7 deferred, 3 blocked.**
+**Summary: 200 done, 6 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -91,7 +91,7 @@ after D123–D218 plus explicit overrides for the final items.
 | 5. Input aids | Coordinate input (absolute and relative x, y; polar) | **Done** | D89: tracker beside the cursor in every point tool; Tab between boxes, `a`/`#` absolute |
 | 5. Input aids | Guide lines, temporary references, inference lines | **Done** | D89: temporary guides (rest 0.5 s on a snap point), extensions and parallels; D202: permanent guide lines kept in the project settings, added and cleared from the View menu, snapped like grid lines |
 | 5. Input aids | Snap to perpendicular, tangent, intersection, wall faces | **Done** | D89 intersections and parallels; D188 tangent snapping from the previous point to drafting circles/arcs (`snap_data.circles` + `Snap::Tangent`); wall-face snapping is the dimension option. |
-| 5. Input aids | Work planes (custom drawing planes) | **Deferred** | Core done; remainder deferred. Free horizontal work plane at a user height independent of the active level: `work_plane` / `set_work_plane` in the bridge, kept in project settings (height, enabled, angle), and the viewport uses it for drawing/snapping when enabled. View > *Free work plane...* sets the height, View > *Work plane rotation...* rotates the pl... |
+| 5. Input aids | Work planes (custom drawing planes) | **Done** | D219: free work plane at a user height, plan rotation and an arbitrary tilt (0–85°) and bearing (0–360°) in the `work_plane` project setting. View > *Free work plane...* sets the height, *Work plane rotation...* the plan angle, *Work plane tilt...* the tilt and bearing (with a *Level* reset) and *Use level work plane* returns to the level. `Viewport::pointOnWorkPlane` intersects the view ray with the tilted plane for drawing/snapping, and the preview follows `workPlaneElevationAt`; D98 construction grid (spacing, angle, origin, grid snap) remains |
 | 5. Input aids | Tool presets / favourites (saved tool settings) | **Done** | D97: the Favourites button in the tool strip, kept in the project |
 | 6. Building elements | Walls: straight, layered, L/T joins | **Done** |  |
 | 6. Building elements | Walls: curved | **Done** | D97: Wall tool › Curved (3 points), layered, doors/windows, stretch, split, fillet, mitred joins with straight and curved walls |

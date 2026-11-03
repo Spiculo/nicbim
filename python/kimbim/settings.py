@@ -76,7 +76,7 @@ DEFAULTS = {
     "stair_arrow": "top",  # D92: the plan symbol's arrow: top (default), bottom or both
     "stair_riser_numbers": False,  # D92: number the risers on the plan
     "construction_grid": {"spacing": 1.0, "subdivisions": 4, "angle": 0.0, "origin": [0.0, 0.0]},  # D98
-    "work_plane": {"enabled": False, "z": 0.0, "angle": 0.0},  # free horizontal work plane and plan rotation
+    "work_plane": {"enabled": False, "z": 0.0, "angle": 0.0, "tilt": 0.0, "bearing": 0.0},  # D219
     "wall_reference_line": "Outside face",
     "layers_in_3d": True,
     "member_material_scope": "element",  # D97: a column's or beam's material: its own (Archicad) or its type's (Revit)
@@ -291,6 +291,14 @@ def _error(key: str, value) -> str | None:
         o = g.get("origin")
         if not (isinstance(o, list) and len(o) == 2 and all(num(v) for v in o)):
             return "the grid origin is [x, y]"
+    if key == "work_plane":  # D219: free work plane, plan rotation and an arbitrary tilt
+        if not isinstance(value, dict):
+            return "the work plane is a table: enabled, z, angle, tilt, bearing"
+        for name, lo, hi in (("z", -1000.0, 1000.0), ("angle", -360.0, 360.0),
+                             ("tilt", 0.0, 85.0), ("bearing", 0.0, 360.0)):
+            v = value.get(name, 0.0)
+            if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
+                return f"the work plane's {name} must be between {lo:g} and {hi:g}"
     if key == "sun":
         from . import sun
 
@@ -427,19 +435,23 @@ def load_settings_file(path: str) -> str:
 
 
 def work_plane() -> str:
-    """The free work plane: a user height and plan rotation independent of the active level."""
+    """The free work plane: a user height, plan rotation and arbitrary tilt/bearing independent of
+    the active level."""
     value = current().get("work_plane") or DEFAULTS["work_plane"]
     return B._dump({"ok": True, "enabled": bool(value.get("enabled")),
-                    "z": float(value.get("z", 0.0)), "angle": float(value.get("angle", 0.0))})
+                    "z": float(value.get("z", 0.0)), "angle": float(value.get("angle", 0.0)),
+                    "tilt": float(value.get("tilt", 0.0)), "bearing": float(value.get("bearing", 0.0))})
 
 
-def set_work_plane(z, enabled="true", angle="0") -> str:
+def set_work_plane(z, enabled="true", angle="0", tilt="0", bearing="0") -> str:
     try:
         height = float(z)
         rotation = float(angle)
+        slope = float(tilt)
+        direction = float(bearing)
     except (TypeError, ValueError) as ex:
-        return B._dump({"ok": False, "error": f"bad height or angle: {ex}"})
+        return B._dump({"ok": False, "error": f"bad height, angle, tilt or bearing: {ex}"})
     on = str(enabled).strip().lower() in ("1", "true", "yes", "on")
     result = json.loads(set_project_settings(json.dumps(
-        {"work_plane": {"enabled": on, "z": height, "angle": rotation}})))
-    return B._dump({**result, "enabled": on, "z": height, "angle": rotation})
+        {"work_plane": {"enabled": on, "z": height, "angle": rotation, "tilt": slope, "bearing": direction}})))
+    return B._dump({**result, "enabled": on, "z": height, "angle": rotation, "tilt": slope, "bearing": direction})

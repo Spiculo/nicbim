@@ -128,6 +128,26 @@ def _defaults(settings: dict) -> bool:
     return {k: v for k, v in settings.items() if k != "texture_files"} ==         {k: v for k, v in S.DEFAULTS.items() if k != "texture_files"}
 
 
+def test_the_work_plane_can_be_tilted():
+    """D219: a free work plane keeps a height, plan rotation and an arbitrary tilt/bearing."""
+    assert call("new_project", "Plane")["ok"]
+    assert call("set_work_plane", "3.2", "true", "0.25", "30", "135")["ok"]
+    state = call("work_plane")
+    assert state["enabled"] and state["z"] == 3.2
+    assert abs(state["angle"] - 0.25) < 1e-9
+    assert state["tilt"] == 30.0 and state["bearing"] == 135.0
+    # Out-of-range tilt/bearing are refused and leave the previous plane in place.
+    for bad in (("0", "true", "0", "-1", "0"), ("0", "true", "0", "86", "0"),
+                ("0", "true", "0", "10", "361")):
+        assert not call("set_work_plane", *bad)["ok"], bad
+    state = call("work_plane")
+    assert state["tilt"] == 30.0 and state["bearing"] == 135.0
+    # A level plane is tilt 0; disabling it still keeps the numbers for the next enable.
+    assert call("set_work_plane", "3.2", "false", "0.25", "0", "0")["ok"]
+    state = call("work_plane")
+    assert not state["enabled"] and state["tilt"] == 0.0 and state["bearing"] == 0.0
+
+
 def test_favourites_are_kept_with_the_project():
     """D97: Archicad's Favourites: named tool settings, saved in the project's settings."""
     assert json.loads(b.new_project("Fav"))["ok"]

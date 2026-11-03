@@ -135,11 +135,19 @@ public:
     // Screen point -> point on the horizontal plane z (metres). False without a window or when the
     // view ray is parallel to the plane.
     bool pointOnPlane(int x, int y, double z, gp_Pnt* out);
+    // D219: screen point -> point on the work plane through (0, 0, m_workZ) with the work normal.
+    // A level, until the user tilts the plane.
+    bool pointOnWorkPlane(int x, int y, gp_Pnt* out);
+    // D219: the work plane's elevation at plan point (x, y); m_workZ when the plane is level.
+    double workPlaneElevationAt(double x, double y) const;
 
     // Drawing mode (wall tool): left clicks and moves become points on the work plane (z, metres)
     // instead of selection; middle-button navigation keeps working. Esc/right click end drawing.
     void setDrawingMode(bool on, double workPlaneZ = 0.0);
     void setWorkPlaneZ(double z) { m_workZ = z; }
+    // D219: the work plane's upward normal (0, 0, 1) is horizontal; tilt/bearing turn it.
+    void setWorkPlaneNormal(const gp_Dir& normal) { m_workNormal = normal; }
+    gp_Dir workPlaneNormal() const { return m_workNormal; }
     bool isDrawingMode() const { return m_drawingMode; }
     // D100: while drawing, a right click asks for a context menu (drawingContextRequested) instead of
     // ending (drawingEnded); Esc still ends. Off by default (the Object tool's quick switcher).
@@ -497,6 +505,7 @@ private:
     QPointF m_dragStart;
     QPointF m_hoverPos;
     double m_workZ = 0.0;
+    gp_Dir m_workNormal{0.0, 0.0, 1.0}; // D219: the work plane's normal (a level plane by default)
     Handle(ElementBatch) m_preview;
     Handle(AIS_InteractiveObject) m_toolOverlay;
     Handle(AIS_InteractiveObject) m_cutOverlay;

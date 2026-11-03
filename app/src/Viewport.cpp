@@ -234,6 +234,33 @@ bool Viewport::pointOnPlane(int x, int y, double z, gp_Pnt* out)
     return true;
 }
 
+bool Viewport::pointOnWorkPlane(int x, int y, gp_Pnt* out)
+{
+    if (!ensureWindow())
+        return false;
+    double px = 0, py = 0, pz = 0, vx = 0, vy = 0, vz = 0;
+    m_view->ConvertWithProj(x, y, px, py, pz, vx, vy, vz);
+    // D219: intersect the view ray with the plane through (0, 0, m_workZ) whose normal is
+    // m_workNormal. A level plane (normal 0, 0, 1) reduces to the height-only intersection.
+    const double denom = m_workNormal.X() * vx + m_workNormal.Y() * vy + m_workNormal.Z() * vz;
+    if (std::abs(denom) < 1e-9)
+        return false;
+    const double t = (m_workNormal.X() * (0.0 - px) + m_workNormal.Y() * (0.0 - py)
+                         + m_workNormal.Z() * (m_workZ - pz))
+        / denom;
+    *out = gp_Pnt(px + t * vx, py + t * vy, pz + t * vz);
+    return true;
+}
+
+double Viewport::workPlaneElevationAt(double x, double y) const
+{
+    // D219: the plane (p - p0) . n = 0 with p0 = (0, 0, m_workZ). A near-vertical plane (nz ~ 0)
+    // keeps the work height: a plan point then has no single elevation on the plane.
+    if (std::abs(m_workNormal.Z()) < 1e-9)
+        return m_workZ;
+    return m_workZ - (m_workNormal.X() * x + m_workNormal.Y() * y) / m_workNormal.Z();
+}
+
 void Viewport::applyNavigationPreset()
 {
     auto& gestures = ChangeMouseGestureMap();
@@ -1053,7 +1080,7 @@ bool Viewport::workPoint(const QPointF& widgetPos, QPointF* point, double* toler
 {
     const NCollection_Vec2<int> px = toPixels(widgetPos);
     gp_Pnt a, b;
-    if (!pointOnPlane(px.x(), px.y(), m_workZ, &a) || !pointOnPlane(px.x() + 10, px.y(), m_workZ, &b))
+    if (!pointOnWorkPlane(px.x(), px.y(), &a) || !pointOnWorkPlane(px.x() + 10, px.y(), &b))
         return false;
     *point = QPointF(a.X(), a.Y());
     *tolerance = a.Distance(b);
@@ -1084,7 +1111,9 @@ void Viewport::setWallPreview(const std::optional<std::pair<QPointF, QPointF>>& 
             a += left;
             b += left;
         }
-        boxes.push_back({a, b, thickness, m_workZ, m_workZ + height});
+        const double za = workPlaneElevationAt(a.x(), a.y());
+        const double zb = workPlaneElevationAt(b.x(), b.y());
+        boxes.push_back({a, b, thickness, std::min(za, zb), std::max(za, zb) + height});
     }
     setPreviewBoxes(boxes);
 }
