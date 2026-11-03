@@ -59,7 +59,7 @@ release notes, so check before relying on a single cell.
 | Hide / isolate by class or type | all | ✅ | P0 | View › Hide / Isolate selected (I); Edit › Select all of this class / Select similar first |
 | Plan cut height | AC RV VW BB | ✅ | P1 | Slider beside the view |
 | Poché on cut elements | AC RV VW | ✅ | P1 | D96: fill from the building material; composites cut layer by layer |
-| Section box | AC RV VW BB | 🟡 | P0 | Around the selection; no drag handles |
+| Section box | AC RV VW BB | ✅ | P0 | D217: the box is six named cut planes (X/Y/Z min/max) with the standard cut-plane handle; each face drags along its normal, the top face is selected when the box is turned on, and View > *Section box* adds/removes all six |
 | Free clipping planes, several at once | AC RV BB | ✅ | P0 | D95: the Cut planes panel (several, oblique, flip, offset) |
 | Saved views (layers, level, plan/3D, cut) | AC RV VW BB | ✅ | P1 | D57 |
 | Lines-only / hidden-line display | all | ✅ | — | L |

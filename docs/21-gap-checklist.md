@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D216 plus explicit overrides for the final items.
+after D123–D217 plus explicit overrides for the final items.
 
-**Summary: 197 done, 9 deferred, 3 blocked.**
+**Summary: 198 done, 8 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -45,7 +45,7 @@ after D123–D216 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Hide / isolate by class or type | **Done** | View › Hide / Isolate selected (I); Edit › Select all of this class / Select similar first |
 | 2. Viewing and navigation | Plan cut height | **Done** | Slider beside the view |
 | 2. Viewing and navigation | Poché on cut elements | **Done** | D96: fill from the building material; composites cut layer by layer |
-| 2. Viewing and navigation | Section box | **Deferred** | Core done; remainder deferred. Around the selection; no drag handles |
+| 2. Viewing and navigation | Section box | **Done** | D217: the box is six named cut planes (X/Y/Z min/max), so every face has the standard cut-plane handle and drags along its normal; the top face is selected when the box is turned on, and View > *Section box* adds/removes all six |
 | 2. Viewing and navigation | Free clipping planes, several at once | **Done** | D95: the Cut planes panel (several, oblique, flip, offset) |
 | 2. Viewing and navigation | Saved views (layers, level, plan/3D, cut) | **Done** | D57 |
 | 2. Viewing and navigation | Lines-only / hidden-line display | **Done** | L |

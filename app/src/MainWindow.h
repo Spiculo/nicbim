@@ -1013,7 +1013,6 @@ private:
     QWidget* m_planCutButton = nullptr; // D92: the title bar controls the preferences can hide
     QWidget* m_cutSeparator = nullptr;
     QMenu* m_fileMenu = nullptr;
-    Bnd_Box m_boxBounds; // captured when the section box is switched on
     // D85: underlays (Underlays.cpp): linework by file, page images by file/page/dpi/colour.
     QHash<QString, std::shared_ptr<const UnderlayLines>> m_underlayLines;
     QHash<QString, QImage> m_underlayImages;

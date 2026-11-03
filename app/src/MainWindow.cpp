@@ -144,9 +144,14 @@ namespace kimbim {
 
 namespace {
 
-// Imperial and metric project units: the model is in metres; these convert for display and input.
-double unitFactor(const QString& unit)
+// D217: the section box is six named cut planes, so each face gets the standard drag handle.
+bool isSectionBoxPlane(const CutPlane& plane)
 {
+    return QString::fromStdString(plane.name).startsWith(QLatin1String("Section box: "));
+}
+
+// Imperial and metric project units: the model is in metres; these convert for display and input.
+double unitFactor(const QString& unit){
     if (unit == QLatin1String("mm")) return 1000.0;
     if (unit == QLatin1String("cm")) return 100.0;
     if (unit == QLatin1String("ft")) return 1.0 / 0.3048;
@@ -1282,12 +1287,52 @@ void MainWindow::buildMenus()
     m_sectionBox->setCheckable(true);
     m_sectionBox->setShortcut(Qt::Key_B);
     connect(m_sectionBox, &QAction::toggled, this, [this](bool on) {
-        if (on) { // box around the selection, or around everything visible
-            m_boxBounds = m_viewport->boundsOf(m_viewport->selectedGuids());
-            if (!m_boxBounds.IsVoid())
-                m_boxBounds.Enlarge(0.1);
+        CutSettings& settings = m_cuts[m_viewport];
+        for (int i = int(settings.planes.size()) - 1; i >= 0; --i)
+            if (isSectionBoxPlane(settings.planes[i]))
+                settings.planes.removeAt(i);
+        if (settings.selectedPlane >= settings.planes.size())
+            settings.selectedPlane = -1;
+        if (on) { // D217: the box is six cut planes, each with the standard drag handle
+            Bnd_Box box = m_viewport->boundsOf(m_viewport->selectedGuids());
+            if (box.IsVoid()) {
+                m_status->showMessage(tr("Select something first: the section box is drawn around it"));
+                const QSignalBlocker block(m_sectionBox);
+                m_sectionBox->setChecked(false);
+            } else {
+                box.Enlarge(0.1);
+                double x0, y0, z0, x1, y1, z1;
+                box.Get(x0, y0, z0, x1, y1, z1);
+                auto add = [&](const QString& name, const gp_Pnt& point, const gp_Dir& normal,
+                               const gp_Dir& direction, CutPlane::Kind kind) {
+                    CutPlane plane;
+                    plane.name = name.toStdString();
+                    plane.point = point;
+                    plane.normal = normal;
+                    plane.direction = direction;
+                    plane.kind = kind;
+                    settings.planes.append(plane);
+                };
+                add(QStringLiteral("Section box: ") + tr("X min"), gp_Pnt(x0, 0, 0), gp_Dir(1, 0, 0),
+                    gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
+                add(QStringLiteral("Section box: ") + tr("X max"), gp_Pnt(x1, 0, 0), gp_Dir(-1, 0, 0),
+                    gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
+                add(QStringLiteral("Section box: ") + tr("Y min"), gp_Pnt(0, y0, 0), gp_Dir(0, 1, 0),
+                    gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
+                add(QStringLiteral("Section box: ") + tr("Y max"), gp_Pnt(0, y1, 0), gp_Dir(0, -1, 0),
+                    gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
+                add(QStringLiteral("Section box: ") + tr("Z min"), gp_Pnt(0, 0, z0), gp_Dir(0, 0, 1),
+                    gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
+                add(QStringLiteral("Section box: ") + tr("Z max"), gp_Pnt(0, 0, z1), gp_Dir(0, 0, -1),
+                    gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
+                settings.selectedPlane = int(settings.planes.size()) - 1; // the top face, its handle shown
+                m_status->showMessage(tr("Section box: drag the selected face's handle; the other faces are in the Cut planes panel"));
+            }
         }
-        applyCuts();
+        settings.box = false;
+        settings.bounds = Bnd_Box();
+        applyCutsTo(m_viewport, settings);
+        pushCutPlanesToPanel();
     });
     // D134: crop the active view to a rectangle (a plan's crop region).
     QAction* cropRegion = view->addAction(tr("Crop &region..."));
@@ -2219,9 +2264,9 @@ void MainWindow::applyCuts()
 {
     CutSettings& mine = m_cuts[m_viewport]; // the active view's cuts follow the controls
     mine.planCut = m_planCut->isChecked();
-    mine.box = m_sectionBox->isChecked();
+    mine.box = false; // D217: the box is six cut planes, not a bounds box
+    mine.bounds = Bnd_Box();
     mine.height = m_cutHeight->value();
-    mine.bounds = m_boxBounds;
     applyCutsTo(m_viewport, mine);
 }
 
@@ -6860,9 +6905,9 @@ void MainWindow::activateView(const QString& key)
         const CutSettings cut = m_cuts.value(m_viewport); // this view's own cuts into the controls
         const QSignalBlocker b1(m_planCut), b2(m_sectionBox), b3(m_cutHeight), b4(m_cutSlider);
         m_planCut->setChecked(cut.planCut);
-        m_sectionBox->setChecked(cut.box);
+        const bool hasBox = std::any_of(cut.planes.cbegin(), cut.planes.cend(), isSectionBoxPlane);
+        m_sectionBox->setChecked(hasBox);
         m_cutHeight->setValue(cut.height);
-        m_boxBounds = cut.bounds;
     }
     // D91: a plan tab has no cut slider; the 3D tab keeps it.
     host->adoptChrome(m_toolOptions, host->storey().isEmpty() ? m_cutColumn : nullptr);
@@ -10154,6 +10199,11 @@ bool MainWindow::applyView(const QString& name)
                     three.planes.append(p);
             }
             three.selectedPlane = -1;
+            const bool hasBox = std::any_of(three.planes.cbegin(), three.planes.cend(), isSectionBoxPlane);
+            {
+                const QSignalBlocker block(m_sectionBox);
+                m_sectionBox->setChecked(hasBox);
+            }
             if (data.value("cut").isDouble()) {
                 three.planCut = true;
                 three.height = data.value("cut").toDouble();

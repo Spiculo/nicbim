@@ -62,10 +62,37 @@ private slots:
         w.setTool(kimbim::MainWindow::Tool::None);
         w.findChild<QAction*>(QStringLiteral("actionPlanCut"))->setChecked(true);
         w.findChild<QAction*>(QStringLiteral("actionSectionBox"))->setChecked(true);
+        // D217: the box is six named cut planes, and the top face's handle is shown at once.
+        QCOMPARE(w.cutPlanes().size(), 6);
+        QCOMPARE(w.selectedCutPlane(), 5);
+        QVERIFY(w.viewport()->hasCutPlaneOverlay());
         for (int i = 0; i < 4; ++i)
             QVERIFY2(w.addVerticalCut({-1, -2.0 + i}, {6, -2.0 + i}, {0, 1}, 0), "the fourth user plane must fit");
-        QCOMPARE(w.cutPlanes().size(), 4);
+        QCOMPARE(w.cutPlanes().size(), 10);
         QCOMPARE(w.viewport()->clipPlaneCount(), 1 + 6 + 4);
+    }
+
+    void theSectionBoxFacesHaveDraggableHandles()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        w.setTool(kimbim::MainWindow::Tool::Wall);
+        w.wallTool()->click({0, 0});
+        w.wallTool()->click({5, 0});
+        w.wallTool()->finish();
+        w.setTool(kimbim::MainWindow::Tool::None);
+        w.findChild<QAction*>(QStringLiteral("actionSectionBox"))->setChecked(true);
+        QCOMPARE(w.cutPlanes().size(), 6);
+        QCOMPARE(w.selectedCutPlane(), 5); // the top face's handle is shown at once
+        QVERIFY(w.viewport()->hasCutPlaneOverlay());
+        const double before = w.cutPlanes().at(5).offset();
+        QVERIFY(QMetaObject::invokeMethod(w.viewport(), "cutPlaneDragStarted"));
+        QVERIFY(QMetaObject::invokeMethod(w.viewport(), "cutPlaneDragged", Q_ARG(double, 0.5)));
+        QVERIFY(QMetaObject::invokeMethod(w.viewport(), "cutPlaneDragFinished"));
+        QVERIFY(std::abs(w.cutPlanes().at(5).offset() - (before + 0.5)) < 1e-9);
+        w.findChild<QAction*>(QStringLiteral("actionSectionBox"))->setChecked(false);
+        QCOMPARE(w.cutPlanes().size(), 0);
+        QCOMPARE(w.viewport()->clipPlaneCount(), 0);
     }
 
     void aCutThroughAWallDrawsPoche()
