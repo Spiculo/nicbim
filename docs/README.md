@@ -27,6 +27,8 @@ These documents guide development. They come from the original spec (`../doc.md`
 | 16 | [Parametric Objects](16-parametric-objects.md) | Customisable library objects as data: parameters, formulas, parts, anchors, the Object Editor |
 | 17 | [Agent Tools](17-agent-tools.md) | AI agents on a project: the in-app Assistant (the main path), the `kimbim` command line and the optional MCP server, live and offline sessions, the review bar, snapshots, the tool list |
 | 18 | [Agent Tools: Scope, Parity and Sessions](18-agent-tools-and-sessions.md) | The full tool scope, the user-to-agent parity gaps, project-change context, stored sessions with branches/worktrees, and the pending agent integrations |
+| 19 | [Rust Decomposer](19-rust-decomposer.md) | The C++ `ifcdump` bridge and the Rust canonical decomposer, and why cold decomposition got faster |
+| 20 | [VR Feasibility](20-vr-feasibility.md) | OpenXR availability, what a VR mode needs, cost/risk and the deferral recommendation |
 | — | [Decision Log](decisions.md) | Every architectural decision and its status |
 | — | [Open Questions](open-questions.md) | What is still undecided |
 | — | [Glossary](glossary.md) | BIM / IFC / VCS terms |

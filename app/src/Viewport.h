@@ -324,7 +324,7 @@ public:
     QImage renderImage(int width, int height);
     // D147: a ray-traced render (materials, lights, shadows, reflections, AA); falls back to the
     // shaded render when the GPU cannot run it.
-    QImage renderPhoto(int width, int height, int depth = 3);
+    QImage renderPhoto(int width, int height, int depth = 3, bool globalIllumination = false);
     bool projectCenterOf(const QString& guid, int* x, int* y) const;
 
     const Handle(AIS_InteractiveContext)& context() const { return m_context; }

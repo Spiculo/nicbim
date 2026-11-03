@@ -3675,6 +3675,16 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6965" />
+      <source>Global illumination (path tracing; very slow)</source>
+      <translation>Iluminación global (trazado de caminos; muy lento)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6969" />
+      <source>Bounces light between surfaces for soft indirect light; much slower</source>
+      <translation>Rebota la luz entre superficies para una luz indirecta suave; mucho más lento</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6965" />
       <source>Photorealistic (ray tracing; slower)</source>
       <translation>Fotorrealista (trazado de rayos; más lento)</translation>
     </message>

@@ -7272,7 +7272,14 @@ void MainWindow::exportImageDialog()
     form->addRow(tr("Height (px):"), height);
     auto* photo = new QCheckBox(tr("Photorealistic (ray tracing; slower)"), &dialog);
     photo->setToolTip(tr("Ray-traced shadows and reflections using the model's materials and the sun"));
+    auto* global = new QCheckBox(tr("Global illumination (path tracing; very slow)"), &dialog);
+    global->setToolTip(tr("Bounces light between surfaces for soft indirect light; much slower"));
+    connect(global, &QCheckBox::toggled, photo, [photo](bool on) {
+        if (on)
+            photo->setChecked(true);
+    });
     form->addRow(QString(), photo);
+    form->addRow(QString(), global);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -7280,7 +7287,7 @@ void MainWindow::exportImageDialog()
     if (dialog.exec() != QDialog::Accepted)
         return;
     const QImage image = photo->isChecked()
-        ? m_viewport->renderPhoto(width->value(), height->value())
+        ? m_viewport->renderPhoto(width->value(), height->value(), 3, global->isChecked())
         : m_viewport->renderImage(width->value(), height->value());
     if (image.isNull() || !image.save(path)) {
         showError(tr("Export image"), tr("The image could not be rendered or saved."));

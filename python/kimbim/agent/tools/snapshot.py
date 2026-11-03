@@ -203,8 +203,9 @@ def _take_2d(session, view, args) -> dict:
                           "additionalProperties": False}],
                "description": "3d: a view-cube preset (default iso-se, framed on the target) or {eye, target "
                               "(project units), up, fov (degrees; 0 or none: orthographic)}."},
-    "style": {"type": "string", "enum": ["shaded", "white", "lines", "textured", "render"],
-              "description": "3d; default shaded. render: ray-traced materials, shadows and reflections."},
+    "style": {"type": "string", "enum": ["shaded", "white", "lines", "textured", "render", "pathtrace"],
+              "description": "3d; default shaded. render: ray-traced materials, shadows and reflections; "
+                             "pathtrace: global illumination (very slow)."},
     "purpose": {"type": "string", "description": "The purpose (pen set, visibility); default the project's."},
     "cut": {"type": ["number", "string"], "description": "3d: a horizontal cut at this height (project units or "
                                                          "\"1.1m\"), above `level` when given."},

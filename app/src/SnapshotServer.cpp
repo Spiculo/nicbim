@@ -282,7 +282,7 @@ private:
         if (!readSize(req.value("size"), QSize(1024, 768), &size))
             return error("bad_request", QStringLiteral("size must be [w, h], 1 to %1 pixels").arg(kMaxSide));
         const QString style = req.value("style").toString(QStringLiteral("shaded"));
-        if (!QStringList{"shaded", "white", "lines", "textured", "render"}.contains(style))
+        if (!QStringList{"shaded", "white", "lines", "textured", "render", "pathtrace"}.contains(style))
             return error("bad_request", QStringLiteral("unknown style: %1").arg(style));
         // The camera: a preset name, or {eye, target, up, fov}.
         const QJsonValue cameraValue = req.value("camera");
@@ -372,9 +372,11 @@ private:
             }
         }
         v->view()->ZFitAll();
-        const QImage image = style == QLatin1String("render")
-            ? v->renderPhoto(size.width(), size.height())
-            : v->renderImage(size.width(), size.height());
+        const QImage image = style == QLatin1String("pathtrace")
+            ? v->renderPhoto(size.width(), size.height(), 4, true)
+            : style == QLatin1String("render")
+                  ? v->renderPhoto(size.width(), size.height())
+                  : v->renderImage(size.width(), size.height());
         QJsonObject used{{"eye", xyz(camera->Eye().XYZ())}, {"target", xyz(camera->Center().XYZ())},
             {"up", xyz(camera->Up().XYZ())}, {"fov", camera->IsOrthographic() ? 0.0 : camera->FOVy()},
             {"projection", camera->IsOrthographic() ? "orthographic" : "perspective"}};

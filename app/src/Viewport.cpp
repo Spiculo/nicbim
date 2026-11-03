@@ -3112,22 +3112,26 @@ QImage Viewport::renderImage(int width, int height)
     return image;
 }
 
-QImage Viewport::renderPhoto(int width, int height, int depth)
+QImage Viewport::renderPhoto(int width, int height, int depth, bool globalIllumination)
 {
     if (width <= 0 || height <= 0 || !ensureWindow())
         return {};
     // OCCT's ray tracer: the app's materials, surfaces and lights, with ray-traced shadows,
-    // reflections and adaptive anti-aliasing. If the GPU/driver cannot run it, fall back to the
-    // ordinary shaded render rather than returning nothing.
+    // reflections and adaptive anti-aliasing. With globalIllumination it becomes path tracing
+    // (slower; filmic tone mapping). If the GPU/driver cannot run it, fall back to the ordinary
+    // shaded render rather than returning nothing.
     const Graphic3d_RenderingParams previous = m_view->RenderingParams();
     Graphic3d_RenderingParams params = previous;
     params.Method = Graphic3d_RM_RAYTRACING;
-    params.RaytracingDepth = std::max(1, depth);
+    params.RaytracingDepth = std::max(globalIllumination ? 4 : 1, depth);
     params.IsShadowEnabled = true;
     params.IsReflectionEnabled = true;
     params.IsAntialiasingEnabled = true;
-    params.IsGlobalIlluminationEnabled = false; // path tracing is far slower; ray tracing is the default
-    params.NbMsaaSamples = 0;                     // incompatible with ray tracing
+    params.IsGlobalIlluminationEnabled = globalIllumination;
+    params.ToneMappingMethod = globalIllumination ? Graphic3d_ToneMappingMethod_Filmic
+                                                  : Graphic3d_ToneMappingMethod_Disabled;
+    params.RebuildRayTracingShaders = true;
+    params.NbMsaaSamples = 0; // incompatible with ray tracing
     m_view->ChangeRenderingParams() = params;
     const QImage image = renderImage(width, height);
     m_view->ChangeRenderingParams() = previous;

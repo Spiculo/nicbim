@@ -2,6 +2,16 @@
 
 Resolve these, then record the answer in [decisions.md](decisions.md).
 
+## Needs the owner (blocked)
+
+These are not decisions the agent can make or verify:
+
+| Item | What is needed | Why it blocks |
+|------|----------------|---------------|
+| Code signing | A `.pfx`/`.p12` certificate and its password (use `KIMBIM_SIGN_PASSWORD`, not the command line) | `kimbim sign` (D145) is implemented and tested with a fake runner; an actual signed build needs the owner's private key |
+| SketchUp `.skp` import | Trimble SketchUp SDK access/licence and a redistribution decision | No conda-forge/PyPI importer exists; `.skp` is proprietary (D148 re-check) |
+| VR | An OpenXR runtime and headset for testing, and an owner decision that VR is in scope | The SDK is available (`openxr-sdk`), but no runtime/headset exists here and VR cannot be verified; see [20](20-vr-feasibility.md) |
+
 ## Resolved (2026-10-03)
 
 | Question | Answer | Decision |
