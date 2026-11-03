@@ -154,7 +154,7 @@ release notes, so check before relying on a single cell.
 | Ceilings | RV VW | ✅ | P2 | D156: Model > *Ceiling...* makes an `IfcCovering` (`PredefinedType=CEILING`) over a selected slab or a closed loop of walls, or a drawn outline; its underside sits at the level + offset (default 2.7 m), with a thickness (default 20 cm) in `KIMBIM_Ceiling`; one undo step, agent `create.ceiling` / `create.ceiling_from_selection` |
 | Zones / rooms / spaces (auto from walls, area, name, number) | all | ✅ | P1 | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | Area plans (gross, rentable) | RV VW | ✅ | new | D182: File > *Area plan...* shows the active level's gross area (the union of its rooms, or its slab footprint) and rentable area (the sum of the rooms), with each room's area (`area_plan`, agent `areas.plan`) |
-| Generic object (extrusion, revolve, mesh import) | all | 🟡 | P1 | D120: File > *Import mesh...* brings OBJ, ASCII/binary STL and ASCII PLY as `IfcBuildingElementProxy` bodies (scale/rotation/position); extrusion/revolve authoring is still part of the parametric object system ([16](16-parametric-objects.md)) |
+| Generic object (extrusion, revolve, mesh import) | all | ✅ | P1 | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (tests in `test_objedit.py` and `test_library.py`), placed as proxy types |
 | Morph / free-form modelling, push/pull | AC SU VW | ⬜ | new | Massing and odd shapes |
 | Conceptual massing with floor areas | RV VW | ⬜ | new | |
 | Models / modules placed on several levels | AC RV VW | ✅ | — | D58 (Archicad Hotlinked Modules, Revit Groups) |
