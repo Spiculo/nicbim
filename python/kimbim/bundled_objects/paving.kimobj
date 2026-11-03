@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "paving",
+ "name": {"en": "Paving", "es": "Pavimento"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcGeographicElementType", "USERDEFINED", "PAVING"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "PAVING"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 2.0},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 2.0},
+  {"key": "height", "kind": "length", "label": {"en": "Thickness", "es": "Espesor"}, "default": 0.08}
+ ],
+ "parts": [
+  {"id": "body", "box": {"dx": "width", "dy": "depth", "dz": "height"}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [["0", "depth / 2"], ["width", "depth / 2"]]}},
+  {"line": {"points": [["width / 2", "0"], ["width / 2", "depth"]]}}
+ ]
+}

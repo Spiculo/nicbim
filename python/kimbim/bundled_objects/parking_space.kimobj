@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "parking_space",
+ "name": {"en": "Parking space", "es": "Plaza de aparcamiento"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcGeographicElementType", "USERDEFINED", "PARKING"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "PARKING"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 2.5},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 5.0},
+  {"key": "height", "kind": "length", "label": {"en": "Marking height", "es": "Altura de la marca"}, "default": 0.02}
+ ],
+ "parts": [
+  {"id": "body", "box": {"dx": "width", "dy": "depth", "dz": "height"}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [["0", "depth * 0.15"], ["width", "depth * 0.15"]]}},
+  {"line": {"points": [["0", "depth * 0.85"], ["width", "depth * 0.85"]]}}
+ ]
+}

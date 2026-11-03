@@ -40,11 +40,14 @@ def test_the_library_lists_every_category():
     ids = {o["id"] for o in listing["objects"]}
     for wanted in ("table", "chair", "sofa", "bed_single", "bed_double", "wardrobe", "desk", "shelf", "wc",
                    "washbasin", "bathtub", "shower_tray", "bidet", "base_cabinets", "wall_cabinets", "sink_unit",
-                   "fridge", "cooker", "person", "tree", "shrub", "hedge", "car", "floor_lamp", "table_lamp"):
+                   "fridge", "cooker", "person", "tree", "shrub", "hedge", "car", "paving", "path",
+                   "parking_space", "floor_lamp", "table_lamp"):
         assert wanted in ids
     assert {"id": "lighting", "name": "Lighting"} in listing["categories"]
     assert {o["category"] for o in listing["objects"] if o["id"] in ("floor_lamp", "table_lamp")} == {"lighting"}
     assert {o["category"] for o in listing["objects"] if o["id"] in ("tree", "shrub", "hedge")} == {"site"}
+    assert {o["category"] for o in listing["objects"]
+            if o["id"] in ("paving", "path", "parking_space")} == {"site"}
     for o in listing["objects"]:
         assert o["symbol"] and o["params"], o["id"]  # a thumbnail and parameters for every bundled object
         assert {"width", "height"} <= {p["key"] for p in o["params"]}

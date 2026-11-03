@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D193 plus explicit overrides for the final items.
+after D123–D194 plus explicit overrides for the final items.
 
-**Summary: 176 done, 30 deferred, 3 blocked.**
+**Summary: 177 done, 29 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -126,7 +126,7 @@ after D123–D193 plus explicit overrides for the final items.
 | 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups) |
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
 | 7. Site | Building pad / cut-and-fill | **Done** | D116 flattens a polygonal terrain part to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad against the pre-pad surface (`pad_cut_fill`, agent `terrain.pad_volumes`), shown in the dialog's status line. |
-| 7. Site | Hardscape, paths, parking | **Deferred** |  |
+| 7. Site | Hardscape, paths, parking | **Done** | D194: bundled *Paving*, *Path* and *Parking space* objects in the site category (IFC geographic/proxy types, thin box bodies and plan symbols); hardscape areas are placed and edited like any library object |
 | 7. Site | Plants and landscape | **Done** | D192: bundled *Shrub* and *Hedge* objects in the site category (tree was already there), with IFC geographic/proxy types, body and plan symbol; plant objects place on any level like the rest of the library |
 | 7. Site | North direction, sun study | **Done** | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |
 | 8. Objects and libraries | Library browser (thumbnails, search, categories) | **Done** | D86: Library panel |
