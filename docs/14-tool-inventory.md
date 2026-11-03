@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D146).**
+**Status as of `main` (2026-11-03, after D112–D147).**
 
 ## How to read it
 
@@ -282,7 +282,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Real-time textured 3D | all | ✅ | new | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
-| Photorealistic rendering | AC RV VW | ⬜ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size (the app's shaded OCCT view, not a path tracer); photorealistic rendering is still to do |
+| Photorealistic rendering | AC RV VW | ⬜ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size. D147: *Photorealistic (ray tracing)* uses OCCT's ray tracer (materials, sun/shadows, reflections, adaptive AA) with a shaded fallback; the agent `snapshot.take` style `render` uses the same path. Full path-traced/global-illumination rendering and VR are still to do |
 | AI visualiser (sketch to image) | AC VW | 🔮 | new | |
 | Sun / shadow studies, animations | all | 🟡 | new | D96: sun shadows for a place, date and time; no animations |
 | Walkthrough video, VR | AC RV VW | ⬜ | P2 | |
@@ -359,6 +359,6 @@ What now most often stops an architect from finishing a real project, roughly in
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
 12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
-14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents, D138 model view options by drawing scale and D146 high-resolution image export; photorealistic rendering and VR are still to do.
+14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents, D138 model view options by drawing scale, D146 high-resolution image export and D147 ray-traced renders; path-traced rendering and VR are still to do.
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14: photorealistic rendering and VR; high-resolution image export is in); D140-D143 give live links, editable copies, attribute/property and geometry sync.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14: path-traced rendering and VR; high-resolution ray-traced export is in); D140-D143 give live links, editable copies, attribute/property and geometry sync.

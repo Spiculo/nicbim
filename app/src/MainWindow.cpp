@@ -7270,13 +7270,18 @@ void MainWindow::exportImageDialog()
     height->setValue(1080);
     form->addRow(tr("Width (px):"), width);
     form->addRow(tr("Height (px):"), height);
+    auto* photo = new QCheckBox(tr("Photorealistic (ray tracing; slower)"), &dialog);
+    photo->setToolTip(tr("Ray-traced shadows and reflections using the model's materials and the sun"));
+    form->addRow(QString(), photo);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     if (dialog.exec() != QDialog::Accepted)
         return;
-    const QImage image = m_viewport->renderImage(width->value(), height->value());
+    const QImage image = photo->isChecked()
+        ? m_viewport->renderPhoto(width->value(), height->value())
+        : m_viewport->renderImage(width->value(), height->value());
     if (image.isNull() || !image.save(path)) {
         showError(tr("Export image"), tr("The image could not be rendered or saved."));
         return;

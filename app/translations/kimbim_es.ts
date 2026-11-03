@@ -3674,6 +3674,16 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <translation>Alto (px):</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="6965" />
+      <source>Photorealistic (ray tracing; slower)</source>
+      <translation>Fotorrealista (trazado de rayos; más lento)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6966" />
+      <source>Ray-traced shadows and reflections using the model's materials and the sun</source>
+      <translation>Sombras y reflejos por trazado de rayos con los materiales del modelo y el sol</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="6968" />
       <source>The image could not be rendered or saved.</source>
       <translation>No se pudo renderizar o guardar la imagen.</translation>

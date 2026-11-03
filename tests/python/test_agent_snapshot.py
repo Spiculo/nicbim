@@ -95,6 +95,16 @@ def test_snapshot_3d_default(s, tmp_path):
 
 @app
 @needs_app
+def test_snapshot_render_style(s, tmp_path):
+    out = tmp_path / "render.png"
+    r = run(s, "snapshot.take", style="render", size=[240, 160], out=str(out))
+    assert r["ok"], r
+    assert r["result"]["path"] == str(out)
+    assert png_size(out) == (240, 160) and out.stat().st_size > 0
+
+
+@app
+@needs_app
 def test_snapshot_plan_level1(s, tmp_path):
     r = run(s, "snapshot.take", view="plan", level="Level 1", size=[800, 600])
     assert r["ok"], r

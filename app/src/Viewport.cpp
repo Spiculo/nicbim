@@ -25,6 +25,7 @@
 #include <V3d_DirectionalLight.hxx>
 #include <V3d_AmbientLight.hxx>
 #include <Graphic3d_Camera.hxx>
+#include <Graphic3d_RenderingParams.hxx>
 #include <SelectMgr_EntityOwner.hxx>
 #include <SelectMgr_Selection.hxx>
 #include <Select3D_SensitivePoint.hxx>
@@ -3109,6 +3110,28 @@ QImage Viewport::renderImage(int width, int height)
         }
     }
     return image;
+}
+
+QImage Viewport::renderPhoto(int width, int height, int depth)
+{
+    if (width <= 0 || height <= 0 || !ensureWindow())
+        return {};
+    // OCCT's ray tracer: the app's materials, surfaces and lights, with ray-traced shadows,
+    // reflections and adaptive anti-aliasing. If the GPU/driver cannot run it, fall back to the
+    // ordinary shaded render rather than returning nothing.
+    const Graphic3d_RenderingParams previous = m_view->RenderingParams();
+    Graphic3d_RenderingParams params = previous;
+    params.Method = Graphic3d_RM_RAYTRACING;
+    params.RaytracingDepth = std::max(1, depth);
+    params.IsShadowEnabled = true;
+    params.IsReflectionEnabled = true;
+    params.IsAntialiasingEnabled = true;
+    params.IsGlobalIlluminationEnabled = false; // path tracing is far slower; ray tracing is the default
+    params.NbMsaaSamples = 0;                     // incompatible with ray tracing
+    m_view->ChangeRenderingParams() = params;
+    const QImage image = renderImage(width, height);
+    m_view->ChangeRenderingParams() = previous;
+    return image.isNull() ? renderImage(width, height) : image;
 }
 
 QString Viewport::pickAt(int x, int y)
