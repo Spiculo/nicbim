@@ -93,6 +93,32 @@ private slots:
         QCOMPARE(kimbim::maxUserPlanes(32, false, false, true), 28);
     }
 
+    void viewRangeKeepsOnlyAboveItsBottom()
+    {
+        kimbim::CutState s;
+        s.hasBottom = true;
+        s.bottom = 0.0;
+        const auto planes = kimbim::makePlanes(s);
+        QCOMPARE(int(planes.size()), 1);
+        QVERIFY(kept(planes, 5, 5, 1.0));
+        QVERIFY(!kept(planes, 5, 5, -0.5));
+        QCOMPARE(kimbim::planeCount(s), 1);
+        QCOMPARE(kimbim::maxUserPlanes(32, false, false, false, true), 31);
+    }
+
+    void cropAndPlanCutAndBoxAndRangeCountTogether()
+    {
+        kimbim::CutState s;
+        s.planCut = true;
+        s.box = true;
+        s.bounds.Update(0, 0, 0, 10, 10, 10);
+        s.crop.Update(1, 1, -100, 9, 9, 100);
+        s.hasBottom = true;
+        s.bottom = 0.0;
+        QCOMPARE(kimbim::planeCount(s), 12); // 1 + 6 + 4 + 1
+        QCOMPARE(kimbim::maxUserPlanes(32, true, true, true, true), 20);
+    }
+
     void cropAndPlanCutAndBoxCountTogether()
     {
         kimbim::CutState s;

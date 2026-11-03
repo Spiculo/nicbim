@@ -3142,6 +3142,7 @@ private slots:
                  "actionDetailTool", "actionExportIfc", "actionLinkModel", "actionLinks",
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
+                 "actionViewRange", "actionClearViewRange",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }

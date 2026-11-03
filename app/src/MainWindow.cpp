@@ -1081,6 +1081,13 @@ void MainWindow::buildMenus()
     QAction* clearCrop = view->addAction(tr("Clear crop re&gion"));
     clearCrop->setObjectName(QStringLiteral("actionClearCropRegion"));
     connect(clearCrop, &QAction::triggered, this, &MainWindow::clearCropRegion);
+    QAction* viewRange = view->addAction(tr("View ran&ge..."));
+    viewRange->setObjectName(QStringLiteral("actionViewRange"));
+    viewRange->setToolTip(tr("The active view's cut height and how far below its level it shows"));
+    connect(viewRange, &QAction::triggered, this, &MainWindow::viewRangeDialog);
+    QAction* clearRange = view->addAction(tr("Clear view ran&ge"));
+    clearRange->setObjectName(QStringLiteral("actionClearViewRange"));
+    connect(clearRange, &QAction::triggered, this, &MainWindow::clearViewRange);
     // D95: cut planes of any direction (Archicad's 3D Cutaway).
     m_cutPlanesMenu = view->addMenu(tr("Cut &planes"));
     m_cutPlanesMenu->setObjectName(QStringLiteral("menuCutPlanes"));
@@ -1426,7 +1433,8 @@ int MainWindow::availableCutPlaneSlots() const
     int limit = modelView()->clipPlaneLimit();
     if (limit <= 0)
         limit = 32; // headless: the driver cannot be asked
-    const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid());
+    const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid(),
+                                   s.viewDepth >= 0.0);
     int used = 0;
     for (const CutPlane& p : s.planes)
         if (p.enabled)
@@ -1510,7 +1518,8 @@ bool MainWindow::setCutPlaneEnabled(int index, bool on)
         int limit = modelView()->clipPlaneLimit();
         if (limit <= 0)
             limit = 32; // headless: the driver cannot be asked
-        const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid());
+        const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid(),
+                                       s.viewDepth >= 0.0);
         int used = 0;
         for (int i = 0; i < s.planes.size(); ++i)
             if (i != index && s.planes[i].enabled)
@@ -1738,6 +1747,59 @@ void MainWindow::clearCropRegion()
     m_status->showMessage(tr("Crop region cleared"));
 }
 
+void MainWindow::viewRangeDialog()
+{
+    if (!m_viewport)
+        return;
+    CutSettings& settings = m_cuts[m_viewport];
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("View range"));
+    auto* form = new QFormLayout(&dialog);
+    auto* top = new QDoubleSpinBox(&dialog);
+    top->setRange(0.0, 100.0);
+    top->setDecimals(3);
+    top->setSuffix(tr(" m"));
+    top->setValue(settings.height);
+    auto* limited = new QCheckBox(tr("Show down to a limit below the level"), &dialog);
+    limited->setChecked(settings.viewDepth >= 0.0);
+    auto* bottom = new QDoubleSpinBox(&dialog);
+    bottom->setRange(0.0, 50.0);
+    bottom->setDecimals(3);
+    bottom->setSuffix(tr(" m"));
+    bottom->setValue(settings.viewDepth >= 0.0 ? settings.viewDepth : 1.0);
+    bottom->setEnabled(limited->isChecked());
+    connect(limited, &QCheckBox::toggled, bottom, &QDoubleSpinBox::setEnabled);
+    form->addRow(tr("Cut height above the level:"), top);
+    form->addRow(QString(), limited);
+    form->addRow(tr("Depth below the level:"), bottom);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    {
+        const QSignalBlocker blockCut(m_planCut), blockHeight(m_cutHeight);
+        m_planCut->setChecked(true); // a top means a horizontal cut
+        m_cutHeight->setValue(top->value());
+    }
+    settings.planCut = true;
+    settings.height = top->value();
+    settings.viewDepth = limited->isChecked() ? bottom->value() : -1.0;
+    applyCutsTo(m_viewport, settings);
+    m_status->showMessage(tr("View range set"));
+}
+
+void MainWindow::clearViewRange()
+{
+    auto it = m_cuts.find(m_viewport);
+    if (it == m_cuts.end() || it->viewDepth < 0.0)
+        return;
+    it->viewDepth = -1.0;
+    applyCutsTo(m_viewport, *it);
+    m_status->showMessage(tr("View range cleared"));
+}
+
 void MainWindow::updateCutSliderRange()
 {
     // From the level up to the next level (or 4 m), in centimetres.
@@ -1765,6 +1827,8 @@ void MainWindow::applyCutsTo(Viewport* view, CutSettings& settings)
     state.box = settings.box;
     state.bounds = settings.bounds;
     state.crop = settings.crop;
+    state.hasBottom = settings.viewDepth >= 0.0;
+    state.bottom = (m_levels ? m_levels->activeElevation() : 0.0) - std::max(settings.viewDepth, 0.0);
     state.planes.assign(settings.planes.begin(), settings.planes.end());
     int limit = view->clipPlaneLimit();
     if (limit <= 0)
@@ -1799,8 +1863,10 @@ void MainWindow::applyCutsTo(Viewport* view, CutSettings& settings)
         keep.emplace_back(gp_Pnt(0, y0, 0), gp_Dir(0, 1, 0));
         keep.emplace_back(gp_Pnt(0, y1, 0), gp_Dir(0, -1, 0));
     }
+    if (state.hasBottom)
+        keep.emplace_back(gp_Pnt(0, 0, state.bottom), gp_Dir(0, 0, 1));
     const int room = maxUserPlanes(limit, state.planCut, state.box && !state.bounds.IsVoid(),
-                                   !state.crop.IsVoid());
+                                   !state.crop.IsVoid(), state.hasBottom);
     int used = 0;
     bool selectedClipped = false;
     for (int i = 0; i < settings.planes.size(); ++i) {

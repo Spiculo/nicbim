@@ -51,15 +51,17 @@ int planeCount(const CutState& state)
         n += 6;
     if (!state.crop.IsVoid())
         n += 4;
+    if (state.hasBottom)
+        ++n;
     for (const CutPlane& p : state.planes)
         if (p.enabled)
             ++n;
     return n;
 }
 
-int maxUserPlanes(int driverLimit, bool planCut, bool box, bool crop)
+int maxUserPlanes(int driverLimit, bool planCut, bool box, bool crop, bool bottom)
 {
-    const int fixed = (planCut ? 1 : 0) + (box ? 6 : 0) + (crop ? 4 : 0);
+    const int fixed = (planCut ? 1 : 0) + (box ? 6 : 0) + (crop ? 4 : 0) + (bottom ? 1 : 0);
     if (driverLimit <= 0)
         return 1 << 20;
     return std::max(0, driverLimit - fixed);
@@ -90,6 +92,8 @@ std::vector<Handle(Graphic3d_ClipPlane)> makePlanes(const CutState& state, int l
             if (limit <= 0 || int(planes.size()) < limit)
                 planes.push_back(plane(points[i], dirs[i]));
     }
+    if (state.hasBottom && (limit <= 0 || int(planes.size()) < limit))
+        planes.push_back(plane(gp_Pnt(0, 0, state.bottom), gp_Dir(0, 0, 1))); // keep above
     for (const CutPlane& p : state.planes)
         if (p.enabled && (limit <= 0 || int(planes.size()) < limit))
             planes.push_back(plane(p.point, p.normal));

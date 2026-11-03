@@ -2952,6 +2952,51 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <translation>Región de recorte borrada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="1051" />
+      <source>View ran&amp;ge...</source>
+      <translation>Rango de &amp;vista...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1053" />
+      <source>The active view's cut height and how far below its level it shows</source>
+      <translation>La altura de corte de la vista activa y cuánto muestra por debajo de su nivel</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1055" />
+      <source>Clear view ran&amp;ge</source>
+      <translation>Borrar el rango de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1790" />
+      <source>View range</source>
+      <translation>Rango de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1798" />
+      <source>Show down to a limit below the level</source>
+      <translation>Mostrar hasta un límite bajo el nivel</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1806" />
+      <source>Cut height above the level:</source>
+      <translation>Altura de corte sobre el nivel:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1808" />
+      <source>Depth below the level:</source>
+      <translation>Profundidad bajo el nivel:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1821" />
+      <source>View range set</source>
+      <translation>Rango de vista aplicado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1830" />
+      <source>View range cleared</source>
+      <translation>Rango de vista borrado</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="1034" />
       <source>Section &amp;box</source>
       <translation>Caja de &amp;sección</translation>

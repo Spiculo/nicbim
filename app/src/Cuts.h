@@ -43,6 +43,8 @@ struct CutState {
     bool box = false;
     Bnd_Box bounds;     // section box: keep only what is inside
     Bnd_Box crop;       // D134: crop region: keep only what is inside its X/Y rectangle (Z ignored)
+    bool hasBottom = false; // D136: view range: keep everything above `bottom`
+    double bottom = 0;
     std::vector<CutPlane> planes; // D95: user planes, in panel order
 };
 
@@ -54,6 +56,6 @@ std::vector<Handle(Graphic3d_ClipPlane)> makePlanes(const CutState& state, int l
 // How many clip planes the state needs (plan cut, the box's six sides and the enabled planes).
 int planeCount(const CutState& state);
 // How many user planes fit beside the plan cut and the box with this driver limit.
-int maxUserPlanes(int driverLimit, bool planCut, bool box, bool crop = false);
+int maxUserPlanes(int driverLimit, bool planCut, bool box, bool crop = false, bool bottom = false);
 
 } // namespace kimbim
