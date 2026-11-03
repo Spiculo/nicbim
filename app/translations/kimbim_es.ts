@@ -5115,6 +5115,26 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>&amp;Marquee selection</source>
+      <translation>Selección por &amp;marquesina</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="722" />
+      <source>Drag a rectangle that selects every element it touches, including hidden ones</source>
+      <translation>Arrastra un rectángulo que selecciona todo lo que toca, incluidos los ocultos</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="721" />
+      <source>Marquee: drag a rectangle to select everything it touches</source>
+      <translation>Marquesina: arrastra un rectángulo para seleccionar todo lo que toca</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="722" />
+      <source>Marquee selection off</source>
+      <translation>Selección por marquesina desactivada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="700" />
       <source>&amp;Align...</source>
       <translation>&amp;Alinear...</translation>
     </message>

@@ -2069,6 +2069,19 @@ private slots:
         QVERIFY(w.close());
     }
 
+    // D155: marquee selection is a checkable selection mode.
+    void marqueeSelectionMode()
+    {
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        QAction* a = action(w, "actionMarqueeSelection");
+        QVERIFY(a->isCheckable());
+        kimbim::Viewport::setMarqueeSelection(false);
+        a->trigger();
+        QVERIFY(kimbim::Viewport::marqueeSelection());
+        a->trigger();
+        QVERIFY(!kimbim::Viewport::marqueeSelection());
+    }
+
     // D153: a split view is a second viewport beside the active one, with its own key and camera.
     void splitViewCreatesASecondViewport()
     {
@@ -3216,7 +3229,7 @@ private slots:
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
                  "actionDrawingScale", "actionExportImage", "actionWalkMode", "actionSplitView",
-                 "actionAlign", "actionAttributeManager", "actionKeynotes"})
+                 "actionAlign", "actionMarqueeSelection", "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
 

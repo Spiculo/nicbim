@@ -94,6 +94,10 @@ public:
     static void setBoxMode(BoxMode mode);
     static BoxMode boxMode();
     static BoxMode boxModeFrom(const QString& preference); // "direction", "partial", "entire"
+    // D155: marquee selection: a dragged rectangle always takes everything it touches, including
+    // hidden elements (for 2D export and editing).
+    static void setMarqueeSelection(bool on);
+    static bool marqueeSelection();
     // Perspective camera (D76), per view; plan views stay orthographic (the setting comes back in 3D).
     void setPerspective(bool on);
     // D152: first-person walk/fly mode (WASD, Q/E, drag to look).
@@ -357,6 +361,7 @@ public:
         return endX < startX;
     }
     static BoxMode s_boxMode;
+    static bool s_marquee;
     void setSelectThrough(bool on) { m_selectThrough = on; }
     bool selectThrough() const { return m_selectThrough; }
     // Guids with at least one visible pixel in the rectangle (nullopt: cannot tell, e.g. no window).

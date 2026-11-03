@@ -80,6 +80,7 @@ double g_fieldOfView = 45.0;
 } // namespace
 
 Viewport::BoxMode Viewport::s_boxMode = Viewport::BoxMode::Direction;
+bool Viewport::s_marquee = false;
 
 namespace {
 
@@ -889,9 +890,10 @@ void Viewport::handleSelectionPoly(const Handle(AIS_InteractiveContext)& ctx, co
 {
     const auto& points = myUI.Selection.Points;
     const bool rectangle = myUI.Selection.Tool == AIS_ViewSelectionTool_RubberBand && points.Size() == 2;
-    const bool through = m_selectThrough || (LastMouseFlags() & Aspect_VKeyFlags_ALT) != 0;
+    const bool through = s_marquee || m_selectThrough || (LastMouseFlags() & Aspect_VKeyFlags_ALT) != 0;
     // D78: right to left is a crossing box (dashed band), left to right a window box (solid band).
-    const bool crossing = rectangle && isCrossingBox(points.First().x(), points.Last().x());
+    // D155: a marquee always crosses, through hidden geometry.
+    const bool crossing = s_marquee || (rectangle && isCrossingBox(points.First().x(), points.Last().x()));
     if (rectangle && !myRubberBand.IsNull())
         myRubberBand->SetLineType(crossing ? Aspect_TOL_DASH : Aspect_TOL_SOLID);
     struct OverlapScope { // the selector takes touched elements only for this crossing box
@@ -921,12 +923,12 @@ int Viewport::selectInRectangle(int x0, int y0, int x1, int y1, AIS_SelectionSch
     if (!ensureWindow())
         return 0;
     const QSet<QString> before = selectedSet();
-    m_context->MainSelector()->AllowOverlapDetection(isCrossingBox(x0, x1));
+    m_context->MainSelector()->AllowOverlapDetection(s_marquee || isCrossingBox(x0, x1));
     m_context->SelectRectangle(NCollection_Vec2<int>(std::min(x0, x1), std::min(y0, y1)),
         NCollection_Vec2<int>(std::max(x0, x1), std::max(y0, y1)), m_view, scheme);
     m_context->MainSelector()->AllowOverlapDetection(false);
     m_context->UpdateCurrentViewer();
-    if (!through && !m_selectThrough)
+    if (!through && !m_selectThrough && !s_marquee)
         keepOnlyVisible(before, scheme, x0, y0, x1, y1);
     emit selectionChanged(selectedGuids());
     return m_context->NbSelected();
@@ -3382,6 +3384,16 @@ void Viewport::setBoxMode(BoxMode mode)
 Viewport::BoxMode Viewport::boxMode()
 {
     return s_boxMode;
+}
+
+void Viewport::setMarqueeSelection(bool on)
+{
+    s_marquee = on;
+}
+
+bool Viewport::marqueeSelection()
+{
+    return s_marquee;
 }
 
 Viewport::BoxMode Viewport::boxModeFrom(const QString& preference)

@@ -717,6 +717,14 @@ void MainWindow::buildMenus()
         ->setToolTip(tr("Select every element sharing the selected element's class and predefined type, its type object or its class (Edit ▸ Preferences)"));
     editAction(tr("Select all of this c&lass"), "actionSelectClass", QKeySequence(), [this] { selectSimilar(QStringLiteral("class")); })
         ->setToolTip(tr("Select every element of the selected elements' IFC classes"));
+    QAction* marquee = editAction(tr("&Marquee selection"), "actionMarqueeSelection", QKeySequence(),
+        [this](bool on) {
+            Viewport::setMarqueeSelection(on);
+            m_status->showMessage(on ? tr("Marquee: drag a rectangle to select everything it touches")
+                                     : tr("Marquee selection off"));
+        });
+    marquee->setCheckable(true);
+    marquee->setToolTip(tr("Drag a rectangle that selects every element it touches, including hidden ones"));
     editAction(tr("Select &all"), "actionSelectAll", QKeySequence::SelectAll, [this] { selectAll(); })
         ->setToolTip(tr("With a creation tool active, selects that tool's elements; otherwise everything"));
     editAction(tr("&Find && Select..."), "actionFindSelect", QKeySequence(Qt::CTRL | Qt::Key_F), [this] {
