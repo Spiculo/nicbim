@@ -1314,6 +1314,10 @@ _EXPORTS = {
         "boolean_elements",
         "cut_elements",
     ),
+    "morph": (
+        "move_vertices",
+        "push_pull",
+    ),
     "settings": (
         "load_settings_file",
         "project_settings",

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D219 plus explicit overrides for the final items.
+after D123–D220 plus explicit overrides for the final items.
 
-**Summary: 200 done, 6 deferred, 3 blocked.**
+**Summary: 201 done, 5 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -121,7 +121,7 @@ after D123–D219 plus explicit overrides for the final items.
 | 6. Building elements | Zones / rooms / spaces (auto from walls, area, name, number) | **Done** | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | 6. Building elements | Area plans (gross, rentable) | **Done** | D182: File > *Area plan...* shows the level's gross area (rooms' union or slab footprint) and rentable area (sum of rooms), with each room's area (`area_plan`, agent `areas.plan`). |
 | 6. Building elements | Generic object (extrusion, revolve, mesh import) | **Done** | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (with tests), and they place as proxy types like any library object |
-| 6. Building elements | Morph / free-form modelling, push/pull | **Deferred** | Massing and odd shapes |
+| 6. Building elements | Morph / free-form modelling, push/pull | **Done** | D220: `morph.push_pull` moves a massing box side/top/bottom or a mesh's named face (world-space vertices), `morph.move_vertices` moves chosen mesh vertices; Model > *Push/pull...* asks for the face and distance. Each call is one undo step and refuses a collapse or a bad face. |
 | 6. Building elements | Conceptual massing with floor areas | **Done** | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level; `areas.massing_report` lists each box's footprint and volume and sums floor area per level, counting a level when it lies inside the box |
 | 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups) |
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |

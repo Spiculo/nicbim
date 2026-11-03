@@ -3310,6 +3310,48 @@ void MainWindow::buildModelingToolbar()
         setSelection({r.value("guid").toString()});
         m_status->showMessage(tr("Massing box added"));
     });
+    QAction* pushPull = model->addAction(tr("&Push/pull...")); // D220
+    pushPull->setObjectName(QStringLiteral("actionPushPull"));
+    pushPull->setToolTip(tr("Push or pull a face of a massing box or a triangulated mesh"));
+    connect(pushPull, &QAction::triggered, this, [this] {
+        if (m_selection.size() != 1) {
+            m_status->showMessage(tr("Select one massing box or mesh to push/pull"));
+            return;
+        }
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Push/pull"));
+        auto* form = new QFormLayout(&dialog);
+        auto* face = new QComboBox(&dialog);
+        for (const auto& item : {std::pair{tr("+X (right)"), QStringLiteral("+x")},
+                 std::pair{tr("-X (left)"), QStringLiteral("-x")},
+                 std::pair{tr("+Y (back)"), QStringLiteral("+y")},
+                 std::pair{tr("-Y (front)"), QStringLiteral("-y")},
+                 std::pair{tr("+Z (top)"), QStringLiteral("+z")},
+                 std::pair{tr("-Z (bottom)"), QStringLiteral("-z")}})
+            face->addItem(item.first, item.second);
+        auto* distance = new QDoubleSpinBox(&dialog);
+        distance->setRange(-1000.0, 1000.0);
+        distance->setDecimals(3);
+        distance->setSuffix(tr(" m"));
+        distance->setValue(1.0);
+        form->addRow(tr("Face:"), face);
+        form->addRow(tr("Distance (negative pulls inward):"), distance);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        const QJsonObject r = bridge("push_pull", {m_selection.first(),
+            face->currentData().toString(), QString::number(distance->value(), 'g', 17)});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Push/pull"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(
+            tr("Face %1 moved %2 m").arg(face->currentText()).arg(distance->value()));
+    });
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));
     skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
