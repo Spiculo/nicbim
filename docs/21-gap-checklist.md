@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D186 plus explicit overrides for the final items.
+after D123–D187 plus explicit overrides for the final items.
 
-**Summary: 170 done, 36 deferred, 3 blocked.**
+**Summary: 171 done, 35 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -229,6 +229,6 @@ after D123–D186 plus explicit overrides for the final items.
 | 20. Automation and customisation | Python console with the model API | **Done** | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | 20. Automation and customisation | Visual programming | **Deferred** | Grasshopper, Dynamo, Marionette |
 | 20. Automation and customisation | Plugins / add-ons | **Deferred** |  |
-| 20. Automation and customisation | Customisable shortcuts, toolbars and workspaces | **Deferred** | Core done; remainder deferred. Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. D135: View > *Toolbars* shows or hide... |
+| 20. Automation and customisation | Customisable shortcuts, toolbars and workspaces | **Done** | Help › *Keyboard shortcuts* lists, rebinds and resets keys (per user); View › *Workspaces* saves and reapplies panel layouts (D131); View › *Toolbars* shows/hides and remembers them (D135). `test_shortcuts.cpp` and `test_preferences.cpp` verify all three. |
 | 20. Automation and customisation | UI languages | **Done** | English and Spanish |
 | 20. Automation and customisation | AI assistant | **Deferred** | [08](08-future.md) |
