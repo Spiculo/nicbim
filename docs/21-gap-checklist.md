@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D182 plus explicit overrides for the final items.
+after D123–D183 plus explicit overrides for the final items.
 
-**Summary: 166 done, 40 deferred, 3 blocked.**
+**Summary: 167 done, 39 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -209,7 +209,7 @@ after D123–D182 plus explicit overrides for the final items.
 | 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. D151 pushes host edits back to the source IFC; the read-only proxy remains a reference. |
 | 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. |
 | 17. Collaboration and versions | BCF issues (import, export, viewpoints) | **Done** | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
-| 17. Collaboration and versions | Markups and comments in the model | **Deferred** |  |
+| 17. Collaboration and versions | Markups and comments in the model | **Done** | D113 BCF 2.1 issues with viewpoints (camera + selected components), threaded comments and import/export (Issues dialog); D87 in-model revision clouds and text markups. `tests/python/test_bcf.py` checks the exports with bcf-client. |
 | 17. Collaboration and versions | Cloud sharing with clients (web viewer) | **Deferred** | [08](08-future.md) |
 | 18. Interoperability | IFC export, valid against the schema | **Done** | Checked in CI: IfcOpenShell validator (schema + EXPRESS rules), web-ifc geometry and the independent xBIM .NET parser (`pixi run interop`, `pixi run interop-xbim`) |
 | 18. Interoperability | IFC export settings (what to export, property mapping) | **Done** | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |

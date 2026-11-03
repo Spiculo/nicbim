@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D182).**
+**Status as of `main` (2026-11-03, after D112–D183).**
 
 ## How to read it
 
@@ -298,7 +298,7 @@ release notes, so check before relying on a single cell.
 | External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. D140: linked files are watched; *Open source* opens the linked IFC in a second KimBim window, and saving it refreshes the host automatically. D151: *Push edits to source...* writes host edits of monitored copies back to the linked IFC (attributes, properties, geometry and placement, inverse link transform) with conflict strategies. The read-only proxy itself stays read-only; editing happens through monitored copies |
 | Copy / monitor linked elements | RV | ✅ | new | D141: *Make editable...* explodes a linked IFC into normal editable elements tagged `KIMBIM_LinkMonitor` (Source, SourceGuid, signatures); *Monitor changes...* reports source elements that changed, disappeared or were added. D142: *Sync monitored...* applies changed source attributes/properties to unmodified host copies, leaves or resolves conflicts (`links.monitor_sync`, safe/source/host), and optionally deletes orphan copies. D143: sync also copies changed **local geometry and placement** (representations deep-copied, link transform applied). D151: *Push edits to source...* writes host edits of monitored copies back to the source IFC, with safe/host/source conflict strategies and a dry run |
 | BCF issues (import, export, viewpoints) | AC RV VW BB | ✅ | new | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
-| Markups and comments in the model | AC RV VW | ⬜ | new | |
+| Markups and comments in the model | AC RV VW | ✅ | new | D113: BCF 2.1 issues with viewpoints (camera and selected components), threaded comments and import/export, in the Issues dialog; D87 adds in-model revision clouds and text markups on plans. `tests/python/test_bcf.py` checks every export with bcf-client |
 | Cloud sharing with clients (web viewer) | AC RV VW | 🔮 | — | [08](08-future.md) |
 
 ## 18. Interoperability
