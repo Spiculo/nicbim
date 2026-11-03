@@ -3462,6 +3462,10 @@ void MainWindow::buildModelingToolbar()
     scriptsAction->setObjectName(QStringLiteral("actionVisualScripts"));
     scriptsAction->setToolTip(tr("Run a saved linear script of model operations as one undo step"));
     connect(scriptsAction, &QAction::triggered, this, &MainWindow::visualScriptsDialog);
+    QAction* analyticalAction = model->addAction(tr("&Analytical model...")); // D224
+    analyticalAction->setObjectName(QStringLiteral("actionAnalyticalModel"));
+    analyticalAction->setToolTip(tr("Derive an IFC structural analysis model from columns, beams, slabs and roofs"));
+    connect(analyticalAction, &QAction::triggered, this, &MainWindow::analyticalModelDialog);
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));
     skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
@@ -9267,6 +9271,74 @@ void MainWindow::visualScriptsDialog() // D223: linear visual scripts
             showError(tr("Visual scripts"), r.value("error").toString());
             return;
         }
+        refresh();
+    });
+    connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    dialog.exec();
+}
+
+void MainWindow::analyticalModelDialog() // D224: derived structural analytical model
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Analytical model"));
+    dialog.resize(520, 260);
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* summary = new QLabel(&dialog);
+    summary->setWordWrap(true);
+    layout->addWidget(summary);
+    auto* note = new QLabel(tr("A geometry-only idealisation: columns and beams become curve members, "
+                               "slabs and roofs surface members. Loads, supports and results stay with "
+                               "the structural engineer."), &dialog);
+    note->setWordWrap(true);
+    layout->addWidget(note);
+    layout->addStretch(1);
+    auto* buttons = new QHBoxLayout;
+    layout->addLayout(buttons);
+    auto* derive = new QPushButton(tr("Derive / update"), &dialog);
+    auto* remove = new QPushButton(tr("Remove"), &dialog);
+    auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(derive);
+    buttons->addWidget(remove);
+    buttons->addStretch(1);
+    buttons->addWidget(close);
+    auto refresh = [&] {
+        const QJsonObject current = bridge("analysis_model");
+        const QJsonObject model = current.value("model").toObject();
+        if (model.isEmpty()) {
+            summary->setText(tr("No analytical model yet. Derive one from the physical model."));
+            remove->setEnabled(false);
+        } else {
+            summary->setText(tr("%1: %2 curve member(s), %3 surface member(s), updated %4")
+                                 .arg(model.value("name").toString())
+                                 .arg(model.value("curves").toInt())
+                                 .arg(model.value("surfaces").toInt())
+                                 .arg(model.value("updated").toString()));
+            remove->setEnabled(true);
+        }
+    };
+    refresh();
+    connect(derive, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject r = bridge("create_analysis_model", {tr("Analytical model")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Analytical model"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        refresh();
+        m_status->showMessage(tr("Analytical model: %1 curve(s), %2 surface(s)")
+                                  .arg(r.value("curves").toInt())
+                                  .arg(r.value("surfaces").toInt()));
+    });
+    connect(remove, &QPushButton::clicked, &dialog, [&] {
+        if (QMessageBox::question(&dialog, tr("Analytical model"),
+                tr("Remove the derived analytical model? The physical model is not changed.")) != QMessageBox::Yes)
+            return;
+        const QJsonObject r = bridge("remove_analysis_model");
+        if (!r.value("ok").toBool()) {
+            showError(tr("Analytical model"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
         refresh();
     });
     connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);

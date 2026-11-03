@@ -1541,6 +1541,11 @@ _EXPORTS = {
         "run_pipeline",
         "save_pipeline",
     ),
+    "structural": (
+        "analysis_model",
+        "create_analysis_model",
+        "remove_analysis_model",
+    ),
     "bcf": (
         "add_comment",
         "create_issue",

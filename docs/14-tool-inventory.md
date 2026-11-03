@@ -324,7 +324,7 @@ release notes, so check before relying on a single cell.
 | Clash detection | AC RV VW BB | ✅ | P2 | Hard and clearance between classes or Find & Select criteria (D81); no BCF yet |
 | Model checks (duplicates, overlaps, rooms without a number) | AC RV | ✅ | P2 | Duplicates, rooms, zero-length walls, not on a level, hostless openings (D81) |
 | Energy evaluation, daylight | AC RV VW | ✅ | new | D222: `energy.energy_report` gives a steady-state heating/lighting estimate and an average daylight factor per level from the envelope areas, rooms and `energy_settings` (U-values, glazing transmittance, air changes, degree days, lighting power, occupied hours); Model > *Energy and daylight...* shows the table, total and inputs. Early-stage comparison, not a compliance calculation |
-| Structural analytical model | AC RV | ⬜ | new | Probably out of scope for architects |
+| Structural analytical model | AC RV | ✅ | new | D224: `structural.create_analysis_model` derives an `IfcStructuralAnalysisModel` (LOADING_3D) from columns/beams (curve members along the extrusion axis) and slabs/roofs (surface members from the footprint), tagged with their source; re-derive replaces in place, removal leaves the physical model. Geometry-only idealisation, no loads/results |
 
 ## 20. Automation and customisation
 

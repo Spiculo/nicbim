@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D223 plus explicit overrides for the final items.
+after D123–D224 plus explicit overrides for the final items.
 
-**Summary: 204 done, 2 deferred, 3 blocked.**
+**Summary: 205 done, 1 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -225,7 +225,7 @@ after D123–D223 plus explicit overrides for the final items.
 | 19. Analysis and checking | Clash detection | **Done** | Hard and clearance between classes or Find & Select criteria (D81); no BCF yet |
 | 19. Analysis and checking | Model checks (duplicates, overlaps, rooms without a number) | **Done** | Duplicates, rooms, zero-length walls, not on a level, hostless openings (D81) |
 | 19. Analysis and checking | Energy evaluation, daylight | **Done** | D222: `energy.energy_report` gives a steady-state heating/lighting estimate and average daylight factor per level from the envelope and rooms, with `energy_settings` U-values/use figures; Model > *Energy and daylight...* shows the table, total and inputs. Early-stage comparison, not a compliance calculation. |
-| 19. Analysis and checking | Structural analytical model | **Deferred** | Probably out of scope for architects |
+| 19. Analysis and checking | Structural analytical model | **Done** | D224: `structural.create_analysis_model` derives an `IfcStructuralAnalysisModel` (LOADING_3D) with curve members from columns/beams and surface members from slabs/roofs, tagged with their source; re-derive replaces in place and removal leaves the physical model. Geometry-only idealisation, no loads or results. |
 | 20. Automation and customisation | Python console with the model API | **Done** | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | 20. Automation and customisation | Visual programming | **Done** | D223: linear visual scripts in the `visual_scripts` project setting; `run_pipeline` runs whitelisted ops (massing, room, push/pull, move_vertices) as one undo step with `"$n"` wiring, and Model > *Visual scripts...* lists/edits/runs/deletes them. A linear program rather than a wired node graph. |
 | 20. Automation and customisation | Plugins / add-ons | **Done** | D212: `.py` add-ons in the app's `plugins` folder run at startup and on *Reload*; they may define `register(api)` with the `kimbim.app_bridge` module; Help > *Plugins...* lists loaded/failed files (errors on hover), reloads them and opens the folder |
