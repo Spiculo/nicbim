@@ -57,7 +57,8 @@ DEFAULT_OPENING_TYPES = {
              ("Double sliding door 2400x2100", 2.4, 2.1, 0.0, "DOUBLE_DOOR_SLIDING")],
     "window": [("Window 1200x1200", 1.2, 1.2, 0.9, "SINGLE_PANEL"), ("Window 600x600", 0.6, 0.6, 1.5, "SINGLE_PANEL"),
                ("Window 2400x1200, two panels", 2.4, 1.2, 0.9, "DOUBLE_PANEL_VERTICAL"),
-               ("Window 3000x1500, three panels", 3.0, 1.5, 0.9, "TRIPLE_PANEL_VERTICAL")],
+               ("Window 3000x1500, three panels", 3.0, 1.5, 0.9, "TRIPLE_PANEL_VERTICAL"),
+               ("Storefront 3600x2700", 3.6, 2.7, 0.0, "TRIPLE_PANEL_VERTICAL")],  # D209: a glazed shopfront grid
 }
 OPENING_PSET = "KIMBIM_OpeningDefaults"
 OPENING_CLASSES = {"door": ("IfcDoor", "IfcDoorType"), "window": ("IfcWindow", "IfcWindowType")}
@@ -2925,6 +2926,65 @@ def add_slab_opening(slab_guid: str, points_json: str) -> str:
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
     return B._dump(r)
+
+
+def create_skylight(slab_guid: str, x, y, width, depth, type_guid: str = "") -> str:
+    """D209: a horizontal window filling a rectangular opening in a slab (a skylight). The window
+    lies in the slab's top, its width along +X and its depth along +Y from (x, y)."""
+    if B._model is None:
+        return _fail("no model open")
+    slab = _by_guid(slab_guid)
+    if slab is None or not slab.is_a("IfcSlab"):
+        return _fail("not a slab")
+    try:
+        x, y, width, depth = float(x), float(y), float(width), float(depth)
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    if width <= 0 or depth <= 0:
+        return _fail("the skylight needs a positive width and depth")
+    storey = ifcopenshell.util.element.get_container(slab)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return _fail("the slab is not on a level")
+    if not B._model.by_type("IfcWindowType"):
+        opening_types("window")  # the defaults, outside the undo step
+    window_type = _by_guid(type_guid) if type_guid else next(iter(B._model.by_type("IfcWindowType")), None)
+    if window_type is None:
+        return _fail("no window type")
+    bottom = float(ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[2][3]) * _scale()
+    top = bottom + (_extrusion_depth(slab) or 0.3)
+    made = {}
+
+    def action():
+        f = B._model
+        s = _scale()
+        outline = [[x, y], [x + width, y], [x + width, y + depth], [x, y + depth]]
+        opening = _cut_slab(slab, outline, "Skylight opening")
+        window = ifcopenshell.api.root.create_entity(f, ifc_class="IfcWindow", name=window_type.Name)
+        ifcopenshell.api.type.assign_type(f, related_objects=[window], relating_type=window_type)
+        window.PredefinedType = "WINDOW"
+        window.PartitioningType = getattr(window_type, "PartitioningType", None) or "SINGLE_PANEL"
+        window.OverallWidth = width / s
+        window.OverallHeight = depth / s
+        representation = _filling_representation("window", window_type, width, depth)
+        ifcopenshell.api.geometry.assign_representation(f, product=window, representation=representation)
+        matrix = np.eye(4)
+        matrix[:3, 0] = [1.0, 0.0, 0.0]
+        matrix[:3, 1] = [0.0, 0.0, 1.0]
+        matrix[:3, 2] = [0.0, -1.0, 0.0]
+        matrix[:3, 3] = [x, y + depth, top]
+        ifcopenshell.api.geometry.edit_object_placement(f, product=window, matrix=matrix, is_si=True)
+        ifcopenshell.api.spatial.assign_container(f, products=[window], relating_structure=storey)
+        ifcopenshell.api.feature.add_filling(f, opening=opening, element=window)
+        layers.assign_active(window)
+        renovation.stamp_new(window)
+        made["window"], made["opening"] = window, opening
+        return 1, [slab.GlobalId, window.GlobalId, opening.GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["window"].GlobalId, "opening": made["opening"].GlobalId})
 
 
 def _cut_slab(slab, outline, name="Slab opening"):

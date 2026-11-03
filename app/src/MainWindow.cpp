@@ -3185,6 +3185,57 @@ void MainWindow::buildModelingToolbar()
         setSelection({r.value("guid").toString()});
         m_status->showMessage(tr("Massing box added"));
     });
+    QAction* skylight = model->addAction(tr("S&kylight...")); // D209
+    skylight->setObjectName(QStringLiteral("actionSkylight"));
+    skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
+    connect(skylight, &QAction::triggered, this, [this] {
+        if (m_selection.size() != 1) {
+            m_status->showMessage(tr("Select one slab first: the skylight goes in it"));
+            return;
+        }
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Skylight"));
+        auto* form = new QFormLayout(&dialog);
+        auto spin = [&](double value) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(0.1, 50.0);
+            box->setDecimals(2);
+            box->setSuffix(tr(" m"));
+            box->setValue(value);
+            return box;
+        };
+        auto* width = spin(1.2);
+        auto* depth = spin(1.2);
+        form->addRow(tr("Width:"), width);
+        form->addRow(tr("Depth:"), depth);
+        auto* skyButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(skyButtons);
+        connect(skyButtons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(skyButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        double x = 0.0, y = 0.0;
+        if (m_viewport && m_viewport->isPlanView()) {
+            gp_Pnt point;
+            const QSize size = m_viewport->size();
+            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
+                x = point.X();
+                y = point.Y();
+            }
+        }
+        auto num = [](double v) { return QString::number(v, 'g', 17); };
+        const QJsonObject r = bridge("create_skylight", {m_selection.first(),
+            num(x - width->value() / 2), num(y - depth->value() / 2),
+            num(width->value()), num(depth->value()), QString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Skylight"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_viewport->selectGuids({r.value("guid").toString()});
+        setSelection({r.value("guid").toString()});
+        m_status->showMessage(tr("Skylight added"));
+    });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));

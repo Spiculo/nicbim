@@ -3241,7 +3241,8 @@ private slots:
                  "actionGridDimension", "actionPublishSheetSet", "actionNewRevision", "actionAreaPlan",
                  "actionAttributeManager", "actionKeynotes", "actionMake2DBlock", "actionInsert2DBlock",
                  "actionSunAnimation", "actionConvertUnderlay", "actionMassingBox",
-                 "actionAddGuideLine", "actionClearGuideLines", "actionSketchStyle", "actionXray"})
+                 "actionAddGuideLine", "actionClearGuideLines", "actionSketchStyle", "actionXray",
+                 "actionSkylight"})
             QVERIFY2(action(w, name), name);
     }
 

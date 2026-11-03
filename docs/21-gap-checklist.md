@@ -3,7 +3,7 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D208 plus explicit overrides for the final items.
+after D123–D209 plus explicit overrides for the final items.
 
 **Summary: 190 done, 16 deferred, 3 blocked.**
 
@@ -103,7 +103,7 @@ after D123–D208 plus explicit overrides for the final items.
 | 6. Building elements | Slab openings | **Done** |  |
 | 6. Building elements | Sloped slabs, slab edges | **Done** | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. D168 adds slope X/Y and an Edge checkbox to the Slab tool strip, applied to each new slab. |
 | 6. Building elements | Doors and windows in walls (parametric) | **Done** | Basic types |
-| 6. Building elements | Door/window variety: sliding, double, corner window, skylight, storefront | **Deferred** | Core done; remainder deferred. D97: double, sliding, double sliding doors; two- and three-panel windows; no corner windows, skylights or storefronts |
+| 6. Building elements | Door/window variety: sliding, double, corner window, skylight, storefront | **Deferred** | D97: double, sliding and double sliding doors; two- and three-panel windows. D209: *Storefront 3600x2700* window type and *Skylight...* (a horizontal window filling a slab opening). Corner windows remain |
 | 6. Building elements | Door swing and window symbols in plan | **Done** | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
 | 6. Building elements | Generic opening (wall or slab hole without a filling) | **Done** | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening`. |
 | 6. Building elements | Columns, beams from profiles | **Done** |  |
