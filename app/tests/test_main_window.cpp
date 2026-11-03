@@ -3282,7 +3282,7 @@ private slots:
                  "actionSunAnimation", "actionConvertUnderlay", "actionMassingBox",
                  "actionAddGuideLine", "actionClearGuideLines", "actionSketchStyle", "actionXray",
                  "actionSkylight", "actionCornerWindow", "actionPlugins", "actionCostEstimate",
-                 "actionConstructionSequence", "actionShareWebPage", "actionPushPull"})
+                 "actionConstructionSequence", "actionShareWebPage", "actionPushPull", "actionMeshLink"})
             QVERIFY2(action(w, name), name);
     }
 

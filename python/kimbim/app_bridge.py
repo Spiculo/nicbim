@@ -1522,6 +1522,13 @@ _EXPORTS = {
         "unlink",
         "update_link",
     ),
+    "meshlink": (
+        "add_mesh_link",
+        "mesh_links",
+        "refresh_mesh_links",
+        "remove_mesh_link",
+        "stale_mesh_links",
+    ),
     "bcf": (
         "add_comment",
         "create_issue",

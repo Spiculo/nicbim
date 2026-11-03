@@ -312,7 +312,7 @@ release notes, so check before relying on a single cell.
 | PDF import | AC RV VW | ✅ | new | D85: a PDF page as an underlay (an image); D132: a PDF placed as **vector linework** (PyMuPDF paths, selectable/snappable); D200: converting a vector PDF to 2D imports its **text** as editable free text |
 | SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; D133 adds binary FBX through Assimp. SketchUp `.skp` and live links are still to do. Re-checked 2026-11-03: conda-forge has no SketchUp package; `.skp` needs Trimble's proprietary SDK |
 | Point clouds | AC RV VW | ✅ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). D148 adds E57 through the `e57dump` C++ bridge built on conda-forge's `libe57format` (BSD-3); the bridge ships in the portable build |
-| Rhino / Grasshopper live link | AC RV VW | ⬜ | new | |
+| Rhino / Grasshopper live link | AC RV VW | ✅ | new | D221: file-based live link - a Rhino/Grasshopper mesh export (OBJ, STL, PLY, COLLADA, glTF/GLB, FBX) is imported as one proxy with `KIMBIM_MeshLink`; the link watcher refreshes it in place when the export changes, and Model > *Rhino/Grasshopper link...* lists the links (Add/Update/Remove). Pushing edits back needs Rhino itself |
 
 ## 19. Analysis and checking
 

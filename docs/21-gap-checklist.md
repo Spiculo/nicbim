@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D220 plus explicit overrides for the final items.
+after D123–D221 plus explicit overrides for the final items.
 
-**Summary: 201 done, 5 deferred, 3 blocked.**
+**Summary: 202 done, 4 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -218,7 +218,7 @@ after D123–D220 plus explicit overrides for the final items.
 | 18. Interoperability | PDF import | **Done** | D85: a PDF page as an underlay (an image); D132: a PDF placed as **vector linework** (PyMuPDF paths, selectable/snappable); D200: converting a vector PDF to 2D also imports its **text** as editable free text |
 | 18. Interoperability | SketchUp, Rhino, OBJ, FBX import | **Blocked** | OBJ/STL/PLY, COLLADA, glTF/GLB and ASCII/binary FBX are done; SketchUp `.skp` needs Trimble's proprietary SDK. |
 | 18. Interoperability | Point clouds | **Done** | D125 XYZ/PTS/CSV/LAS, D132 LAZ, D148 E57. |
-| 18. Interoperability | Rhino / Grasshopper live link | **Deferred** |  |
+| 18. Interoperability | Rhino / Grasshopper live link | **Done** | D221: a Rhino/Grasshopper mesh export is a live link (`meshlink.add_mesh_link`, `KIMBIM_MeshLink`); the link watcher rebuilds it in place when the export's hash changes, and Model > *Rhino/Grasshopper link...* adds, updates and removes links. Push-back needs Rhino itself. |
 | 19. Analysis and checking | Measure distance, angle, area | **Done** | D79: Shift+M, snaps, 3D surfaces, copy to clipboard |
 | 19. Analysis and checking | IFC schema validation in the app | **Done** | Checks panel, EXPRESS rules included (D81) |
 | 19. Analysis and checking | IDS checks | **Done** | IfcTester; IDS files kept in the project; HTML/JSON report (D81) |

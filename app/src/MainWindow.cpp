@@ -3735,6 +3735,10 @@ void MainWindow::buildModelingToolbar()
     linksAction->setObjectName(QStringLiteral("actionLinks"));
     linksAction->setToolTip(tr("Update or remove the linked IFC references"));
     connect(linksAction, &QAction::triggered, this, &MainWindow::linksDialog);
+    QAction* meshLinkAction = model->addAction(tr("Rhino/Grassho&pper link...")); // D221
+    meshLinkAction->setObjectName(QStringLiteral("actionMeshLink"));
+    meshLinkAction->setToolTip(tr("Keep a Rhino or Grasshopper mesh export in step with the model"));
+    connect(meshLinkAction, &QAction::triggered, this, &MainWindow::meshLinksDialog);
     QAction* curtainAction = model->addAction(tr("Curtain &wall settings...")); // D116
     curtainAction->setObjectName(QStringLiteral("actionCurtainWallSettings"));
     curtainAction->setToolTip(tr("Height, mullion spacing and panel thickness of the selected curtain wall"));
@@ -8943,12 +8947,120 @@ void MainWindow::linksDialog()
     dialog.exec();
 }
 
+void MainWindow::meshLinksDialog() // D221: live Rhino/Grasshopper mesh exports
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Rhino/Grasshopper links"));
+    dialog.resize(760, 360);
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* table = new QTableWidget(&dialog);
+    table->setColumnCount(4);
+    table->setHorizontalHeaderLabels({tr("Name"), tr("File"), tr("Triangles"), tr("Updated")});
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    layout->addWidget(table, 1);
+    auto* buttons = new QHBoxLayout;
+    layout->addLayout(buttons);
+    QJsonArray links;
+    auto refresh = [&] {
+        links = bridge("mesh_links").value("links").toArray();
+        table->setRowCount(links.size());
+        for (int i = 0; i < links.size(); ++i) {
+            const QJsonObject link = links[i].toObject();
+            auto* name = new QTableWidgetItem(link.value("name").toString());
+            name->setData(Qt::UserRole, link.value("guid").toString());
+            if (link.value("stale").toBool())
+                name->setToolTip(tr("The file changed or is missing: press Update"));
+            table->setItem(i, 0, name);
+            auto* path = new QTableWidgetItem(link.value("path").toString());
+            path->setToolTip(link.value("path").toString());
+            table->setItem(i, 1, path);
+            table->setItem(i, 2, new QTableWidgetItem(QString::number(link.value("triangles").toInt())));
+            table->setItem(i, 3, new QTableWidgetItem(link.value("updated").toString()));
+        }
+        if (table->rowCount())
+            table->selectRow(0);
+    };
+    refresh();
+    rebuildLinkWatch();
+    auto current = [&]() -> QJsonObject {
+        const int row = table->currentRow();
+        return row >= 0 && row < links.size() ? links[row].toObject() : QJsonObject();
+    };
+    auto* add = new QPushButton(tr("Add..."), &dialog);
+    add->setToolTip(tr("Link a mesh file exported from Rhino or Grasshopper"));
+    auto* update = new QPushButton(tr("Update"), &dialog);
+    auto* remove = new QPushButton(tr("Remove"), &dialog);
+    auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(add);
+    buttons->addWidget(update);
+    buttons->addWidget(remove);
+    buttons->addStretch(1);
+    buttons->addWidget(close);
+    connect(add, &QPushButton::clicked, &dialog, [&] {
+        const QString path = QFileDialog::getOpenFileName(&dialog, tr("Link a Rhino/Grasshopper export"),
+            QString(), tr("Mesh files (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;All files (*)"));
+        if (path.isEmpty())
+            return;
+        const QJsonObject r = bridge("add_mesh_link",
+            {path, m_levels->activeStorey(), QJsonDocument(QJsonObject{{"name", QFileInfo(path).completeBaseName()}})
+                                                        .toJson(QJsonDocument::Compact)});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Rhino/Grasshopper link"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        refresh();
+        rebuildLinkWatch();
+        m_status->showMessage(tr("Linked %1").arg(QFileInfo(path).fileName()));
+    });
+    connect(update, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject link = current();
+        if (link.isEmpty())
+            return;
+        const QJsonObject r = bridge("refresh_mesh_links", {link.value("guid").toString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Rhino/Grasshopper link"), r.value("error").toString());
+            return;
+        }
+        if (!r.value("updated").toArray().isEmpty())
+            afterEdit(r);
+        if (!r.value("errors").toArray().isEmpty())
+            showError(tr("Rhino/Grasshopper link"),
+                r.value("errors").toArray().first().toObject().value("error").toString());
+        refresh();
+    });
+    connect(remove, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject link = current();
+        if (link.isEmpty())
+            return;
+        const QJsonObject r = bridge("remove_mesh_link", {link.value("guid").toString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Rhino/Grasshopper link"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        refresh();
+        rebuildLinkWatch();
+    });
+    connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    dialog.exec();
+}
+
 void MainWindow::rebuildLinkWatch()
 {
     if (!m_linkWatcher)
         return;
     QStringList paths;
     for (const auto& value : bridge("list_links").value("links").toArray()) {
+        const QString path = value.toObject().value("path").toString();
+        if (!path.isEmpty() && QFileInfo::exists(path))
+            paths << path;
+    }
+    for (const auto& value : bridge("mesh_links").value("links").toArray()) { // D221
         const QString path = value.toObject().value("path").toString();
         if (!path.isEmpty() && QFileInfo::exists(path))
             paths << path;
@@ -8968,17 +9080,28 @@ void MainWindow::refreshLinksIfStale()
     for (const auto& value : stale.value("links").toArray())
         if (value.toObject().value("changed").toBool())
             ++changed;
-    if (!changed)
+    int meshChanged = bridge("stale_mesh_links").value("links").toArray().size(); // D221
+    if (!changed && !meshChanged)
         return;
-    const QJsonObject r = bridge("refresh_links", {QString()});
-    if (!r.value("ok").toBool()) {
-        m_status->showMessage(tr("Could not refresh the linked models: %1").arg(r.value("error").toString()));
-        return;
+    if (changed) {
+        const QJsonObject r = bridge("refresh_links", {QString()});
+        if (!r.value("ok").toBool()) {
+            m_status->showMessage(tr("Could not refresh the linked models: %1").arg(r.value("error").toString()));
+            return;
+        }
+        if (!r.value("refreshed").toArray().isEmpty()) {
+            afterEdit(r);
+            m_status->showMessage(tr("Refreshed %n linked model(s) after their file changed", nullptr,
+                                     r.value("refreshed").toArray().size()));
+        }
     }
-    if (!r.value("refreshed").toArray().isEmpty()) {
-        afterEdit(r);
-        m_status->showMessage(tr("Refreshed %n linked model(s) after their file changed", nullptr,
-                                 r.value("refreshed").toArray().size()));
+    if (meshChanged) {
+        const QJsonObject r = bridge("refresh_mesh_links", {QString()});
+        if (r.value("ok").toBool() && !r.value("updated").toArray().isEmpty()) {
+            afterEdit(r);
+            m_status->showMessage(tr("Refreshed %n Rhino/Grasshopper link(s) after their file changed",
+                                     nullptr, r.value("updated").toArray().size()));
+        }
     }
     rebuildLinkWatch();
 }
