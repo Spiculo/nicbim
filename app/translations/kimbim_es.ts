@@ -3339,6 +3339,54 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6375" />
+      <source>Make editable...</source>
+      <translation>Hacer editable...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7543" />
+      <source>Replace this read-only link with normal, editable elements tagged with their source identity</source>
+      <translation>Reemplazar este vínculo de solo lectura por elementos normales y editables etiquetados con su identidad de origen</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7544" />
+      <source>Monitor changes...</source>
+      <translation>Monitorizar cambios...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7566" />
+      <source>Make editable</source>
+      <translation>Hacer editable</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7567" />
+      <source>Replace the link to "%1" with editable copies?</source>
+      <translation>¿Reemplazar el vínculo con "%1" por copias editables?</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../src/MainWindow.cpp" line="7577" />
+      <source>%n editable element(s) copied</source>
+      <translation>
+        <numerusform>Elemento editable copiado</numerusform>
+        <numerusform>Elementos editables copiados</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7591" />
+      <source>Monitor changes</source>
+      <translation>Monitorizar cambios</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7600" />
+      <source>%1: %2 changed, %3 removed, %4 new</source>
+      <translation>%1: %2 cambiados, %3 eliminados, %4 nuevos</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7603" />
+      <source>No monitored linked models.</source>
+      <translation>No hay modelos vinculados monitorizados.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7540" />
       <source>Open source</source>
       <translation>Abrir el origen</translation>
     </message>

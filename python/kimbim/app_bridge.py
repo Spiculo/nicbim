@@ -1454,8 +1454,10 @@ _EXPORTS = {
         "update_keynote_annotations",
     ),
     "links": (
+        "explode_link",
         "link_model",
         "list_links",
+        "monitor_status",
         "refresh_links",
         "stale_links",
         "set_link_transform",

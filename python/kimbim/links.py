@@ -21,11 +21,13 @@ import pathlib
 
 import ifcopenshell
 import ifcopenshell.api.geometry
+import ifcopenshell.api.project
 import ifcopenshell.api.pset
 import ifcopenshell.api.root
 import ifcopenshell.api.spatial
 import ifcopenshell.geom
 import ifcopenshell.util.element
+import ifcopenshell.util.placement
 import numpy as np
 
 from . import app_bridge as B
@@ -33,6 +35,7 @@ from . import authoring as A
 from . import terrain
 
 PSET = "KIMBIM_Link"
+MONITOR_PSET = "KIMBIM_LinkMonitor"
 OBJECT_TYPE = "Linked model"
 TRANSFORM_KEYS = ("x", "y", "z", "rotation", "scale")
 
@@ -213,6 +216,161 @@ def _links() -> list:
 def _triangles(element) -> int:
     _points, triangles = terrain._mesh(element)
     return triangles
+
+
+# ---------------------------------------------------------------- copy/monitor
+
+def _transform_matrix(transform: dict) -> np.ndarray:
+    angle = math.radians(transform["rotation"])
+    c, s, scale = math.cos(angle), math.sin(angle), transform["scale"]
+    return np.array([[c * scale, -s * scale, 0.0, transform["x"]],
+                     [s * scale, c * scale, 0.0, transform["y"]],
+                     [0.0, 0.0, scale, transform["z"]], [0.0, 0.0, 0.0, 1.0]])
+
+
+def _signature(product) -> str:
+    """A stable hash of a product's attributes, types and property sets (for monitor comparisons)."""
+    try:
+        info = product.get_info(recursive=False)
+        info.pop("id", None)
+        props = ifcopenshell.util.element.get_psets(product, psets_only=True)
+        payload = json.dumps({"info": info, "psets": props}, sort_keys=True, default=str, separators=(",", ":"))
+    except Exception:  # noqa: BLE001 - a malformed product must not break the report
+        payload = repr(product)
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
+def _monitored() -> list[tuple]:
+    """(host element, KIMBIM_LinkMonitor values) for every monitored copy."""
+    out = []
+    if B._model is None:
+        return out
+    for pset in B._model.by_type("IfcPropertySet"):
+        if pset.Name != MONITOR_PSET:
+            continue
+        for element in B._pset_users(pset):
+            data = ifcopenshell.util.element.get_pset(element, MONITOR_PSET)
+            if data:
+                out.append((element, data))
+    return sorted(out, key=lambda pair: pair[0].id())
+
+
+def _source_products(model) -> list:
+    """The source model's drawable products a monitored copy represents."""
+    skip = ("IfcOpeningElement", "IfcSpace", "IfcAnnotation", "IfcGrid", "IfcSite", "IfcBuilding",
+            "IfcBuildingStorey", "IfcProject", "IfcTypeObject")
+    return [p for p in model.by_type("IfcProduct")
+            if p.Representation is not None and not any(p.is_a(c) for c in skip)]
+
+
+def explode_link(guid: str, options_json: str = "") -> str:
+    """Turn a linked IFC into **editable copies**: every product of the source is appended to this
+    project as a normal element (Geometry, properties and types included) and tagged with
+    `KIMBIM_LinkMonitor` (Source, SourceGuid, SourceClass, SourceName, SourceHash, SourceSignature,
+    HostSignature, Synced). The link proxy is removed. Options: {level (name/GlobalId)}; the proxy's
+    level is used otherwise. One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    element, data = _link(guid)
+    if element is None:
+        return A._fail("not a linked model")
+    try:
+        options = _options(options_json)
+        path = str(data.get("Path") or "")
+        transform = _parse_transform(data.get("Transform"))
+        source = ifcopenshell.open(path)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    except Exception as ex:  # noqa: BLE001
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    container = _level(options.get("level") or "") if options.get("level") else \
+        ifcopenshell.util.element.get_container(element)
+    if container is None:
+        return A._fail("the linked model is not on a level")
+    source_hash = hashlib.sha1(pathlib.Path(path).read_bytes()).hexdigest()
+    products = _source_products(source)
+    if not products:
+        return A._fail("the linked model has no products to copy")
+    matrix = _transform_matrix(transform)
+    made = {}
+
+    def action():
+        f = B._model
+        reuse = {}
+        copies = []
+        for product in products:
+            try:
+                new = ifcopenshell.api.project.append_asset(
+                    f, library=source, element=product, reuse_identities=reuse,
+                    assume_asset_uniqueness_by_name=True)
+            except Exception:
+                continue
+            if new is None or not new.is_a("IfcProduct"):
+                continue
+            if new.ObjectPlacement is not None:
+                local = ifcopenshell.util.placement.get_local_placement(new.ObjectPlacement)
+                ifcopenshell.api.geometry.edit_object_placement(
+                    f, product=new, matrix=matrix @ local, is_si=True)
+            ifcopenshell.api.spatial.assign_container(f, products=[new], relating_structure=container)
+            pset = ifcopenshell.api.pset.add_pset(f, product=new, name=MONITOR_PSET)
+            ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
+                "Source": path, "SourceGuid": product.GlobalId, "SourceClass": product.is_a(),
+                "SourceName": product.Name or "", "SourceHash": source_hash,
+                "SourceSignature": _signature(product), "HostSignature": _signature(new),
+                "Synced": _now(), "Link": guid})
+            copies.append(new)
+        if not copies:
+            raise ValueError("no source product could be copied")
+        ifcopenshell.api.root.remove_product(f, product=element)
+        made["guids"] = [c.GlobalId for c in copies]
+        return len(copies), made["guids"], [guid]
+
+    try:
+        r = B._run(action)
+    except Exception as ex:  # noqa: BLE001
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made["guids"], "count": len(made["guids"]), "source": path,
+                    "skipped": max(0, len(products) - len(made["guids"]))})
+
+
+def monitor_status() -> str:
+    """Report what changed in every monitored source file: the host copies whose source element
+    changed, host copies whose source element is gone, and source elements that were added since the
+    copy was made. Nothing is modified."""
+    if B._model is None:
+        return B._dump({"ok": True, "sources": []})
+    by_source: dict[str, list] = {}
+    for element, data in _monitored():
+        by_source.setdefault(str(data.get("Source") or ""), []).append((element, data))
+    sources = []
+    for path, entries in sorted(by_source.items()):
+        entry = {"path": path, "monitored": len(entries), "changed": False, "missing": False,
+                 "changed_elements": [], "removed": [], "added": [], "error": ""}
+        try:
+            source = ifcopenshell.open(path)
+        except Exception as ex:  # noqa: BLE001
+            entry.update(changed=True, missing=not pathlib.Path(path).is_file(),
+                         error=f"{type(ex).__name__}: {ex}")
+            sources.append(entry)
+            continue
+        source_products = _source_products(source)
+        current = {p.GlobalId: p for p in source_products}
+        seen = set()
+        for element, data in entries:
+            source_guid = str(data.get("SourceGuid") or "")
+            seen.add(source_guid)
+            product = current.get(source_guid)
+            if product is None:
+                entry["removed"].append({"guid": element.GlobalId, "source_guid": source_guid,
+                                         "name": element.Name or ""})
+            elif _signature(product) != str(data.get("SourceSignature") or ""):
+                entry["changed_elements"].append({"guid": element.GlobalId, "source_guid": source_guid,
+                                                  "name": element.Name or "", "class": product.is_a()})
+        entry["added"] = [{"source_guid": p.GlobalId, "name": p.Name or "", "class": p.is_a()}
+                          for p in source_products if p.GlobalId not in seen]
+        entry["changed"] = bool(entry["changed_elements"] or entry["removed"] or entry["added"])
+        sources.append(entry)
+    return B._dump({"ok": True, "sources": sources})
 
 
 # ---------------------------------------------------------------- public commands

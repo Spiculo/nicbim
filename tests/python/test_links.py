@@ -215,6 +215,47 @@ def test_errors(tmp_path):
     assert call(L.unlink, "not-a-guid")["ok"] is False
 
 
+def test_explode_a_link_into_monitored_editable_copies(tmp_path):
+    f, level = open_model(walls=0)
+    src = source(tmp_path, walls=2)
+    linked = call(L.link_model, str(src), json.dumps({"name": "Consultant"}))
+    assert linked["ok"], linked
+    exploded = call(L.explode_link, linked["guid"])
+    assert exploded["ok"], exploded
+    assert exploded["count"] == 2 and len(exploded["guids"]) == 2
+    assert not f.by_type("IfcBuildingElementProxy")  # the read-only proxy is gone
+    assert len(f.by_type("IfcWall")) == 2
+    copies = [f.by_guid(g) for g in exploded["guids"]]
+    assert all(c.is_a("IfcWall") for c in copies)
+    for copy in copies:
+        data = json.loads(json.dumps(ifcopenshell.util.element.get_pset(copy, L.MONITOR_PSET), default=str))
+        assert data["Source"] == str(src.resolve())
+        assert data["SourceGuid"] and data["SourceSignature"]
+        assert ifcopenshell.util.element.get_container(copy).GlobalId == level
+    # They are ordinary elements: an edit changes the host model.
+    copies[0].Name = "Edited in the host"
+    monitor = call(L.monitor_status)
+    assert monitor["ok"] and monitor["sources"][0]["changed"] is False
+    assert len(monitor["sources"][0]["changed_elements"]) == 0
+
+    # A source edit is reported without touching the host copies.
+    changed = ifcopenshell.open(str(src))
+    changed.by_type("IfcWall")[0].Name = "Changed in the source"
+    changed.write(str(src))
+    report = call(L.monitor_status)["sources"][0]
+    assert report["changed"] is True
+    assert len(report["changed_elements"]) == 1
+    assert report["changed_elements"][0]["class"] == "IfcWall"
+
+    # New and removed source products are reported too.
+    changed = ifcopenshell.open(str(src))
+    changed.by_type("IfcWall")[0].Name = "Removed in the source"
+    changed.remove(changed.by_type("IfcWall")[0])
+    changed.write(str(src))
+    report = call(L.monitor_status)["sources"][0]
+    assert len(report["removed"]) == 1 and report["changed"] is True
+
+
 def test_stale_links_and_refresh(tmp_path):
     f, _level = open_model()
     src = source(tmp_path)

@@ -7512,16 +7512,56 @@ void MainWindow::linksDialog()
     };
     auto* openSource = new QPushButton(tr("Open source"), &dialog); // D140: edit the linked file live
     openSource->setToolTip(tr("Open the linked IFC in a second KimBim window; saving it updates this link"));
+    auto* makeEditable = new QPushButton(tr("Make editable..."), &dialog); // D141
+    makeEditable->setToolTip(tr("Replace this read-only link with normal, editable elements tagged with their source identity"));
+    auto* monitor = new QPushButton(tr("Monitor changes..."), &dialog);
     auto* updateChanged = new QPushButton(tr("Update changed"), &dialog);
     auto* update = new QPushButton(tr("Update"), &dialog);
     auto* remove = new QPushButton(tr("Unlink"), &dialog);
     auto* close = new QPushButton(tr("Close"), &dialog);
     buttons->addWidget(openSource);
+    buttons->addWidget(makeEditable);
+    buttons->addWidget(monitor);
     buttons->addWidget(updateChanged);
     buttons->addWidget(update);
     buttons->addWidget(remove);
     buttons->addStretch(1);
     buttons->addWidget(close);
+    connect(makeEditable, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject link = current();
+        if (link.isEmpty())
+            return;
+        if (QMessageBox::question(&dialog, tr("Make editable"),
+                tr("Replace the link to \"%1\" with editable copies?").arg(link.value("name").toString()))
+            != QMessageBox::Yes)
+            return;
+        const QJsonObject r = bridge("explode_link", {link.value("guid").toString(), QString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Linked models"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        refresh();
+        m_status->showMessage(tr("%n editable element(s) copied", nullptr, r.value("count").toInt()));
+    });
+    connect(monitor, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject r = bridge("monitor_status");
+        if (!r.value("ok").toBool()) {
+            showError(tr("Linked models"), r.value("error").toString());
+            return;
+        }
+        QStringList lines;
+        for (const auto& value : r.value("sources").toArray()) {
+            const QJsonObject source = value.toObject();
+            lines << tr("%1: %2 changed, %3 removed, %4 new")
+                         .arg(source.value("path").toString())
+                         .arg(source.value("changed_elements").toArray().size())
+                         .arg(source.value("removed").toArray().size())
+                         .arg(source.value("added").toArray().size());
+        }
+        QMessageBox::information(&dialog, tr("Monitor changes"),
+                                 lines.isEmpty() ? tr("No monitored linked models.") : lines.join(QLatin1Char('\n')));
+    });
     connect(openSource, &QPushButton::clicked, &dialog, [&] {
         const QJsonObject link = current();
         const QString path = link.value("path").toString();

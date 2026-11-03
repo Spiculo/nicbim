@@ -82,3 +82,23 @@ def remove(session, guid):
     """Remove a linked model from the project (the linked file itself is left alone)."""
     bridge(L.unlink, guid)
     return {"removed": guid}
+
+
+@tool("links.explode", {"required": ["guid"], "properties": {
+    "guid": _GUID,
+    "level": {"type": "string", "description": "Level for the copies (default the link's level)."}}},
+    writes=True)
+def explode(session, guid, level=""):
+    """Turn a linked model into editable copies: every source product becomes a normal element tagged
+    with its source identity; the read-only proxy is removed."""
+    options = {}
+    if level:
+        options["level"] = level_guid(level)
+    r = bridge(L.explode_link, guid, json.dumps(options))
+    return {"guids": r["guids"], "count": r["count"], "source": r["source"], "skipped": r["skipped"]}
+
+
+@tool("links.monitor_status", {})
+def monitor_status(session):
+    """Report changed, removed and newly added source elements for every monitored (exploded) linked model."""
+    return bridge(L.monitor_status)
