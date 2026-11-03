@@ -51,6 +51,7 @@
 #include <QDateTimeEdit>
 #include <QDialogButtonBox>
 #include <QDesktopServices>
+#include <QDateEdit>
 #include <QUrl>
 #include <QDialog>
 #include <QMenu>
@@ -3399,6 +3400,112 @@ void MainWindow::buildModelingToolbar()
             return;
         }
         m_status->showMessage(tr("Cost rates saved"));
+    });
+    QAction* sequence = model->addAction(tr("Construction s&equence...")); // D214
+    sequence->setObjectName(QStringLiteral("actionConstructionSequence"));
+    sequence->setToolTip(tr("Dated phases and the elements assigned to them (4D)"));
+    connect(sequence, &QAction::triggered, this, [this] {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Construction sequence"));
+        auto* layout = new QVBoxLayout(&dialog);
+        auto* table = new QTableWidget(&dialog);
+        table->setColumnCount(5);
+        table->setHorizontalHeaderLabels({tr("Phase"), tr("Start"), tr("End"), tr("Days"), tr("Elements")});
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        layout->addWidget(table);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+        auto* add = buttons->addButton(tr("Add..."), QDialogButtonBox::ActionRole);
+        auto* edit = buttons->addButton(tr("Edit..."), QDialogButtonBox::ActionRole);
+        auto* del = buttons->addButton(tr("Delete"), QDialogButtonBox::ActionRole);
+        auto* assign = buttons->addButton(tr("Assign selection"), QDialogButtonBox::ActionRole);
+        layout->addWidget(buttons);
+        QJsonArray phases;
+        auto show = [&] {
+            phases = bridge("phases").value("phases").toArray();
+            table->setRowCount(phases.size());
+            for (int i = 0; i < phases.size(); ++i) {
+                const QJsonObject p = phases.at(i).toObject();
+                table->setItem(i, 0, new QTableWidgetItem(p.value("name").toString()));
+                table->setItem(i, 1, new QTableWidgetItem(p.value("start").toString()));
+                table->setItem(i, 2, new QTableWidgetItem(p.value("end").toString()));
+                const QDate start = QDate::fromString(p.value("start").toString(), Qt::ISODate);
+                const QDate end = QDate::fromString(p.value("end").toString(), Qt::ISODate);
+                table->setItem(i, 3, new QTableWidgetItem(QString::number(start.daysTo(end) + 1)));
+                table->setItem(i, 4, new QTableWidgetItem(QString::number(p.value("count").toInt())));
+            }
+            table->resizeColumnsToContents();
+        };
+        auto editPhase = [&](bool isNew) {
+            const int row = table->currentRow();
+            if (!isNew && (row < 0 || row >= phases.size()))
+                return;
+            const QJsonObject current = isNew ? QJsonObject() : phases.at(row).toObject();
+            QDialog phaseDialog(&dialog);
+            phaseDialog.setWindowTitle(isNew ? tr("Add phase") : tr("Edit phase"));
+            auto* form = new QFormLayout(&phaseDialog);
+            auto* name = new QLineEdit(current.value("name").toString(), &phaseDialog);
+            auto* start = new QDateEdit(QDate::fromString(current.value("start").toString(), Qt::ISODate), &phaseDialog);
+            auto* end = new QDateEdit(QDate::fromString(current.value("end").toString(), Qt::ISODate), &phaseDialog);
+            if (isNew) {
+                start->setDate(QDate::currentDate());
+                end->setDate(QDate::currentDate().addDays(7));
+            }
+            for (QDateEdit* d : {start, end}) {
+                d->setCalendarPopup(true);
+                d->setDisplayFormat(QStringLiteral("yyyy-MM-dd"));
+            }
+            form->addRow(tr("Name:"), name);
+            form->addRow(tr("Start:"), start);
+            form->addRow(tr("End:"), end);
+            auto* okButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &phaseDialog);
+            form->addRow(okButtons);
+            connect(okButtons, &QDialogButtonBox::accepted, &phaseDialog, &QDialog::accept);
+            connect(okButtons, &QDialogButtonBox::rejected, &phaseDialog, &QDialog::reject);
+            if (phaseDialog.exec() != QDialog::Accepted)
+                return;
+            const QJsonObject r = bridge("save_phase", {name->text(), start->date().toString(Qt::ISODate),
+                end->date().toString(Qt::ISODate), QString(), current.value("id").toString()});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Phase"), r.value("error").toString());
+                return;
+            }
+            show();
+        };
+        connect(add, &QPushButton::clicked, &dialog, [&] { editPhase(true); });
+        connect(edit, &QPushButton::clicked, &dialog, [&] { editPhase(false); });
+        connect(del, &QPushButton::clicked, &dialog, [&] {
+            const int row = table->currentRow();
+            if (row < 0 || row >= phases.size())
+                return;
+            const QJsonObject r = bridge("delete_phase", {phases.at(row).toObject().value("id").toString()});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Delete phase"), r.value("error").toString());
+                return;
+            }
+            afterEdit(r);
+            show();
+        });
+        connect(assign, &QPushButton::clicked, &dialog, [&] {
+            const int row = table->currentRow();
+            if (row < 0 || row >= phases.size())
+                return;
+            if (m_selection.isEmpty()) {
+                m_status->showMessage(tr("Select the elements first"));
+                return;
+            }
+            const QJsonObject r = bridge("assign_phase", {jsonList(m_selection),
+                phases.at(row).toObject().value("id").toString()});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Assign phase"), r.value("error").toString());
+                return;
+            }
+            afterEdit(r);
+            show();
+        });
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        show();
+        dialog.exec();
     });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87

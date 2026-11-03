@@ -275,7 +275,7 @@ release notes, so check before relying on a single cell.
 | Schedule on a sheet | all | ✅ | new | D112: Sheets › Place schedule... (scheme, width, merge; vector table in PDF/SVG) |
 | Export to CSV / XLSX | all | ✅ | P1 | D77 (openpyxl) |
 | Cost estimating (5D) | BB AL | ✅ | new | D213: rates by type name in `cost_rates`; Model > *Cost estimate...* bills each type's quantity (Qto or geometry, counts for doors/windows/furniture), edits rates in place and totals the cost; Bonsai remains for full 5D |
-| Construction sequencing (4D) | BB | ⬜ | new | Bonsai has it |
+| Construction sequencing (4D) | BB | ✅ | new | D214: dated phases in `construction_phases`; *Construction sequence...* adds/edits phases, assigns the selection (each element gets `KIMBIM_Construction` with Phase/Name/Start/End) and lists Phase, start, end, days and element count |
 
 ## 16. Visualisation
 

@@ -1076,6 +1076,7 @@ from . import templates as _templates  # noqa: E402
 from . import guides as _guides  # noqa: E402
 from . import plugins as _plugins  # noqa: E402
 from . import costing as _costing  # noqa: E402
+from . import sequencing as _sequencing  # noqa: E402
 _EXPORTS = {
     "authoring": (
         "add_grid_axis",
@@ -1264,6 +1265,7 @@ _EXPORTS = {
     "guides": ("add_guide", "clear_guides", "guides", "remove_guide"),
     "plugins": ("load_plugins", "plugins_folder", "plugins_state"),
     "costing": ("cost_estimate", "set_cost_rates"),
+    "sequencing": ("assign_phase", "delete_phase", "phases", "save_phase"),
     "templates": (
         "view_templates",
         "save_view_template",

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D213 plus explicit overrides for the final items.
+after D123–D214 plus explicit overrides for the final items.
 
-**Summary: 194 done, 12 deferred, 3 blocked.**
+**Summary: 195 done, 11 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -196,7 +196,7 @@ after D123–D213 plus explicit overrides for the final items.
 | 15. Schedules and quantities | Schedule on a sheet | **Done** | D112: Sheets › Place schedule... (scheme, width, merge; vector table in PDF/SVG) |
 | 15. Schedules and quantities | Export to CSV / XLSX | **Done** | D77 (openpyxl) |
 | 15. Schedules and quantities | Cost estimating (5D) | **Done** | D213: rates by type name in the `cost_rates` project setting; Model > *Cost estimate...* bills each type's quantity (Qto or geometry, counts for doors/windows/furniture), edits the rates in place and totals the cost. Bonsai remains available for full 5D |
-| 15. Schedules and quantities | Construction sequencing (4D) | **Deferred** | Bonsai has it |
+| 15. Schedules and quantities | Construction sequencing (4D) | **Done** | D214: dated phases in `construction_phases`; *Construction sequence...* adds/edits phases, assigns the selection (each element gets `KIMBIM_Construction` with Phase/Name/Start/End) and lists Phase, start, end, days and element count. Bonsai remains available for full 4D |
 | 16. Visualisation | Real-time textured 3D | **Done** | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
 | 16. Visualisation | Photorealistic rendering | **Done** | D146 image export, D147 ray tracing, D149 path tracing. Offline CPU render farm is future. |
 | 16. Visualisation | AI visualiser (sketch to image) | **Deferred** |  |
