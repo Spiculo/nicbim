@@ -3242,7 +3242,7 @@ private slots:
                  "actionAttributeManager", "actionKeynotes", "actionMake2DBlock", "actionInsert2DBlock",
                  "actionSunAnimation", "actionConvertUnderlay", "actionMassingBox",
                  "actionAddGuideLine", "actionClearGuideLines", "actionSketchStyle", "actionXray",
-                 "actionSkylight"})
+                 "actionSkylight", "actionCornerWindow"})
             QVERIFY2(action(w, name), name);
     }
 

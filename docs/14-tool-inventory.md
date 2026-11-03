@@ -137,7 +137,7 @@ release notes, so check before relying on a single cell.
 | Slab openings | all | ✅ | P0 | |
 | Sloped slabs, slab edges | AC RV VW | ✅ | new | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. D168 adds slope X/Y and an Edge checkbox to the Slab tool strip, applied to each new slab |
 | Doors and windows in walls (parametric) | all | ✅ | P0 | Basic types |
-| Door/window variety: sliding, double, corner window, skylight, storefront | all | 🟡 | new | D97: double, sliding and double sliding doors; two- and three-panel windows; D209: *Storefront 3600x2700* and *Skylight...* (a horizontal window filling a slab opening). Corner windows remain |
+| Door/window variety: sliding, double, corner window, skylight, storefront | all | ✅ | new | D97: double, sliding and double sliding doors; two- and three-panel windows; D209: *Storefront 3600x2700* and *Skylight...* (horizontal window in a slab); D210: *Corner window...* (two windows meeting at a corner of two walls) |
 | Door swing and window symbols in plan | all | ✅ | new | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
 | Generic opening (wall or slab hole without a filling) | AC RV VW | ✅ | P2 | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening` |
 | Columns, beams from profiles | all | ✅ | P0 | |

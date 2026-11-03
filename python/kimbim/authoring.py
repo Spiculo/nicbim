@@ -1717,6 +1717,29 @@ def _wall_height(wall) -> float:
     return max(depths, default=0.0) * _scale()
 
 
+def _make_filling(kind: str, wall, opening_type, along, width, height, sill):
+    """Inside an action: an opening through `wall` filled by a new door/window, centred `along` metres
+    from the wall axis start and `sill` above its base. Returns the element."""
+    f = B._model
+    s = _scale()
+    element_class = OPENING_CLASSES[kind][0]
+    opening = ifcopenshell.api.root.create_entity(f, ifc_class="IfcOpeningElement", name=f"{kind} opening")
+    ifcopenshell.api.feature.add_feature(f, feature=opening, element=wall)
+    element = ifcopenshell.api.root.create_entity(f, ifc_class=element_class, name=opening_type.Name,
+                                                  predefined_type="DOOR" if kind == "door" else "WINDOW")
+    element.OverallWidth, element.OverallHeight = width / s, height / s
+    ifcopenshell.api.type.assign_type(f, related_objects=[element], relating_type=opening_type)
+    representation = _filling_representation(kind, opening_type, width, height)
+    ifcopenshell.api.geometry.assign_representation(f, product=element, representation=representation)
+    _place_opening(element, opening, wall, along, width, height, sill)  # D97: through the body as it lies
+    ifcopenshell.api.feature.add_filling(f, opening=opening, element=element)
+    container = ifcopenshell.util.element.get_container(wall)
+    if container is not None:
+        ifcopenshell.api.spatial.assign_container(f, products=[element], relating_structure=container)
+    layers.assign_active(element)
+    return element
+
+
 def insert_opening(kind: str, wall_guid: str, type_guid: str, along, width, height, sill) -> str:
     """A door or window in a wall: an opening through the wall filled by the door/window, centred
     `along` metres from the wall axis start, with its bottom `sill` metres above the wall base."""
@@ -1748,32 +1771,64 @@ def insert_opening(kind: str, wall_guid: str, type_guid: str, along, width, heig
     made = {}
 
     def action():
-        f = B._model
-        s = _scale()
-        opening = ifcopenshell.api.root.create_entity(f, ifc_class="IfcOpeningElement", name=f"{kind} opening")
-        ifcopenshell.api.feature.add_feature(f, feature=opening, element=wall)
-
-        element = ifcopenshell.api.root.create_entity(f, ifc_class=element_class, name=opening_type.Name,
-                                                      predefined_type="DOOR" if kind == "door" else "WINDOW")
-        element.OverallWidth, element.OverallHeight = width / s, height / s
-        ifcopenshell.api.type.assign_type(f, related_objects=[element], relating_type=opening_type)
-        representation = _filling_representation(kind, opening_type, width, height)
-        ifcopenshell.api.geometry.assign_representation(f, product=element, representation=representation)
-        _place_opening(element, opening, wall, along, width, height, sill)  # D97: through the body as it lies
-        ifcopenshell.api.feature.add_filling(f, opening=opening, element=element)
-        container = ifcopenshell.util.element.get_container(wall)
-        if container is not None:
-            ifcopenshell.api.spatial.assign_container(f, products=[element], relating_structure=container)
-        layers.assign_active(element)
-        # D91: the door or window takes its host wall's status; it is left without one and inherits.
-        made["element"] = element
-        return 1, [wall.GlobalId, element.GlobalId], []
+        made["element"] = _make_filling(kind, wall, opening_type, along, width, height, sill)
+        return 1, [wall.GlobalId, made["element"].GlobalId], []
 
     try:
         r = B._run(action)
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "guid": made["element"].GlobalId})
+
+
+def create_corner_window(wall_a_guid: str, wall_b_guid: str, type_guid: str, width, height,
+                         sill=0.0) -> str:
+    """D210: a corner window: two windows of `width` × `height` (sill above the wall base) meeting at
+    the corner where two walls join, one on each wall. One undo step; returns both ids."""
+    if B._model is None:
+        return _fail("no model open")
+    a, b = _by_guid(wall_a_guid), _by_guid(wall_b_guid)
+    for e, what in ((a, "the first wall"), (b, "the second wall")):
+        if e is None or not e.is_a("IfcWall"):
+            return _fail(f"{what} is not a wall")
+    if a.GlobalId == b.GlobalId:
+        return _fail("pick two different walls")
+    opening_type = _by_guid(type_guid)
+    if opening_type is None or not opening_type.is_a("IfcWindowType"):
+        return _fail("not a window type")
+    try:
+        width, height, sill = float(width), float(height), float(sill or 0.0)
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    if width <= 0 or height <= 0 or sill < 0:
+        return _fail("the corner window needs a positive width and height")
+    la, lb = _axis_world(a), _axis_world(b)
+    if la is None or lb is None:
+        return _fail("corner windows need straight walls")
+    pairs = [(math.dist(pa, pb), i, j) for i, pa in enumerate(la) for j, pb in enumerate(lb)]
+    distance, ia, ib = min(pairs)
+    if distance > 0.05:
+        return _fail("the two walls do not meet at a corner")
+    length_a, length_b = math.dist(*la), math.dist(*lb)
+    along_a = width / 2 if ia == 0 else length_a - width / 2
+    along_b = width / 2 if ib == 0 else length_b - width / 2
+    for wall, along in ((a, along_a), (b, along_b)):
+        error = _opening_fit_error(wall, along, width, height, sill)
+        if error:
+            return _fail(error)
+    made = {}
+
+    def action():
+        made["a"] = _make_filling("window", a, opening_type, along_a, width, height, sill)
+        made["b"] = _make_filling("window", b, opening_type, along_b, width, height, sill)
+        return 2, [a.GlobalId, b.GlobalId, made["a"].GlobalId, made["b"].GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["a"].GlobalId,
+                    "guids": [made["a"].GlobalId, made["b"].GlobalId]})
 
 
 def create_wall_opening(wall_guid: str, along, width, height, sill, name: str = "Wall opening") -> str:

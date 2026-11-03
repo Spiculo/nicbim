@@ -6,8 +6,10 @@ import re
 import ifcopenshell.util.element
 import ifcopenshell.util.placement
 import ifcopenshell.validate
+import pytest
 
 from kimbim import app_bridge as b
+from kimbim import authoring
 
 
 def call(fn, *args):
@@ -66,6 +68,33 @@ def test_a_storefront_type_and_a_skylight():
     assert abs(float(matrix[1][2]) + 1.0) < 1e-9  # local Z (the window's height) lies along -Y
     assert not call("create_skylight", wall, 0, 0, 1, 1)["ok"]
     assert not call("create_skylight", slab, 0, 0, 0, 1)["ok"]
+    logger = ifcopenshell.validate.json_logger()
+    ifcopenshell.validate.validate(b._model, logger, express_rules=True)
+    assert [s for s in logger.statements if s["level"] == "error"] == []
+
+
+def test_a_corner_window_puts_a_window_on_each_wall():
+    """D210: two windows meet at the corner where two walls join."""
+    assert call("new_project", "Corner")["ok"]
+    level = call("storeys")["storeys"][0]["guid"]
+    wt = next(t for t in call("wall_types")["types"] if t["name"] == "Exterior 300")["guid"]
+    a = call("create_wall", level, wt, 0, 0, 5, 0, 3.0, "", "")["guid"]
+    b_wall = call("create_wall", level, wt, 5, 0, 5, 4, 3.0, a, "")["guid"]
+    window_type = call("opening_types", "window")["types"][0]["guid"]
+    r = call("create_corner_window", a, b_wall, window_type, 1.2, 1.5, 0.9)
+    assert r["ok"], r
+    assert len(r["guids"]) == 2
+    alongs = []
+    for guid in r["guids"]:
+        info = authoring._opening_info(b._model.by_guid(guid))
+        assert info is not None and info[3] == pytest.approx(1.2) and info[4] == pytest.approx(1.5)
+        alongs.append(round(info[2], 6))
+    assert sorted(alongs) == pytest.approx([0.6, 4.4])
+
+    other = call("create_wall", level, wt, 10, 0, 10, 4, 3.0, "", "")["guid"]
+    assert not call("create_corner_window", a, other, window_type, 1.2, 1.5, 0.9)["ok"]  # no shared corner
+    assert not call("create_corner_window", a, a, window_type, 1.2, 1.5, 0.9)["ok"]
+    assert not call("create_corner_window", a, b_wall, window_type, 0, 1.5, 0.9)["ok"]
     logger = ifcopenshell.validate.json_logger()
     ifcopenshell.validate.validate(b._model, logger, express_rules=True)
     assert [s for s in logger.statements if s["level"] == "error"] == []

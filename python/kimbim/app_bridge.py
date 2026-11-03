@@ -1095,6 +1095,7 @@ _EXPORTS = {
         "create_ceiling",
         "create_wall_opening",
         "create_column",
+        "create_corner_window",
         "create_massing",
         "create_skylight",
         "create_curtain_wall",

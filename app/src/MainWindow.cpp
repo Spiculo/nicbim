@@ -3236,6 +3236,63 @@ void MainWindow::buildModelingToolbar()
         setSelection({r.value("guid").toString()});
         m_status->showMessage(tr("Skylight added"));
     });
+    QAction* cornerWindow = model->addAction(tr("&Corner window...")); // D210
+    cornerWindow->setObjectName(QStringLiteral("actionCornerWindow"));
+    cornerWindow->setToolTip(tr("Two windows meeting at the corner of the two selected walls"));
+    connect(cornerWindow, &QAction::triggered, this, [this] {
+        if (m_selection.size() != 2) {
+            m_status->showMessage(tr("Select the two walls that meet at the corner"));
+            return;
+        }
+        const QJsonArray types = bridge("opening_types", {"window"}).value("types").toArray();
+        if (types.isEmpty()) {
+            m_status->showMessage(tr("No window types yet"));
+            return;
+        }
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Corner window"));
+        auto* form = new QFormLayout(&dialog);
+        auto* type = new QComboBox(&dialog);
+        for (const auto& v : types) {
+            const QJsonObject t = v.toObject();
+            type->addItem(t.value("name").toString(), t.value("guid").toString());
+        }
+        auto spin = [&](double value) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(0.0, 50.0);
+            box->setDecimals(2);
+            box->setSuffix(tr(" m"));
+            box->setValue(value);
+            return box;
+        };
+        auto* width = spin(1.2);
+        auto* height = spin(1.5);
+        auto* sill = spin(0.9);
+        form->addRow(tr("Type:"), type);
+        form->addRow(tr("Width:"), width);
+        form->addRow(tr("Height:"), height);
+        form->addRow(tr("Sill:"), sill);
+        auto* cornerButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(cornerButtons);
+        connect(cornerButtons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(cornerButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        auto num = [](double v) { return QString::number(v, 'g', 17); };
+        const QJsonObject r = bridge("create_corner_window", {m_selection[0], m_selection[1],
+            type->currentData().toString(), num(width->value()), num(height->value()), num(sill->value())});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Corner window"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        QStringList inserted;
+        for (const auto& v : r.value("guids").toArray())
+            inserted << v.toString();
+        m_viewport->selectGuids(inserted);
+        setSelection(inserted);
+        m_status->showMessage(tr("Corner window added"));
+    });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));
