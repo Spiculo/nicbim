@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D176 plus explicit overrides for the final items.
+after D123–D177 plus explicit overrides for the final items.
 
-**Summary: 160 done, 46 deferred, 3 blocked.**
+**Summary: 161 done, 45 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -135,7 +135,7 @@ after D123–D176 plus explicit overrides for the final items.
 | 8. Objects and libraries | Object settings dialog with live preview; place or edit a placed object | **Done** | D100: Library panel right click, Properties *Edit...*; modify all or create a new type |
 | 8. Objects and libraries | Saved object versions (project types, shared through the office library, quick switcher, last used) | **Done** | D100: `kimbim-versions.ifc` in the office folder; a click places the last version, a right click in the Object tool switches |
 | 8. Objects and libraries | Parametric object authoring | **Done** | D99: `.kimobj` definitions (parameters, formulas, parts, anchors, repeats, variants), stored on their types; D101: the Object Editor (new objects, edit office and project objects, *Customise a copy* of bundled or placed ones, save to the project or the office library). Archicad GDL, Revit Family Editor, Vectorworks plug-in objects. Design: [16](16-paramet... |
-| 8. Objects and libraries | Office libraries (shared folder or repo) | **Deferred** | Core done; remainder deferred. D99: a folder of `.kimobj` files and IFC type files |
+| 8. Objects and libraries | Office libraries (shared folder or repo) | **Done** | D99: a configured folder of `.kimobj` files and IFC type files, listed, placed and versioned; a git repo is a normal folder synchronized by git. Tested by `tests/python/test_library.py::test_office_library_kimobj_and_ifc_types`. |
 | 8. Objects and libraries | Online object catalogues (BIMobject and others) | **Deferred** |  |
 | 8. Objects and libraries | Paste between projects (with types and materials) | **Deferred** |  |
 | 9. Organising the model | Layers (shown, locked, active) | **Done** | D57 |

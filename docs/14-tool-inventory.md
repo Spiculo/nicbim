@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D176).**
+**Status as of `main` (2026-11-03, after D112–D177).**
 
 ## How to read it
 
@@ -179,7 +179,7 @@ release notes, so check before relying on a single cell.
 | Object settings dialog with live preview; place or edit a placed object | AC RV | ✅ | P0 | D100: Library panel right click, Properties *Edit...*; modify all or create a new type |
 | Saved object versions (project types, shared through the office library, quick switcher, last used) | RV | ✅ | P0 | D100: `kimbim-versions.ifc` in the office folder; a click places the last version, a right click in the Object tool switches |
 | Parametric object authoring | AC RV VW | ✅ | new | D99: `.kimobj` definitions (parameters, formulas, parts, anchors, repeats, variants), stored on their types; D101: the Object Editor (new objects, edit office and project objects, *Customise a copy* of bundled or placed ones, save to the project or the office library). Archicad GDL, Revit Family Editor, Vectorworks plug-in objects. Design: [16](16-parametric-objects.md) |
-| Office libraries (shared folder or repo) | AC RV VW | 🟡 | P1 | D99: a folder of `.kimobj` files and IFC type files |
+| Office libraries (shared folder or repo) | AC RV VW | ✅ | P1 | D99: a configured folder of `.kimobj` files and IFC type files, listed, placed and versioned (D100); a git repo is a normal folder synchronized by git. Tested by `tests/python/test_library.py::test_office_library_kimobj_and_ifc_types` |
 | Online object catalogues (BIMobject and others) | AC RV VW | 🔮 | new | |
 | Paste between projects (with types and materials) | all | ⬜ | P1 | |
 
