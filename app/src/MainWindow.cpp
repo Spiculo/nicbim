@@ -3344,6 +3344,62 @@ void MainWindow::buildModelingToolbar()
         setSelection(inserted);
         m_status->showMessage(tr("Corner window added"));
     });
+    QAction* costEstimate = model->addAction(tr("Cost &estimate...")); // D213
+    costEstimate->setObjectName(QStringLiteral("actionCostEstimate"));
+    costEstimate->setToolTip(tr("Set rates by type and see the bill of quantities and total"));
+    connect(costEstimate, &QAction::triggered, this, [this] {
+        const QJsonObject estimate = bridge("cost_estimate");
+        if (!estimate.value("ok").toBool()) {
+            showError(tr("Cost estimate"), estimate.value("error").toString());
+            return;
+        }
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Cost estimate"));
+        auto* layout = new QVBoxLayout(&dialog);
+        auto* table = new QTableWidget(&dialog);
+        table->setColumnCount(5);
+        table->setHorizontalHeaderLabels({tr("Type"), tr("Unit"), tr("Quantity"), tr("Rate"), tr("Cost")});
+        const QJsonArray rows = estimate.value("rows").toArray();
+        table->setRowCount(rows.size());
+        for (int i = 0; i < rows.size(); ++i) {
+            const QJsonObject r = rows.at(i).toObject();
+            auto* typeItem = new QTableWidgetItem(r.value("type").toString());
+            typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
+            table->setItem(i, 0, typeItem);
+            auto* unitItem = new QTableWidgetItem(r.value("unit").toString());
+            unitItem->setFlags(unitItem->flags() & ~Qt::ItemIsEditable);
+            table->setItem(i, 1, unitItem);
+            auto* qty = new QTableWidgetItem(QString::number(r.value("quantity").toDouble(), 'f', 3));
+            qty->setFlags(qty->flags() & ~Qt::ItemIsEditable);
+            table->setItem(i, 2, qty);
+            table->setItem(i, 3, new QTableWidgetItem(QString::number(r.value("rate").toDouble(), 'f', 2)));
+            auto* costItem = new QTableWidgetItem(QString::number(r.value("cost").toDouble(), 'f', 2));
+            costItem->setFlags(costItem->flags() & ~Qt::ItemIsEditable);
+            table->setItem(i, 4, costItem);
+        }
+        table->resizeColumnsToContents();
+        layout->addWidget(table);
+        layout->addWidget(new QLabel(tr("Total: %1")
+            .arg(QString::number(estimate.value("total").toDouble(), 'f', 2)), &dialog));
+        auto* costButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        layout->addWidget(costButtons);
+        connect(costButtons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(costButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        QJsonArray changes;
+        for (int i = 0; i < table->rowCount(); ++i) {
+            changes.append(QJsonObject{{"type", table->item(i, 0)->text()},
+                {"rate", table->item(i, 3)->text().toDouble()}, {"unit", table->item(i, 1)->text()}});
+        }
+        const QJsonObject r = bridge("set_cost_rates",
+            {QString::fromUtf8(QJsonDocument(changes).toJson(QJsonDocument::Compact))});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Cost estimate"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("Cost rates saved"));
+    });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));

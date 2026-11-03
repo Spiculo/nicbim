@@ -274,7 +274,7 @@ release notes, so check before relying on a single cell.
 | Material take-off, quantities (area, volume, length) | all | ✅ | P1 | D77: length, height, areas (net/gross side, openings), volume, count from Qto_ sets, parameters or shape; merge identical items + totals. D96 adds the *Building materials* take-off: one row per material layer (material, thickness, area, volume, count), tested by `tests/python/test_materials.py::test_material_takeoff_schedule` |
 | Schedule on a sheet | all | ✅ | new | D112: Sheets › Place schedule... (scheme, width, merge; vector table in PDF/SVG) |
 | Export to CSV / XLSX | all | ✅ | P1 | D77 (openpyxl) |
-| Cost estimating (5D) | BB AL | ⬜ | new | Bonsai has it |
+| Cost estimating (5D) | BB AL | ✅ | new | D213: rates by type name in `cost_rates`; Model > *Cost estimate...* bills each type's quantity (Qto or geometry, counts for doors/windows/furniture), edits rates in place and totals the cost; Bonsai remains for full 5D |
 | Construction sequencing (4D) | BB | ⬜ | new | Bonsai has it |
 
 ## 16. Visualisation

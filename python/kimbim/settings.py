@@ -88,6 +88,7 @@ DEFAULTS = {
     "sheet_sets": {},  # D172: named sheet subsets for batch publishing {name: [numbers]}
     "drafting_blocks": {},  # D196: reusable 2D blocks by name {shapes: [{kind, points, extra, pen}]}
     "guide_lines": [],  # D202: permanent construction guide lines {id, x1, y1, x2, y2}
+    "cost_rates": {},  # D213: cost estimate rates by type name {rate, unit}
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -314,6 +315,14 @@ def _error(key: str, value) -> str | None:
                     and all(isinstance(g.get(k), (int, float)) and not isinstance(g.get(k), bool)
                             for k in ("x1", "y1", "x2", "y2"))):
                 return "a guide line needs an id and two points"
+    if key == "cost_rates":  # D213
+        if not isinstance(value, dict):
+            return "cost rates are a table by type name"
+        for name, entry in value.items():
+            if not (isinstance(name, str) and name.strip() and isinstance(entry, dict)
+                    and isinstance(entry.get("rate"), (int, float)) and not isinstance(entry.get("rate"), bool)
+                    and entry["rate"] >= 0 and entry.get("unit") in ("m3", "m2", "m", "pcs")):
+                return "a cost rate needs a type name, a non-negative rate and a unit"
     if key == "favourites":
         if not isinstance(value, dict) or not all(
                 isinstance(k, str) and k.strip() and isinstance(v, dict) and isinstance(v.get("tool"), str)
