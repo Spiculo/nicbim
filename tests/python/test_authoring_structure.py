@@ -69,6 +69,50 @@ def test_round_column_and_rotation(project):
     assert hi[0] - lo[0] == pytest.approx(0.3 * math.sqrt(2), abs=2e-3)  # a square turned 45 degrees
 
 
+def test_slanted_tapered_and_segmented_members(project):
+    """D205: a member may lean, taper (IFC4) and be built as precast segments."""
+    t = named("column", "Column 300x300")["guid"]
+    r = call("create_column", project["level"], t, 0, 0, 3.0, 0.0, 1.0, 0.0, 1.0, 1)
+    assert r["ok"], r
+    lo, hi = bbox(r["guid"])
+    lean = math.atan2(1.0, 3.0)
+    assert hi[2] == pytest.approx(3.0 + 0.15 * math.sin(lean), abs=0.01)  # the section tilts with the axis
+    assert hi[0] == pytest.approx(1.0 + 0.15 * math.cos(lean), abs=0.02)  # the top leans 1 m along +x
+
+    r = call("create_column", project["level"], t, 5, 0, 3.0, 0.0, 0.0, 0.0, 0.5, 1)
+    assert r["ok"], r
+    column = b._model.by_guid(r["guid"])
+    solid = column.Representation.Representations[0].Items[0]
+    assert solid.is_a("IfcExtrudedAreaSolidTapered")
+    assert solid.EndSweptArea.XDim == pytest.approx(solid.SweptArea.XDim * 0.5)
+    assert solid.Depth == pytest.approx(3.0 / 0.001)  # millimetres: 3 m
+
+    r = call("create_column", project["level"], t, 8, 0, 3.0, 0.0, 0.0, 0.0, 1.0, 2)
+    assert r["ok"] and len(r["guids"]) == 2
+    tops = []
+    for guid in r["guids"]:
+        lo, hi = bbox(guid)
+        assert hi[2] - lo[2] == pytest.approx(1.5, abs=1e-3)
+        tops.append(hi[2])
+    assert max(tops) == pytest.approx(3.0, abs=1e-3)
+
+    beam_type = named("beam", "Beam 200x400")["guid"]
+    r = call("create_beam", project["level"], beam_type, 0, 0, 5, 0, 3.0, 2.0)
+    assert r["ok"], r
+    lo, hi = bbox(r["guid"])
+    assert hi[2] == pytest.approx(3.0, abs=1e-3) and lo[2] == pytest.approx(1.6, abs=0.03)
+
+    r = call("create_beam", project["level"], beam_type, 0, 2, 5, 2, 3.0, 3.0, 0.5)
+    assert r["ok"], r
+    beam = b._model.by_guid(r["guid"])
+    solid = beam.Representation.Representations[0].Items[0]
+    assert solid.is_a("IfcExtrudedAreaSolidTapered")
+    assert solid.EndSweptArea.YDim == pytest.approx(solid.SweptArea.YDim * 0.5)
+
+    assert not call("create_column", project["level"], t, 0, 0, 3.0, 0.0, 0.0, 0.0, 0.0)["ok"]
+    assert not call("create_column", project["level"], t, 0, 0, 3.0, 0.0, 0.0, 0.0, 1.0, 0)["ok"]
+
+
 def test_beam_top_is_where_asked(project):
     t = named("beam", "Beam 200x400")["guid"]
     r = call("create_beam", project["level"], t, 0, 0, 5, 0, 3.0)

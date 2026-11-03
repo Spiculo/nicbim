@@ -903,6 +903,12 @@ private:
     QHash<int, QAction*> m_toolActions;
     QComboBox* m_types = nullptr;
     QDoubleSpinBox* m_wallHeight = nullptr;
+    // D205: slanted, tapered and segmented columns and beams
+    QDoubleSpinBox* m_memberLeanX = nullptr;
+    QDoubleSpinBox* m_memberLeanY = nullptr;
+    QDoubleSpinBox* m_memberTaper = nullptr;
+    QDoubleSpinBox* m_memberTop2 = nullptr;
+    QSpinBox* m_memberSegments = nullptr;
     QComboBox* m_wallReference = nullptr; // D97: the Wall tool's reference line location
     QDoubleSpinBox* m_slabSlopeX = nullptr; // D168: the Slab tool's slope (rise over run)
     QDoubleSpinBox* m_slabSlopeY = nullptr;

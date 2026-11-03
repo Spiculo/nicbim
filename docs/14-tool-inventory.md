@@ -141,7 +141,7 @@ release notes, so check before relying on a single cell.
 | Door swing and window symbols in plan | all | ✅ | new | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
 | Generic opening (wall or slab hole without a filling) | AC RV VW | ✅ | P2 | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening` |
 | Columns, beams from profiles | all | ✅ | P0 | |
-| Slanted, tapered, segmented columns and beams | AC RV | ⬜ | new | |
+| Slanted, tapered, segmented columns and beams | AC RV | ✅ | new | D205: the Column/Beam tool strip gains *Lean X/Y* (columns), *End rise* (beams), *Taper* (top size as a fraction; IFC4) and *Segments* (precast pieces); tapered solids and stacked segments are built by the engine |
 | Grids | all | ✅ | P0 | D98: Grid system (numbered and lettered axes at once) |
 | Stairs: straight flight | all | ✅ | P1 | |
 | Stairs: landings, L/U shapes, spiral, by sketch | all | 🟡 | P1 | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; no winders or spiral yet |

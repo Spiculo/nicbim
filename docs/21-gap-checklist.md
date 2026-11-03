@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D204 plus explicit overrides for the final items.
+after D123–D205 plus explicit overrides for the final items.
 
-**Summary: 187 done, 19 deferred, 3 blocked.**
+**Summary: 188 done, 18 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -107,7 +107,7 @@ after D123–D204 plus explicit overrides for the final items.
 | 6. Building elements | Door swing and window symbols in plan | **Done** | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
 | 6. Building elements | Generic opening (wall or slab hole without a filling) | **Done** | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening`. |
 | 6. Building elements | Columns, beams from profiles | **Done** |  |
-| 6. Building elements | Slanted, tapered, segmented columns and beams | **Deferred** |  |
+| 6. Building elements | Slanted, tapered, segmented columns and beams | **Done** | D205: the Column/Beam tool strip gains *Lean X/Y* (columns), *End rise* (beams), *Taper* (top size as a fraction; IFC4) and *Segments* (precast pieces); the engine builds the leaning/sloping placement, tapered solids and stacked segments and returns all their ids |
 | 6. Building elements | Grids | **Done** | D98: Grid system (numbered and lettered axes at once) |
 | 6. Building elements | Stairs: straight flight | **Done** |  |
 | 6. Building elements | Stairs: landings, L/U shapes, spiral, by sketch | **Deferred** | Core done; remainder deferred. D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; no winders or spiral yet |

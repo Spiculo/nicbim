@@ -3409,6 +3409,31 @@ void MainWindow::buildModelingToolbar()
     m_wallHeight->setSuffix(QStringLiteral(" m"));
     m_wallHeight->setToolTip(tr("Wall height"));
     bar->addField(m_wallHeight);
+    auto memberSpin = [&](const char* name, const QString& tip, double lo, double hi, double value,
+                          const QString& suffix) {
+        auto* box = new QDoubleSpinBox(bar);
+        box->setObjectName(QLatin1String(name));
+        box->setRange(lo, hi);
+        box->setDecimals(2);
+        box->setValue(value);
+        box->setSuffix(suffix);
+        box->setToolTip(tip);
+        bar->addField(box);
+        return box;
+    };
+    m_memberLeanX = memberSpin("memberLeanX", tr("Column top lean along X, or the beam's end rise"),
+                               -50.0, 50.0, 0.0, QStringLiteral(" m"));
+    m_memberLeanY = memberSpin("memberLeanY", tr("Column top lean along Y"), -50.0, 50.0, 0.0, QStringLiteral(" m"));
+    m_memberTaper = memberSpin("memberTaper", tr("Top size as a fraction of the base (1 = straight)"),
+                               0.05, 1.0, 1.0, QString());
+    m_memberTop2 = memberSpin("memberTop2", tr("Beam second end rise above its first"), -50.0, 50.0, 0.0,
+                              QStringLiteral(" m"));
+    m_memberSegments = new QSpinBox(bar);
+    m_memberSegments->setObjectName(QStringLiteral("memberSegments"));
+    m_memberSegments->setRange(1, 20);
+    m_memberSegments->setValue(1);
+    m_memberSegments->setToolTip(tr("Precast segments"));
+    bar->addField(m_memberSegments);
     // D97: where the clicked line is in the new wall (Archicad's reference line location).
     m_wallReference = new QComboBox(bar);
     m_wallReference->setObjectName(QStringLiteral("wallReference"));
@@ -4265,6 +4290,12 @@ void MainWindow::setTool(Tool tool)
         it.value()->setChecked(it.key() == int(tool));
     }
     m_wallHeight->setVisible(tool == Tool::Wall || tool == Tool::Column || tool == Tool::Beam || tool == Tool::Roof || tool == Tool::CurtainWall);
+    const bool member = tool == Tool::Column || tool == Tool::Beam;
+    m_memberLeanX->setVisible(tool == Tool::Column);
+    m_memberLeanY->setVisible(tool == Tool::Column);
+    m_memberTaper->setVisible(member);
+    m_memberSegments->setVisible(member);
+    m_memberTop2->setVisible(tool == Tool::Beam);
     m_slabSlopeX->setVisible(tool == Tool::Slab);
     m_slabSlopeY->setVisible(tool == Tool::Slab);
     m_slabEdge->setVisible(tool == Tool::Slab);
@@ -9803,7 +9834,9 @@ bool MainWindow::columnAt(QPointF p, bool turned)
         type = firstType(bridge("column_types"));
     auto num = [](double v) { return QString::number(v, 'g', 17); };
     const QJsonObject r = bridge("create_column", {m_levels->activeStorey(), type.value("guid").toString(), num(s.point.x()),
-        num(s.point.y()), num(m_wallHeight->value()), num(turned ? M_PI / 2 : 0.0)});
+        num(s.point.y()), num(m_wallHeight->value()), num(turned ? M_PI / 2 : 0.0),
+        num(m_memberLeanX->value()), num(m_memberLeanY->value()),
+        QString::number(m_memberTaper->value(), 'g', 17), QString::number(m_memberSegments->value())});
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Could not place it: %1").arg(r.value("error").toString()));
         return false;
@@ -9825,8 +9858,10 @@ bool MainWindow::createSegment(QPointF p1, QPointF p2)
         QJsonObject type = m_tool == Tool::Beam ? currentType() : QJsonObject();
         if (type.isEmpty())
             type = firstType(bridge("beam_types"));
+        const double memberTop = m_levels->activeElevation() + m_wallHeight->value();
         r = bridge("create_beam", {m_levels->activeStorey(), type.value("guid").toString(), num(p1.x()), num(p1.y()),
-            num(p2.x()), num(p2.y()), num(m_levels->activeElevation() + m_wallHeight->value())});
+            num(p2.x()), num(p2.y()), num(memberTop), num(memberTop + m_memberTop2->value()),
+            QString::number(m_memberTaper->value(), 'g', 17), QString::number(m_memberSegments->value())});
     }
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Could not create it: %1").arg(r.value("error").toString()));

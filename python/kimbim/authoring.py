@@ -1834,6 +1834,63 @@ def _profile_size(profile) -> tuple[float, float]:
     return 0.0, 0.0
 
 
+def _scale_profile(f, profile, scale: float):
+    """A copy of a profile with its size multiplied (the type's profile stays untouched)."""
+    if abs(scale - 1.0) < 1e-9:
+        return profile
+    if profile.is_a("IfcCircleProfileDef"):
+        return f.create_entity("IfcCircleProfileDef", ProfileType="AREA", ProfileName=profile.ProfileName,
+                               Position=profile.Position, Radius=float(profile.Radius) * scale)
+    if profile.is_a("IfcRectangleProfileDef"):
+        return f.create_entity("IfcRectangleProfileDef", ProfileType="AREA", ProfileName=profile.ProfileName,
+                               Position=profile.Position,
+                               XDim=float(profile.XDim) * scale, YDim=float(profile.YDim) * scale)
+    raise ValueError("only rectangular and round profiles can taper")
+
+
+def _member_representation(f, profile, depth_m: float, start_scale: float, end_scale: float, cardinal: int):
+    """The body of a column or beam: its profile extruded `depth_m` (tapered when the scales differ)."""
+    if abs(start_scale - 1.0) < 1e-9 and abs(end_scale - 1.0) < 1e-9:
+        return ifcopenshell.api.geometry.add_profile_representation(
+            f, context=_body_context(), profile=profile, depth=depth_m, cardinal_point=cardinal)
+    start = _scale_profile(f, profile, start_scale)
+    end = _scale_profile(f, profile, end_scale)
+    if abs(start_scale - end_scale) < 1e-9 or f.schema == "IFC2X3":
+        if abs(start_scale - end_scale) > 1e-9:
+            raise ValueError("tapered columns and beams need IFC4")
+        return ifcopenshell.api.geometry.add_profile_representation(
+            f, context=_body_context(), profile=start, depth=depth_m, cardinal_point=cardinal)
+    point = f.createIfcCartesianPoint((0.0, 0.0, 0.0))
+    if cardinal == 8:  # a beam's top centre at the placement: the profile sits below it
+        y = 2 * float(start.Radius) if start.is_a("IfcCircleProfileDef") else float(start.YDim)
+        point = f.createIfcCartesianPoint((0.0, -y / 2, 0.0))
+    solid = f.createIfcExtrudedAreaSolidTapered(
+        start, f.createIfcAxis2Placement3D(point, None, None), f.createIfcDirection((0.0, 0.0, 1.0)),
+        depth_m / _scale(), end)
+    return f.createIfcShapeRepresentation(_body_context(), "Body", "SweptSolid", [solid])
+
+
+def _member_matrix(origin, axis, rotation: float = 0.0):
+    """Placement with local Z along `axis`, local Y up (perpendicular to it) and the profile turned
+    `rotation` radians about the axis."""
+    z = np.asarray(axis, dtype=float)
+    z = z / float(np.linalg.norm(z))
+    up = np.array([0.0, 0.0, 1.0])
+    y = up - z * float(up @ z)
+    if float(np.linalg.norm(y)) < 1e-9:
+        fallback = np.array([0.0, 1.0, 0.0])
+        y = fallback - z * float(fallback @ z)
+    y = y / float(np.linalg.norm(y))
+    x = np.cross(y, z)
+    if rotation:
+        c, s = math.cos(rotation), math.sin(rotation)
+        x, y = x * c + y * s, -x * s + y * c
+    matrix = np.eye(4)
+    matrix[:3, 0], matrix[:3, 1], matrix[:3, 2] = x, y, z
+    matrix[:3, 3] = np.asarray(origin, dtype=float)
+    return matrix
+
+
 def _profile_types(ifc_class: str, defaults, create_defaults: bool = True) -> list:
     f = B._model
     if create_defaults and not [t for t in f.by_type(ifc_class) if _profile(t) is not None]:
@@ -1879,8 +1936,11 @@ def _profile_element(storey_guid, type_guid, type_class):
     return storey, element_type, ""
 
 
-def create_column(storey_guid: str, type_guid: str, x, y, height, rotation=0.0) -> str:
-    """A column standing on the level at (x, y), `height` m tall, turned `rotation` radians."""
+def create_column(storey_guid: str, type_guid: str, x, y, height, rotation=0.0,
+                  lean_x=0.0, lean_y=0.0, top_scale=1.0, segments=1) -> str:
+    """A column standing on the level at (x, y), `height` m tall, turned `rotation` radians. D205:
+    the top can lean by (`lean_x`, `lean_y`) metres, taper to `top_scale` of the base size (IFC4),
+    and the column can be built as `segments` stacked precast pieces."""
     if B._model is None:
         return _fail("no model open")
     storey, column_type, error = _profile_element(storey_guid, type_guid, "IfcColumnType")
@@ -1888,33 +1948,50 @@ def create_column(storey_guid: str, type_guid: str, x, y, height, rotation=0.0) 
         return _fail(error)
     try:
         x, y, height, rotation = float(x), float(y), float(height), float(rotation or 0.0)
+        lean_x, lean_y = float(lean_x or 0.0), float(lean_y or 0.0)
+        top_scale = 1.0 if top_scale in (None, "") else float(top_scale)
+        segments = 1 if segments in (None, "") else int(segments)
     except (TypeError, ValueError) as ex:
         return _fail(str(ex))
     if height <= 0:
         return _fail("the column height must be positive")
-    made = {}
+    if not 0.05 <= top_scale <= 1.0:
+        return _fail("the taper must be between 0.05 and 1")
+    if not 1 <= segments <= 20:
+        return _fail("the segments must be between 1 and 20")
+    profile = _profile(column_type)
+    if profile is None:
+        return _fail("the column type has no profile")
+    axis = np.array([lean_x, lean_y, height], dtype=float)
+    total = float(np.linalg.norm(axis))
+    base = np.array([x, y, _elevation(storey)], dtype=float)
+    made = []
 
     def action():
         f = B._model
-        column = ifcopenshell.api.root.create_entity(f, ifc_class="IfcColumn", name=column_type.Name)
-        ifcopenshell.api.type.assign_type(f, related_objects=[column], relating_type=column_type)
-        representation = ifcopenshell.api.geometry.add_profile_representation(
-            f, context=_body_context(), profile=_profile(column_type), depth=height)
-        ifcopenshell.api.geometry.assign_representation(f, product=column, representation=representation)
-        c, s = math.cos(rotation), math.sin(rotation)
-        matrix = np.array([[c, -s, 0, x], [s, c, 0, y], [0, 0, 1, _elevation(storey)], [0, 0, 0, 1]], dtype=float)
-        ifcopenshell.api.geometry.edit_object_placement(f, product=column, matrix=matrix, is_si=True)
-        ifcopenshell.api.spatial.assign_container(f, products=[column], relating_structure=storey)
-        layers.assign_active(column)
-        renovation.stamp_new(column)
-        made["element"] = column
-        return 1, [column.GlobalId], []
+        for i in range(segments):
+            t0, t1 = i / segments, (i + 1) / segments
+            origin = base + axis * t0
+            start_scale = 1.0 + (top_scale - 1.0) * t0
+            end_scale = 1.0 + (top_scale - 1.0) * t1
+            column = ifcopenshell.api.root.create_entity(f, ifc_class="IfcColumn", name=column_type.Name)
+            ifcopenshell.api.type.assign_type(f, related_objects=[column], relating_type=column_type)
+            representation = _member_representation(
+                f, profile, total / segments, start_scale, end_scale, 5)
+            ifcopenshell.api.geometry.assign_representation(f, product=column, representation=representation)
+            matrix = _member_matrix(origin, axis, rotation)
+            ifcopenshell.api.geometry.edit_object_placement(f, product=column, matrix=matrix, is_si=True)
+            ifcopenshell.api.spatial.assign_container(f, products=[column], relating_structure=storey)
+            layers.assign_active(column)
+            renovation.stamp_new(column)
+            made.append(column.GlobalId)
+        return len(made), made, []
 
     try:
         r = B._run(action)
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({**r, "guid": made["element"].GlobalId})
+    return B._dump({**r, "guid": made[0], "guids": made})
 
 
 MASSING_PSET = "KIMBIM_Massing"  # D201
@@ -1966,8 +2043,11 @@ def create_massing(storey_guid: str, x, y, width, depth, height, name: str = "Ma
     return B._dump({**r, "guid": made["box"].GlobalId})
 
 
-def create_beam(storey_guid: str, type_guid: str, x1, y1, x2, y2, top) -> str:
-    """A beam from (x1, y1) to (x2, y2) whose top is at `top` (absolute metres)."""
+def create_beam(storey_guid: str, type_guid: str, x1, y1, x2, y2, top, top2=None,
+                top_scale=1.0, segments=1) -> str:
+    """A beam from (x1, y1) to (x2, y2) whose top is at `top` (absolute metres). D205: the other
+    end's top can be `top2` (a sloped beam), the section can taper to `top_scale` (IFC4), and the
+    beam can be built as `segments` pieces."""
     if B._model is None:
         return _fail("no model open")
     storey, beam_type, error = _profile_element(storey_guid, type_guid, "IfcBeamType")
@@ -1975,35 +2055,50 @@ def create_beam(storey_guid: str, type_guid: str, x1, y1, x2, y2, top) -> str:
         return _fail(error)
     try:
         x1, y1, x2, y2, top = float(x1), float(y1), float(x2), float(y2), float(top)
+        top2 = top if top2 in (None, "") else float(top2)
+        top_scale = 1.0 if top_scale in (None, "") else float(top_scale)
+        segments = 1 if segments in (None, "") else int(segments)
     except (TypeError, ValueError) as ex:
         return _fail(str(ex))
-    length = math.hypot(x2 - x1, y2 - y1)
+    if not 0.05 <= top_scale <= 1.0:
+        return _fail("the taper must be between 0.05 and 1")
+    if not 1 <= segments <= 20:
+        return _fail("the segments must be between 1 and 20")
+    profile = _profile(beam_type)
+    if profile is None:
+        return _fail("the beam type has no profile")
+    axis = np.array([x2 - x1, y2 - y1, top2 - top], dtype=float)
+    length = float(np.linalg.norm(axis))
     if length < MIN_WALL_LENGTH:
         return _fail("the beam has no length")
-    made = {}
+    start = np.array([x1, y1, top], dtype=float)
+    made = []
 
     def action():
         f = B._model
-        beam = ifcopenshell.api.root.create_entity(f, ifc_class="IfcBeam", name=beam_type.Name)
-        ifcopenshell.api.type.assign_type(f, related_objects=[beam], relating_type=beam_type)
-        # Profile Y up, extrusion (local Z) along the beam, top centre on the placement.
-        representation = ifcopenshell.api.geometry.add_profile_representation(
-            f, context=_body_context(), profile=_profile(beam_type), depth=length, cardinal_point=8)
-        ifcopenshell.api.geometry.assign_representation(f, product=beam, representation=representation)
-        dx, dy = (x2 - x1) / length, (y2 - y1) / length
-        matrix = np.array([[-dy, 0, dx, x1], [dx, 0, dy, y1], [0, 1, 0, top], [0, 0, 0, 1]], dtype=float)
-        ifcopenshell.api.geometry.edit_object_placement(f, product=beam, matrix=matrix, is_si=True)
-        ifcopenshell.api.spatial.assign_container(f, products=[beam], relating_structure=storey)
-        layers.assign_active(beam)
-        renovation.stamp_new(beam)
-        made["element"] = beam
-        return 1, [beam.GlobalId], []
+        for i in range(segments):
+            t0, t1 = i / segments, (i + 1) / segments
+            origin = start + axis * t0
+            start_scale = 1.0 + (top_scale - 1.0) * t0
+            end_scale = 1.0 + (top_scale - 1.0) * t1
+            beam = ifcopenshell.api.root.create_entity(f, ifc_class="IfcBeam", name=beam_type.Name)
+            ifcopenshell.api.type.assign_type(f, related_objects=[beam], relating_type=beam_type)
+            representation = _member_representation(
+                f, profile, length / segments, start_scale, end_scale, 8)
+            ifcopenshell.api.geometry.assign_representation(f, product=beam, representation=representation)
+            matrix = _member_matrix(origin, axis)
+            ifcopenshell.api.geometry.edit_object_placement(f, product=beam, matrix=matrix, is_si=True)
+            ifcopenshell.api.spatial.assign_container(f, products=[beam], relating_structure=storey)
+            layers.assign_active(beam)
+            renovation.stamp_new(beam)
+            made.append(beam.GlobalId)
+        return len(made), made, []
 
     try:
         r = B._run(action)
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({**r, "guid": made["element"].GlobalId})
+    return B._dump({**r, "guid": made[0], "guids": made})
 
 
 # ---------------------------------------------------------------- grids (Slice 6)
