@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D149).**
+**Status as of `main` (2026-11-03, after D112–D150).**
 
 ## How to read it
 
@@ -219,9 +219,9 @@ release notes, so check before relying on a single cell.
 | Elevations (building, interior) | all | 🟡 | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). Interior elevations: an elevation with a limited depth |
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
-| 3D documents / axonometric drawings | AC RV VW | ⬜ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
+| 3D documents / axonometric drawings | AC RV VW | ✅ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
 | Crop regions, view range, depth | AC RV VW | 🟡 | new | D61 depth (infinite / limited / zero) is in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional bottom limit below its level. A per-view range in generated drawings and model view options by scale are still to do |
-| Model view options (detail level by scale) | AC RV VW | ⬜ | new | D138: every drawing has a scale (1–1000); at 1:200 and coarser the project's `model_view_options.coarse_hidden_classes` (default furniture, furnishings, sanitary and appliances) are left out of plans, sections, elevations and 3D documents. Finer drawings keep everything; the table is a versioned project setting |
+| Model view options (detail level by scale) | AC RV VW | ✅ | new | D138: every drawing has a scale (1–1000); at 1:200 and coarser the project's `model_view_options.coarse_hidden_classes` (default furniture, furnishings, sanitary and appliances) are left out of plans, sections, elevations and 3D documents. Finer drawings keep everything; the table is a versioned project setting |
 | Drawings update when the model changes | all | 🟡 | P1 | Out-of-date bar + Regenerate; regenerated when brought to the front |
 
 ## 12. 2D drafting
@@ -282,10 +282,10 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Real-time textured 3D | all | ✅ | new | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
-| Photorealistic rendering | AC RV VW | ⬜ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size. D147: *Photorealistic (ray tracing)* uses OCCT's ray tracer (materials, sun/shadows, reflections, adaptive AA) with a shaded fallback; the agent `snapshot.take` style `render` uses the same path. D149: *Global illumination (path tracing)* and `snapshot.take` style `pathtrace` use OCCT's path tracer with filmic tone mapping. VR is deferred (see [20](20-vr-feasibility.md)) |
+| Photorealistic rendering | AC RV VW | ✅ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size. D147: *Photorealistic (ray tracing)* uses OCCT's ray tracer (materials, sun/shadows, reflections, adaptive AA) with a shaded fallback; the agent `snapshot.take` style `render` uses the same path. D149: *Global illumination (path tracing)* and `snapshot.take` style `pathtrace` use OCCT's path tracer with filmic tone mapping. VR is deferred (see [20](20-vr-feasibility.md)) |
 | AI visualiser (sketch to image) | AC VW | 🔮 | new | |
 | Sun / shadow studies, animations | all | 🟡 | new | D96: sun shadows for a place, date and time; no animations |
-| Walkthrough video, VR | AC RV VW | ⬜ | P2 | |
+| Walkthrough video, VR | AC RV VW | 🔮 | P2 |  |
 
 ## 17. Collaboration and versions
 
@@ -296,7 +296,7 @@ release notes, so check before relying on a single cell.
 | Combine options with conflict UI | — | ✅ | P1 | Slice 22 (D69), M5 exit |
 | Several people on one project (Teamwork, Worksharing, Project Sharing) | AC RV VW | 🔮 | P2 | Git remotes first ([08](08-future.md)) |
 | External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. D140: linked files are watched; *Open source* opens the linked IFC in a second KimBim window, and saving it refreshes the host automatically. Linked elements are still not editable in place |
-| Copy / monitor linked elements | RV | ⬜ | new | D141: *Make editable...* explodes a linked IFC into normal editable elements tagged `KIMBIM_LinkMonitor` (Source, SourceGuid, signatures); *Monitor changes...* reports source elements that changed, disappeared or were added. D142: *Sync monitored...* applies changed source attributes/properties to unmodified host copies, leaves or resolves conflicts (`links.monitor_sync`, safe/source/host), and optionally deletes orphan copies. D143: sync also copies changed **local geometry and placement** (representations deep-copied, link transform applied) |
+| Copy / monitor linked elements | RV | ✅ | new | D141: *Make editable...* explodes a linked IFC into normal editable elements tagged `KIMBIM_LinkMonitor` (Source, SourceGuid, signatures); *Monitor changes...* reports source elements that changed, disappeared or were added. D142: *Sync monitored...* applies changed source attributes/properties to unmodified host copies, leaves or resolves conflicts (`links.monitor_sync`, safe/source/host), and optionally deletes orphan copies. D143: sync also copies changed **local geometry and placement** (representations deep-copied, link transform applied) |
 | BCF issues (import, export, viewpoints) | AC RV VW BB | ✅ | new | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | Markups and comments in the model | AC RV VW | ⬜ | new | |
 | Cloud sharing with clients (web viewer) | AC RV VW | 🔮 | — | [08](08-future.md) |
@@ -311,7 +311,7 @@ release notes, so check before relying on a single cell.
 | DWG/DXF import (underlay and convert) | all | 🟡 | new | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings). No DWG yet, no convert to 2D elements. Architects receive most survey and consultant data as DWG |
 | PDF import | AC RV VW | 🟡 | new | D85: a PDF page as an underlay (an image); D132: a PDF can be placed as **vector linework** (PyMuPDF paths, selectable/snappable, no text) instead of a rendered page |
 | SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; D133 adds binary FBX through Assimp. SketchUp `.skp` and live links are still to do. Re-checked 2026-11-03: conda-forge has no SketchUp package; `.skp` needs Trimble's proprietary SDK |
-| Point clouds | AC RV VW | ⬜ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). D148 adds E57 through the `e57dump` C++ bridge built on conda-forge's `libe57format` (BSD-3); the bridge ships in the portable build |
+| Point clouds | AC RV VW | ✅ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). D148 adds E57 through the `e57dump` C++ bridge built on conda-forge's `libe57format` (BSD-3); the bridge ships in the portable build |
 | Rhino / Grasshopper live link | AC RV VW | ⬜ | new | |
 
 ## 19. Analysis and checking
@@ -361,4 +361,4 @@ What now most often stops an architect from finishing a real project, roughly in
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays, D133 binary FBX and D148 E57. SketchUp `.skp` and live links are still to do.
 14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents, D138 model view options by drawing scale, D146 high-resolution image export, D147 ray-traced renders and D149 path-traced renders; VR is deferred pending hardware/runtime ([20](20-vr-feasibility.md)).
 
-Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are SketchUp `.skp` (proprietary SDK), VR (deferred pending hardware/runtime), true cross-file in-place editing, and owner-provided certificate/SketchUp SDK; D140-D143 give live links, editable copies, attribute/property and geometry sync.
+Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are SketchUp `.skp` (proprietary SDK), VR (deferred pending hardware/runtime), true cross-file in-place editing, and owner-provided certificate/SketchUp SDK; D140-D143 give live links, editable copies, attribute/property and geometry sync. Every row is classified in the [final gap checklist](21-gap-checklist.md): 136 done, 70 deferred, 3 blocked.
