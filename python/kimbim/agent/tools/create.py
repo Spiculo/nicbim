@@ -128,6 +128,29 @@ def update_curtain_wall(session, curtain_wall, height=None, spacing=None, panel_
             "panel_thickness_m": round(r["panel_thickness"], 6), "parts": r["parts"]}
 
 
+@tool("create.curtain_panel", {"required": ["curtain_wall", "index"], "properties": {
+    "curtain_wall": {"type": "string", "description": "GlobalId of the curtain wall."},
+    "index": {"type": "integer", "description": "Bay index, from 0 at the wall's start (create.curtain_wall_info lists them)."},
+    "kind": {"type": "string", "enum": ["glass", "solid", "open"],
+             "description": "Glass (default), an opaque solid panel, or an open bay with no panel."},
+    "thickness": {**_LENGTH, "description": "Panel thickness; solid panels default to 10 cm."}}},
+    writes=True)
+def curtain_panel(session, curtain_wall, index, kind="glass", thickness=None):
+    """Change one bay of a curtain wall: make it glass, an opaque solid panel, or open."""
+    changes = {"kind": kind}
+    if thickness is not None:
+        changes["thickness"] = lengths(session, thickness)[0]
+    r = bridge(A.set_curtain_panel, curtain_wall, int(index), json.dumps(changes))
+    return {"guids": [r["guid"]], "panels": r["panels"]}
+
+
+@tool("create.curtain_wall_info", {"required": ["curtain_wall"], "properties": {
+    "curtain_wall": {"type": "string", "description": "GlobalId of the curtain wall."}}})
+def curtain_wall_info(session, curtain_wall):
+    """Read a curtain wall's settings and its bays (index, span, kind, thickness)."""
+    return bridge(A.curtain_wall_info, curtain_wall)
+
+
 @tool("create.slab_edge", {"required": ["slab"], "properties": {
     "slab": {"type": "string", "description": "GlobalId of the slab."},
     "width": _LENGTH, "depth": _LENGTH}},

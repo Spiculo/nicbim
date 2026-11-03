@@ -1090,6 +1090,7 @@ _EXPORTS = {
         "create_column",
         "create_curtain_wall",
         "curtain_wall_info",
+        "set_curtain_panel",
         "update_curtain_wall",
         "add_slab_edge",
         "set_slab_slope",

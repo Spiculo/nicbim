@@ -780,6 +780,98 @@ def _curtain_members(f, wall, p1, p2, base, height, spacing, mullion_width=0.05,
     return parts
 
 
+def _curtain_bays(p1, p2, spacing: float) -> list:
+    """The panel bays along a curtain wall: (from, to) distances from p1, one per mullion interval."""
+    length = math.dist(p1, p2)
+    step = max(spacing, 0.3)
+    bounds, t = [0.0], step
+    while t < length - 0.01:
+        bounds.append(t)
+        t += step
+    bounds.append(length)
+    return [(bounds[k], bounds[k + 1]) for k in range(len(bounds) - 1)]
+
+
+def _parse_panels(value) -> dict:
+    """The per-bay overrides: {"1": {"kind": "solid", "thickness": 0.1}, ...}."""
+    try:
+        data = json.loads(value) if isinstance(value, str) else value
+    except (TypeError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    out = {}
+    for key, item in data.items():
+        try:
+            index = int(key)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(item, dict):
+            continue
+        kind = str(item.get("kind") or "glass").lower()
+        if kind not in ("glass", "solid", "open"):
+            kind = "glass"
+        entry = {"kind": kind}
+        if item.get("thickness") is not None:
+            try:
+                entry["thickness"] = float(item["thickness"])
+            except (TypeError, ValueError):
+                pass
+        out[str(index)] = entry
+    return out
+
+
+def _panel_value(panels: dict, index: int, default_thickness: float) -> tuple[str, float]:
+    entry = panels.get(str(index)) or {}
+    kind = entry.get("kind", "glass")
+    thickness = float(entry.get("thickness", default_thickness))
+    if kind == "solid" and "thickness" not in entry:
+        thickness = max(default_thickness, 0.1)
+    return kind, thickness
+
+
+def _curtain_panel_reps(f, wall, p1, p2, base, height, spacing, default_thickness, panels) -> list:
+    """One body representation with a solid item per closed bay (glass or solid); open bays get none.
+
+    The wall's placement is set to p1 once; each bay's solid is shifted along the local X axis by its
+    start distance, so the panels stay together in one representation. (`create_2pt_wall` moves the
+    product's placement on every call, so it cannot be used per bay.)
+    """
+    length = math.dist(p1, p2)
+    dx, dy = (p2[0] - p1[0]) / length, (p2[1] - p1[1]) / length
+    matrix = np.array([[dx, -dy, 0, p1[0]], [dy, dx, 0, p1[1]],
+                       [0, 0, 1, base], [0, 0, 0, 1]], dtype=float)
+    ifcopenshell.api.geometry.edit_object_placement(f, product=wall, matrix=matrix, is_si=True)
+    scale = ifcopenshell.util.unit.calculate_unit_scale(f)
+    items = []
+    for index, (start, end) in enumerate(_curtain_bays(p1, p2, spacing)):
+        kind, thickness = _panel_value(panels, index, default_thickness)
+        if kind == "open" or end - start < 0.001:
+            continue
+        representation = ifcopenshell.api.geometry.add_wall_representation(
+            f, context=_body_context(), length=end - start, height=height, thickness=thickness)
+        for item in representation.Items:
+            point = item.Position.Location
+            point.Coordinates = (start / scale, point.Coordinates[1], point.Coordinates[2])
+            items.append(item)
+    context = _body_context()
+    return [f.createIfcShapeRepresentation(context, "Body", "SweptSolid", items)]
+
+
+def _replace_bodies(product, representations: list) -> None:
+    """Swap every Body representation of a product for the given list (same product, same GlobalId)."""
+    f = B._model
+    definition = product.Representation
+    if definition is not None:
+        for representation in list(definition.Representations or ()):
+            ifcopenshell.api.geometry.unassign_representation(f, product=product, representation=representation)
+            ifcopenshell.api.geometry.remove_representation(f, representation=representation)
+    if not representations:
+        representations = [f.createIfcShapeRepresentation(_body_context(), "Body", "SweptSolid", [])]
+    for representation in representations:
+        ifcopenshell.api.geometry.assign_representation(f, product=product, representation=representation)
+
+
 def _curtain_parts(wall) -> list:
     """The IfcMembers aggregated to a curtain wall (the mullions and rails it owns)."""
     return [obj for rel in (getattr(wall, "IsDecomposedBy", ()) or ())
@@ -931,6 +1023,35 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
     p1, p2, base = _curtain_frame(wall, values)
     if math.dist(p1, p2) < MIN_WALL_LENGTH:
         return _fail("the curtain wall has no length")
+    panels = _parse_panels(values.get("Panels"))
+    if changes.get("panels") is not None:
+        if not isinstance(changes["panels"], dict):
+            return _fail("panels must be an object keyed by bay index")
+        bays = len(_curtain_bays(p1, p2, spacing))
+        for key, entry in changes["panels"].items():
+            try:
+                index = int(key)
+            except (TypeError, ValueError):
+                return _fail(f"panel bay is not a whole number: {key}")
+            if not 0 <= index < bays:
+                return _fail(f"panel bay {index} is outside this wall (0-{bays - 1})")
+            if not isinstance(entry, dict):
+                return _fail("a panel override must be an object")
+            kind = str(entry.get("kind") or (panels.get(str(index)) or {}).get("kind") or "glass").lower()
+            if kind not in ("glass", "solid", "open"):
+                return _fail("a panel kind is glass, solid or open")
+            update = {"kind": kind}
+            if entry.get("thickness") is not None:
+                try:
+                    thickness = float(entry["thickness"])
+                except (TypeError, ValueError):
+                    return _fail("the panel thickness must be a number")
+                if not 0.005 <= thickness <= 0.5:
+                    return _fail("the panel thickness must be between 5 mm and 50 cm")
+                update["thickness"] = thickness
+            elif str(index) in panels and "thickness" in panels[str(index)]:
+                update["thickness"] = panels[str(index)]["thickness"]
+            panels[str(index)] = update
     old_parts = _curtain_parts(wall)
     made = {}
 
@@ -938,10 +1059,14 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
         f = B._model
         for member in old_parts:
             ifcopenshell.api.root.remove_product(f, product=member)
-        representation = ifcopenshell.api.geometry.create_2pt_wall(
-            f, element=wall, context=_body_context(), p1=tuple(p1), p2=tuple(p2),
-            elevation=base, height=height, thickness=panel_thickness, is_si=True)
-        _replace_body(wall, representation)
+        if panels:
+            _replace_bodies(wall, _curtain_panel_reps(
+                f, wall, p1, p2, base, height, spacing, panel_thickness, panels))
+        else:
+            representation = ifcopenshell.api.geometry.create_2pt_wall(
+                f, element=wall, context=_body_context(), p1=tuple(p1), p2=tuple(p2),
+                elevation=base, height=height, thickness=panel_thickness, is_si=True)
+            _replace_body(wall, representation)
         parts = _curtain_members(f, wall, p1, p2, base, height, spacing,
                                  mullion_width, mullion_depth, rail_depth)
         ps = next((rel.RelatingPropertyDefinition for rel in (getattr(wall, "IsDefinedBy", ()) or ())
@@ -953,7 +1078,8 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
         ifcopenshell.api.pset.edit_pset(f, pset=ps, properties={
             "Height": height, "MullionSpacing": spacing, "PanelThickness": panel_thickness,
             "MullionWidth": mullion_width, "MullionDepth": mullion_depth, "RailDepth": rail_depth,
-            "Axis": json.dumps([p1[0], p1[1], p2[0], p2[1]]), "Base": base})
+            "Panels": json.dumps(panels), "Axis": json.dumps([p1[0], p1[1], p2[0], p2[1]]),
+            "Base": base})
         made["parts"] = parts
         return 1 + len(parts), [wall.GlobalId, *parts], [m.GlobalId for m in old_parts]
 
@@ -964,7 +1090,7 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
     return B._dump({**r, "guid": guid, "height": height, "spacing": spacing,
                     "panel_thickness": panel_thickness, "mullion_width": mullion_width,
                     "mullion_depth": mullion_depth, "rail_depth": rail_depth,
-                    "parts": len(made.get("parts", []))})
+                    "parts": len(made.get("parts", [])), "panels": len(panels)})
 
 
 def curtain_wall_info(guid: str) -> str:
@@ -978,8 +1104,36 @@ def curtain_wall_info(guid: str) -> str:
             "mullion_depth": values.get("MullionDepth", 0.05), "rail_depth": values.get("RailDepth", 0.05)}
     if values:
         p1, p2, base = _curtain_frame(wall, values)
-        info.update({"axis": [p1[0], p1[1], p2[0], p2[1]], "base": base})
+        overrides = _parse_panels(values.get("Panels"))
+        spacing = float(values.get("MullionSpacing") or 1.5)
+        thickness = float(values.get("PanelThickness") or 0.04)
+        panels = []
+        for index, (start, end) in enumerate(_curtain_bays(p1, p2, spacing)):
+            kind, panel_thickness = _panel_value(overrides, index, thickness)
+            panels.append({"index": index, "from": round(start, 6), "to": round(end, 6),
+                           "kind": kind, "thickness": round(panel_thickness, 6),
+                           "overridden": str(index) in overrides})
+        info.update({"axis": [p1[0], p1[1], p2[0], p2[1]], "base": base, "panels": panels})
     return B._dump(info)
+
+
+def set_curtain_panel(guid: str, index, changes_json: str) -> str:
+    """Change one bay of a curtain wall: kind (glass, solid or open) and/or its panel thickness.
+    One undo step; the rest of the wall keeps its settings."""
+    if B._model is None:
+        return _fail("no model open")
+    wall = _by_guid(guid)
+    if wall is None or not wall.is_a("IfcCurtainWall"):
+        return _fail("unknown curtain wall")
+    try:
+        bay = int(index)
+        changes = json.loads(changes_json) if isinstance(changes_json, str) else changes_json
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    if not isinstance(changes, dict):
+        return _fail("the panel change must be an object")
+    change = {str(bay): changes}
+    return update_curtain_wall(guid, json.dumps({"panels": change}))
 
 
 def slab_outline_from_walls(walls_json: str) -> str:

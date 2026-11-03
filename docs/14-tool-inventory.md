@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D125).**
+**Status as of `main` (2026-11-03, after D112–D126).**
 
 ## How to read it
 
@@ -150,7 +150,7 @@ release notes, so check before relying on a single cell.
 | Roofs: flat | all | ✅ | P1 | Slice 19 (D66) |
 | Roofs: pitched, hip, gable, multi-plane, by footprint | all | ✅ | P1 | Slice 19 (D66): shed, gable, hip, a slope per edge; walls trimmed to the roof |
 | Shell / free-form roof | AC RV | ⬜ | new | |
-| Curtain walls (grids, mullions, panels) | AC RV VW | 🟡 | P2 | D109: `create.curtain_wall` makes an `IfcCurtainWall` panel (`IfcCurtainWallType`, `KIMBIM_CurtainWall` height/spacing/panel thickness) with vertical mullions and top/bottom rails as aggregated IfcMembers; the Curtain wall tool is in the 3D palette. D116: Model > *Curtain wall settings...* edits height, mullion spacing, panel thickness and mullion/rail sizes and rebuilds the members; editing individual panels is still to do |
+| Curtain walls (grids, mullions, panels) | AC RV VW | 🟡 | P2 | D109: `create.curtain_wall` makes an `IfcCurtainWall` panel (`IfcCurtainWallType`, `KIMBIM_CurtainWall` height/spacing/panel thickness) with vertical mullions and top/bottom rails as aggregated IfcMembers; the Curtain wall tool is in the 3D palette. D116: Model > *Curtain wall settings...* edits height, mullion spacing, panel thickness and mullion/rail sizes and rebuilds the members; D126: the settings dialog lists every bay as Glass, Solid panel or Open, with its own thickness; `create.curtain_panel` and `create.curtain_wall_info` expose the same. Individual panel materials/types and panel-level move/copy are still to do |
 | Ceilings | RV VW | ⬜ | new | Archicad uses slabs |
 | Zones / rooms / spaces (auto from walls, area, name, number) | all | ✅ | P1 | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | Area plans (gross, rentable) | RV VW | ⬜ | new | |
@@ -349,7 +349,7 @@ What now most often stops an architect from finishing a real project, roughly in
 1. ✅ **DWG in and out** (§14, §18): D109 converts DWG underlays through LibreDWG (`dwg2dxf`) and exports drawings/sheets with `dxf2dwg` (`versions export-dwg`). The converter lives in its own `dwg` pixi environment because conda-forge's libredwg cannot share IfcOpenShell's msys2 epoch; `KIMBIM_DWG_BIN` points at another install. The app's DXF export dialog has a DWG format.
 2. ✅ **Parametric object authoring** (§8): make and customise objects without writing code. Done: the `.kimobj` engine (D99), the settings dialog with saved versions (D100) and the Object Editor (D101). Design: [16](16-parametric-objects.md).
 3. ✅ **Imperial units** (§1): D108 (m/cm/mm/ft/in, matching areas; feet-and-inches text and imperial paper still to do).
-4. 🟡 **Curtain walls** (§6) and **sloped slabs / slab edges** (§6): D109 adds the data/model APIs (`create.curtain_wall`, `set_slab_slope`, `create.slab_edge`) and tests; the curtain wall has a palette tool; slopes and edges are Model menu actions. D116 adds the settings dialog (height, spacing, panel thickness, mullion/rail sizes); editing individual panels and slope/edge fields in the tool strip are still to do.
+4. 🟡 **Curtain walls** (§6) and **sloped slabs / slab edges** (§6): D109 adds the data/model APIs (`create.curtain_wall`, `set_slab_slope`, `create.slab_edge`) and tests; the curtain wall has a palette tool; slopes and edges are Model menu actions. D116 adds the settings dialog (height, spacing, panel thickness, mullion/rail sizes); D126 adds per-bay panels (glass, solid, open, own thickness). Slope/edge fields in the tool strip and panel materials/types are still to do.
 5. ✅ **Detail views and markers** linked to the model (§11, §13): D112 (region, 1:20 default, linked plan marker, sheet placement). D116 adds the View palette Detail tool; extra 2D on the detail and tag/room-stamp overlays are still to do.
 6. ✅ **Schedules on sheets** and **drawing/sheet lists** (§14, §15): D112 (vector tables in PDF/SVG, dragged and removed on the sheet).
 7. ✅ **Re-import with reconciliation** (§18): D104.

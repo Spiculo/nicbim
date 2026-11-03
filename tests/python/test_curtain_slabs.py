@@ -5,6 +5,7 @@ import math
 
 import ifcopenshell.geom
 import ifcopenshell.util.placement
+import ifcopenshell.util.representation
 import numpy as np
 import pytest
 
@@ -150,3 +151,62 @@ def test_update_curtain_wall_mullion_and_rail_sizes(project):
     assert (verts[:, 1].max() - verts[:, 1].min()) == pytest.approx(0.08, abs=1e-6)
     rail = next(m for m in members(r["guid"]) if m.Name == "Curtain wall bottom rail")
     assert (shape(rail.GlobalId)[:, 2].max() - shape(rail.GlobalId)[:, 2].min()) == pytest.approx(0.12, abs=1e-6)
+
+
+def _panel_solids(guid):
+    wall = b._model.by_guid(guid)
+    rep = ifcopenshell.util.representation.get_representation(wall, "Model", "Body", "MODEL_VIEW")
+    return [e for e in b._model.traverse(rep) if e.is_a("IfcExtrudedAreaSolid")]
+
+
+def test_a_curtain_wall_lists_its_bays(project):
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    info = call("curtain_wall_info", r["guid"])
+    assert len(info["panels"]) == 4  # 6 m / 1.5 m
+    assert [p["kind"] for p in info["panels"]] == ["glass"] * 4
+    assert info["panels"][0]["from"] == 0.0 and info["panels"][-1]["to"] == pytest.approx(6.0)
+
+
+def test_one_panel_can_be_solid_or_open(project):
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    assert json.loads(A.set_curtain_panel(r["guid"], 1, json.dumps({"kind": "solid", "thickness": 0.12})))["ok"]
+    info = call("curtain_wall_info", r["guid"])
+    assert info["panels"][1]["kind"] == "solid"
+    assert info["panels"][1]["thickness"] == pytest.approx(0.12)
+    assert info["panels"][1]["overridden"] is True
+    assert len(_panel_solids(r["guid"])) == 4  # still one solid per closed bay
+
+    assert json.loads(A.set_curtain_panel(r["guid"], 2, json.dumps({"kind": "open"})))["ok"]
+    info = call("curtain_wall_info", r["guid"])
+    assert info["panels"][2]["kind"] == "open"
+    assert len(_panel_solids(r["guid"])) == 3  # the open bay has no panel
+
+    assert json.loads(A.set_curtain_panel(r["guid"], 2, json.dumps({"kind": "glass"})))["ok"]
+    assert len(_panel_solids(r["guid"])) == 4
+
+
+def test_all_panels_open_is_still_a_valid_wall(project):
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    for index in range(4):
+        assert json.loads(A.set_curtain_panel(r["guid"], index, json.dumps({"kind": "open"})))["ok"]
+    assert _panel_solids(r["guid"]) == []
+    assert b._model.by_guid(r["guid"]).Representation is not None
+    assert len(members(r["guid"])) == 7
+
+
+def test_curtain_panel_refuses_bad_bays(project):
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    for index, change in ((4, {"kind": "open"}), (-1, {"kind": "open"}),
+                          (0, {"kind": "brick"}), (0, {"kind": "solid", "thickness": 2.0})):
+        refused = json.loads(A.set_curtain_panel(r["guid"], index, json.dumps(change)))
+        assert refused["ok"] is False and refused["error"], (index, change)
+    assert call("curtain_wall_info", r["guid"])["panels"][0]["kind"] == "glass"
+
+
+def test_curtain_panel_agent_tool_is_registered():
+    from kimbim.agent import catalogue
+    from kimbim.agent.tools import create  # noqa: F401
+
+    assert "create.curtain_panel" in catalogue.TOOLS and catalogue.TOOLS["create.curtain_panel"].writes
+    assert "create.curtain_wall_info" in catalogue.TOOLS
+    assert not catalogue.TOOLS["create.curtain_wall_info"].writes

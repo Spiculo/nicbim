@@ -3354,8 +3354,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="567" />
-      <source>Import an OBJ, STL or PLY mesh as an object on a level</source>
-      <translation>Importar una malla OBJ, STL o PLY como objeto en un nivel</translation>
+      <source>Import an OBJ, STL, PLY, COLLADA, glTF or ASCII FBX mesh as an object on a level</source>
+      <translation>Importar una malla OBJ, STL, PLY, COLLADA, glTF o FBX ASCII como objeto en un nivel</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6040" />
@@ -3364,8 +3364,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6042" />
-      <source>Meshes (*.obj *.stl *.ply);;All files (*)</source>
-      <translation>Mallas (*.obj *.stl *.ply);;Todos los archivos (*)</translation>
+      <source>Meshes (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;All files (*)</source>
+      <translation>Mallas (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;Todos los archivos (*)</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6060" />
@@ -3384,6 +3384,76 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
         <numerusform>Malla importada: %n triángulo</numerusform>
         <numerusform>Malla importada: %n triángulos</numerusform>
       </translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="569" />
+      <source>Import point c&amp;loud...</source>
+      <translation>Importar nube de &amp;puntos...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="570" />
+      <source>Import a scan (XYZ, PTS, CSV or uncompressed LAS) as a visible object on a level</source>
+      <translation>Importar un escaneo (XYZ, PTS, CSV o LAS sin comprimir) como objeto visible en un nivel</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6114" />
+      <source>Import point cloud</source>
+      <translation>Importar nube de puntos</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6116" />
+      <source>Point clouds (*.xyz *.pts *.csv *.txt *.las);;All files (*)</source>
+      <translation>Nubes de puntos (*.xyz *.pts *.csv *.txt *.las);;Todos los archivos (*)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6160" />
+      <source>Maximum points:</source>
+      <translation>Puntos máximos:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6161" />
+      <source>Marker size:</source>
+      <translation>Tamaño del marcador:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6180" />
+      <source>Point cloud imported: %1 of %2 point(s)</source>
+      <translation>Nube de puntos importada: %1 de %2 punto(s)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6120" />
+      <source>Panels:</source>
+      <translation>Paneles:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6122" />
+      <source>Bay</source>
+      <translation>Paño</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6122" />
+      <source>Kind</source>
+      <translation>Tipo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6122" />
+      <source>Thickness</source>
+      <translation>Espesor</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6128" />
+      <source>Glass</source>
+      <translation>Vidrio</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6129" />
+      <source>Solid panel</source>
+      <translation>Panel sólido</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="6130" />
+      <source>Open</source>
+      <translation>Abierto</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="6111" />

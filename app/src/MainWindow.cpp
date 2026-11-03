@@ -7350,15 +7350,53 @@ void MainWindow::curtainWallDialog()
     form->addRow(tr("Mullion width:"), mullionWidth);
     form->addRow(tr("Mullion depth:"), mullionDepth);
     form->addRow(tr("Rail depth:"), railDepth);
+    // D126: individual panels: each bay is glass, an opaque solid panel or open.
+    const QJsonArray panelList = current.value("panels").toArray();
+    auto* panelsTable = new QTableWidget(panelList.size(), 3, &dialog);
+    panelsTable->setHorizontalHeaderLabels({tr("Bay"), tr("Kind"), tr("Thickness")});
+    panelsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    panelsTable->verticalHeader()->setVisible(false);
+    panelsTable->setMinimumHeight(120);
+    for (int i = 0; i < panelList.size(); ++i) {
+        const QJsonObject panel = panelList.at(i).toObject();
+        auto* bay = new QTableWidgetItem(QString::number(panel.value("index").toInt() + 1));
+        bay->setFlags(bay->flags() & ~Qt::ItemIsEditable);
+        panelsTable->setItem(i, 0, bay);
+        auto* kind = new QComboBox(panelsTable);
+        kind->addItem(tr("Glass"), QStringLiteral("glass"));
+        kind->addItem(tr("Solid panel"), QStringLiteral("solid"));
+        kind->addItem(tr("Open"), QStringLiteral("open"));
+        kind->setCurrentIndex(qMax(0, kind->findData(panel.value("kind").toString())));
+        panelsTable->setCellWidget(i, 1, kind);
+        auto* panelThickness = spin(0.005, 0.5, panel.value("thickness").toDouble(0.04), 3, tr(" m"));
+        panelThickness->setEnabled(panel.value("kind").toString() == QLatin1String("solid"));
+        connect(kind, &QComboBox::currentIndexChanged, panelThickness, [kind, panelThickness] {
+            panelThickness->setEnabled(kind->currentData().toString() == QLatin1String("solid"));
+        });
+        panelsTable->setCellWidget(i, 2, panelThickness);
+    }
+    form->addRow(tr("Panels:"), panelsTable);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     if (dialog.exec() != QDialog::Accepted)
         return;
+    QJsonObject panels;
+    for (int i = 0; i < panelsTable->rowCount(); ++i) {
+        auto* kind = qobject_cast<QComboBox*>(panelsTable->cellWidget(i, 1));
+        auto* panelThickness = qobject_cast<QDoubleSpinBox*>(panelsTable->cellWidget(i, 2));
+        if (!kind || !panelThickness)
+            continue;
+        QJsonObject entry{{"kind", kind->currentData().toString()}};
+        if (kind->currentData().toString() == QLatin1String("solid"))
+            entry.insert(QStringLiteral("thickness"), panelThickness->value());
+        panels.insert(QString::number(i), entry);
+    }
     QJsonObject values{{"height", height->value()}, {"spacing", spacing->value()},
         {"panel_thickness", thickness->value()}, {"mullion_width", mullionWidth->value()},
-        {"mullion_depth", mullionDepth->value()}, {"rail_depth", railDepth->value()}};
+        {"mullion_depth", mullionDepth->value()}, {"rail_depth", railDepth->value()},
+        {"panels", panels}};
     const QJsonObject r = bridge("update_curtain_wall", {m_selection.first(),
         QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact))});
     if (!r.value("ok").toBool()) {
