@@ -58,16 +58,24 @@ def drawings_list(session):
 
 
 @tool("drawings.create", {"required": ["kind"], "properties": {
-    "kind": {"type": "string", "enum": ["plan", "section", "elevation"]},
+    "kind": {"type": "string", "enum": ["plan", "section", "elevation", "3d"]},
     "level": {"type": "string", "description": "Plan: the level (name or GlobalId)."},
     "line": {"type": "array", "items": {"type": "array"},
              "description": "Section/elevation: the marker line [[x, y], [x, y]] in project units."},
     "direction": {"type": ["string", "array"],
                   "description": "Section/elevation: which side of the line it looks at, \"left\" or \"right\" of "
-                                 "start to end (default left), or a [x, y] point to look towards."}}}, writes=True)
-def drawings_create(session, kind, level="", line=None, direction="left"):
+                                 "start to end (default left), or a [x, y] point to look towards. 3D: a [x, y, z] "
+                                 "look direction (default SE isometric)."},
+    "up": {"type": "array", "items": {"type": "number"},
+           "description": "3D: screen-up vector (default [0, 0, 1])."},
+    "name": {"type": "string", "description": "3D: the document name."}}}, writes=True)
+def drawings_create(session, kind, level="", line=None, direction="left", up=None, name=""):
     """Create a drawing. A plan needs a level. A section needs a line; an elevation takes a line too, or none to add
-    the North/South/East/West elevations the model lacks."""
+    the North/South/East/West elevations the model lacks. A 3D document needs only a look direction."""
+    if kind == "3d":
+        look = direction if isinstance(direction, list) and len(direction) == 3 else [1, -1, -1]
+        return {"guid": bridge(DR.create_3d, json.dumps(look),
+                              json.dumps(up or [0, 0, 1]), name or "")["guid"]}
     if kind == "plan":
         if not level:
             raise AgentError("bad_input", hint="a plan needs a level")

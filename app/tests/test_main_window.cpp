@@ -2067,6 +2067,38 @@ private slots:
         QVERIFY(w.close());
     }
 
+    // D137: a 3D document is an axonometric of the model from the active 3D view, editable and
+    // regenerable like any other drawing.
+    void threeDDocumentGeneratesAnAxonometric()
+    {
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        QVERIFY(w.newProject());
+        w.setTool(kimbim::MainWindow::Tool::Wall);
+        w.wallTool()->setTolerance(0.05);
+        for (const QPointF& p : {QPointF(0, 0), QPointF(8, 0)})
+            w.wallTool()->click(p);
+        w.setTool(kimbim::MainWindow::Tool::None);
+        action(w, "actionCreate3DDocument")->trigger();
+
+        auto& py = kimbim::PythonEngine::instance();
+        QString guid;
+        for (const auto& v : py.callJson("drawings", {}, nullptr).object().value("drawings").toArray()) {
+            const QJsonObject d = v.toObject();
+            if (d.value("kind").toString() == QLatin1String("3d")) {
+                guid = d.value("guid").toString();
+                QVERIFY(d.value("direction").toArray().size() == 3);
+                QVERIFY(d.value("up").toArray().size() == 3);
+            }
+        }
+        QVERIFY(!guid.isEmpty());
+        QVERIFY(w.openDrawing(guid));
+        QTRY_VERIFY_WITH_TIMEOUT(w.drawingView(guid)->hasDrawing(), 60000);
+        const QByteArray svg = w.drawingView(guid)->svg();
+        QVERIFY(!svg.isEmpty());
+        QVERIFY(svg.contains("<svg"));
+        QVERIFY(svg.contains("<path"));
+    }
+
     void sectionPathsAndObliqueCuts()
     {
         kimbim::MainWindow w(nullptr, /*quiet=*/true);
@@ -3142,7 +3174,7 @@ private slots:
                  "actionDetailTool", "actionExportIfc", "actionLinkModel", "actionLinks",
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
-                 "actionViewRange", "actionClearViewRange",
+                 "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }

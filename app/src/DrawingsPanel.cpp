@@ -61,7 +61,12 @@ void DrawingsPanel::setDrawings(const QJsonArray& drawings)
         auto* item = new QListWidgetItem(d.value("name").toString(), m_list);
         item->setData(GuidRole, d.value("guid").toString());
         item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setToolTip(d.value("kind").toString() == QLatin1String("section") ? tr("Section") : tr("Elevation"));
+        const QString kind = d.value("kind").toString();
+        item->setToolTip(kind == QLatin1String("section") ? tr("Section")
+            : kind == QLatin1String("plan")              ? tr("Floor plan")
+            : kind == QLatin1String("detail")            ? tr("Detail")
+            : kind == QLatin1String("3d")                ? tr("3D document")
+                                                         : tr("Elevation"));
         if (item->data(GuidRole).toString() == current)
             m_list->setCurrentItem(item);
     }

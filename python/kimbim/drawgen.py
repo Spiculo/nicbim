@@ -37,9 +37,9 @@ import numpy as np
 
 W = ifcopenshell.ifcopenshell_wrapper
 PSET = "KIMBIM_Drawing"
-KINDS = ("section", "elevation", "plan", "detail")
+KINDS = ("section", "elevation", "plan", "detail", "3d")
 TARGET_VIEW = {"section": "SECTION_VIEW", "elevation": "ELEVATION_VIEW", "plan": "PLAN_VIEW",
-               "detail": "PLAN_VIEW"}
+               "detail": "PLAN_VIEW", "3d": "MODEL_VIEW"}
 DETAIL_SCALE = 20  # 1:20: Archicad's default for a detail view
 DETAIL_BUBBLE = 4.0  # millimetres on paper: a detail marker's bubble radius
 PLAN_CUT = 1.10  # metres above the story: Archicad's default floor plan cut plane
@@ -276,6 +276,12 @@ def settings_of(drawing) -> dict | None:
     data = ifcopenshell.util.element.get_pset(drawing, PSET) or {}
     if data.get("Kind") not in KINDS:
         return None
+    if data["Kind"] == "3d":
+        direction = _json_list(data.get("Direction")) or [1.0, -1.0, -1.0]
+        up = _json_list(data.get("Up")) or [0.0, 0.0, 1.0]
+        return {"kind": "3d", "points": [], "look": [], "depth": None, "auto": False, "side": "",
+                "direction": [float(v) for v in direction[:3]], "up": [float(v) for v in up[:3]],
+                "bulges": [], "tilt": 0.0, "base": 0.0}
     if data["Kind"] in ("plan", "detail"):
         depth = data.get("ViewDepth")
         out = {"kind": data["Kind"], "points": [], "look": [], "depth": None, "auto": True, "side": "",
@@ -342,6 +348,33 @@ def plan_camera(storey, cut, bounds, depth_below=PLAN_DEPTH):
     return m, (hi[0] - lo[0] + 2 * MARGIN, hi[1] - lo[1] + 2 * MARGIN, cut + max(0.0, float(depth_below)))
 
 
+def axonometric_camera(direction, up, bounds):
+    """An orthographic 3D camera for a 3D document: X right, Y screen-up, looking along `direction`
+    (world vector from the viewer), centred on the model's bounds. Returns (matrix, (w, h, d))."""
+    lo, hi = bounds
+    d = np.array(direction, dtype=float)
+    if np.linalg.norm(d) < 1e-9:
+        d = np.array([1.0, -1.0, -1.0])
+    d /= np.linalg.norm(d)
+    u = np.array(up, dtype=float)
+    if np.linalg.norm(u) < 1e-9:
+        u = np.array([0.0, 0.0, 1.0])
+    right = np.cross(d, u)
+    if np.linalg.norm(right) < 1e-9:  # a view straight up or down: screen right is +X
+        right = np.array([1.0, 0.0, 0.0])
+    right /= np.linalg.norm(right)
+    screen_up = np.cross(right, d)
+    screen_up /= np.linalg.norm(screen_up)
+    center = (np.array(lo, dtype=float) + np.array(hi, dtype=float)) / 2.0
+    m = np.eye(4)
+    m[:3, 0], m[:3, 1], m[:3, 2], m[:3, 3] = right, screen_up, -d, center
+    corners = [np.array([x, y, z]) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
+    rel = np.array(corners) - center
+    us, vs, ws = rel @ right, rel @ screen_up, rel @ d
+    return m, (float(us.max() - us.min() + 2 * MARGIN), float(vs.max() - vs.min() + 2 * MARGIN),
+               float(ws.max() - ws.min() + 2 * MARGIN))
+
+
 def _storey(drawing, s):
     try:
         return drawing.file.by_guid(s["storey"]) if s.get("storey") else None
@@ -354,7 +387,10 @@ def place(f, drawing, s, bounds, view_depth=PLAN_DEPTH):
     unit = ifcopenshell.util.unit.calculate_unit_scale(f)
     if s["auto"] and s.get("side"):
         s["points"], s["look"] = auto_marker(s["side"], bounds)
-    if s["kind"] in ("plan", "detail"):
+    if s["kind"] == "3d":
+        m, (w, h, d) = axonometric_camera(s.get("direction") or [1, -1, -1],
+                                          s.get("up") or [0, 0, 1], bounds)
+    elif s["kind"] in ("plan", "detail"):
         storey = _storey(drawing, s)
         if storey is None:
             raise ValueError("the drawing's story no longer exists")
@@ -382,7 +418,7 @@ def place(f, drawing, s, bounds, view_depth=PLAN_DEPTH):
 def store_path(f, drawing, s, points=None):
     """Write the marker path in the drawing's own frame, so moving or rotating it carries the path
     (a bent or curved marker is not a straight line any more)."""
-    if s["kind"] in ("plan", "detail") or s.get("auto"):
+    if s["kind"] in ("plan", "detail", "3d") or s.get("auto"):
         return
     world = points if points is not None else s.get("points") or []
     if len(world) < 2 or drawing.ObjectPlacement is None:
@@ -424,7 +460,10 @@ def write_settings(f, drawing, s):
     props = {"Kind": s["kind"], "Depth": -1.0 if s["depth"] is None else float(s["depth"]), "Auto": bool(s["auto"]),
              "Tilt": float(s.get("tilt", 0.0)), "Base": float(s.get("base", 0.0)),
              **({"Side": s["side"]} if s.get("side") else {})}
-    if s["kind"] == "plan":
+    if s["kind"] == "3d":
+        props.update({"Direction": json.dumps([round(float(v), 9) for v in s["direction"]], separators=(",", ":")),
+                      "Up": json.dumps([round(float(v), 9) for v in s["up"]], separators=(",", ":"))})
+    elif s["kind"] == "plan":
         props.update({"Storey": s["storey"], "Cut": float(s["cut"]),
                       "ViewDepth": -1.0 if s.get("view_depth") is None else float(s["view_depth"])})
     elif s["kind"] == "detail":

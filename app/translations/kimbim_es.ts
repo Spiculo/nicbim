@@ -1424,6 +1424,21 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <source>Elevation</source>
       <translation>Alzado</translation>
     </message>
+    <message>
+      <location filename="../src/DrawingsPanel.cpp" line="64" />
+      <source>Floor plan</source>
+      <translation>Planta</translation>
+    </message>
+    <message>
+      <location filename="../src/DrawingsPanel.cpp" line="64" />
+      <source>Detail</source>
+      <translation>Detalle</translation>
+    </message>
+    <message>
+      <location filename="../src/DrawingsPanel.cpp" line="64" />
+      <source>3D document</source>
+      <translation>Documento 3D</translation>
+    </message>
   </context>
   <context>
     <name>kimbim::DxfExportDialog</name>
@@ -2950,6 +2965,31 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <location filename="../src/MainWindow.cpp" line="1759" />
       <source>Crop region cleared</source>
       <translation>Región de recorte borrada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1051" />
+      <source>3D &amp;document...</source>
+      <translation>&amp;Documento 3D...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1060" />
+      <source>Add an axonometric drawing of the model from the active 3D view's direction</source>
+      <translation>Añadir un dibujo axonométrico del modelo desde la dirección de la vista 3D activa</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1062" />
+      <source>Switch to the 3D view first: its direction frames the document</source>
+      <translation>Cambia primero a la vista 3D: su dirección encuadra el documento</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1070" />
+      <source>3D document</source>
+      <translation>Documento 3D</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1076" />
+      <source>3D document added: %1</source>
+      <translation>Documento 3D añadido: %1</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1051" />

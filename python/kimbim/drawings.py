@@ -104,9 +104,11 @@ def drawings() -> str:
                         **({"storey": s["storey"], "elevation": round(G.storey_elevation(storey), 6),
                             "cut": float(s.get("cut", G.PLAN_CUT)),
                             "view_depth": resolve_view_depth(s["storey"], s)} if storey else {}),
+                        **({"direction": s.get("direction") or [], "up": s.get("up") or []}
+                           if s["kind"] == "3d" else {}),
                         "stale": not any(k[:2] == key for k in _cache.get(d.GlobalId, {}))})
-        # Archicad's Project Map order: floor plans (by story height), sections, elevations, details.
-        order = {"plan": 0, "section": 1, "elevation": 2, "detail": 3}
+        # Archicad's Project Map order: floor plans (by story height), sections, elevations, details/3D.
+        order = {"plan": 0, "section": 1, "elevation": 2, "detail": 3, "3d": 4}
         out.sort(key=lambda d: (order[d["kind"]], d.get("elevation", 0.0), d["name"]))
     return B._dump({"drawings": out})
 
@@ -571,6 +573,50 @@ def _detail_label(storey) -> str:
     while str(n) in taken:
         n += 1
     return str(n)
+
+
+def _vector3(value, what: str) -> list[float]:
+    try:
+        data = json.loads(value) if isinstance(value, str) else value
+        values = [float(v) for v in data]
+    except (TypeError, ValueError):
+        raise ValueError(f"the {what} must be three numbers") from None
+    if len(values) != 3 or not all(math.isfinite(v) for v in values):
+        raise ValueError(f"the {what} must be three numbers")
+    length = math.sqrt(sum(v * v for v in values))
+    if length < 1e-9:
+        raise ValueError(f"the {what} cannot be zero")
+    return [v / length for v in values]
+
+
+def create_3d(direction_json: str, up_json: str, name: str = "") -> str:
+    """A 3D document: an orthographic axonometric of the whole model seen along `direction`
+    (a world vector from the viewer) with `up` as screen up, drawn with hidden-line removal and
+    placed on sheets like any other drawing. One undo step.
+
+    The camera direction is stored with the drawing, so the document is a fixed view of the model
+    (changing the model regenerates it, changing the 3D camera does not)."""
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        direction = _vector3(direction_json, "direction")
+        up = _vector3(up_json, "up")
+        if abs(sum(a * b for a, b in zip(direction, up))) > 0.999:
+            raise ValueError("the up vector cannot be parallel to the direction")
+    except ValueError as ex:
+        return A._fail(str(ex))
+    name = (name or "").strip() or _next_name("3D view")
+    s = {"kind": "3d", "points": [], "look": [], "depth": None, "auto": False, "side": "",
+         "direction": direction, "up": up, "bulges": [], "tilt": 0.0, "base": 0.0}
+    made = {}
+
+    def action():
+        drawing = _new(name, s)
+        made["guid"] = drawing.GlobalId
+        return 1
+
+    r = B._run(action)
+    return B._dump({**r, "guid": made["guid"], "name": name})
 
 
 def create_detail(level_guid: str, points_json: str, scale: int = 20, name: str = "") -> str:
@@ -1126,8 +1172,8 @@ def generate_view_drawing(guid: str, geometry_json: str) -> str:
     if d is None:
         return A._fail("not a drawing")
     s = G.settings_of(d)
-    if s is None or s.get("kind") not in ("section", "elevation"):
-        return A._fail("not a section or elevation")
+    if s is None or s.get("kind") not in ("section", "elevation", "3d"):
+        return A._fail("not a section, elevation or 3D document")
     key = (*_state_key(), "view", hash(geometry_json))
     hit = _cache.get(guid, {}).get(key)
     if hit is None:

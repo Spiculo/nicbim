@@ -752,6 +752,26 @@ void MainWindow::buildMenus()
         afterEdit(r);
         m_status->showMessage(tr("%n drawing(s) added", nullptr, r.value("created").toInt()));
     });
+    QAction* threeDDocument = view->addAction(tr("3D &document...")); // D137
+    threeDDocument->setObjectName(QStringLiteral("actionCreate3DDocument"));
+    threeDDocument->setToolTip(tr("Add an axonometric drawing of the model from the active 3D view's direction"));
+    connect(threeDDocument, &QAction::triggered, this, [this] {
+        if (!m_viewport || m_viewport->isPlanView()) {
+            m_status->showMessage(tr("Switch to the 3D view first: its direction frames the document"));
+            return;
+        }
+        const gp_Dir d = m_viewport->currentViewDirection(), u = m_viewport->currentViewUp();
+        const QJsonArray direction{d.X(), d.Y(), d.Z()}, up{u.X(), u.Y(), u.Z()};
+        const QJsonObject r = bridge("create_3d",
+            {QString::fromUtf8(QJsonDocument(direction).toJson(QJsonDocument::Compact)),
+             QString::fromUtf8(QJsonDocument(up).toJson(QJsonDocument::Compact)), QString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("3D document"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(tr("3D document added: %1").arg(r.value("name").toString()));
+    });
     QAction* through = view->addAction(tr("Select &hidden elements too"));
     through->setObjectName(QStringLiteral("actionSelectThrough"));
     through->setCheckable(true);
@@ -6141,6 +6161,28 @@ void MainWindow::regenerateDrawing(const QString& guid)
             }
             planCutZ = elevation + cut;
             planFloorZ = elevation - below;
+            break;
+        }
+        if (d.value("kind").toString() == QLatin1String("3d")) {
+            // D137: a 3D document is an orthographic axonometric: the stored look direction and screen
+            // up define the camera; every building element takes part in the hidden-line pass.
+            const QJsonArray dir = d.value("direction").toArray(), upv = d.value("up").toArray();
+            if (dir.size() != 3 || upv.size() != 3)
+                break;
+            const gp_Dir forward(dir.at(0).toDouble(), dir.at(1).toDouble(), dir.at(2).toDouble());
+            const gp_Dir screenUp(upv.at(0).toDouble(), upv.at(1).toDouble(), upv.at(2).toDouble());
+            double x0, y0, z0, x1, y1, z1;
+            bounds.Get(x0, y0, z0, x1, y1, z1);
+            gp_Vec right = gp_Vec(forward).Crossed(gp_Vec(screenUp));
+            if (right.Magnitude() < 1e-9)
+                right = gp_Vec(1, 0, 0);
+            viewAxes = gp_Ax2(gp_Pnt((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2),
+                              gp_Dir(-forward.X(), -forward.Y(), -forward.Z()), gp_Dir(right));
+            for (const auto& g : bridge("drawing_bounds").value("guids").toArray())
+                viewGuids << g.toString();
+            viewGuids.sort();
+            include = QString::fromUtf8(
+                QJsonDocument(QJsonArray::fromStringList(viewGuids)).toJson(QJsonDocument::Compact));
             break;
         }
         double x0, y0, z0, x1, y1, z1;

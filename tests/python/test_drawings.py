@@ -6,6 +6,7 @@ import re
 import sys
 from pathlib import Path
 
+import ifcopenshell.util.element
 import ifcopenshell.validate
 import pytest
 
@@ -64,6 +65,23 @@ def test_opening_a_file_adds_no_drawings(tmp_path):
     assert call("save", str(tmp_path / "plain.ifc"))["ok"]
     assert call("open_model", str(tmp_path / "plain.ifc"))["ok"]
     assert call("drawings")["drawings"] == []
+
+
+def test_a_3d_document_stores_its_direction_and_up():
+    assert call("new_project", "Casa")["ok"]
+    r = call("create_3d", json.dumps([1, -1, -1]), json.dumps([0, 0, 1]), "Axonometric")
+    assert r["ok"], r
+    d = drawing(r["guid"])
+    assert d is not None, d
+    assert d["kind"] == "3d" and d["name"] == "Axonometric"
+    assert d["direction"] == pytest.approx([1 / math.sqrt(3), -1 / math.sqrt(3), -1 / math.sqrt(3)])
+    assert d["up"] == pytest.approx([0.0, 0.0, 1.0])
+    assert call("state")["can_undo"]
+    entity = b._model.by_guid(r["guid"])
+    data = ifcopenshell.util.element.get_pset(entity, "KIMBIM_Drawing")
+    assert data["Kind"] == "3d" and json.loads(data["Direction"]) and json.loads(data["Up"])
+    assert call("create_3d", json.dumps([0, 0, 0]), json.dumps([0, 0, 1]))["ok"] is False
+    assert call("create_3d", json.dumps([0, 0, 1]), json.dumps([0, 0, 2]))["ok"] is False
 
 
 def test_section_from_two_points_and_a_look_side(house):

@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D136).**
+**Status as of `main` (2026-11-03, after D112–D137).**
 
 ## How to read it
 
@@ -219,7 +219,7 @@ release notes, so check before relying on a single cell.
 | Elevations (building, interior) | all | 🟡 | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). Interior elevations: an elevation with a limited depth |
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
-| 3D documents / axonometric drawings | AC RV VW | ⬜ | new | |
+| 3D documents / axonometric drawings | AC RV VW | ⬜ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
 | Crop regions, view range, depth | AC RV VW | 🟡 | new | D61 depth (infinite / limited / zero) is in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional bottom limit below its level. A per-view range in generated drawings and model view options by scale are still to do |
 | Model view options (detail level by scale) | AC RV VW | ⬜ | new | |
 | Drawings update when the model changes | all | 🟡 | P1 | Out-of-date bar + Regenerate; regenerated when brought to the front |
@@ -359,6 +359,6 @@ What now most often stops an architect from finishing a real project, roughly in
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
 12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
-14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range; 3D documents, model view options by scale, rendering and VR are still to do.
+14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range and D137 adds 3D documents; model view options by scale, rendering and VR are still to do.
 
 Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14) and a live editable hotlink.

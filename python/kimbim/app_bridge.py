@@ -1163,6 +1163,7 @@ _EXPORTS = {
         "set_annotation_text",
     ),
     "drawings": (
+        "create_3d",
         "create_detail",
         "create_drawings",
         "create_drawing_path",
