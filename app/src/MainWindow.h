@@ -641,6 +641,7 @@ private:
     void linkModelDialog();
     void linksDialog();
     void meshLinksDialog(); // D221: live Rhino/Grasshopper mesh exports
+    void visualScriptsDialog(); // D223: linear visual scripts
     void rebuildLinkWatch();   // D140: keep the linked files watched for live edits
     void refreshLinksIfStale();
     void splitView();          // D153: another viewport beside the active one

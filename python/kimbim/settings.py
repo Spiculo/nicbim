@@ -94,6 +94,7 @@ DEFAULTS = {
                         "glazing_transmittance": 0.70, "air_changes": 0.50,
                         "heating_degree_days": 2200.0, "lighting_power_density": 8.0,
                         "occupancy_hours": 2500.0},  # D222: early-stage energy/daylight inputs
+    "visual_scripts": {},  # D223: linear visual scripts by name {steps: [{op, args}]}
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -314,6 +315,19 @@ def _error(key: str, value) -> str | None:
             v = value.get(name, 0.0)
             if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
                 return f"the energy setting {name} must be between {lo:g} and {hi:g}"
+    if key == "visual_scripts":  # D223
+        if not isinstance(value, dict):
+            return "the visual scripts are a table by name"
+        for name, steps in value.items():
+            if not isinstance(name, str) or not name.strip():
+                return "a visual script needs a name"
+            if not isinstance(steps, list) or not steps:
+                return f"the visual script {name!r} needs at least one step"
+            for step in steps:
+                if not isinstance(step, dict) or not isinstance(step.get("op"), str):
+                    return f"the visual script {name!r} has a step without an op"
+                if step.get("args") is not None and not isinstance(step.get("args"), dict):
+                    return f"the visual script {name!r} has a step whose args is not a table"
     if key == "sun":
         from . import sun
 

@@ -3458,6 +3458,10 @@ void MainWindow::buildModelingToolbar()
         refresh();
         dialog.exec();
     });
+    QAction* scriptsAction = model->addAction(tr("&Visual scripts...")); // D223
+    scriptsAction->setObjectName(QStringLiteral("actionVisualScripts"));
+    scriptsAction->setToolTip(tr("Run a saved linear script of model operations as one undo step"));
+    connect(scriptsAction, &QAction::triggered, this, &MainWindow::visualScriptsDialog);
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));
     skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
@@ -9151,6 +9155,119 @@ void MainWindow::meshLinksDialog() // D221: live Rhino/Grasshopper mesh exports
         afterEdit(r);
         refresh();
         rebuildLinkWatch();
+    });
+    connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    dialog.exec();
+}
+
+void MainWindow::visualScriptsDialog() // D223: linear visual scripts
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Visual scripts"));
+    dialog.resize(700, 420);
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* table = new QTableWidget(&dialog);
+    table->setColumnCount(2);
+    table->setHorizontalHeaderLabels({tr("Name"), tr("Steps")});
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    layout->addWidget(table, 1);
+    auto* buttons = new QHBoxLayout;
+    layout->addLayout(buttons);
+    QJsonArray scripts;
+    auto refresh = [&] {
+        scripts = bridge("pipelines").value("pipelines").toArray();
+        table->setRowCount(scripts.size());
+        for (int i = 0; i < scripts.size(); ++i) {
+            const QJsonObject script = scripts[i].toObject();
+            auto* name = new QTableWidgetItem(script.value("name").toString());
+            name->setData(Qt::UserRole, script.value("name").toString());
+            table->setItem(i, 0, name);
+            table->setItem(i, 1, new QTableWidgetItem(QString::number(script.value("steps").toArray().size())));
+        }
+        if (table->rowCount())
+            table->selectRow(0);
+    };
+    refresh();
+    auto current = [&]() -> QJsonObject {
+        const int row = table->currentRow();
+        return row >= 0 && row < scripts.size() ? scripts[row].toObject() : QJsonObject();
+    };
+    auto editScript = [&](const QString& startName, const QJsonArray& startSteps) {
+        QDialog editor(&dialog);
+        editor.setWindowTitle(tr("Visual script"));
+        editor.resize(560, 380);
+        auto* editorLayout = new QVBoxLayout(&editor);
+        auto* name = new QLineEdit(startName, &editor);
+        name->setObjectName(QStringLiteral("visualScriptName"));
+        editorLayout->addWidget(name);
+        auto* steps = new QPlainTextEdit(&editor);
+        steps->setObjectName(QStringLiteral("visualScriptSteps"));
+        steps->setPlainText(QString::fromUtf8(QJsonDocument(startSteps).toJson(QJsonDocument::Indented)));
+        editorLayout->addWidget(steps, 1);
+        auto* hint = new QLabel(tr("A JSON list of steps: {\"op\": \"massing\", \"args\": {...}}. "
+                                   "Use \"$1\" for the first step's new element."), &editor);
+        hint->setWordWrap(true);
+        editorLayout->addWidget(hint);
+        auto* editorButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &editor);
+        editorLayout->addWidget(editorButtons);
+        connect(editorButtons, &QDialogButtonBox::accepted, &editor, &QDialog::accept);
+        connect(editorButtons, &QDialogButtonBox::rejected, &editor, &QDialog::reject);
+        if (editor.exec() != QDialog::Accepted)
+            return;
+        const QJsonObject r = bridge("save_pipeline", {name->text(), steps->toPlainText()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Visual scripts"), r.value("error").toString());
+            return;
+        }
+        refresh();
+    };
+    auto* add = new QPushButton(tr("New..."), &dialog);
+    auto* edit = new QPushButton(tr("Edit..."), &dialog);
+    auto* run = new QPushButton(tr("Run"), &dialog);
+    auto* remove = new QPushButton(tr("Delete"), &dialog);
+    auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(add);
+    buttons->addWidget(edit);
+    buttons->addWidget(run);
+    buttons->addWidget(remove);
+    buttons->addStretch(1);
+    buttons->addWidget(close);
+    connect(add, &QPushButton::clicked, &dialog, [&] { editScript(QString(), QJsonArray()); });
+    connect(edit, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject script = current();
+        if (script.isEmpty())
+            return;
+        editScript(script.value("name").toString(), script.value("steps").toArray());
+    });
+    connect(run, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject script = current();
+        if (script.isEmpty())
+            return;
+        const QJsonObject r = bridge("run_pipeline", {script.value("name").toString(), m_levels->activeStorey()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Visual scripts"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(tr("Ran \"%1\": %n step(s)", nullptr, r.value("results").toArray().size())
+                                  .arg(script.value("name").toString()));
+    });
+    connect(remove, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject script = current();
+        if (script.isEmpty())
+            return;
+        if (QMessageBox::question(&dialog, tr("Visual scripts"),
+                tr("Delete \"%1\"?").arg(script.value("name").toString())) != QMessageBox::Yes)
+            return;
+        const QJsonObject r = bridge("delete_pipeline", {script.value("name").toString()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Visual scripts"), r.value("error").toString());
+            return;
+        }
+        refresh();
     });
     connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
     dialog.exec();

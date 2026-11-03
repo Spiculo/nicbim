@@ -331,7 +331,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Python console with the model API | RV(pyRevit) BB | ✅ | P1 | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
-| Visual programming | AC RV VW | ⬜ | new | Grasshopper, Dynamo, Marionette |
+| Visual programming | AC RV VW | ✅ | new | D223: linear visual scripts saved in the project (`visual_scripts`): whitelisted engine ops (massing, room, push/pull, move_vertices) run top to bottom as one undo step, with `"$n"` wiring an earlier step's element; Model > *Visual scripts...* lists/edits/runs/deletes them. A linear program rather than a wired node graph |
 | Plugins / add-ons | all | ✅ | P2 | D212: `.py` add-ons in the app's `plugins` folder run at startup and on *Reload*; they may define `register(api)` with the `kimbim.app_bridge` module; Help > *Plugins...* lists loaded/failed files, reloads and opens the folder |
 | Customisable shortcuts, toolbars and workspaces | all | ✅ | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. D135: View > *Toolbars* shows or hides each toolbar and remembers the choice. D187 verifies all three with `test_shortcuts.cpp` (rebind/reset) and `test_preferences.cpp` (workspace and toolbar round-trips) |
 | UI languages | all | ✅ | P0 | English and Spanish |

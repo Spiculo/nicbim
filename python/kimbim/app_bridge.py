@@ -1534,6 +1534,13 @@ _EXPORTS = {
         "energy_settings",
         "set_energy_settings",
     ),
+    "visual": (
+        "delete_pipeline",
+        "pipeline_ops",
+        "pipelines",
+        "run_pipeline",
+        "save_pipeline",
+    ),
     "bcf": (
         "add_comment",
         "create_issue",
