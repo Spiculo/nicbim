@@ -1451,6 +1451,7 @@ _EXPORTS = {
         "create_terrain_from_contours",
         "delete_terrain",
         "list_building_pads",
+        "pad_cut_fill",
         "list_terrains",
         "set_building_pad",
     ),

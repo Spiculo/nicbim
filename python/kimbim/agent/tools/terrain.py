@@ -90,6 +90,12 @@ def pads(session, terrain):
     return {"pads": bridge(T.list_building_pads, terrain)["pads"]}
 
 
+@tool("terrain.pad_volumes", {"required": ["terrain"], "properties": {"terrain": _TERRAIN}})
+def pad_volumes(session, terrain):
+    """Cut and fill volumes (m3) for each building pad, against the surface before the pads."""
+    return bridge(T.pad_cut_fill, terrain)
+
+
 @tool("terrain.clear_pads", {"required": ["terrain"], "properties": {"terrain": _TERRAIN}}, writes=True)
 def clear_pads(session, terrain):
     """Remove a terrain's building pads and restore the surface kept before the first pad."""

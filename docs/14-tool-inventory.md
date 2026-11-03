@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D177).**
+**Status as of `main` (2026-11-03, after D112–D178).**
 
 ## How to read it
 
@@ -164,7 +164,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Terrain from survey points or contours | AC RV VW BB | ✅ | new | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
-| Building pad / cut-and-fill | RV VW | 🟡 | new | D116: *Building pad...* flattens a polygonal part of a terrain to an elevation and stores/clears pads; no automatic cut-and-fill volumes yet |
+| Building pad / cut-and-fill | RV VW | ✅ | new | D116: *Building pad...* flattens a polygonal part of a terrain to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad, computed against the surface stored before the first pad (`pad_cut_fill`, agent `terrain.pad_volumes`); the dialog reports them in the status line |
 | Hardscape, paths, parking | VW RV | ⬜ | new | |
 | Plants and landscape | VW AC | ⬜ | new | |
 | North direction, sun study | all | ✅ | new | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |

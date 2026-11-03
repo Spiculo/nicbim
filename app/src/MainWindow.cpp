@@ -7453,7 +7453,13 @@ void MainWindow::terrainPadDialog()
             return;
         }
         afterEdit(r);
-        m_status->showMessage(tr("Building pad applied"));
+        const QJsonObject volumes = bridge("pad_cut_fill", {terrain->currentData().toString()});
+        if (volumes.value("ok").toBool())
+            m_status->showMessage(tr("Building pad applied — cut %1 m³, fill %2 m³")
+                .arg(volumes.value("cut").toDouble(), 0, 'f', 2)
+                .arg(volumes.value("fill").toDouble(), 0, 'f', 2));
+        else
+            m_status->showMessage(tr("Building pad applied"));
     });
     dialog.exec();
 }

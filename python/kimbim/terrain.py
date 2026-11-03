@@ -416,6 +416,99 @@ def list_building_pads(terrain_guid: str) -> str:
     return B._dump({"ok": True, "pads": _pads_from(data)})
 
 
+def _barycentric_z(tri, p) -> float:
+    (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = tri
+    den = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3)
+    if abs(den) < _EPS:
+        return (z1 + z2 + z3) / 3
+    l1 = ((y2 - y3) * (p[0] - x3) + (x3 - x2) * (p[1] - y3)) / den
+    l2 = ((y3 - y1) * (p[0] - x3) + (x1 - x3) * (p[1] - y3)) / den
+    return l1 * z1 + l2 * z2 + (1 - l1 - l2) * z3
+
+
+def _polygon_area(points) -> float:
+    n = len(points)
+    return abs(sum(points[i][0] * points[(i + 1) % n][1] - points[(i + 1) % n][0] * points[i][1]
+                   for i in range(n))) / 2
+
+
+def _clip_heights(points, positive: bool):
+    """A convex polygon of (x, y, height) split by height = 0, with the crossing points added."""
+    out = []
+    for i, a in enumerate(points):
+        b = points[(i + 1) % len(points)]
+        inside_a = a[2] >= -_EPS if positive else a[2] <= _EPS
+        inside_b = b[2] >= -_EPS if positive else b[2] <= _EPS
+        if inside_a:
+            out.append(a)
+        if inside_a != inside_b:
+            t = a[2] / (a[2] - b[2])
+            out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 0.0))
+    return out
+
+
+def _volume_above(points) -> float:
+    """The volume between a height-zero plane and a convex polygon of (x, y, height)."""
+    if len(points) < 3:
+        return 0.0
+    total = 0.0
+    for i in range(1, len(points) - 1):
+        a, b, c = points[0], points[i], points[i + 1]
+        area = _polygon_area([(a[0], a[1]), (b[0], b[1]), (c[0], c[1])])
+        total += area * (a[2] + b[2] + c[2]) / 3
+    return total
+
+
+def _pad_volumes(base_points, base_faces, pad) -> tuple[float, float]:
+    polygon = Polygon([(float(p[0]), float(p[1])) for p in pad.get("points") or []])
+    if not polygon.is_valid or polygon.area <= _EPS:
+        return 0.0, 0.0
+    elevation = float(pad.get("elevation") or 0.0)
+    cut = fill = 0.0
+    for face in base_faces:
+        tri = [base_points[i] for i in face]
+        inter = Polygon([(p[0], p[1]) for p in tri]).intersection(polygon)
+        if inter.is_empty:
+            continue
+        for piece in triangulate(inter):
+            clipped = piece.intersection(inter)
+            parts = list(clipped.geoms) if hasattr(clipped, "geoms") else [clipped]
+            for part in parts:
+                if part.is_empty or part.area <= _EPS:
+                    continue
+                coords = list(part.exterior.coords)[:-1]
+                heights = [(x, y, _barycentric_z(tri, (x, y)) - elevation) for x, y in coords]
+                cut += _volume_above(_clip_heights(heights, True))
+                fill += -_volume_above(_clip_heights(heights, False))
+    return max(cut, 0.0), max(fill, 0.0)
+
+
+def pad_cut_fill(terrain_guid: str) -> str:
+    """Cut and fill volumes (m³) per building pad, against the surface stored before the first pad."""
+    if B._model is None:
+        return A._fail("no model open")
+    element, _pset = _terrain_element(terrain_guid)
+    if element is None:
+        return A._fail("not a terrain")
+    data = ifcopenshell.util.element.get_pset(element, PSET) or {}
+    pads = _pads_from(data)
+    if not pads:
+        return B._dump({"ok": True, "pads": [], "cut": 0.0, "fill": 0.0, "net": 0.0})
+    base = _stored_mesh(data)
+    if base is None:
+        return A._fail("the surface before the pads was not stored, so their volumes cannot be computed")
+    base_points, base_faces = base
+    rows, total_cut, total_fill = [], 0.0, 0.0
+    for index, pad in enumerate(pads):
+        cut, fill = _pad_volumes(base_points, base_faces, pad)
+        rows.append({"index": index, "elevation": float(pad.get("elevation") or 0.0),
+                     "cut": round(cut, 6), "fill": round(fill, 6), "net": round(cut - fill, 6)})
+        total_cut += cut
+        total_fill += fill
+    return B._dump({"ok": True, "pads": rows, "cut": round(total_cut, 6),
+                    "fill": round(total_fill, 6), "net": round(total_cut - total_fill, 6)})
+
+
 def clear_building_pads(terrain_guid: str) -> str:
     """Remove every pad and rebuild the mesh from the surface kept before the first pad.
 

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D177 plus explicit overrides for the final items.
+after D123–D178 plus explicit overrides for the final items.
 
-**Summary: 161 done, 45 deferred, 3 blocked.**
+**Summary: 162 done, 44 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -125,7 +125,7 @@ after D123–D177 plus explicit overrides for the final items.
 | 6. Building elements | Conceptual massing with floor areas | **Deferred** |  |
 | 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups) |
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
-| 7. Site | Building pad / cut-and-fill | **Deferred** | Core done; remainder deferred. D116: *Building pad...* flattens a polygonal part of a terrain to an elevation and stores/clears pads; no automatic cut-and-fill volumes yet |
+| 7. Site | Building pad / cut-and-fill | **Done** | D116 flattens a polygonal terrain part to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad against the pre-pad surface (`pad_cut_fill`, agent `terrain.pad_volumes`), shown in the dialog's status line. |
 | 7. Site | Hardscape, paths, parking | **Deferred** |  |
 | 7. Site | Plants and landscape | **Deferred** |  |
 | 7. Site | North direction, sun study | **Done** | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |

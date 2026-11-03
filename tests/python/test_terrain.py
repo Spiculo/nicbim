@@ -187,6 +187,22 @@ def test_building_pads_accumulate():
     assert issues() == []
 
 
+def test_building_pad_cut_and_fill_volumes():
+    """D178: the volume above the pad is cut, the volume below it is fill."""
+    f, level = open_model()
+    slope = [[float(x), float(y), 0.5 * x] for y in range(4) for x in range(4)]  # z = 0.5 x
+    r = call(T.create_terrain, level, json.dumps(slope))
+    assert r["ok"], r
+    assert call(T.set_building_pad, r["guid"], json.dumps(PAD), 0.75)["ok"]  # the pad cuts the slope in half
+    volumes = call(T.pad_cut_fill, r["guid"])
+    assert volumes["ok"], volumes
+    assert volumes["pads"][0]["cut"] == pytest.approx(0.5, abs=0.02)
+    assert volumes["pads"][0]["fill"] == pytest.approx(0.5, abs=0.02)
+    assert volumes["net"] == pytest.approx(0.0, abs=0.02)
+    assert call(T.clear_building_pads, r["guid"])["ok"]
+    assert call(T.pad_cut_fill, r["guid"])["pads"] == []
+
+
 def test_clear_building_pads_restores_the_base_mesh():
     f, level = open_model()
     r = call(T.create_terrain, level, json.dumps(GRID))

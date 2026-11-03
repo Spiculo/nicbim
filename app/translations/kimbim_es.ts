@@ -3654,6 +3654,11 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <translation>Plataforma aplicada</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="7456" />
+      <source>Building pad applied — cut %1 m³, fill %2 m³</source>
+      <translation>Plataforma aplicada — desmonte %1 m³, terraplén %2 m³</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="6327" />
       <source>Terrain:</source>
       <translation>Terreno:</translation>
