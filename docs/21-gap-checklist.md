@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D151 plus explicit overrides for the final items.
+after D123–D152 plus explicit overrides for the final items.
 
-**Summary: 136 done, 70 deferred, 3 blocked.**
+**Summary: 137 done, 69 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -40,7 +40,7 @@ after D123–D151 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Preset views (front, back, sides, isometric) | **Done** | D76: View › Views, Alt+1…Alt+0 |
 | 2. Viewing and navigation | Perspective camera | **Done** | D76: View › Perspective (Shift+P), per view |
 | 2. Viewing and navigation | Touchpad navigation | **Done** | D89: two-finger scroll pans, Shift orbits, pinch zooms; scroll preference |
-| 2. Viewing and navigation | Walk / fly mode | **Deferred** |  |
+| 2. Viewing and navigation | Walk / fly mode | **Done** | D152: View > *Walk mode* (Shift+W): first-person perspective at the current camera, WASD/arrows move, Q/E or PageUp/PageDown fly up/down, Shift runs, drag looks, Esc exits; a plan view refuses it and switching views stops it |
 | 2. Viewing and navigation | Hide, isolate, show all (per element, per level) | **Done** |  |
 | 2. Viewing and navigation | Hide / isolate by class or type | **Done** | View › Hide / Isolate selected (I); Edit › Select all of this class / Select similar first |
 | 2. Viewing and navigation | Plan cut height | **Done** | Slider beside the view |
@@ -206,8 +206,8 @@ after D123–D151 plus explicit overrides for the final items.
 | 17. Collaboration and versions | Milestones, object history, before/after | **Done** | Slice 20 (M5) |
 | 17. Collaboration and versions | Combine options with conflict UI | **Done** | Slice 22 (D69), M5 exit |
 | 17. Collaboration and versions | Several people on one project (Teamwork, Worksharing, Project Sharing) | **Deferred** | Git remotes first ([08](08-future.md)) |
-| 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. D151 pushes host edits back to the source IFC, so linked content is edited in place through monitored copies; the read-only proxy itself stays a reference. |
-| 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. Editing linked content works through monitored copies. |
+| 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. D151 pushes host edits back to the source IFC; the read-only proxy remains a reference. |
+| 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. |
 | 17. Collaboration and versions | BCF issues (import, export, viewpoints) | **Done** | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | 17. Collaboration and versions | Markups and comments in the model | **Deferred** |  |
 | 17. Collaboration and versions | Cloud sharing with clients (web viewer) | **Deferred** | [08](08-future.md) |

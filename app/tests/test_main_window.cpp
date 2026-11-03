@@ -2069,6 +2069,26 @@ private slots:
         QVERIFY(w.close());
     }
 
+    // D152: walk mode is a first-person camera: W/S move it and Esc leaves.
+    void walkModeMovesTheCamera()
+    {
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        QVERIFY(w.newProject());
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        kimbim::Viewport* v = w.viewport();
+        const gp_Pnt before = v->view()->Camera()->Eye();
+        v->setWalkMode(true);
+        QVERIFY(v->isWalkMode());
+        QVERIFY(!v->view()->Camera()->IsOrthographic());
+        QTest::keyPress(v, Qt::Key_W);
+        QTest::qWait(250);
+        QTest::keyRelease(v, Qt::Key_W);
+        QVERIFY(v->view()->Camera()->Eye().Distance(before) > 0.05);
+        QTest::keyClick(v, Qt::Key_Escape);
+        QVERIFY(!v->isWalkMode());
+    }
+
     // D137: a 3D document is an axonometric of the model from the active 3D view, editable and
     // regenerable like any other drawing.
     void threeDDocumentGeneratesAnAxonometric()
@@ -3177,7 +3197,7 @@ private slots:
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
-                 "actionDrawingScale", "actionExportImage",
+                 "actionDrawingScale", "actionExportImage", "actionWalkMode",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }

@@ -1006,7 +1006,26 @@ void MainWindow::buildMenus()
             m_prefs.save();
             m_status->showMessage(tr("The current view is now the home view"));
         });
-        QAction* perspective = view->addAction(tr("P&erspective"));
+        QAction* walk = view->addAction(tr("&Walk mode")); // D152
+    walk->setObjectName(QStringLiteral("actionWalkMode"));
+    walk->setCheckable(true);
+    walk->setShortcut(QKeySequence(Qt::SHIFT | Qt::Key_W));
+    walk->setToolTip(tr("First-person walk: WASD moves, Q/E up and down, drag to look, Esc exits"));
+    connect(walk, &QAction::toggled, this, [this, walk](bool on) {
+        if (on && (!m_viewport || m_viewport->isPlanView())) {
+            m_status->showMessage(tr("Walk mode needs a 3D view"));
+            walk->setChecked(false);
+            return;
+        }
+        if (m_viewport)
+            m_viewport->setWalkMode(on);
+        if (on)
+            m_status->showMessage(tr("Walk mode: WASD moves, Q/E up/down, drag to look, Esc exits"));
+    });
+    connect(view, &QMenu::aboutToShow, this, [this, walk] {
+        walk->setChecked(m_viewport && m_viewport->isWalkMode());
+    });
+    QAction* perspective = view->addAction(tr("P&erspective"));
         perspective->setObjectName(QStringLiteral("actionPerspective"));
         perspective->setCheckable(true);
         perspective->setShortcut(QKeySequence(Qt::SHIFT | Qt::Key_P));
@@ -5968,6 +5987,8 @@ bool MainWindow::currentViewShowsCutSlider() const
 void MainWindow::activateView(const QString& key)
 {
     if (auto* view = qobject_cast<DrawingView*>(m_dock->view(key))) {
+        if (m_viewport && m_viewport->isWalkMode())
+            m_viewport->setWalkMode(false); // walk belongs to the view that started it
         m_status->setZoom(-1); // drawings show their own zoom
         setTool(Tool::None); // the tools draw in model views
         if (view->isStale() || !view->hasDrawing())
@@ -5979,6 +6000,8 @@ void MainWindow::activateView(const QString& key)
         return;
     const bool switched = host->viewport() != m_viewport;
     if (switched) {
+        if (m_viewport && m_viewport->isWalkMode())
+            m_viewport->setWalkMode(false);
         setTool(Tool::None); // a tool doesn't carry over to another view
         m_viewport = host->viewport();
         const CutSettings cut = m_cuts.value(m_viewport); // this view's own cuts into the controls

@@ -5115,6 +5115,26 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>&amp;Walk mode</source>
+      <translation>Modo &amp;caminata</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1006" />
+      <source>First-person walk: WASD moves, Q/E up and down, drag to look, Esc exits</source>
+      <translation>Caminata en primera persona: WASD mueve, Q/E sube y baja, arrastra para mirar, Esc sale</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1011" />
+      <source>Walk mode needs a 3D view</source>
+      <translation>El modo caminata necesita una vista 3D</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1016" />
+      <source>Walk mode: WASD moves, Q/E up/down, drag to look, Esc exits</source>
+      <translation>Modo caminata: WASD mueve, Q/E sube/baja, arrastra para mirar, Esc sale</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1010" />
       <source>&amp;Toolbars</source>
       <translation>&amp;Barras de herramientas</translation>
     </message>

@@ -14,6 +14,7 @@
 #include <QPoint>
 #include <QLineF>
 #include <QPointF>
+#include <QElapsedTimer>
 #include <QSet>
 #include <QVector>
 #include <utility>
@@ -95,6 +96,9 @@ public:
     static BoxMode boxModeFrom(const QString& preference); // "direction", "partial", "entire"
     // Perspective camera (D76), per view; plan views stay orthographic (the setting comes back in 3D).
     void setPerspective(bool on);
+    // D152: first-person walk/fly mode (WASD, Q/E, drag to look).
+    void setWalkMode(bool on);
+    bool isWalkMode() const { return m_walk; }
     bool isPerspective() const { return m_perspective; }
     // BCF viewpoints: restore a camera (eye, target, up) and projection.
     void setCamera(const gp_Pnt& eye, const gp_Pnt& center, const gp_Dir& up, bool perspective,
@@ -425,6 +429,7 @@ protected:
     void mouseMoveEvent(QMouseEvent*) override;
     void wheelEvent(QWheelEvent*) override;
     void keyPressEvent(QKeyEvent*) override;
+    void keyReleaseEvent(QKeyEvent*) override;
     void mouseDoubleClickEvent(QMouseEvent*) override;
     bool event(QEvent*) override;                       // D89: native touchpad gestures
     bool focusNextPrevChild(bool) override { return false; } // D89: Tab is the view's (cycling, tracker)
@@ -465,6 +470,15 @@ private:
     std::optional<IdImage> renderIds(int w, int h);
     QString guidOfId(int id) const; // empty if not a live element
     QSet<QString> selectedSet() const;
+    void walkTick();
+    void walkLook(double dx, double dy);
+    bool m_walk = false;
+    bool m_walkWasPerspective = false;
+    QTimer* m_walkTimer = nullptr;
+    QElapsedTimer m_walkClock;
+    QSet<int> m_walkKeys;
+    QPointF m_walkLookPos;
+    bool m_walkLooking = false;
     bool m_drawingMode = false;
     bool m_rightClickMenu = false;
     QTimer* m_hoverTimer = nullptr;

@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D151).**
+**Status as of `main` (2026-11-03, after D112–D152).**
 
 ## How to read it
 
@@ -54,7 +54,7 @@ release notes, so check before relying on a single cell.
 | Preset views (front, back, sides, isometric) | all | ✅ | P0 | D76: View › Views, Alt+1…Alt+0 |
 | Perspective camera | all | ✅ | P0 | D76: View › Perspective (Shift+P), per view |
 | Touchpad navigation | all | ✅ | P0 | D89: two-finger scroll pans, Shift orbits, pinch zooms; scroll preference |
-| Walk / fly mode | AC RV VW SU | ⬜ | P2 | |
+| Walk / fly mode | AC RV VW SU | ✅ | P2 | D152: View > *Walk mode* (Shift+W): first-person perspective at the current camera, WASD/arrows move, Q/E or PageUp/PageDown fly up/down, Shift runs, drag looks, Esc exits; a plan view refuses it and switching views stops it |
 | Hide, isolate, show all (per element, per level) | all | ✅ | P0 | |
 | Hide / isolate by class or type | all | ✅ | P0 | View › Hide / Isolate selected (I); Edit › Select all of this class / Select similar first |
 | Plan cut height | AC RV VW BB | ✅ | P1 | Slider beside the view |

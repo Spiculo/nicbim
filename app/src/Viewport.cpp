@@ -2120,6 +2120,18 @@ bool Viewport::surfacePointAt(const QPointF& widgetPos, gp_Pnt* out)
 
 void Viewport::keyPressEvent(QKeyEvent* e)
 {
+    if (m_walk) {
+        if (e->key() == Qt::Key_Escape) {
+            setWalkMode(false);
+            return;
+        }
+        if (QStringLiteral("WASDQE").contains(e->text().toUpper())
+            || e->key() == Qt::Key_Up || e->key() == Qt::Key_Down || e->key() == Qt::Key_Left
+            || e->key() == Qt::Key_Right || e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) {
+            m_walkKeys.insert(e->key());
+            return;
+        }
+    }
     if (m_facePickMode && e->key() == Qt::Key_Escape) {
         emit drawingEnded();
         return;
@@ -2149,6 +2161,15 @@ void Viewport::keyPressEvent(QKeyEvent* e)
         return;
     }
     QWidget::keyPressEvent(e);
+}
+
+void Viewport::keyReleaseEvent(QKeyEvent* e)
+{
+    if (m_walk) {
+        m_walkKeys.remove(e->key());
+        return;
+    }
+    QWidget::keyReleaseEvent(e);
 }
 
 void Viewport::leaveEvent(QEvent* e)
@@ -2187,6 +2208,11 @@ void Viewport::mouseDoubleClickEvent(QMouseEvent* e)
 
 void Viewport::mousePressEvent(QMouseEvent* e)
 {
+    if (m_walk && (e->button() == Qt::LeftButton || e->button() == Qt::RightButton)) {
+        m_walkLooking = true;
+        m_walkLookPos = e->position();
+        return;
+    }
     AbortViewAnimation(); // any click stops a preset turn where it is
     // D76: the view cube and home button take left clicks before tools and selection.
     if (e->button() == Qt::LeftButton && viewCubeShown()) {
@@ -2260,6 +2286,10 @@ void Viewport::mousePressEvent(QMouseEvent* e)
 
 void Viewport::mouseReleaseEvent(QMouseEvent* e)
 {
+    if (m_walk && m_walkLooking) {
+        m_walkLooking = false;
+        return;
+    }
     if (m_cycleClick && e->button() == Qt::LeftButton) {
         m_cycleClick = false;
         return;
@@ -2303,6 +2333,12 @@ void Viewport::mouseReleaseEvent(QMouseEvent* e)
 
 void Viewport::mouseMoveEvent(QMouseEvent* e)
 {
+    if (m_walk && m_walkLooking) {
+        const QPointF d = e->position() - m_walkLookPos;
+        m_walkLookPos = e->position();
+        walkLook(d.x(), d.y());
+        return;
+    }
     m_pointer = e->position();
     if (!m_cycleGuid.isEmpty() && (e->position() - m_cyclePos).manhattanLength() > 4) { // D89: left the spot
         m_cycleGuid.clear();
@@ -3386,6 +3422,98 @@ void Viewport::setPerspective(bool on)
     AbortViewAnimation();
     m_perspective = on;
     applyProjection();
+    update();
+}
+
+void Viewport::setWalkMode(bool on)
+{
+    if (m_walk == on)
+        return;
+    if (on) {
+        if (m_planView)
+            return; // a plan is not a first-person view
+        m_walkWasPerspective = m_perspective;
+        setPerspective(true);
+        m_walk = true;
+        m_walkKeys.clear();
+        m_walkClock.start();
+        if (!m_walkTimer) {
+            m_walkTimer = new QTimer(this);
+            m_walkTimer->setInterval(16);
+            connect(m_walkTimer, &QTimer::timeout, this, &Viewport::walkTick);
+        }
+        m_walkTimer->start();
+        setFocus(Qt::OtherFocusReason);
+        grabKeyboard();
+        m_context->ClearDetected(false);
+        update();
+    } else {
+        m_walk = false;
+        m_walkLooking = false;
+        m_walkKeys.clear();
+        if (m_walkTimer)
+            m_walkTimer->stop();
+        releaseKeyboard();
+        setPerspective(m_walkWasPerspective);
+        update();
+    }
+}
+
+void Viewport::walkTick()
+{
+    if (!m_walk || !m_view)
+        return;
+    const double dt = std::clamp(m_walkClock.restart() / 1000.0, 0.001, 0.1);
+    const Handle(Graphic3d_Camera) cam = m_view->Camera();
+    gp_Vec forward(cam->Direction());
+    gp_Vec up(cam->Up());
+    gp_Vec right = forward.Crossed(up);
+    if (right.Magnitude() < 1e-9 || forward.Magnitude() < 1e-9)
+        return;
+    forward.Normalize();
+    right.Normalize();
+    up.Normalize();
+    auto pressed = [this](int key) { return m_walkKeys.contains(key); };
+    gp_Vec move;
+    if (pressed(Qt::Key_W) || pressed(Qt::Key_Up))
+        move += forward;
+    if (pressed(Qt::Key_S) || pressed(Qt::Key_Down))
+        move -= forward;
+    if (pressed(Qt::Key_D) || pressed(Qt::Key_Right))
+        move += right;
+    if (pressed(Qt::Key_A) || pressed(Qt::Key_Left))
+        move -= right;
+    if (pressed(Qt::Key_E) || pressed(Qt::Key_PageUp))
+        move += up;
+    if (pressed(Qt::Key_Q) || pressed(Qt::Key_PageDown))
+        move -= up;
+    if (move.Magnitude() < 1e-9)
+        return;
+    move.Normalize();
+    const bool run = QGuiApplication::keyboardModifiers() & Qt::ShiftModifier;
+    move *= (run ? 9.0 : 3.2) * dt;
+    const gp_Pnt eye = cam->Eye().Translated(move);
+    const gp_Pnt centre = cam->Center().Translated(move);
+    cam->SetEyeAndCenter(eye, centre);
+    m_view->Redraw();
+    update();
+}
+
+void Viewport::walkLook(double dx, double dy)
+{
+    const Handle(Graphic3d_Camera) cam = m_view->Camera();
+    const gp_Pnt eye = cam->Eye();
+    gp_Vec forward(cam->Direction());
+    gp_Vec up(cam->Up());
+    gp_Vec right = forward.Crossed(up);
+    if (forward.Magnitude() < 1e-9 || right.Magnitude() < 1e-9)
+        return;
+    forward.Rotate(gp_Ax1(eye, gp_Dir(0, 0, 1)), -dx * 0.0035);
+    forward.Rotate(gp_Ax1(eye, gp_Dir(right)), -dy * 0.0035);
+    if (std::abs(forward.Z()) > 0.995)
+        return; // do not roll over the pole
+    cam->SetEyeAndCenter(eye, eye.Translated(forward.Normalized() * std::max(cam->Distance(), 1.0)));
+    m_view->Redraw();
     update();
 }
 
