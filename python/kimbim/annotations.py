@@ -573,6 +573,27 @@ def mirror(annotation, point) -> bool:
     return True
 
 
+def shape_in_action(storey, kind: str, points, extra: dict, pen=None, name: str = ""):
+    """Inside an action: create a drafting shape or symbol on `storey` (world metres), no new undo
+    step. Returns the annotation."""
+    f = B._model
+    origin = points[0]
+    local = [(x - origin[0], y - origin[1]) for x, y in points]
+    annotation = ifcopenshell.api.root.create_entity(f, ifc_class="IfcAnnotation",
+                                                     name=(name or kind.capitalize())[:60])
+    annotation.ObjectType = kind.upper()
+    ifcopenshell.api.spatial.assign_container(f, products=[annotation], relating_structure=storey)
+    matrix = np.eye(4)
+    matrix[0][3], matrix[1][3], matrix[2][3] = origin[0], origin[1], A._elevation(storey)
+    ifcopenshell.api.geometry.edit_object_placement(f, product=annotation, matrix=matrix, is_si=True)
+    _set(annotation, kind, "", local, pen=pen if pen is not None else settings.current().get("current_pen"),
+         extra=extra)
+    from . import layers
+
+    layers.assign_active(annotation)
+    return annotation
+
+
 def add_shape(storey, kind: str, points, extra: dict, pen=None, text: str = "", name: str = "") -> str:
     """A drafting shape (drafting.add_drafting has checked it) or a symbol (symbols.add_symbol) on a
     level; world metres."""

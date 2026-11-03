@@ -772,6 +772,73 @@ def underlay_lines(id: str):
     return (B._dump(meta), np.ascontiguousarray(coords, dtype="<f4").tobytes(), np.ascontiguousarray(colours).tobytes())
 
 
+def convert_to_drafting(id: str, options_json: str = "") -> str:
+    """D199: turn a DXF/DWG or vector-PDF underlay's linework into drafting lines on its level, at
+    the underlay's placement; one undo step. Options: `pen` (default: the current pen)."""
+    from . import annotations as N
+    from . import app_bridge as B
+    from . import authoring as A
+    from . import settings as S
+
+    u = next((e for e in _entries() if e.get("id") == id), None)
+    if u is None:
+        return _fail("unknown underlay")
+    if u.get("kind") not in ("dxf", "dwg") and not (u.get("kind") == "pdf" and u.get("vector")):
+        return _fail("only DXF, DWG or vector-PDF linework can become 2D lines")
+    try:
+        options = json.loads(options_json or "{}")
+    except ValueError:
+        return _fail("bad options")
+    try:
+        if u.get("kind") == "pdf":
+            coords, _colours, origin, _info = _pdf_vector_segments(u["file"], int(u.get("page", 0)))
+        else:
+            coords, _colours, origin, _info = _segments(u["file"])
+    except Exception as ex:
+        return _fail(f"could not read the underlay: {ex}")
+    limit = 2000
+    if len(coords) > limit:
+        return _fail(f"the drawing has {len(coords)} segments (the limit is {limit}): convert a smaller area")
+    storey = A._by_guid(u.get("storey", ""))
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return _fail("the underlay is not on a level")
+    pen = options.get("pen", S.current().get("current_pen"))
+    ox, oy = float(origin[0]), float(origin[1])
+    base = u.get("base") or [0.0, 0.0]
+    bx, by = float(base[0]), float(base[1])
+    atx, aty = float(u.get("x", 0.0)), float(u.get("y", 0.0))
+    scale = float(u.get("scale", 1.0))
+    rotation = math.radians(float(u.get("rotation", 0.0)))
+    ca, sa = math.cos(rotation), math.sin(rotation)
+    y_down = u.get("kind") == "pdf"
+
+    def world(x, y):
+        dx, dy = ox + float(x), oy + float(y)
+        lx = (dx - bx) * scale
+        ly = ((by - dy) if y_down else (dy - by)) * scale
+        return (atx + lx * ca - ly * sa, aty + lx * sa + ly * ca)
+
+    made = []
+
+    def action():
+        for row in coords:
+            p1, p2 = world(row[0], row[1]), world(row[2], row[3])
+            if math.dist(p1, p2) < 1e-6:
+                continue
+            annotation = N.shape_in_action(storey, "line", [p1, p2], {"LineType": "Solid"}, pen,
+                                           f"{u.get('name', 'Drawing')} line")
+            made.append(annotation.GlobalId)
+        return len(made), made, []
+
+    if not made and len(coords) == 0:
+        return _fail("the underlay has no linework")
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made, "count": len(made)})
+
+
 def underlay_raster(id: str) -> str:
     """Where a PDF underlay's page is rendered (raw BGRX pixels, see render_pdf), or an image's file."""
     from . import app_bridge as B

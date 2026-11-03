@@ -416,6 +416,29 @@ def test_trace_shows_the_level_below():
     assert not json.loads(U.trace_lines(l1["guid"], "below")[0])["ok"]  # nothing below the lowest level
 
 
+def test_a_dxf_underlay_converts_to_2d_lines(tmp_path):
+    """D199: the underlay's linework becomes editable drafting lines at its placement, one undo step."""
+    assert call("new_project", "Convert")["ok"]
+    storey = call("storeys")["storeys"][0]["guid"]
+    r = call("add_underlay", str(survey_dxf(tmp_path / "s.dxf")), json.dumps({"storey": storey, "x": 2.0, "y": 3.0}))
+    assert r["ok"], r
+    underlay = r["underlay"]
+    converted = call("convert_to_drafting", underlay["id"])
+    assert converted["ok"], converted
+    assert converted["count"] > 20
+    lines = [a for a in call("annotations", storey)["annotations"] if a["kind"] == "line"]
+    assert len(lines) == converted["count"]
+    xs = [p[0] for a in lines for p in a["points"]]
+    ys = [p[1] for a in lines for p in a["points"]]
+    assert max(xs) - min(xs) == pytest.approx(10.0, abs=0.01)  # the 10 m outline, in millimetres in the DXF
+    assert min(xs) == pytest.approx(2.0, abs=0.01)             # placed at x = 2
+    assert min(ys) >= 3.0 - 1.0 - 0.01                         # the hidden-layer line at -1 m stays with the underlay
+
+    assert call("undo")["ok"]
+    assert not [a for a in call("annotations", storey)["annotations"] if a["kind"] == "line"]
+    assert not call("convert_to_drafting", "nope")["ok"]
+
+
 @pytest.mark.skipif(not dwg.available(), reason="no DWG converter (pixi install -e dwg)")
 def test_a_dwg_underlay_is_converted_to_dxf(tmp_path):
     dxf = survey_dxf(tmp_path / "survey.dxf")

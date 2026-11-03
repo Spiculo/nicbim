@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D198 plus explicit overrides for the final items.
+after D123–D199 plus explicit overrides for the final items.
 
-**Summary: 181 done, 25 deferred, 3 blocked.**
+**Summary: 182 done, 24 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -214,7 +214,7 @@ after D123–D198 plus explicit overrides for the final items.
 | 18. Interoperability | IFC export, valid against the schema | **Done** | Checked in CI: IfcOpenShell validator (schema + EXPRESS rules), web-ifc geometry and the independent xBIM .NET parser (`pixi run interop`, `pixi run interop-xbim`) |
 | 18. Interoperability | IFC export settings (what to export, property mapping) | **Done** | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |
 | 18. Interoperability | Re-import with reconciliation report | **Done** | D104: `kimbim versions import` matches by GlobalId, Tag, then a reviewed heuristic; dry run and JSON report |
-| 18. Interoperability | DWG/DXF import (underlay and convert) | **Deferred** | Core done; remainder deferred. D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings). No DWG yet, no convert to 2D elements. Architects receive most survey and consultant data as DWG |
+| 18. Interoperability | DWG/DXF import (underlay and convert) | **Done** | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings), and DWG through LibreDWG/ODA conversion; D199: *Convert underlay to 2D lines...* turns DXF/DWG/vector-PDF linework into editable drafting lines at the underlay's placement, one undo step |
 | 18. Interoperability | PDF import | **Deferred** | Core done; remainder deferred. D85: a PDF page as an underlay (an image); D132: a PDF can be placed as **vector linework** (PyMuPDF paths, selectable/snappable, no text) instead of a rendered page |
 | 18. Interoperability | SketchUp, Rhino, OBJ, FBX import | **Blocked** | OBJ/STL/PLY, COLLADA, glTF/GLB and ASCII/binary FBX are done; SketchUp `.skp` needs Trimble's proprietary SDK. |
 | 18. Interoperability | Point clouds | **Done** | D125 XYZ/PTS/CSV/LAS, D132 LAZ, D148 E57. |

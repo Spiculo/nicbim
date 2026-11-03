@@ -805,16 +805,7 @@ def insert_block(name, storey_guid, x, y, rotation=0.0, scale=1.0) -> str:
                 continue
             extra = {k: v for k, v in (shape.get("extra") or {}).items() if k in EXTRA}
             extra.setdefault("LineType", "Solid")
-            annotation = ifcopenshell.api.root.create_entity(f, ifc_class="IfcAnnotation",
-                                                             name=(name or kind.capitalize())[:60])
-            annotation.ObjectType = kind.upper()
-            ifcopenshell.api.spatial.assign_container(f, products=[annotation], relating_structure=storey)
-            matrix = np.eye(4)
-            matrix[0][3], matrix[1][3], matrix[2][3] = pts[0][0], pts[0][1], A._elevation(storey)
-            ifcopenshell.api.geometry.edit_object_placement(f, product=annotation, matrix=matrix, is_si=True)
-            local = [(px - pts[0][0], py - pts[0][1]) for px, py in pts]
-            N._set(annotation, kind, "", local, pen=shape.get("pen"), extra=extra)
-            layers.assign_active(annotation)
+            annotation = N.shape_in_action(storey, kind, pts, extra, shape.get("pen"), name)
             made.append(annotation.GlobalId)
         return len(made), made, []
 

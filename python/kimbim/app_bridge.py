@@ -1427,6 +1427,7 @@ _EXPORTS = {
     ),
     "underlays": (
         "add_underlay",
+        "convert_to_drafting",
         "place_figure",
         "remove_underlay",
         "set_underlay",

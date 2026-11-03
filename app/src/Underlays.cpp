@@ -104,6 +104,36 @@ void MainWindow::addUnderlayActions(QMenu* file)
     manage->setObjectName(QStringLiteral("actionUnderlays"));
     manage->setToolTip(tr("Show, hide, fade, calibrate, move or remove underlays"));
     connect(manage, &QAction::triggered, this, &MainWindow::underlaysDialog);
+    QAction* convert = file->addAction(tr("Convert underlay to &2D lines...")); // D199
+    convert->setObjectName(QStringLiteral("actionConvertUnderlay"));
+    convert->setToolTip(tr("Turn a DXF, DWG or vector-PDF underlay's linework into editable drafting lines"));
+    connect(convert, &QAction::triggered, this, [this] {
+        QStringList names, ids;
+        for (const auto& v : bridge("underlays").value("underlays").toArray()) {
+            const QJsonObject u = v.toObject();
+            const QString kind = u.value("kind").toString();
+            if (kind != QLatin1String("dxf") && kind != QLatin1String("dwg")
+                && !(kind == QLatin1String("pdf") && u.value("vector").toBool()))
+                continue;
+            names << u.value("name").toString();
+            ids << u.value("id").toString();
+        }
+        if (names.isEmpty()) {
+            m_status->showMessage(tr("No DXF, DWG or vector-PDF underlay to convert"));
+            return;
+        }
+        bool ok = false;
+        const QString name = QInputDialog::getItem(this, tr("Convert underlay"), tr("Underlay:"), names, 0, false, &ok);
+        if (!ok || name.isEmpty())
+            return;
+        const QJsonObject r = bridge("convert_to_drafting", {ids.at(names.indexOf(name))});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Convert underlay"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(tr("%n 2D line(s) made from %1", nullptr, r.value("count").toInt()).arg(name));
+    });
 
     // Picking points for a calibration or a move: the active view is in drawing mode with no tool.
     onEachView([this](Viewport* v) {
