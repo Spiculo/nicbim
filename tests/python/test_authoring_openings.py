@@ -188,6 +188,14 @@ def test_deleting_a_wall_takes_its_doors_and_windows(house):
 def test_snap_data_lists_openings(house):
     d = types("door")["Door 900x2100"]
     door = call("insert_opening", "door", house["walls"][0], d["guid"], 3.0, 0.9, 2.1, 0.0)["guid"]
-    ops = call("snap_data", house["level"])["openings"]
+    data = call("snap_data", house["level"])
+    ops = data["openings"]
     assert ops == [{"guid": door, "wall": house["walls"][0], "along": pytest.approx(3.0, abs=1e-6), "width": pytest.approx(0.9),
                     "height": pytest.approx(2.1), "sill": pytest.approx(0.0, abs=1e-9)}]
+    # D179: the jambs and the wall's layer lines are snap points (dimensions use them).
+    jambs = {(p["x"], p["y"]) for p in data["points"]
+             if p.get("guid") == door and p.get("kind") == "endpoint"}
+    assert {(2.55, 0.0), (3.45, 0.0)} <= jambs
+    layers = {(p["x"], p["y"]) for p in data["points"]
+              if p.get("guid") == house["walls"][0] and p.get("kind") == "endpoint"}
+    assert {(0.0, -0.15), (0.0, 0.15), (8.0, -0.15), (8.0, 0.15)} <= layers

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D178 plus explicit overrides for the final items.
+after D123–D179 plus explicit overrides for the final items.
 
-**Summary: 162 done, 44 deferred, 3 blocked.**
+**Summary: 163 done, 43 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -173,7 +173,7 @@ after D123–D178 plus explicit overrides for the final items.
 | 13. Annotation | Linear dimension (two points) | **Done** |  |
 | 13. Annotation | Marks (circle with a tag) | **Done** |  |
 | 13. Annotation | Dimension chains, overall dimensions | **Done** | D158: Slice 15 chains (Shift+click); Model > *Overall dimension...* adds one dimension across the selected elements' combined bounds on X, Y or the longer side, offset outside; agent `annotation.overall_dimension`. |
-| 13. Annotation | Snap dimensions to wall faces, openings and layers | **Deferred** | Core done; remainder deferred. Slice 15: wall faces; openings and layer lines later |
+| 13. Annotation | Snap dimensions to wall faces, openings and layers | **Done** | Slice 15 wall faces; D179 adds door/window jambs and wall layer boundary points at both wall ends to `snap_data`, so dimensions and the other drawing tools snap to openings and layer lines. |
 | 13. Annotation | Automatic dimensioning of walls and openings | **Done** | D98: Model › *Dimension selected walls* (a chain per straight wall: ends and openings); D158 adds the selection's overall dimension; D166 adds *Dimension grid* (a chain between the level's grid axes, offset outside). |
 | 13. Annotation | Angle, radius, arc-length, level and spot-elevation dimensions | **Done** | D87: angle, radius, diameter, level and spot elevation; D161 adds the arc-length mode of the angle-dimension tool (start, a point on the arc, end, text point). |
 | 13. Annotation | Associative labels and tags (show a property, follow the element) | **Done** | D87: Tag tool and Tag all; templates of schedule fields; styles (door/window marker, wall tag, room stamp, mark, label) in project settings; IfcRelAssignsToProduct |

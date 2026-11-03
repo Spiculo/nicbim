@@ -655,6 +655,37 @@ def snap_data(storey_guid: str, mesh_vertices: str = "") -> str:
     from . import drafting  # D84: the drafting shapes' ends, middles and centres
 
     points = drafting.snap_points(storey)
+    # D179: door/window jambs and wall layer lines are snap targets too (dimensions use them).
+    from . import materials
+
+    for opening in openings:
+        wall = _by_guid(opening["wall"])
+        axis = _axis_world(wall) if wall is not None else None
+        if axis is None:
+            continue
+        a, b = (np.array(p, dtype=float) for p in axis)
+        length = float(np.linalg.norm(b - a))
+        if length < 1e-9:
+            continue
+        u = (b - a) / length
+        for along in (opening["along"] - opening["width"] / 2, opening["along"] + opening["width"] / 2):
+            p = a + u * along
+            points.append({"x": round(float(p[0]), 6), "y": round(float(p[1]), 6),
+                           "kind": "endpoint", "guid": opening["guid"]})
+    for entry in walls:
+        wall = _by_guid(entry["guid"])
+        axis = _axis_world(wall) if wall is not None else None
+        bands = materials.layer_bands(wall) if wall is not None else None
+        if axis is None or not bands:
+            continue
+        a, b = (np.array(p, dtype=float) for p in axis)
+        u = (b - a) / float(np.linalg.norm(b - a))
+        left = np.array([-u[1], u[0]])
+        for bound in bands["bounds"]:
+            for end in (a, b):
+                p = end + left * float(bound)
+                points.append({"x": round(float(p[0]), 6), "y": round(float(p[1]), 6),
+                               "kind": "endpoint", "guid": entry["guid"]})
     if str(mesh_vertices).lower() not in ("", "0", "false", "none"):
         points = points + _mesh_vertex_points(storey)
     return B._dump({"walls": walls, "openings": openings, "grid": _grid_lines(storey), "points": points})
