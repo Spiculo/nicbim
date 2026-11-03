@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D157 plus explicit overrides for the final items.
+after D123–D158 plus explicit overrides for the final items.
 
-**Summary: 142 done, 64 deferred, 3 blocked.**
+**Summary: 143 done, 63 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -172,7 +172,7 @@ after D123–D157 plus explicit overrides for the final items.
 | 13. Annotation | Text labels | **Done** | Screen-sized; paper-unit size is open (doc 13) |
 | 13. Annotation | Linear dimension (two points) | **Done** |  |
 | 13. Annotation | Marks (circle with a tag) | **Done** |  |
-| 13. Annotation | Dimension chains, overall dimensions | **Deferred** | Core done; remainder deferred. Slice 15: chains (Shift+click); no overall dimension yet |
+| 13. Annotation | Dimension chains, overall dimensions | **Done** | D158: Slice 15 chains (Shift+click); Model > *Overall dimension...* adds one dimension across the selected elements' combined bounds on X, Y or the longer side, offset outside; agent `annotation.overall_dimension`. |
 | 13. Annotation | Snap dimensions to wall faces, openings and layers | **Deferred** | Core done; remainder deferred. Slice 15: wall faces; openings and layer lines later |
 | 13. Annotation | Automatic dimensioning of walls and openings | **Deferred** | Core done; remainder deferred. D98: Model › Dimension selected walls (a chain per straight wall: ends and openings); no overall or grid chains yet |
 | 13. Annotation | Angle, radius, arc-length, level and spot-elevation dimensions | **Deferred** | Core done; remainder deferred. D87: angle, radius, diameter, level (plan: slab top or level; sections: story levels) and spot elevation; no arc length yet |

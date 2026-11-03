@@ -142,3 +142,14 @@ def auto_dimension(session, elements, offset="0.8m"):
     """Add a dimension chain along a row of aligned elements."""
     r = bridge(N.auto_dimension, json.dumps(list(elements)), lengths(session, offset)[0])
     return {"guids": r.get("guids", [])}
+
+
+@tool("annotation.overall_dimension", {"required": ["elements"], "properties": {
+    "elements": {"type": "array", "items": {"type": "string"}, "description": "GlobalIds to dimension."},
+    "offset": {"type": ["number", "string"], "description": "Distance outside the bounds (default 0.8 m)."},
+    "axis": {"type": "string", "enum": ["auto", "x", "y"],
+             "description": "Which side to measure: x, y or auto (the longer one)."}}}, writes=True)
+def overall_dimension(session, elements, offset="0.8m", axis="auto"):
+    """Add one overall dimension across the selection's combined plan bounds."""
+    r = bridge(N.overall_dimension, json.dumps(list(elements)), lengths(session, offset)[0], axis)
+    return {"guids": [r["guid"]], "axis": r.get("axis")}

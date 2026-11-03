@@ -5184,6 +5184,56 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Hueco en muro creado</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="2865" />
+      <source>&amp;Overall dimension...</source>
+      <translation>&amp;Dimensión total...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2867" />
+      <source>One dimension across the selected elements' combined bounds</source>
+      <translation>Una dimensión a lo ancho de los límites combinados de los elementos seleccionados</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8704" />
+      <source>Select the elements to dimension</source>
+      <translation>Selecciona los elementos a dimensionar</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8709" />
+      <source>Overall dimension</source>
+      <translation>Dimensión total</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8724" />
+      <source>Distance outside the bounds:</source>
+      <translation>Distancia fuera de los límites:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8725" />
+      <source>Measure:</source>
+      <translation>Medir:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8721" />
+      <source>Auto (longer side)</source>
+      <translation>Automático (lado mayor)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8722" />
+      <source>Horizontal (X)</source>
+      <translation>Horizontal (X)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8723" />
+      <source>Vertical (Y)</source>
+      <translation>Vertical (Y)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8735" />
+      <source>Overall dimension added</source>
+      <translation>Dimensión total añadida</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>

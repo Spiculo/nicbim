@@ -2861,6 +2861,11 @@ void MainWindow::buildModelingToolbar()
         if (ok)
             autoDimension(offset);
     });
+    // D158: one overall dimension across the selection's combined plan bounds.
+    QAction* overallDim = model->addAction(tr("&Overall dimension..."));
+    overallDim->setObjectName(QStringLiteral("actionOverallDimension"));
+    overallDim->setToolTip(tr("One dimension across the selected elements' combined bounds"));
+    connect(overallDim, &QAction::triggered, this, &MainWindow::overallDimensionDialog);
     model->addSeparator();
     model->addAction(m_levels->addLevelAction()); // D75: also in the level drop-down
     model->addAction(m_levels->levelsAction());   // D79: the levels table, also in the drop-down
@@ -8660,6 +8665,43 @@ void MainWindow::ceilingDialog()
     afterEdit(r);
     setSelection({r.value("guid").toString()});
     m_status->showMessage(tr("Ceiling created"));
+}
+
+void MainWindow::overallDimensionDialog()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select the elements to dimension"));
+        return;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Overall dimension"));
+    auto* form = new QFormLayout(&dialog);
+    auto* offset = new QDoubleSpinBox(&dialog);
+    offset->setRange(0.0, 100.0);
+    offset->setDecimals(3);
+    offset->setValue(0.8);
+    offset->setSuffix(tr(" m"));
+    auto* axis = new QComboBox(&dialog);
+    axis->addItem(tr("Auto (longer side)"), QStringLiteral("auto"));
+    axis->addItem(tr("Horizontal (X)"), QStringLiteral("x"));
+    axis->addItem(tr("Vertical (Y)"), QStringLiteral("y"));
+    form->addRow(tr("Distance outside the bounds:"), offset);
+    form->addRow(tr("Measure:"), axis);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QJsonObject r = bridge("overall_dimension", {
+        jsonList(m_selection), QString::number(offset->value(), 'g', 17), axis->currentData().toString()});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Overall dimension"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    setSelection({r.value("guid").toString()});
+    m_status->showMessage(tr("Overall dimension added"));
 }
 
 void MainWindow::wallOpeningDialog()

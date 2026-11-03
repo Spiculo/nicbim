@@ -35,3 +35,33 @@ def test_automatic_wall_dimensions(project):
     assert dim["points"][-1][1] == pytest.approx(-0.8)  # outside it, away from the body (y 0 to 0.3)
     assert dim["text"].split() == ["1.50", "1.00", "3.50"]
     assert not call("auto_dimension", json.dumps([]), 0.8)["ok"]
+
+
+def test_overall_dimension_spans_the_selection(project):
+    """D158: one dimension across the combined bounds, on X, Y or the longer side."""
+    t = project["Exterior 300"]
+    pts = [(0, 0), (8, 0), (8, 6), (0, 6)]
+    walls, last = [], ""
+    for i in range(4):
+        (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % 4]
+        end = walls[0] if i == 3 else ""
+        r = call("create_wall", project["level"], t, x1, y1, x2, y2, 3.0, last, end)
+        assert r["ok"], r
+        walls.append(r["guid"])
+        last = r["guid"]
+    r = call("overall_dimension", json.dumps(walls), 0.8, "x")
+    assert r["ok"] and r["axis"] == "x", r
+    dim = next(a for a in call("annotations", project["level"])["annotations"] if a["guid"] == r["guid"])
+    assert dim["kind"] == "dimension"
+    start, end, through = dim["points"]
+    assert start[1] == pytest.approx(end[1])
+    assert through[0] == pytest.approx(start[0])
+    assert through[1] == pytest.approx(start[1] + 0.8)
+    assert end[0] - start[0] > 7.9  # spans the 8 m loop
+    assert float(dim["text"]) == pytest.approx(end[0] - start[0], abs=1e-2)
+    y = call("overall_dimension", json.dumps(walls), 0.5, "y")
+    assert y["ok"] and y["axis"] == "y", y
+    auto = call("overall_dimension", json.dumps(walls), 0.5, "auto")
+    assert auto["ok"] and auto["axis"] == "x", auto  # 8 m beats 6 m
+    assert not call("overall_dimension", json.dumps([]), 0.8, "x")["ok"]
+    assert not call("overall_dimension", json.dumps(walls), 0.8, "z")["ok"]

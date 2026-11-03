@@ -283,6 +283,59 @@ def auto_dimension(guids_json: str, offset=0.8) -> str:
     return B._dump({**r, "guids": made})
 
 
+def overall_dimension(guids_json: str, offset=0.8, axis: str = "auto") -> str:
+    """One overall dimension across the selection's combined plan bounds (D158): along `x`, `y` or
+    `auto` (the longer side), the dimension line `offset` metres outside the bounds. One undo step."""
+    from . import editing
+
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        offset = float(offset)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    if axis not in ("auto", "x", "y"):
+        return A._fail("axis must be x, y or auto")
+    elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
+    if not elements:
+        return A._fail("select elements to dimension")
+    lo = hi = None
+    for e in elements:
+        bounds = editing._element_bounds(e)
+        if bounds is None:
+            continue
+        mn, mx = bounds
+        lo = mn if lo is None else np.minimum(lo, mn)
+        hi = mx if hi is None else np.maximum(hi, mx)
+    if lo is None:
+        return A._fail("the selection has no shape")
+    if axis == "auto":
+        axis = "x" if hi[0] - lo[0] >= hi[1] - lo[1] else "y"
+    if axis == "x":
+        p0, p1 = (float(lo[0]), float(hi[1])), (float(hi[0]), float(hi[1]))
+        through = (p0[0], p0[1] + offset)
+    else:
+        p0, p1 = (float(hi[0]), float(lo[1])), (float(hi[0]), float(hi[1]))
+        through = (p0[0] + offset, p0[1])
+    storey = ifcopenshell.util.element.get_container(elements[0])
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return A._fail("the selection is not on a level")
+    points = [p0, p1, through]
+    made = {}
+
+    def action():
+        origin = points[0]
+        local = [(x - origin[0], y - origin[1]) for x, y in points]
+        made["annotation"] = _new(storey, "dimension", _measure(local), origin, local)
+        return 1, [made["annotation"].GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["annotation"].GlobalId, "axis": axis})
+
+
 def _fills(wall):
     """(door/window, opening, along, width) in a wall."""
     out = []
