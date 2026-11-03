@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D163 plus explicit overrides for the final items.
+after D123–D164 plus explicit overrides for the final items.
 
-**Summary: 148 done, 58 deferred, 3 blocked.**
+**Summary: 149 done, 57 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -98,7 +98,7 @@ after D123–D163 plus explicit overrides for the final items.
 | 6. Building elements | Walls: slanted, trapezoid, custom profile | **Done** | D97: slant angle, double slant, complex profiles (Model › Save shape as wall profile) |
 | 6. Building elements | Wall flip, reference line (core / face) | **Done** | D97: six reference lines (outside face default), Model › Flip walls |
 | 6. Building elements | Junction priorities (which layers run through) | **Done** | D97: building-material priority → `IfcMaterialLayer.Priority`, used by the wall regenerator; Model › Wall junctions overrides per wall |
-| 6. Building elements | Wall attached to a slab or roof above | **Deferred** | Core done; remainder deferred. D97: top linked to the level above (Properties › Geometry › Top link); Model › Trim walls to roof |
+| 6. Building elements | Wall attached to a slab or roof above | **Done** | D97: top linked to the level above (Properties › Geometry › Top link); D164 adds *Slab or roof above*, which follows the underside of the lowest slab/roof over the wall; Model › Trim walls to roof. |
 | 6. Building elements | Slabs by outline or from walls | **Done** |  |
 | 6. Building elements | Slab openings | **Done** |  |
 | 6. Building elements | Sloped slabs, slab edges | **Deferred** | Core done; remainder deferred. D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. The Model menu has *Slab slope...* and *Add slab edge*; the Slab tool has no fields for them yet |

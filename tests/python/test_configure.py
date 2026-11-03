@@ -392,6 +392,25 @@ def test_doors_go_right_through_walls_drawn_by_any_line(project, reference):
     assert _through(g, 2.5) == []
 
 
+def test_wall_top_linked_to_a_slab_above(project):
+    """D164: the top link can follow the underside of a slab or roof above, not only a level."""
+    from kimbim import authoring
+
+    g = wall(project, "Outside face")
+    # nothing above: the link is refused
+    assert not call("set_element_setting", json.dumps([g]), C.GEOMETRY, "Top link", "Slab or roof above")["ok"]
+    slab = call("slab_types")["types"][0]["guid"]
+    assert call("create_slab", project["level"], slab, json.dumps([[-1, -1], [6, -1], [6, 1], [-1, 1]]), 3.0)["ok"]
+    assert call("set_element_setting", json.dumps([g]), C.GEOMETRY, "Top link", "Slab or roof above")["ok"]
+    assert authoring._wall_height(b._model.by_guid(g)) == pytest.approx(2.8, abs=1e-6)  # 3.0 top - 0.2 slab
+    assert call("set_element_setting", json.dumps([g]), C.GEOMETRY, "Top offset", "-0.2")["ok"]
+    assert authoring._wall_height(b._model.by_guid(g)) == pytest.approx(2.6, abs=1e-6)
+    assert "Slab or roof above" in props(g)[C.GEOMETRY]["Top link"]["choices"]
+    # a typed height unlinks it again
+    assert call("set_dimension", json.dumps([g]), "Height", "2.5")["ok"]
+    assert props(g)[C.GEOMETRY]["Top link"]["value"] == "Unlinked"
+
+
 def test_wall_tops_linked_to_the_level_above(project):
     """D97: Archicad's top link: the wall's height follows the level above."""
     from kimbim import authoring

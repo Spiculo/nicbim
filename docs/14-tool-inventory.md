@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D163).**
+**Status as of `main` (2026-11-03, after D112–D164).**
 
 ## How to read it
 
@@ -132,7 +132,7 @@ release notes, so check before relying on a single cell.
 | Walls: slanted, trapezoid, custom profile | AC RV VW | ✅ | new | D97: slant angle, double slant, complex profiles (Model › Save shape as wall profile) |
 | Wall flip, reference line (core / face) | all | ✅ | P0 | D97: six reference lines (outside face default), Model › Flip walls |
 | Junction priorities (which layers run through) | AC RV | ✅ | new | D97: building-material priority → `IfcMaterialLayer.Priority`, used by the wall regenerator; Model › Wall junctions overrides per wall |
-| Wall attached to a slab or roof above | AC RV | 🟡 | new | D97: top linked to the level above (Properties › Geometry › Top link); Model › Trim walls to roof |
+| Wall attached to a slab or roof above | AC RV | ✅ | new | D97: top linked to the level above (Properties › Geometry › Top link); D164 adds *Slab or roof above*, which follows the underside of the lowest slab/roof over the wall; Model › Trim walls to roof |
 | Slabs by outline or from walls | all | ✅ | P0 | |
 | Slab openings | all | ✅ | P0 | |
 | Sloped slabs, slab edges | AC RV VW | 🟡 | new | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. The Model menu has *Slab slope...* and *Add slab edge*; the Slab tool has no fields for them yet |

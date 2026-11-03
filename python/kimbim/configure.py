@@ -120,7 +120,7 @@ def apply_reference(wall, reference: str):
 # Archicad's wall top linked to a story above: the height follows the levels (KIMBIM_Wall.TopLink:
 # how many levels up, 0 or none = unlinked; TopOffset metres above it).
 
-TOP_LINKS = {"Unlinked": 0, "Level above": 1, "Two levels above": 2}
+TOP_LINKS = {"Unlinked": 0, "Level above": 1, "Two levels above": 2, "Slab or roof above": 3}
 
 
 def top_link_of(wall) -> int:
@@ -131,14 +131,47 @@ def top_offset_of(wall) -> float:
     return float(_pset(wall, WALL_PSET).get("TopOffset") or 0.0)
 
 
+def _slab_above(wall):
+    """The underside (metres) of the lowest slab or roof above the wall whose plan bounds contain the
+    wall's middle (D164), or None."""
+    from . import authoring as A, editing
+
+    home = ifcopenshell.util.element.get_container(wall)
+    axis = A._axis_world(wall)
+    if home is None or axis is None:
+        return None
+    mid = ((axis[0][0] + axis[1][0]) / 2, (axis[0][1] + axis[1][1]) / 2)
+    base = A._elevation(home)
+    best = None
+    for e in [*B._model.by_type("IfcSlab"), *B._model.by_type("IfcRoof")]:
+        bounds = editing._element_bounds(e)
+        if bounds is None:
+            continue
+        mn, mx = bounds
+        if not (mn[0] - 1e-6 <= mid[0] <= mx[0] + 1e-6 and mn[1] - 1e-6 <= mid[1] <= mx[1] + 1e-6):
+            continue
+        if mn[2] <= base + 1e-6:  # at or below the wall's base: not above it
+            continue
+        if best is None or float(mn[2]) < best:
+            best = float(mn[2])
+    return best
+
+
 def linked_height(wall, steps: int, offset: float):
-    """The height a wall linked `steps` levels up (plus `offset`) takes, or None without that level."""
+    """The height a wall linked `steps` levels up (plus `offset`) takes, or None without that level;
+    `steps` 3 follows the underside of the lowest slab or roof above (D164)."""
     from . import authoring as A
     from . import drawgen, worksheets
 
     home = ifcopenshell.util.element.get_container(wall)
     if home is None or not home.is_a("IfcBuildingStorey"):
         return None
+    if steps == TOP_LINKS["Slab or roof above"]:
+        underside = _slab_above(wall)
+        if underside is None:
+            return None
+        height = underside - A._elevation(home) + offset
+        return height if height > 0.01 else None
     order = sorted((s for s in B._model.by_type("IfcBuildingStorey")
                     if not worksheets.is_worksheet(s) and not A._is_model(s)), key=drawgen.storey_elevation)
     if home not in order or order.index(home) + steps >= len(order):
@@ -664,6 +697,8 @@ def set_element_setting(guids_json: str, group: str, name: str, value) -> str:
         for w in walls:
             steps = change.get("TopLink", top_link_of(w)) if "TopLink" in change else top_link_of(w)
             if steps and linked_height(w, steps, change.get("TopOffset", top_offset_of(w))) is None:
+                if steps == TOP_LINKS["Slab or roof above"]:
+                    return _fail(f"there is no slab or roof above {w.Name or 'a wall'}")
                 return _fail(f"{w.Name or 'a wall'}'s level has no level {'two levels' if steps == 2 else 'one level'} above")
 
         def action():
