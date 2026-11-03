@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D156).**
+**Status as of `main` (2026-11-03, after D112–D157).**
 
 ## How to read it
 
@@ -139,7 +139,7 @@ release notes, so check before relying on a single cell.
 | Doors and windows in walls (parametric) | all | ✅ | P0 | Basic types |
 | Door/window variety: sliding, double, corner window, skylight, storefront | all | 🟡 | new | D97: double, sliding, double sliding doors; two- and three-panel windows; no corner windows, skylights or storefronts |
 | Door swing and window symbols in plan | all | ✅ | new | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
-| Generic opening (wall or slab hole without a filling) | AC RV VW | 🟡 | new | Slab openings only |
+| Generic opening (wall or slab hole without a filling) | AC RV VW | ✅ | P2 | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening` |
 | Columns, beams from profiles | all | ✅ | P0 | |
 | Slanted, tapered, segmented columns and beams | AC RV | ⬜ | new | |
 | Grids | all | ✅ | P0 | D98: Grid system (numbered and lettered axes at once) |

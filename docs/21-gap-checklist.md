@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D156 plus explicit overrides for the final items.
+after D123–D157 plus explicit overrides for the final items.
 
-**Summary: 141 done, 65 deferred, 3 blocked.**
+**Summary: 142 done, 64 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -105,7 +105,7 @@ after D123–D156 plus explicit overrides for the final items.
 | 6. Building elements | Doors and windows in walls (parametric) | **Done** | Basic types |
 | 6. Building elements | Door/window variety: sliding, double, corner window, skylight, storefront | **Deferred** | Core done; remainder deferred. D97: double, sliding, double sliding doors; two- and three-panel windows; no corner windows, skylights or storefronts |
 | 6. Building elements | Door swing and window symbols in plan | **Done** | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |
-| 6. Building elements | Generic opening (wall or slab hole without a filling) | **Deferred** | Core done; remainder deferred. Slab openings only |
+| 6. Building elements | Generic opening (wall or slab hole without a filling) | **Done** | D157: Model > *Wall opening...* cuts a rectangular hole through a selected wall with no door or window filling it (along, width, height, sill); slab holes are `add_slab_opening`; agent `create.wall_opening`. |
 | 6. Building elements | Columns, beams from profiles | **Done** |  |
 | 6. Building elements | Slanted, tapered, segmented columns and beams | **Deferred** |  |
 | 6. Building elements | Grids | **Done** | D98: Grid system (numbered and lettered axes at once) |

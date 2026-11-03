@@ -5149,6 +5149,41 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Techo creado</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="2992" />
+      <source>Wall &amp;opening...</source>
+      <translation>Hueco en &amp;muro...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="2994" />
+      <source>Cut a rectangular hole through a selected wall without a door or window</source>
+      <translation>Recortar un hueco rectangular en un muro seleccionado sin puerta ni ventana</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8705" />
+      <source>Select one wall first</source>
+      <translation>Selecciona primero un muro</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8711" />
+      <source>Wall opening</source>
+      <translation>Hueco en muro</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8736" />
+      <source>Centre along the wall:</source>
+      <translation>Centro a lo largo del muro:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8746" />
+      <source>Sill above the base:</source>
+      <translation>Antepecho sobre la base:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8758" />
+      <source>Wall opening created</source>
+      <translation>Hueco en muro creado</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>

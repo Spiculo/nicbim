@@ -192,6 +192,18 @@ def slab_opening(session, slab, points):
     return bridge(A.add_slab_opening, slab, json.dumps(outline))
 
 
+@tool("create.wall_opening", {"required": ["wall", "along", "width", "height"], "properties": {
+    "wall": {"type": "string", "description": "GlobalId of the host wall."},
+    "along": {**_LENGTH, "description": "Centre along the wall from its axis start."},
+    "width": _LENGTH, "height": _LENGTH,
+    "sill": {**_LENGTH, "description": "Bottom above the wall base (default 0)."},
+    "name": {"type": "string"}}}, writes=True)
+def wall_opening(session, wall, along, width, height, sill="0", name="Wall opening"):
+    """Cut a rectangular hole through a wall without a door or window filling it."""
+    return bridge(A.create_wall_opening, wall, lengths(session, along)[0], lengths(session, width)[0],
+                  lengths(session, height)[0], lengths(session, sill)[0], name or "Wall opening")
+
+
 @tool("elements.set_wall_height", {"required": ["walls", "height"], "properties": {
     "walls": {"type": "array", "items": {"type": "string"}, "description": "GlobalIds of walls."},
     "height": _LENGTH}}, writes=True)

@@ -1547,6 +1547,38 @@ def insert_opening(kind: str, wall_guid: str, type_guid: str, along, width, heig
     return B._dump({**r, "guid": made["element"].GlobalId})
 
 
+def create_wall_opening(wall_guid: str, along, width, height, sill, name: str = "Wall opening") -> str:
+    """A rectangular hole through a wall with no door or window filling it, centred `along` metres
+    from the wall axis start, `sill` metres above the wall base. One undo step."""
+    if B._model is None:
+        return _fail("no model open")
+    wall = _by_guid(wall_guid)
+    if wall is None or not wall.is_a("IfcWall"):
+        return _fail("not a wall")
+    try:
+        along, width, height, sill = float(along), float(width), float(height), float(sill)
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    error = _opening_fit_error(wall, along, width, height, sill)
+    if error:
+        return _fail(error)
+    made = {}
+
+    def action():
+        f = B._model
+        opening = ifcopenshell.api.root.create_entity(f, ifc_class="IfcOpeningElement", name=name)
+        ifcopenshell.api.feature.add_feature(f, feature=opening, element=wall)
+        _place_bare_opening(opening, wall, along, width, height, sill)
+        made["opening"] = opening
+        return 1, [wall.GlobalId, opening.GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["opening"].GlobalId})
+
+
 # ---------------------------------------------------------------- columns and beams (Slice 6)
 
 # (name, profile class, width, depth) in metres; circles use width as the diameter.
@@ -2199,6 +2231,21 @@ def _apply_opening_edit(element, opening, wall, along, width, height, sill):
     _replace_body(element, _filling_representation(kind, ifcopenshell.util.element.get_type(element), width, height))
     _place_opening(element, opening, wall, along, width, height, sill)
     element.OverallWidth, element.OverallHeight = width / s, height / s
+
+
+def _place_bare_opening(opening, wall, along, width, height, sill):
+    """Inside an action: an opening through the wall's body as it is now, with no door or window
+    filling it (D157)."""
+    f = B._model
+    thickness = _thickness(_layer_set(wall))
+    side = _body_centre(wall) - thickness / 2
+    placed = _wall_frame(wall)
+    start, depth = _opening_band(wall, width, side, thickness)
+    _replace_body(opening, ifcopenshell.api.geometry.add_wall_representation(
+        f, context=_body_context(), length=width, height=height, thickness=depth))
+    ifcopenshell.api.geometry.edit_object_placement(
+        f, product=opening, matrix=_corner(placed, along, width, start, sill), is_si=False)
+    _regenerate(f, wall)
 
 
 def _place_opening(element, opening, wall, along, width, height, sill):

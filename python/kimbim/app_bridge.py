@@ -1089,6 +1089,7 @@ _EXPORTS = {
         "ceiling_from_selection",
         "create_beam",
         "create_ceiling",
+        "create_wall_opening",
         "create_column",
         "create_curtain_wall",
         "curtain_wall_info",

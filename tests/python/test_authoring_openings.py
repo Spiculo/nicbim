@@ -140,6 +140,26 @@ def test_openings_must_fit_in_the_wall(house):
     assert not b._model.by_type("IfcOpeningElement")
 
 
+def test_wall_opening_without_a_filling(house):
+    wall = house["walls"][0]
+    before = volume(wall)
+    r = call("create_wall_opening", wall, 3.0, 0.9, 2.1, 0.0)
+    assert r["ok"], r
+    opening = b._model.by_guid(r["guid"])
+    assert opening.is_a("IfcOpeningElement")
+    assert not list(getattr(opening, "HasFillings", ()) or ())
+    assert opening.VoidsElements[0].RelatingBuildingElement.GlobalId == wall
+    assert volume(wall) == pytest.approx(before - 0.3 * 0.9 * 2.1, abs=2e-3)
+    assert not b._model.by_type("IfcDoor") and not b._model.by_type("IfcWindow")
+    # it must fit the wall and need a wall
+    assert not call("create_wall_opening", wall, 0.1, 0.9, 2.1, 0.0)["ok"]
+    assert not call("create_wall_opening", wall, 3.0, 0.9, 3.5, 0.0)["ok"]
+    assert not call("create_wall_opening", house["level"], 3.0, 0.9, 2.1, 0.0)["ok"]
+    u = call("undo")
+    assert u["geometry"] == {"changed": [wall], "removed": [r["guid"]]}
+    assert volume(wall) == pytest.approx(before, abs=1e-3)
+
+
 def test_deleting_a_door_closes_the_hole(house):
     wall = house["walls"][0]
     before = volume(wall)

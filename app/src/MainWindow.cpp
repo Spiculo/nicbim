@@ -2989,6 +2989,10 @@ void MainWindow::buildModelingToolbar()
     ceilingAction->setObjectName(QStringLiteral("actionCeiling"));
     ceilingAction->setToolTip(tr("Create an IfcCovering ceiling over a selected slab or a closed loop of selected walls"));
     connect(ceilingAction, &QAction::triggered, this, &MainWindow::ceilingDialog);
+    QAction* wallOpeningAction = model->addAction(tr("Wall &opening...")); // D157
+    wallOpeningAction->setObjectName(QStringLiteral("actionWallOpening"));
+    wallOpeningAction->setToolTip(tr("Cut a rectangular hole through a selected wall without a door or window"));
+    connect(wallOpeningAction, &QAction::triggered, this, &MainWindow::wallOpeningDialog);
     QAction* trimAction = model->addAction(tr("&Trim walls to roof"));
     trimAction->setObjectName(QStringLiteral("actionTrimToRoof"));
     trimAction->setToolTip(tr("Select a roof and walls: the walls reach up to the roof and stop at its underside"));
@@ -8656,6 +8660,58 @@ void MainWindow::ceilingDialog()
     afterEdit(r);
     setSelection({r.value("guid").toString()});
     m_status->showMessage(tr("Ceiling created"));
+}
+
+void MainWindow::wallOpeningDialog()
+{
+    if (m_selection.size() != 1) {
+        m_status->showMessage(tr("Select one wall first"));
+        return;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Wall opening"));
+    auto* form = new QFormLayout(&dialog);
+    auto* along = new QDoubleSpinBox(&dialog);
+    along->setRange(0.0, 1000.0);
+    along->setDecimals(3);
+    along->setValue(2.0);
+    along->setSuffix(tr(" m"));
+    auto* width = new QDoubleSpinBox(&dialog);
+    width->setRange(0.01, 100.0);
+    width->setDecimals(3);
+    width->setValue(0.9);
+    width->setSuffix(tr(" m"));
+    auto* height = new QDoubleSpinBox(&dialog);
+    height->setRange(0.01, 100.0);
+    height->setDecimals(3);
+    height->setValue(2.1);
+    height->setSuffix(tr(" m"));
+    auto* sill = new QDoubleSpinBox(&dialog);
+    sill->setRange(0.0, 100.0);
+    sill->setDecimals(3);
+    sill->setValue(0.0);
+    sill->setSuffix(tr(" m"));
+    form->addRow(tr("Centre along the wall:"), along);
+    form->addRow(tr("Width:"), width);
+    form->addRow(tr("Height:"), height);
+    form->addRow(tr("Sill above the base:"), sill);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    auto num = [](double v) { return QString::number(v, 'g', 17); };
+    const QJsonObject r = bridge("create_wall_opening", {
+        m_selection.first(), num(along->value()), num(width->value()),
+        num(height->value()), num(sill->value())});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Wall opening"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    setSelection({r.value("guid").toString()});
+    m_status->showMessage(tr("Wall opening created"));
 }
 
 void MainWindow::offsetDialog()
