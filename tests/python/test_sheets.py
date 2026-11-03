@@ -63,6 +63,23 @@ def test_changing_the_client_or_address_leaves_no_orphans():
     assert call("project_info")["client"] == "" and call("project_info")["address"] == ""
 
 
+def test_revisions_and_sheet_revision(house):
+    """D171: revisions are project records; a sheet carries one in its title block."""
+    r = call("save_revision", "A", "2026-11-03", "First issue")
+    assert r["ok"], r
+    assert [x["code"] for x in call("revisions")["revisions"]] == ["A"]
+    number = call("add_sheet", "A3", "Planta")["number"]
+    assert call("set_sheet_revision", number, "A")["ok"]
+    assert call("sheet_revision", number)["revision"] == "A"
+    sheet = next(s for s in call("sheets")["sheets"] if s["number"] == number)
+    assert sheet["title_block"]["fields"]["revision"] == "A"
+    assert not call("set_sheet_revision", number, "Z")["ok"]  # not a project revision
+    assert call("set_sheet_revision", number, "")["ok"]       # clear it
+    assert call("sheet_revision", number)["revision"] == ""
+    assert call("delete_revision", "A")["ok"]
+    assert call("revisions")["revisions"] == []
+
+
 def test_sheets_are_numbered_and_hold_drawings_at_scale(house):
     a1 = call("add_sheet", "A1", "Plans")
     a3 = call("add_sheet", "A3", "Details")

@@ -1070,6 +1070,7 @@ from . import pointcloud as _pointcloud  # noqa: E402
 from . import keynotes as _keynotes  # noqa: E402
 from . import attributes as _attributes  # noqa: E402
 from . import solids as _solids  # noqa: E402
+from . import revisions as _revisions  # noqa: E402
 _EXPORTS = {
     "authoring": (
         "add_grid_axis",
@@ -1239,6 +1240,13 @@ _EXPORTS = {
         "move_sheet_symbol",
         "set_sheet_symbol",
         "remove_sheet_symbol",
+    ),
+    "revisions": (
+        "revisions",
+        "save_revision",
+        "delete_revision",
+        "set_sheet_revision",
+        "sheet_revision",
     ),
     "editing": (
         "align_elements",

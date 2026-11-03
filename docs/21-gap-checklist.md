@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D170 plus explicit overrides for the final items.
+after D123–D171 plus explicit overrides for the final items.
 
-**Summary: 154 done, 52 deferred, 3 blocked.**
+**Summary: 155 done, 51 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -186,7 +186,7 @@ after D123–D170 plus explicit overrides for the final items.
 | 14. Sheets and output | Sheets / layouts with drawings placed at scale | **Done** | Slice 16 (M4 exit): A1/A3, numbered, drag to place (D62) |
 | 14. Sheets and output | Title blocks filled from project data | **Done** | Slice 16: a built-in title block; D118: title block templates / master layouts (position, field overrides and paper in project settings; save, apply, rename, delete) |
 | 14. Sheets and output | Drawing and sheet lists (auto-numbered) | **Done** | D112: Sheets › Place drawing list / Place sheet list (natural sort, live from the project; dragged and removed like drawings) |
-| 14. Sheets and output | Revisions / issue management | **Deferred** | Could use versions and milestones (P2 item in 04) |
+| 14. Sheets and output | Revisions / issue management | **Done** | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools. |
 | 14. Sheets and output | Print, PDF export | **Done** | Slice 16: PDF and SVG per sheet (Qt, vector) |
 | 14. Sheets and output | Batch publishing (sets of sheets to PDF/DWG) | **Deferred** | Core done; remainder deferred. File › *Export all sheets as PDF...* publishes every sheet to a folder (one PDF per sheet, collision-safe names); `kimbim-app --export-sheets OUT_DIR model.ifc [--sheets A01,A02]` does it headless. File › *Export DXF...* with the DWG format, or `app_bridge.export_dwg`, batch-converts every ticked drawing/sheet through LibreD... |
 | 14. Sheets and output | DWG/DXF export | **Deferred** | Core done; remainder deferred. D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. DWG not yet (open question) |

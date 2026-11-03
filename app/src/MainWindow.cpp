@@ -4384,6 +4384,10 @@ void MainWindow::buildVersions()
     milestoneAction->setObjectName(QStringLiteral("actionAddMilestone"));
     milestoneAction->setToolTip(tr("Name the latest saved version (Concept, Schematic design, Tender...)"));
     connect(milestoneAction, &QAction::triggered, this, &MainWindow::milestoneDialog);
+    QAction* revisionAction = menu->addAction(tr("New &revision...")); // D171
+    revisionAction->setObjectName(QStringLiteral("actionNewRevision"));
+    revisionAction->setToolTip(tr("Add a revision code and description; sheets can carry it in their title block"));
+    connect(revisionAction, &QAction::triggered, this, &MainWindow::newRevisionDialog);
     QAction* objectHistoryAction = menu->addAction(tr("&Object history..."));
     m_projectActions << objectHistoryAction;
     objectHistoryAction->setObjectName(QStringLiteral("actionObjectHistory"));
@@ -5136,6 +5140,36 @@ bool MainWindow::deleteOption(const QString& name)
     refreshProject();
     m_status->showMessage(tr("Option %1 deleted").arg(name));
     return true;
+}
+
+void MainWindow::newRevisionDialog()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("New revision"));
+    auto* form = new QFormLayout(&dialog);
+    auto* code = new QLineEdit(&dialog);
+    code->setObjectName(QStringLiteral("revisionCode"));
+    auto* date = new QLineEdit(&dialog);
+    date->setObjectName(QStringLiteral("revisionDate"));
+    date->setPlaceholderText(tr("today"));
+    auto* description = new QLineEdit(&dialog);
+    description->setObjectName(QStringLiteral("revisionDescription"));
+    form->addRow(tr("Code:"), code);
+    form->addRow(tr("Date:"), date);
+    form->addRow(tr("Description:"), description);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    form->addRow(buttons);
+    if (dialog.exec() != QDialog::Accepted || code->text().trimmed().isEmpty())
+        return;
+    const QJsonObject r = bridge("save_revision", {code->text().trimmed(), date->text().trimmed(),
+        description->text().trimmed()});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Revisions"), r.value("error").toString());
+        return;
+    }
+    m_status->showMessage(tr("Revision %1 saved").arg(code->text().trimmed()));
 }
 
 void MainWindow::deleteOptionDialog()
@@ -7085,6 +7119,7 @@ void MainWindow::editTitleBlock(const QString& number, QWidget* parent)
         {QStringLiteral("scale"), tr("Scale:")},
         {QStringLiteral("date"), tr("Date:")},
         {QStringLiteral("issued"), tr("Issued by:")},
+        {QStringLiteral("revision"), tr("Revision:")},
     };
     for (const auto& [key, label] : labels) {
         auto* edit = new QLineEdit(values.value(key).toString(), &dialog);

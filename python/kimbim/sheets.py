@@ -31,7 +31,7 @@ PAPERS = {"A1": (841, 594), "A3": (420, 297)}  # landscape, millimetres
 MARGIN = 10.0
 TITLE_W, TITLE_H = 180.0, 50.0
 TITLE_BLOCK = "title_block"
-TITLE_FIELDS = ("project", "project_number", "client", "address", "title", "sheet_number", "scale", "date", "issued")
+TITLE_FIELDS = ("project", "project_number", "client", "address", "title", "sheet_number", "scale", "date", "issued", "revision")
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
 
@@ -1485,6 +1485,7 @@ def _title_defaults(sheet, info=None) -> dict:
         "scale": scale,
         "date": datetime.date.today().isoformat(),
         "issued": "KimBim",
+        "revision": "",
     }
 
 
@@ -1525,6 +1526,7 @@ def _title_block(sheet, width, height, info) -> list:
         (3, 36, 4.5, fields["title"]),
         (3, 45, 2.5, fields["date"]),
         (60, 45, 2.5, fields["issued"]),
+        (100, 38, 2.5, f'Rev: {fields["revision"]}' if fields["revision"] else ""),
     ]
     out = [f'<rect x="{x0}" y="{y0}" width="{TITLE_W}" height="{TITLE_H}" fill="none" stroke="#000" stroke-width="0.5"/>',
            f'<path d="M{x0},{y0 + 28} L{x0 + TITLE_W},{y0 + 28}" stroke="#000" stroke-width="0.25"/>',

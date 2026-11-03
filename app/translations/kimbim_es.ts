@@ -5435,6 +5435,41 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Añadir un borde elevado alrededor de la losa nueva</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="4390" />
+      <source>New &amp;revision...</source>
+      <translation>Nueva &amp;revisión...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="4392" />
+      <source>Add a revision code and description; sheets can carry it in their title block</source>
+      <translation>Añadir un código y una descripción de revisión; las láminas pueden mostrarla en su cajetín</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5075" />
+      <source>New revision</source>
+      <translation>Nueva revisión</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7085" />
+      <source>Revision:</source>
+      <translation>Revisión:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5100" />
+      <source>Revision %1 saved</source>
+      <translation>Revisión %1 guardada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5097" />
+      <source>Revisions</source>
+      <translation>Revisiones</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5078" />
+      <source>today</source>
+      <translation>hoy</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

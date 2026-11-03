@@ -688,6 +688,7 @@ private:
     void openProjectDialog();
     void newOptionDialog();
     void milestoneDialog();
+    void newRevisionDialog(); // D171: a revision record sheets can carry
     void deleteOptionDialog();
     void combineDialog();
     void objectHistoryDialog();
