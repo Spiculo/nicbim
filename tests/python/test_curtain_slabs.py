@@ -55,6 +55,24 @@ def test_curtain_wall_panel_material(project):
     assert call("curtain_wall_info", guid)["panel_material"] == "Glass"
 
 
+def test_curtain_panel_copy_and_swap(project):
+    """D170: a bay's kind and thickness copy to other bays and swap with another."""
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    assert r["ok"], r
+    guid = r["guid"]
+    assert call("set_curtain_panel", guid, 0, json.dumps({"kind": "solid", "thickness": 0.1}))["ok"]
+    assert call("copy_curtain_panel", guid, 0, json.dumps([2]))["ok"]
+    info = call("curtain_wall_info", guid)
+    assert info["panels"][2]["kind"] == "solid"
+    assert info["panels"][2]["thickness"] == pytest.approx(0.1)
+    assert call("swap_curtain_panels", guid, 0, 1)["ok"]
+    info = call("curtain_wall_info", guid)
+    assert info["panels"][1]["kind"] == "solid"
+    assert info["panels"][0]["kind"] == "glass"
+    assert not call("copy_curtain_panel", guid, 0, json.dumps([99]))["ok"]
+    assert not call("swap_curtain_panels", guid, 0, 99)["ok"]
+
+
 def test_a_curtain_wall_is_an_ifc_curtain_wall(project):
     r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
     assert r["ok"], r

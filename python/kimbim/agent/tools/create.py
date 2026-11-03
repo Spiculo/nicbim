@@ -151,6 +151,26 @@ def curtain_wall_info(session, curtain_wall):
     return bridge(A.curtain_wall_info, curtain_wall)
 
 
+@tool("create.curtain_panel_copy", {"required": ["curtain_wall", "from_index", "to"], "properties": {
+    "curtain_wall": {"type": "string", "description": "GlobalId of the curtain wall."},
+    "from_index": {"type": "integer", "description": "Bay index to copy from."},
+    "to": {"type": "array", "items": {"type": "integer"}, "description": "Target bay indices."}}}, writes=True)
+def curtain_panel_copy(session, curtain_wall, from_index, to):
+    """Copy one bay's kind and thickness to other bays."""
+    r = bridge(A.copy_curtain_panel, curtain_wall, int(from_index), json.dumps([int(i) for i in to]))
+    return {"guids": [r["guid"]], "panels": r["panels"]}
+
+
+@tool("create.curtain_panel_move", {"required": ["curtain_wall", "from_index", "to_index"], "properties": {
+    "curtain_wall": {"type": "string", "description": "GlobalId of the curtain wall."},
+    "from_index": {"type": "integer", "description": "Bay index to move."},
+    "to_index": {"type": "integer", "description": "Bay index it swaps with."}}}, writes=True)
+def curtain_panel_move(session, curtain_wall, from_index, to_index):
+    """Swap two bays' kind and thickness."""
+    r = bridge(A.swap_curtain_panels, curtain_wall, int(from_index), int(to_index))
+    return {"guids": [r["guid"]], "panels": r["panels"]}
+
+
 @tool("create.slab_edge", {"required": ["slab"], "properties": {
     "slab": {"type": "string", "description": "GlobalId of the slab."},
     "width": _LENGTH, "depth": _LENGTH}},

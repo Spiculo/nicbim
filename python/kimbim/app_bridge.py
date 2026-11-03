@@ -1097,6 +1097,8 @@ _EXPORTS = {
         "update_curtain_wall",
         "add_slab_edge",
         "set_slab_slope",
+        "copy_curtain_panel",
+        "swap_curtain_panels",
         "slab_slope",
         "create_slab",
         "create_wall",

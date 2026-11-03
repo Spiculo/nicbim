@@ -1356,6 +1356,65 @@ def set_curtain_panel(guid: str, index, changes_json: str) -> str:
     return update_curtain_wall(guid, json.dumps({"panels": change}))
 
 
+def copy_curtain_panel(guid: str, from_index, targets_json: str) -> str:
+    """Copy one bay's kind and thickness to other bays (D170). One undo step."""
+    if B._model is None:
+        return _fail("no model open")
+    wall = _by_guid(guid)
+    if wall is None or not wall.is_a("IfcCurtainWall"):
+        return _fail("unknown curtain wall")
+    values = ifcopenshell.util.element.get_pset(wall, CURTAIN_PSET)
+    if not values:
+        return _fail("not a KimBim curtain wall")
+    try:
+        source = int(from_index)
+        data = json.loads(targets_json) if isinstance(targets_json, str) else targets_json
+        targets = [int(i) for i in data]
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    panels = _parse_panels(values.get("Panels"))
+    spacing = float(values.get("MullionSpacing") or 1.5)
+    default_thickness = float(values.get("PanelThickness") or 0.04)
+    p1, p2, _base = _curtain_frame(wall, values)
+    bays = len(_curtain_bays(p1, p2, spacing))
+    if not 0 <= source < bays:
+        return _fail("the source bay is outside this wall")
+    kind, thickness = _panel_value(panels, source, default_thickness)
+    for target in targets:
+        if not 0 <= target < bays:
+            return _fail(f"panel bay {target} is outside this wall")
+        panels[str(target)] = {"kind": kind, "thickness": thickness}
+    return update_curtain_wall(guid, json.dumps({"panels": panels}))
+
+
+def swap_curtain_panels(guid: str, a, b) -> str:
+    """Swap the kind and thickness of two bays (D170). One undo step."""
+    if B._model is None:
+        return _fail("no model open")
+    wall = _by_guid(guid)
+    if wall is None or not wall.is_a("IfcCurtainWall"):
+        return _fail("unknown curtain wall")
+    values = ifcopenshell.util.element.get_pset(wall, CURTAIN_PSET)
+    if not values:
+        return _fail("not a KimBim curtain wall")
+    try:
+        first, second = int(a), int(b)
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    panels = _parse_panels(values.get("Panels"))
+    spacing = float(values.get("MullionSpacing") or 1.5)
+    default_thickness = float(values.get("PanelThickness") or 0.04)
+    p1, p2, _base = _curtain_frame(wall, values)
+    bays = len(_curtain_bays(p1, p2, spacing))
+    if not (0 <= first < bays and 0 <= second < bays):
+        return _fail("a panel bay is outside this wall")
+    kind_a, thick_a = _panel_value(panels, first, default_thickness)
+    kind_b, thick_b = _panel_value(panels, second, default_thickness)
+    panels[str(first)] = {"kind": kind_b, "thickness": thick_b}
+    panels[str(second)] = {"kind": kind_a, "thickness": thick_a}
+    return update_curtain_wall(guid, json.dumps({"panels": panels}))
+
+
 def slab_outline_from_walls(walls_json: str) -> str:
     """Outline at the outer faces of walls that form one closed loop (metres)."""
     if B._model is None:

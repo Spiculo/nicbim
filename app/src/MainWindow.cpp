@@ -8039,6 +8039,48 @@ void MainWindow::curtainWallDialog()
         panelsTable->setCellWidget(i, 2, panelThickness);
     }
     form->addRow(tr("Panels:"), panelsTable);
+    // D170: copy one bay's settings to every bay, or move it down one bay.
+    auto* panelActions = new QHBoxLayout();
+    auto* copyPanel = new QPushButton(tr("Copy to all bays"), &dialog);
+    auto* movePanel = new QPushButton(tr("Move bay down"), &dialog);
+    panelActions->addWidget(copyPanel);
+    panelActions->addWidget(movePanel);
+    form->addRow(QString(), panelActions);
+    connect(copyPanel, &QPushButton::clicked, &dialog, [panelsTable] {
+        const int row = panelsTable->currentRow();
+        if (row < 0)
+            return;
+        auto* kind = qobject_cast<QComboBox*>(panelsTable->cellWidget(row, 1));
+        auto* thick = qobject_cast<QDoubleSpinBox*>(panelsTable->cellWidget(row, 2));
+        if (!kind || !thick)
+            return;
+        for (int i = 0; i < panelsTable->rowCount(); ++i) {
+            auto* k = qobject_cast<QComboBox*>(panelsTable->cellWidget(i, 1));
+            auto* t = qobject_cast<QDoubleSpinBox*>(panelsTable->cellWidget(i, 2));
+            if (!k || !t)
+                continue;
+            k->setCurrentIndex(k->findData(kind->currentData().toString()));
+            t->setValue(thick->value());
+        }
+    });
+    connect(movePanel, &QPushButton::clicked, &dialog, [panelsTable] {
+        const int row = panelsTable->currentRow();
+        if (row < 0 || row + 1 >= panelsTable->rowCount())
+            return;
+        auto* kindA = qobject_cast<QComboBox*>(panelsTable->cellWidget(row, 1));
+        auto* kindB = qobject_cast<QComboBox*>(panelsTable->cellWidget(row + 1, 1));
+        auto* thickA = qobject_cast<QDoubleSpinBox*>(panelsTable->cellWidget(row, 2));
+        auto* thickB = qobject_cast<QDoubleSpinBox*>(panelsTable->cellWidget(row + 1, 2));
+        if (!kindA || !kindB || !thickA || !thickB)
+            return;
+        const QString first = kindA->currentData().toString();
+        const double firstThickness = thickA->value();
+        kindA->setCurrentIndex(kindA->findData(kindB->currentData().toString()));
+        thickA->setValue(thickB->value());
+        kindB->setCurrentIndex(kindB->findData(first));
+        thickB->setValue(firstThickness);
+        panelsTable->setCurrentCell(row + 1, 0);
+    });
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);

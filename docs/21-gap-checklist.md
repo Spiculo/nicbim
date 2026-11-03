@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D168 plus explicit overrides for the final items.
+after D123–D170 plus explicit overrides for the final items.
 
-**Summary: 153 done, 53 deferred, 3 blocked.**
+**Summary: 154 done, 52 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -116,7 +116,7 @@ after D123–D168 plus explicit overrides for the final items.
 | 6. Building elements | Roofs: flat | **Done** | Slice 19 (D66) |
 | 6. Building elements | Roofs: pitched, hip, gable, multi-plane, by footprint | **Done** | Slice 19 (D66): shed, gable, hip, a slope per edge; walls trimmed to the roof |
 | 6. Building elements | Shell / free-form roof | **Deferred** |  |
-| 6. Building elements | Curtain walls (grids, mullions, panels) | **Deferred** | Core done; remainder deferred. D109/D116/D126/D169: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, and a panel building material. Individual panel move/copy remains. |
+| 6. Building elements | Curtain walls (grids, mullions, panels) | **Done** | D109/D116/D126/D169/D170: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, a panel building material, and copy-to-all/move-bay panel commands. |
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
 | 6. Building elements | Zones / rooms / spaces (auto from walls, area, name, number) | **Done** | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | 6. Building elements | Area plans (gross, rentable) | **Deferred** |  |
