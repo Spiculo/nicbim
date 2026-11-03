@@ -1224,6 +1224,7 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
         mullion_width = float(changes.get("mullion_width", values.get("MullionWidth", 0.05)))
         mullion_depth = float(changes.get("mullion_depth", values.get("MullionDepth", 0.05)))
         rail_depth = float(changes.get("rail_depth", values.get("RailDepth", 0.05)))
+        panel_material = str(changes.get("panel_material", values.get("PanelMaterial") or "")).strip()
     except (TypeError, ValueError) as ex:
         return _fail(str(ex))
     error = _curtain_ranges(height, spacing, panel_thickness)
@@ -1280,6 +1281,12 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
             _replace_body(wall, representation)
         parts = _curtain_members(f, wall, p1, p2, base, height, spacing,
                                  mullion_width, mullion_depth, rail_depth)
+        if panel_material:  # D169: the panels' building material
+            from . import materials
+
+            material = materials.ensure(panel_material, f)
+            ifcopenshell.api.material.unassign_material(f, products=[wall])
+            ifcopenshell.api.material.assign_material(f, products=[wall], material=material)
         ps = next((rel.RelatingPropertyDefinition for rel in (getattr(wall, "IsDefinedBy", ()) or ())
                    if rel.is_a("IfcRelDefinesByProperties")
                    and rel.RelatingPropertyDefinition.is_a("IfcPropertySet")
@@ -1290,7 +1297,7 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
             "Height": height, "MullionSpacing": spacing, "PanelThickness": panel_thickness,
             "MullionWidth": mullion_width, "MullionDepth": mullion_depth, "RailDepth": rail_depth,
             "Panels": json.dumps(panels), "Axis": json.dumps([p1[0], p1[1], p2[0], p2[1]]),
-            "Base": base})
+            "Base": base, "PanelMaterial": panel_material})
         made["parts"] = parts
         return 1 + len(parts), [wall.GlobalId, *parts], [m.GlobalId for m in old_parts]
 
@@ -1312,7 +1319,9 @@ def curtain_wall_info(guid: str) -> str:
     info = {"ok": True, "guid": guid, "height": values.get("Height"),
             "spacing": values.get("MullionSpacing"), "panel_thickness": values.get("PanelThickness"),
             "mullion_width": values.get("MullionWidth", 0.05),
-            "mullion_depth": values.get("MullionDepth", 0.05), "rail_depth": values.get("RailDepth", 0.05)}
+            "mullion_depth": values.get("MullionDepth", 0.05), "rail_depth": values.get("RailDepth", 0.05),
+            "panel_material": values.get("PanelMaterial") or "",
+            "material_choices": [m.Name for m in B._model.by_type("IfcMaterial") if m.Name]}
     if values:
         p1, p2, base = _curtain_frame(wall, values)
         overrides = _parse_panels(values.get("Panels"))

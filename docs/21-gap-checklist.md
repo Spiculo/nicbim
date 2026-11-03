@@ -116,7 +116,7 @@ after D123–D168 plus explicit overrides for the final items.
 | 6. Building elements | Roofs: flat | **Done** | Slice 19 (D66) |
 | 6. Building elements | Roofs: pitched, hip, gable, multi-plane, by footprint | **Done** | Slice 19 (D66): shed, gable, hip, a slope per edge; walls trimmed to the roof |
 | 6. Building elements | Shell / free-form roof | **Deferred** |  |
-| 6. Building elements | Curtain walls (grids, mullions, panels) | **Deferred** | Core done; remainder deferred. D109: `create.curtain_wall` makes an `IfcCurtainWall` panel (`IfcCurtainWallType`, `KIMBIM_CurtainWall` height/spacing/panel thickness) with vertical mullions and top/bottom rails as aggregated IfcMembers; the Curtain wall tool is in the 3D palette. D116: Model > *Curtain wall settings...* edits height, mullion spacing, pane... |
+| 6. Building elements | Curtain walls (grids, mullions, panels) | **Deferred** | Core done; remainder deferred. D109/D116/D126/D169: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, and a panel building material. Individual panel move/copy remains. |
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
 | 6. Building elements | Zones / rooms / spaces (auto from walls, area, name, number) | **Done** | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | 6. Building elements | Area plans (gross, rentable) | **Deferred** |  |

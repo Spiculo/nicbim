@@ -38,6 +38,23 @@ def project():
     settings.load(None)
 
 
+def test_curtain_wall_panel_material(project):
+    """D169: the panels take a building material, kept across later updates."""
+    import ifcopenshell.util.element
+
+    r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
+    assert r["ok"], r
+    guid = r["guid"]
+    assert call("curtain_wall_info", guid)["panel_material"] == ""
+    assert call("update_curtain_wall", guid, json.dumps({"panel_material": "Glass"}))["ok"]
+    material = ifcopenshell.util.element.get_material(b._model.by_guid(guid))
+    assert material is not None and material.Name == "Glass"
+    info = call("curtain_wall_info", guid)
+    assert info["panel_material"] == "Glass" and "Glass" in info["material_choices"]
+    assert call("update_curtain_wall", guid, json.dumps({"height": 3.5}))["ok"]
+    assert call("curtain_wall_info", guid)["panel_material"] == "Glass"
+
+
 def test_a_curtain_wall_is_an_ifc_curtain_wall(project):
     r = call("create_curtain_wall", project["level"], 0, 0, 6, 0, 3.0, 1.5, 0.04)
     assert r["ok"], r

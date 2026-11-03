@@ -8006,6 +8006,13 @@ void MainWindow::curtainWallDialog()
     form->addRow(tr("Mullion width:"), mullionWidth);
     form->addRow(tr("Mullion depth:"), mullionDepth);
     form->addRow(tr("Rail depth:"), railDepth);
+    // D169: the panels' building material.
+    auto* panelMaterial = new QComboBox(&dialog);
+    panelMaterial->addItem(tr("None"), QString());
+    for (const auto& name : current.value("material_choices").toArray())
+        panelMaterial->addItem(name.toString(), name.toString());
+    panelMaterial->setCurrentIndex(qMax(0, panelMaterial->findData(current.value("panel_material").toString())));
+    form->addRow(tr("Panel material:"), panelMaterial);
     // D126: individual panels: each bay is glass, an opaque solid panel or open.
     const QJsonArray panelList = current.value("panels").toArray();
     auto* panelsTable = new QTableWidget(panelList.size(), 3, &dialog);
@@ -8052,7 +8059,7 @@ void MainWindow::curtainWallDialog()
     QJsonObject values{{"height", height->value()}, {"spacing", spacing->value()},
         {"panel_thickness", thickness->value()}, {"mullion_width", mullionWidth->value()},
         {"mullion_depth", mullionDepth->value()}, {"rail_depth", railDepth->value()},
-        {"panels", panels}};
+        {"panel_material", panelMaterial->currentData().toString()}, {"panels", panels}};
     const QJsonObject r = bridge("update_curtain_wall", {m_selection.first(),
         QString::fromUtf8(QJsonDocument(values).toJson(QJsonDocument::Compact))});
     if (!r.value("ok").toBool()) {
