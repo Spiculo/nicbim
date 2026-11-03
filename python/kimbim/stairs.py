@@ -51,9 +51,10 @@ from . import renovation
 STAIR_PSET = "KIMBIM_Stair"
 RAMP_PSET = "KIMBIM_Ramp"
 RAILING_PSET = "KIMBIM_Railing"
-STAIR_SHAPES = ("straight", "L", "U", "sketch")
+STAIR_SHAPES = ("straight", "L", "U", "sketch", "spiral")
 RAMP_SHAPES = ("straight", "L")
-STAIR_TYPES = {"straight": "STRAIGHT_RUN_STAIR", "L": "QUARTER_TURN_STAIR", "U": "HALF_TURN_STAIR", "sketch": "USERDEFINED"}
+STAIR_TYPES = {"straight": "STRAIGHT_RUN_STAIR", "L": "QUARTER_TURN_STAIR", "U": "HALF_TURN_STAIR",
+               "sketch": "USERDEFINED", "spiral": "SPIRAL_STAIR"}
 RAMP_TYPES = {"straight": "STRAIGHT_RUN_RAMP", "L": "QUARTER_TURN_RAMP"}
 
 DEFAULTS = {"width": 1.0, "riser": 0.175, "tread": 0.28, "landing": 0.0, "turn": "left", "slope": 8.0}
@@ -175,10 +176,12 @@ def _split(total: int, weights: list[float], minimum: int) -> list[int]:
 
 
 def stair_layout(shape: str, height: float, width: float, riser: float, tread: float, landing: float = 0.0,
-                 turn: str = "left", points=None, split: int | None = None, well: float | None = None) -> dict:
+                 turn: str = "left", points=None, split: int | None = None, well: float | None = None,
+                 turns: float = 1.0) -> dict:
     """Flights and landings of a stair in its own frame (metres): the walking line starts at (0, 0) at
     the base, the first flight climbs along +X. Flights: start (walking line, first riser), dir, length,
-    risers, tread, z0 (its base), z1/z0 walking heights at its ends; landings: polygon, z (top)."""
+    risers, tread, z0 (its base), z1/z0 walking heights at its ends; landings: polygon, z (top). D207:
+    a spiral turns `turns` times about its centre, each step a wedge slab."""
     if shape not in STAIR_SHAPES:
         raise ValueError(f"unknown stair shape {shape}")
     if width <= 0 or tread <= 0:
@@ -188,6 +191,7 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
     side = 1.0 if turn != "right" else -1.0
     ld = landing if landing > 0 else width
     flights, landings, walk = [], [], []
+    spiral_tread = None
     x = np.array([1.0, 0.0])
 
     def add_flight(start, d, k, z0, g):
@@ -227,6 +231,30 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
             landings.append({"polygon": [np.array(p) for p in poly], "z": zl,
                              "walk": [np.array([l1 + ld / 2, 0.0]), np.array([l1 + ld / 2, y2])]})
             add_flight((l1, y2), (-1.0, 0.0), n - n1, zl, tread)
+    elif shape == "spiral":  # D207: one wedge slab per step, turning about the centre
+        if n < 3:
+            raise ValueError("a spiral stair needs at least 3 risers")
+        turns = max(0.25, min(8.0, float(turns or 1.0)))
+        inner = max(0.05, width * 0.15)
+        outer = inner + width
+        mid = (inner + outer) / 2
+        step = (2 * math.pi * turns) / n * (-1.0 if turn == "right" else 1.0)
+        spiral_tread = mid * step
+
+        def pt(radius, angle):
+            return np.array([radius * math.cos(angle), radius * math.sin(angle)])
+
+        start = -math.pi / 2
+        for i in range(n):
+            a0 = start + i * step
+            a1 = a0 + step
+            polygon = [pt(outer, a0 + (a1 - a0) * k / 3) for k in range(4)]
+            polygon += [pt(inner, a1 - (a1 - a0) * k / 3) for k in range(4)]
+            z = (i + 1) * r
+            landings.append({"polygon": polygon, "z": z, "walk": [pt(mid, a1)]})
+            if i == 0:
+                walk.append((*pt(mid, a0), 0.0))
+            walk.append((*pt(mid, a1), z))
     else:  # by sketch: one flight per segment of the walking line, a landing at each corner
         pts = [np.array([float(p[0]), float(p[1])]) for p in (points or [])]
         pts = [p for i, p in enumerate(pts) if i == 0 or np.linalg.norm(p - pts[i - 1]) > 1e-6]
@@ -261,7 +289,10 @@ def stair_layout(shape: str, height: float, width: float, riser: float, tread: f
         if i < len(landings):
             walk += [(*p, landings[i]["z"]) for p in landings[i]["walk"]]
     treads = [f["tread"] for f in flights]
+    if not treads and spiral_tread:
+        treads = [spiral_tread]
     return {"risers": n, "riser": r, "tread": min(treads), "flights": flights, "landings": landings,
+            "spiral": shape == "spiral",
             "walk": [tuple(float(v) for v in p) for p in walk], "width": width, "height": height}
 
 
@@ -638,16 +669,17 @@ def _build(whole, lay) -> list:
                 "RiserHeight": fl["riser"] / s, "TreadLength": fl["tread"] / s, "WaistThickness": THICKNESS / s})
         changed.append(part)
     for i, landing in enumerate(lay["landings"]):
+        step_name = "Step" if lay.get("spiral") else "Landing"
         if i < len(old_landings):
             part = old_landings[i]
             A._replace_body(part, _landing_body(f, landing["polygon"]))
         else:
-            part = ifcopenshell.api.root.create_entity(f, ifc_class="IfcSlab", name=f"Landing {i + 1}",
+            part = ifcopenshell.api.root.create_entity(f, ifc_class="IfcSlab", name=f"{step_name} {i + 1}",
                                                        predefined_type="LANDING")
             ifcopenshell.api.geometry.assign_representation(f, product=part, representation=_landing_body(f, landing["polygon"]))
             ifcopenshell.api.aggregate.assign_object(f, products=[part], relating_object=whole)
             made.append(part)
-        part.Name = f"Landing {i + 1}"
+        part.Name = f"{step_name} {i + 1}"
         place(part, _matrix(0.0, 0.0, landing["z"], 0.0))
         changed.append(part)
     gone = old_flights[len(lay["flights"]):] + old_landings[len(lay["landings"]):]
@@ -684,7 +716,10 @@ def _whole_params(e, lay) -> None:
                                               "HandicapAccessible": float(data["Slope"]) <= rules()["max_ramp_slope"] + 1e-9})
     else:
         shape = data.get("Shape") or "straight"
-        _set_attr(e, ("PredefinedType", "ShapeType"), STAIR_TYPES[shape])
+        predefined = STAIR_TYPES[shape]
+        if shape == "spiral" and B._model.schema == "IFC2X3":
+            predefined = "USERDEFINED"  # IFC2X3's ShapeType has no spiral
+        _set_attr(e, ("PredefinedType", "ShapeType"), predefined)
         e.ObjectType = "BY_SKETCH" if shape == "sketch" else None
         _pset_edit(f, e, "Pset_StairCommon", {
             "NumberOfRiser": lay["risers"], "NumberOfTreads": lay["risers"] - len(lay["flights"]),
@@ -803,7 +838,8 @@ def create_stair(storey_guid: str, x, y, angle, width, height, options_json: str
     except Exception as ex:
         return A._fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "guid": made["whole"].GlobalId, "risers": lay["risers"], "riser": round(lay["riser"], 6),
-                    "tread": round(lay["tread"], 6), "run": round(lay["flights"][0]["length"], 6),
+                    "tread": round(lay["tread"], 6),
+                    "run": round(lay["flights"][0]["length"], 6) if lay["flights"] else 0.0,
                     "flights": len(lay["flights"]), "landings": len(lay["landings"]),
                     "warnings": stair_warnings(lay["riser"], lay["tread"], rules())})
 

@@ -180,6 +180,7 @@ void MainWindow::startStairTool(Tool tool)
         m_stairShape->addItem(tr("L-shaped"), QStringLiteral("L"));
         if (!ramp) {
             m_stairShape->addItem(tr("U-shaped"), QStringLiteral("U"));
+            m_stairShape->addItem(tr("Spiral"), QStringLiteral("spiral")); // D207
             m_stairShape->addItem(tr("By sketch"), QStringLiteral("sketch"));
         }
         m_stairShape->setCurrentIndex(std::max(0, m_stairShape->findData(current)));
@@ -187,11 +188,12 @@ void MainWindow::startStairTool(Tool tool)
     const QString shape = m_stairShape->currentData().toString();
     m_stairKind->setVisible(stair);
     m_stairShape->setVisible(stair);
-    m_stairTurn->setVisible(stair && (shape == QLatin1String("L") || shape == QLatin1String("U")));
+    m_stairTurn->setVisible(stair && (shape == QLatin1String("L") || shape == QLatin1String("U")
+                                      || shape == QLatin1String("spiral")));
     m_stairWidth->setVisible(stair);
     m_stairTread->setVisible(stair && !ramp);
     m_stairRiser->setVisible(stair && !ramp);
-    m_stairLanding->setVisible(stair && shape != QLatin1String("straight") && shape != QLatin1String("sketch"));
+    m_stairLanding->setVisible(stair && (shape == QLatin1String("L") || shape == QLatin1String("U")));
     m_rampSlope->setVisible(ramp);
     m_rampRise->setVisible(ramp);
     m_railingMode->setVisible(tool == Tool::Railing);

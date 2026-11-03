@@ -3,7 +3,7 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D206 plus explicit overrides for the final items.
+after D123–D207 plus explicit overrides for the final items.
 
 **Summary: 189 done, 17 deferred, 3 blocked.**
 
@@ -110,7 +110,7 @@ after D123–D206 plus explicit overrides for the final items.
 | 6. Building elements | Slanted, tapered, segmented columns and beams | **Done** | D205: the Column/Beam tool strip gains *Lean X/Y* (columns), *End rise* (beams), *Taper* (top size as a fraction; IFC4) and *Segments* (precast pieces); the engine builds the leaning/sloping placement, tapered solids and stacked segments and returns all their ids |
 | 6. Building elements | Grids | **Done** | D98: Grid system (numbered and lettered axes at once) |
 | 6. Building elements | Stairs: straight flight | **Done** |  |
-| 6. Building elements | Stairs: landings, L/U shapes, spiral, by sketch | **Deferred** | Core done; remainder deferred. D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; no winders or spiral yet |
+| 6. Building elements | Stairs: landings, L/U shapes, spiral, by sketch | **Deferred** | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; D207: spiral stairs (one wedge step per riser about a central well, left or right). Winders remain |
 | 6. Building elements | Railings | **Done** | D88: on a stair or ramp's sides (they follow it) or by path; posts, top rail, balusters |
 | 6. Building elements | Ramps | **Done** | D88: straight and L, slope with a 1:12 warning, plan arrow |
 | 6. Building elements | Roofs: flat | **Done** | Slice 19 (D66) |

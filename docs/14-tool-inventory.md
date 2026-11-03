@@ -144,7 +144,7 @@ release notes, so check before relying on a single cell.
 | Slanted, tapered, segmented columns and beams | AC RV | ✅ | new | D205: the Column/Beam tool strip gains *Lean X/Y* (columns), *End rise* (beams), *Taper* (top size as a fraction; IFC4) and *Segments* (precast pieces); tapered solids and stacked segments are built by the engine |
 | Grids | all | ✅ | P0 | D98: Grid system (numbered and lettered axes at once) |
 | Stairs: straight flight | all | ✅ | P1 | |
-| Stairs: landings, L/U shapes, spiral, by sketch | all | 🟡 | P1 | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; no winders or spiral yet |
+| Stairs: landings, L/U shapes, spiral, by sketch | all | 🟡 | P1 | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; D207: spiral stairs (wedge steps about a central well, either turn). Winders remain |
 | Railings | all | ✅ | P1 | D88: on a stair or ramp's sides (they follow it) or by path; posts, top rail, balusters |
 | Ramps | AC RV VW | ✅ | new | D88: straight and L, slope with a 1:12 warning, plan arrow |
 | Roofs: flat | all | ✅ | P1 | Slice 19 (D66) |

@@ -2,6 +2,7 @@
 """Stairs with landings, railings and ramps (D88): riser maths and code warnings, L/U/sketch layouts,
 the IFC they make (IFC4 and IFC2X3), the opening in the floor above, railings and editing."""
 import json
+import math
 
 import ifcopenshell
 import ifcopenshell.geom
@@ -167,6 +168,32 @@ def test_l_stair_is_a_stair_with_flights_and_a_landing(levels):
     assert hi[1] == pytest.approx(1.0 + 0.5 + 8 * 0.28 + 0.0, abs=0.3)
     land_lo, land_hi = bbox([landings[0].GlobalId])
     assert land_hi[2] == pytest.approx(1.5, abs=2e-3) and land_lo[0] == pytest.approx(3.24, abs=2e-3)
+    assert errors() == []
+
+
+def test_a_spiral_stair_turns_about_its_centre():
+    """D207: a spiral is one wedge step per riser around a central well."""
+    lay = stairs.stair_layout("spiral", 3.0, 1.0, 0.175, 0.28)
+    assert lay["spiral"] and lay["flights"] == []
+    assert len(lay["landings"]) == lay["risers"] == 18
+    assert lay["tread"] > 0
+    # step tops climb one riser each, and the last step's start angle is a whole turn from the first
+    assert [round(step["z"], 6) for step in lay["landings"][:3]] == pytest.approx([0.167, 0.333, 0.5], abs=1e-3)
+    first = lay["landings"][0]["walk"][0]
+    last = lay["landings"][-1]["walk"][0]
+    angle_first = math.atan2(first[1], first[0])
+    angle_last = math.atan2(last[1], last[0])
+    assert abs(((angle_last - angle_first) % (2 * math.pi)) - (2 * math.pi * 17 / 18)) < 1e-6
+    right = stairs.stair_layout("spiral", 3.0, 1.0, 0.175, 0.28, turn="right")
+    assert lay["landings"][0]["walk"][0][0] > 0 and right["landings"][0]["walk"][0][0] < 0  # opposite ways
+
+
+def test_a_spiral_stair_is_built_and_validates(levels):
+    r = call("create_stair", levels["l1"], 1.0, 1.0, 0.0, 1.2, 3.0, json.dumps({"shape": "spiral"}))
+    assert r["ok"], r
+    assert r["flights"] == 0 and r["landings"] == 18
+    steps = [p for p in parts(r["guid"]) if p.is_a("IfcSlab")]
+    assert len(steps) == 18 and all(p.Name.startswith("Step") for p in steps)
     assert errors() == []
 
 
