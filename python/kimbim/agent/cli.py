@@ -552,6 +552,20 @@ def _people(group, top) -> None:
     st.add_argument("--remove", action="store_true", help="associations: remove the file associations")
     _add_globals(st, False, only_project)
     st.set_defaults(handler=_setup)
+    ins = top.add_parser("install", help="install the portable KimBim build for this user",
+                         description="Copy dist/KimBim to the user's application folder, write an install marker "
+                                     "and associate .kim/.ifc. No administrator is needed.")
+    ins.add_argument("--source", default="", help="the packaged build (default: dist/KimBim)")
+    ins.add_argument("--dest", default="", help="where to install (default: the user's application folder)")
+    ins.add_argument("--force", action="store_true", help="replace an existing KimBim installation")
+    ins.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
+    ins.add_argument("--no-associations", action="store_true", help="do not change .kim/.ifc associations")
+    ins.set_defaults(handler=_install)
+    uni = top.add_parser("uninstall", help="remove a KimBim installation and its associations",
+                         description="Remove an installation this tool made (a folder without its marker is refused).")
+    uni.add_argument("--dest", default="", help="the installation folder (default: the user's application folder)")
+    uni.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
+    uni.set_defaults(handler=_uninstall)
     hp = top.add_parser("help", help=GROUP_HELP["help"], description=GROUP_HELP["help"] + ".")
     hp.add_argument("--markdown", action="store_true", help="print the agent tools as a Markdown table")
     hp.set_defaults(handler=_help)
@@ -949,6 +963,38 @@ def _serve(ns) -> int:
     if ns.idle is not None:
         args += ["--idle", str(ns.idle)]
     return serve_main(args)
+
+
+def _install(ns) -> int:
+    from .. import installer
+
+    try:
+        result = installer.install(ns.source or None, ns.dest or None, force=ns.force,
+                                   dry_run=ns.dry_run, associations=not ns.no_associations)
+    except (OSError, ValueError) as e:
+        print(_t("cli_error", message=e), file=sys.stderr)
+        return 1
+    for action in result["actions"]:
+        print(action)
+    if result["dry_run"]:
+        print("dry run: nothing changed")
+    else:
+        print(f"installed KimBim in {result['path']}")
+    return 0
+
+
+def _uninstall(ns) -> int:
+    from .. import installer
+
+    try:
+        result = installer.uninstall(ns.dest or None, dry_run=ns.dry_run)
+    except (OSError, ValueError) as e:
+        print(_t("cli_error", message=e), file=sys.stderr)
+        return 1
+    for action in result["actions"]:
+        print(action)
+    print("dry run: nothing changed" if result["dry_run"] else f"removed {result['path']}")
+    return 0
 
 
 def _mcp(ns) -> int:
