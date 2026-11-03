@@ -314,6 +314,44 @@ def test_monitored_copies_sync_and_report_conflicts(tmp_path):
     assert exploded["guids"][0] not in {w.GlobalId for w in f.by_type("IfcWall")}
 
 
+def test_push_monitored_edits_back_to_the_source(tmp_path):
+    f, _level = open_model(walls=0)
+    src = source(tmp_path, walls=1)
+    linked = call(L.link_model, str(src))
+    exploded = call(L.explode_link, linked["guid"])
+    host = f.by_guid(exploded["guids"][0])
+
+    host.Name = "Edited in the host"
+    matrix = ifcopenshell.util.placement.get_local_placement(host.ObjectPlacement)
+    matrix[0][3] += 2.0
+    ifcopenshell.api.geometry.edit_object_placement(f, product=host, matrix=matrix, is_si=True)
+    dry = call(L.push_monitored, "safe", True)
+    assert dry["dry_run"] and len(dry["applied"]) == 1
+    assert ifcopenshell.open(str(src)).by_type("IfcWall")[0].Name != "Edited in the host"
+
+    pushed = call(L.push_monitored, "safe", False)
+    assert pushed["ok"], pushed
+    assert len(pushed["applied"]) == 1
+    source_wall = ifcopenshell.open(str(src)).by_type("IfcWall")[0]
+    assert source_wall.Name == "Edited in the host"
+    source_matrix = ifcopenshell.util.placement.get_local_placement(source_wall.ObjectPlacement)
+    assert float(source_matrix[0][3]) == pytest.approx(2.0 / ifcopenshell.util.unit.calculate_unit_scale(
+        ifcopenshell.open(str(src))), abs=1e-3)
+    assert call(L.monitor_status)["sources"][0]["changed"] is False
+
+    # Both sides changed: safe refuses, host strategy overwrites the source.
+    host.Name = "Host wins"
+    source_model = ifcopenshell.open(str(src))
+    source_model.by_type("IfcWall")[0].Name = "Source edit"
+    source_model.write(str(src))
+    refused = call(L.push_monitored, "safe", False)
+    assert len(refused["conflicts"]) == 1
+    assert ifcopenshell.open(str(src)).by_type("IfcWall")[0].Name == "Source edit"
+    forced = call(L.push_monitored, "host", False)
+    assert len(forced["applied"]) == 1
+    assert ifcopenshell.open(str(src)).by_type("IfcWall")[0].Name == "Host wins"
+
+
 def test_stale_links_and_refresh(tmp_path):
     f, _level = open_model()
     src = source(tmp_path)

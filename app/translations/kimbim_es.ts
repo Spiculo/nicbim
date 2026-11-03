@@ -3354,6 +3354,21 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="7549" />
+      <source>Push edits to source...</source>
+      <translation>Enviar cambios al origen...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7551" />
+      <source>Write local edits of monitored copies back to their linked IFC files</source>
+      <translation>Escribir los cambios locales de las copias monitorizadas en sus archivos IFC vinculados</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7622" />
+      <source>Monitored links: %1 pushed, %2 conflict(s)</source>
+      <translation>Vínculos monitorizados: %1 enviados, %2 conflicto(s)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7549" />
       <source>Sync monitored...</source>
       <translation>Sincronizar monitorizados...</translation>
     </message>

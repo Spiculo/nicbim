@@ -104,6 +104,16 @@ def monitor_status(session):
     return bridge(L.monitor_status)
 
 
+@tool("links.push_monitored", {"properties": {
+    "strategy": {"type": "string", "enum": ["safe", "source", "host"],
+                 "description": "safe: leave conflicts; host: host wins; source: source wins (default safe)."},
+    "dry_run": {"type": "boolean", "description": "Report what would be written without changing files."}}},
+    writes=True)
+def push_monitored(session, strategy="safe", dry_run=False):
+    """Write host edits of monitored copies back to their linked source IFC files."""
+    return bridge(L.push_monitored, strategy, bool(dry_run))
+
+
 @tool("links.monitor_sync", {"properties": {
     "strategy": {"type": "string", "enum": ["safe", "source", "host"],
                  "description": "safe: leave conflicts; source: source wins; host: keep host edits (default safe)."},

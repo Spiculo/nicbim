@@ -1458,6 +1458,7 @@ _EXPORTS = {
         "link_model",
         "list_links",
         "monitor_status",
+        "push_monitored",
         "refresh_links",
         "stale_links",
         "set_link_transform",

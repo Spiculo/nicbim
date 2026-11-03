@@ -7568,6 +7568,8 @@ void MainWindow::linksDialog()
     auto* monitor = new QPushButton(tr("Monitor changes..."), &dialog);
     auto* syncMonitored = new QPushButton(tr("Sync monitored..."), &dialog); // D142
     syncMonitored->setToolTip(tr("Apply changed source attributes and properties to host copies that were not edited here"));
+    auto* pushMonitored = new QPushButton(tr("Push edits to source..."), &dialog); // D151
+    pushMonitored->setToolTip(tr("Write local edits of monitored copies back to their linked IFC files"));
     auto* updateChanged = new QPushButton(tr("Update changed"), &dialog);
     auto* update = new QPushButton(tr("Update"), &dialog);
     auto* remove = new QPushButton(tr("Unlink"), &dialog);
@@ -7576,6 +7578,7 @@ void MainWindow::linksDialog()
     buttons->addWidget(makeEditable);
     buttons->addWidget(monitor);
     buttons->addWidget(syncMonitored);
+    buttons->addWidget(pushMonitored);
     buttons->addWidget(updateChanged);
     buttons->addWidget(update);
     buttons->addWidget(remove);
@@ -7625,6 +7628,19 @@ void MainWindow::linksDialog()
         afterEdit(r);
         refresh();
         m_status->showMessage(tr("Monitored links: %1 applied, %2 conflict(s)")
+                                  .arg(r.value("applied").toArray().size())
+                                  .arg(r.value("conflicts").toArray().size()));
+    });
+    connect(pushMonitored, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject r = bridge("push_monitored", {QStringLiteral("safe"), QStringLiteral("false")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Linked models"), r.value("error").toString());
+            return;
+        }
+        if (!r.value("applied").toArray().isEmpty())
+            afterEdit(r);
+        refresh();
+        m_status->showMessage(tr("Monitored links: %1 pushed, %2 conflict(s)")
                                   .arg(r.value("applied").toArray().size())
                                   .arg(r.value("conflicts").toArray().size()));
     });

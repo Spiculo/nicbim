@@ -17,7 +17,9 @@ import datetime
 import hashlib
 import json
 import math
+import os
 import pathlib
+import tempfile
 
 import ifcopenshell
 import ifcopenshell.api.geometry
@@ -260,26 +262,33 @@ def _signature(product) -> str:
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
 
+def _copy_geometry(dst_element, src_element, dst_file, matrix) -> None:
+    """Copy `src_element`'s representation and placement into `dst_element` in `dst_file`, applying
+    `matrix` (metres) to the source placement."""
+    if src_element.Representation is None:
+        return
+    definition = ifcopenshell.util.element.copy_deep(dst_file, src_element.Representation)
+    reps = list(definition.Representations or ())
+    if dst_element.Representation is not None:
+        for old in list(dst_element.Representation.Representations or ()):
+            ifcopenshell.api.geometry.unassign_representation(dst_file, product=dst_element, representation=old)
+            ifcopenshell.api.geometry.remove_representation(dst_file, representation=old)
+    for rep in reps:
+        ifcopenshell.api.geometry.assign_representation(dst_file, product=dst_element, representation=rep)
+    try:
+        dst_file.remove(definition)  # the representations are assigned now; drop the empty shell
+    except Exception:  # noqa: BLE001
+        pass
+    if src_element.ObjectPlacement is not None:
+        local = ifcopenshell.util.placement.get_local_placement(src_element.ObjectPlacement)
+        local[:3, 3] *= ifcopenshell.util.unit.calculate_unit_scale(src_element.file)
+        ifcopenshell.api.geometry.edit_object_placement(
+            dst_file, product=dst_element, matrix=matrix @ local, is_si=True)
+
+
 def _replace_geometry(element, product, transform: dict) -> None:
     """Replace a host copy's representations and placement with the source product's (link placement applied)."""
-    if product.Representation is not None:
-        definition = ifcopenshell.util.element.copy_deep(B._model, product.Representation)
-        reps = list(definition.Representations or ())
-        if element.Representation is not None:
-            for old in list(element.Representation.Representations or ()):
-                ifcopenshell.api.geometry.unassign_representation(B._model, product=element, representation=old)
-                ifcopenshell.api.geometry.remove_representation(B._model, representation=old)
-        for rep in reps:
-            ifcopenshell.api.geometry.assign_representation(B._model, product=element, representation=rep)
-        try:
-            B._model.remove(definition)  # the representations are assigned now; drop the empty shell
-        except Exception:  # noqa: BLE001
-            pass
-    if product.ObjectPlacement is not None:
-        local = ifcopenshell.util.placement.get_local_placement(product.ObjectPlacement)
-        local[:3, 3] *= ifcopenshell.util.unit.calculate_unit_scale(product.file)
-        ifcopenshell.api.geometry.edit_object_placement(
-            B._model, product=element, matrix=_transform_matrix(transform) @ local, is_si=True)
+    _copy_geometry(element, product, B._model, _transform_matrix(transform))
 
 
 def _apply_source(element, product, transform: dict) -> None:
@@ -309,6 +318,57 @@ def _apply_source(element, product, transform: dict) -> None:
         pset = B._own_pset(element, name)
         if pset is not None:
             ifcopenshell.api.pset.remove_pset(B._model, product=element, pset=pset)
+
+
+def _copy_properties(src_element, dst_element, dst_file) -> None:
+    """Copy scalar attributes and non-KimBim property sets from `src_element` to `dst_element`."""
+    for name, value in src_element.get_info(recursive=False).items():
+        if name in ("id", "type", "GlobalId", "Representation", "ObjectPlacement", "OwnerHistory"):
+            continue
+        if not isinstance(value, (str, int, float, bool, type(None))):
+            continue
+        try:
+            setattr(dst_element, name, value)
+        except (AttributeError, RuntimeError):
+            continue
+    source_psets = ifcopenshell.util.element.get_psets(src_element, psets_only=True)
+    wanted = {name: {k: v for k, v in props.items() if k != "id"}
+              for name, props in source_psets.items() if not name.startswith("KIMBIM_")}
+    host_psets = ifcopenshell.util.element.get_psets(dst_element, psets_only=True)
+    for name, props in wanted.items():
+        pset = B._own_pset(dst_element, name)
+        if pset is None:
+            pset = ifcopenshell.api.pset.add_pset(dst_file, product=dst_element, name=name)
+        ifcopenshell.api.pset.edit_pset(dst_file, pset=pset, properties=props, should_purge=True)
+    for name in host_psets:
+        if name.startswith("KIMBIM_") or name in wanted:
+            continue
+        pset = B._own_pset(dst_element, name)
+        if pset is not None:
+            ifcopenshell.api.pset.remove_pset(dst_file, product=dst_element, pset=pset)
+
+
+def _apply_host_to_source(product, element, source, transform: dict) -> None:
+    """Write a host copy's attributes, properties, geometry and placement back to its source product."""
+    _copy_geometry(product, element, source, np.linalg.inv(_transform_matrix(transform)))
+    _copy_properties(element, product, source)
+
+
+def _write_source(source, path: str) -> str:
+    """Write the source model through a temporary file in the same folder, then replace the original."""
+    folder = pathlib.Path(path).parent
+    handle = tempfile.NamedTemporaryFile(suffix=".ifc", prefix="kimbim-source-", dir=folder, delete=False)
+    temp = pathlib.Path(handle.name)
+    handle.close()
+    try:
+        source.write(str(temp))
+        os.replace(temp, path)
+    finally:
+        try:
+            temp.unlink()
+        except OSError:
+            pass
+    return hashlib.sha1(pathlib.Path(path).read_bytes()).hexdigest()
 
 
 def _monitored() -> list[tuple]:
@@ -521,6 +581,93 @@ def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
         pass
     return B._dump({**r, "applied": made["applied"], "conflicts": conflicts, "removed": removed,
                     "added": added, "errors": errors})
+
+
+def push_monitored(strategy: str = "safe", dry_run: bool = False) -> str:
+    """Write host edits of monitored copies back to their source IFC files.
+
+    A copy whose host signature changed and whose source did not is written back (attributes,
+    properties, local geometry and placement, inverse link transform). If both changed it is a
+    **conflict**: "safe" leaves the source alone, "host" lets the host win, "source" keeps the source.
+    `dry_run` reports without writing. Source files are written through a temporary file and replaced
+    in one step; the host monitor psets are updated in one undo step. The source write itself is not
+    an undoable model step."""
+    if B._model is None:
+        return A._fail("no model open")
+    strategy = str(strategy or "safe").lower()
+    if strategy not in ("safe", "source", "host"):
+        return A._fail("strategy is safe, source or host")
+    if isinstance(dry_run, str):
+        dry_run = dry_run.lower() in ("1", "true", "yes")
+    by_source: dict[str, list] = {}
+    for element, data in _monitored():
+        by_source.setdefault(str(data.get("Source") or ""), []).append((element, data))
+    applied, conflicts, skipped, errors = [], [], [], []
+    for path, entries in by_source.items():
+        try:
+            source = ifcopenshell.open(path)
+        except Exception as ex:  # noqa: BLE001
+            errors.append({"source": path, "error": f"{type(ex).__name__}: {ex}"})
+            continue
+        changes = []
+        for element, data in entries:
+            source_guid = str(data.get("SourceGuid") or "")
+            product = next((p for p in source.by_type("IfcProduct") if p.GlobalId == source_guid), None)
+            if product is None:
+                skipped.append({"guid": element.GlobalId, "reason": "source element is gone"})
+                continue
+            host_sig = _signature(element)
+            source_sig = _signature(product)
+            host_changed = host_sig != str(data.get("HostSignature") or "")
+            source_changed = source_sig != str(data.get("SourceSignature") or "")
+            if not host_changed:
+                skipped.append({"guid": element.GlobalId, "reason": "no host edit"})
+                continue
+            if source_changed and strategy == "safe":
+                conflicts.append({"guid": element.GlobalId, "source": path,
+                                  "source_guid": source_guid, "name": element.Name or "",
+                                  "class": product.is_a()})
+                continue
+            if source_changed and strategy == "source":
+                skipped.append({"guid": element.GlobalId, "reason": "source wins"})
+                continue
+            changes.append((element, product, data))
+        if not changes:
+            continue
+        if dry_run:
+            applied.extend({"guid": element.GlobalId, "source": path,
+                            "source_guid": product.GlobalId, "dry_run": True}
+                           for element, product, _data in changes)
+            continue
+        try:
+            for element, product, data in changes:
+                _apply_host_to_source(product, element, source, _parse_transform(data.get("Transform")))
+            source_hash = _write_source(source, path)
+        except Exception as ex:  # noqa: BLE001
+            errors.append({"source": path, "error": f"{type(ex).__name__}: {ex}"})
+            continue
+        updated = []
+
+        def action():
+            for element, product, _data in changes:
+                pset = B._own_pset(element, MONITOR_PSET)
+                if pset is None:
+                    continue
+                ifcopenshell.api.pset.edit_pset(B._model, pset=pset, properties={
+                    "SourceSignature": _signature(product), "HostSignature": _signature(element),
+                    "SourceHash": source_hash, "Synced": _now(), "SyncState": "pushed"})
+                updated.append(element.GlobalId)
+            return len(updated)
+
+        try:
+            B._run(action)
+        except Exception as ex:  # noqa: BLE001
+            errors.append({"source": path, "error": f"{type(ex).__name__}: {ex}"})
+            continue
+        applied.extend({"guid": element.GlobalId, "source": path, "source_guid": product.GlobalId}
+                       for element, product, _data in changes)
+    return B._dump({"ok": True, "dry_run": dry_run, "applied": applied, "conflicts": conflicts,
+                    "skipped": skipped, "errors": errors})
 
 
 # ---------------------------------------------------------------- public commands

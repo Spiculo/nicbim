@@ -17,7 +17,6 @@ after D123–D149 plus explicit overrides for the final items.
 
 ## Future scope (deferred, not blocked)
 
-- True cross-file in-place editing of linked elements (live links, editable copies and sync already exist).
 - Deeper visualisation beyond the current ray/path-traced exports: offline render farm, animation, walkthrough video.
 
 ## Every item
@@ -207,8 +206,8 @@ after D123–D149 plus explicit overrides for the final items.
 | 17. Collaboration and versions | Milestones, object history, before/after | **Done** | Slice 20 (M5) |
 | 17. Collaboration and versions | Combine options with conflict UI | **Done** | Slice 22 (D69), M5 exit |
 | 17. Collaboration and versions | Several people on one project (Teamwork, Worksharing, Project Sharing) | **Deferred** | Git remotes first ([08](08-future.md)) |
-| 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. True in-place linked editing is future scope. |
-| 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync. Automatic source-to-host sync is in. |
+| 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. D151 pushes host edits back to the source IFC, so linked content is edited in place through monitored copies; the read-only proxy itself stays a reference. |
+| 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. Editing linked content works through monitored copies. |
 | 17. Collaboration and versions | BCF issues (import, export, viewpoints) | **Done** | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | 17. Collaboration and versions | Markups and comments in the model | **Deferred** |  |
 | 17. Collaboration and versions | Cloud sharing with clients (web viewer) | **Deferred** | [08](08-future.md) |
