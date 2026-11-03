@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D173).**
+**Status as of `main` (2026-11-03, after D112–D174).**
 
 ## How to read it
 
@@ -105,7 +105,7 @@ release notes, so check before relying on a single cell.
 | Resize / scale | AC VW SU | ✅ | new | D98: Edit › Resize (about the selection's middle) |
 | Pick up and inject settings (eyedropper / match properties) | AC RV VW | ✅ | new | D97: Edit › Pick up / Inject settings (Ctrl+Alt+C / V) |
 | Edit by polygon points (add, move, delete vertices; curve an edge) | AC RV VW | 🟡 | new | D98: Stretch tool on slabs and 2D shapes: move, add at an edge's middle, Ctrl+click delete; no curved edges |
-| Solid element operations (subtract, intersect, add) | AC RV VW | 🟡 | new | Edit > *Solid cut*, *Solid intersection* and *Solid union* take the selected elements (target first, then one or more tools) and run `kimbim.solids.boolean_elements`, which folds `IfcBooleanResult` DIFFERENCE/INTERSECTION/UNION in the target's Body representation (one undo step). `kimbim.solids.boolean_batch` applies one operation to several targets with the same tools, also one undo step. Edit > *Solid operation on selection sets...* picks a saved target set, a tool set (or the current selection) and an operator, then runs that batch; named sets are managed in Find & Select |
+| Solid element operations (subtract, intersect, add) | AC RV VW | ✅ | new | Edit > *Solid cut*, *Solid intersection* and *Solid union* take the selected elements (target first, then one or more tools) and run `kimbim.solids.boolean_elements`, which folds `IfcBooleanResult` DIFFERENCE/INTERSECTION/UNION in the target's Body representation (one undo step). `kimbim.solids.boolean_batch` applies one operation to several targets with the same tools, also one undo step. Edit > *Solid operation on selection sets...* picks a saved target set, a tool set (or the current selection) and an operator, then runs that batch; named sets are managed in Find & Select |
 | Lock / pin elements | AC RV VW | ✅ | P2 | D160: Edit > *Lock selection* / *Unlock selection* writes `KIMBIM_Lock` (`Locked`); locked elements refuse moves, deletes, align/resize/offset/fillet and dimension edits until unlocked; agent `elements.lock` |
 | Group / ungroup | AC VW SU | ✅ | P1 | D162: Edit > *Group* / *Ungroup* stores a `KIMBIM_Group` id (agent `elements.group` / `elements.ungroup`); moving or deleting one member moves/deletes the whole group. Models (D58) remain the repeated-unit tool |
 
