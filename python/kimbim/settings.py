@@ -63,6 +63,7 @@ DEFAULTS = {
     "tag_styles": {},  # tag styles by id: the project's own and its edited built-ins (D87)
     "title_block_templates": {},  # reusable title blocks / master layouts by id (D116)
     "keynotes": {},  # the keynote table: code -> {code, text, category}
+    "model_view_options": {},  # D138: detail level by drawing scale (empty: the defaults)
     "stair_rules": {},  # building-code limits for stair and ramp warnings (D88; empty: the defaults)
     "check_tolerance": 0.002,   # D92: clash hard tolerance (m)
     "check_clearance": 0.05,    # D92: clash clearance (m)
@@ -232,6 +233,10 @@ def _error(key: str, value) -> str | None:
         from .tags import table_error as tag_table_error
 
         return tag_table_error(value)
+    if key == "model_view_options":
+        from . import drawings
+
+        return drawings.view_options_error(value)
     if key in ("selection_criteria", "selection_sets"):
         from . import queries
 

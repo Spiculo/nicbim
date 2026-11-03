@@ -6,6 +6,7 @@ import re
 import sys
 from pathlib import Path
 
+import ifcopenshell.api.root
 import ifcopenshell.util.element
 import ifcopenshell.validate
 import pytest
@@ -65,6 +66,36 @@ def test_opening_a_file_adds_no_drawings(tmp_path):
     assert call("save", str(tmp_path / "plain.ifc"))["ok"]
     assert call("open_model", str(tmp_path / "plain.ifc"))["ok"]
     assert call("drawings")["drawings"] == []
+
+
+def test_model_view_options_and_drawing_scale():
+    assert call("new_project", "Casa")["ok"]
+    plan = next(d for d in call("drawings")["drawings"] if d["kind"] == "plan")
+    assert call("set_drawing_scale", plan["guid"], 200)["ok"]
+    updated = drawing(plan["guid"])
+    assert updated["scale"] == 200
+    assert ifcopenshell.util.element.get_pset(b._model.by_guid(plan["guid"]), "KIMBIM_Drawing")["Scale"] == 200
+    assert call("set_drawing_scale", plan["guid"], 0)["ok"] is False
+    assert call("set_drawing_scale", plan["guid"], 5000)["ok"] is False
+
+    furniture = ifcopenshell.api.root.create_entity(b._model, ifc_class="IfcFurniture", name="Chair")
+    assert call("set_project_settings", json.dumps({"model_view_options": {
+        "coarse_from": 200, "coarse_hidden_classes": ["IfcFurniture"]}}))["ok"]
+    from kimbim import drawings as DR
+
+    assert DR.hidden_by_scale(100) == set()
+    assert furniture.GlobalId in DR.hidden_by_scale(200)
+    assert call("set_project_settings", json.dumps({"model_view_options": {
+        "coarse_from": 0}}))["ok"] is False
+    assert call("set_project_settings", json.dumps({"model_view_options": {
+        "coarse_hidden_classes": "IfcFurniture"}}))["ok"] is False
+
+    # The base SVG leaves the hidden element out of both the cut and the projection.
+    g = {"bounds": [0, 0, 1, 1], "cut": [{"guid": furniture.GlobalId,
+         "loops": [[(0, 0), (1, 0), (1, 1)]]}], "proj": [{"guid": "other",
+         "loops": [[(0, 0), (1, 0), (1, 1)]]}]}
+    svg = DR._plan_base_svg(g, 200, {furniture.GlobalId})
+    assert furniture.GlobalId not in svg and 'ifc:guid="other"' in svg
 
 
 def test_a_3d_document_stores_its_direction_and_up():

@@ -32,6 +32,11 @@ from . import authoring as A
 from . import drawgen as G
 
 SIDES = ("north", "south", "east", "west")
+# D138: model view options by scale. At 1:coarse_from and coarser the small furnishings are left
+# out; finer drawings keep everything. A project can replace the table in `model_view_options`.
+VIEW_OPTIONS = {"coarse_from": 200,
+                "coarse_hidden_classes": ["IfcFurniture", "IfcFurnishingElement",
+                                          "IfcSanitaryTerminal", "IfcElectricAppliance"]}
 _CACHE_SIZE = 4  # model states remembered per drawing (undo/redo returns to cached ones)
 _cache: dict[str, dict[tuple, str]] = {}
 _worker = None  # (Popen, state) of the long-lived generator, or None
@@ -68,6 +73,58 @@ def _drawings():
     return [a for a in B._model.by_type("IfcAnnotation") if G.is_drawing(a) and G.settings_of(a) is not None]
 
 
+def _view_options() -> dict:
+    """The effective model-view options: the built-in table overridden key by key by the project."""
+    from . import settings as S
+
+    table = dict(VIEW_OPTIONS)
+    own = S.current().get("model_view_options")
+    if isinstance(own, dict):
+        if isinstance(own.get("coarse_from"), (int, float)) and not isinstance(own["coarse_from"], bool):
+            table["coarse_from"] = float(own["coarse_from"])
+        classes = own.get("coarse_hidden_classes")
+        if isinstance(classes, list) and all(isinstance(c, str) for c in classes):
+            table["coarse_hidden_classes"] = list(classes)
+    return table
+
+
+def view_options_error(value) -> str | None:
+    """Validate the `model_view_options` project setting."""
+    if value in (None, {}):
+        return None
+    if not isinstance(value, dict):
+        return "model view options are an object"
+    if "coarse_from" in value and not (isinstance(value["coarse_from"], (int, float))
+                                      and not isinstance(value["coarse_from"], bool)
+                                      and 1 <= value["coarse_from"] <= 1000):
+        return "coarse_from must be a scale between 1 and 1000"
+    classes = value.get("coarse_hidden_classes")
+    if classes is not None and not (isinstance(classes, list) and all(isinstance(c, str) for c in classes)):
+        return "coarse_hidden_classes is a list of IFC class names"
+    return None
+
+
+def hidden_by_scale(scale) -> set[str]:
+    """The GlobalIds a drawing at 1:`scale` leaves out (empty at finer scales)."""
+    try:
+        scale = float(scale)
+    except (TypeError, ValueError):
+        return set()
+    options = _view_options()
+    if scale < float(options["coarse_from"]):
+        return set()
+    classes = tuple(options["coarse_hidden_classes"])
+    if not classes or B._model is None:
+        return set()
+    hidden = set()
+    for cls in classes:
+        try:
+            hidden.update(e.GlobalId for e in B._model.by_type(cls))
+        except RuntimeError:
+            continue  # a class this schema does not have
+    return hidden
+
+
 def _drawing(guid: str):
     d = A._by_guid(guid) if B._model is not None else None
     return d if d is not None and G.is_drawing(d) and G.settings_of(d) is not None else None
@@ -99,8 +156,8 @@ def drawings() -> str:
             out.append({"guid": d.GlobalId, "name": d.Name or "", "kind": s["kind"], "depth": s["depth"],
                         "auto": s["auto"], "side": s.get("side") or "", "points": s["points"], "look": s["look"],
                         "bulges": s.get("bulges") or [], "tilt": float(s.get("tilt", 0.0)),
-                        **({"scale": s.get("scale", G.DETAIL_SCALE), "region": s.get("region") or [],
-                            "source_level": s.get("storey", "")} if detail else {}),
+                        "scale": int(s.get("scale") or (G.DETAIL_SCALE if detail else G.SCALE)),
+                        **({"region": s.get("region") or [], "source_level": s.get("storey", "")} if detail else {}),
                         **({"storey": s["storey"], "elevation": round(G.storey_elevation(storey), 6),
                             "cut": float(s.get("cut", G.PLAN_CUT)),
                             "view_depth": resolve_view_depth(s["storey"], s)} if storey else {}),
@@ -309,6 +366,24 @@ def _edit(guid: str, change) -> str:
         return 1
 
     return B._dump(B._run(action))
+
+
+def set_drawing_scale(guid: str, scale) -> str:
+    """Set a drawing's scale, 1:`scale` (1-1000). Coarser drawings use the model view options: at
+    1:200 and below (D138) the small furnishings are left out. One undo step."""
+    try:
+        value = int(scale)
+    except (TypeError, ValueError):
+        return A._fail("bad scale")
+    if not 1 <= value <= 1000:
+        return A._fail("the scale must be between 1 and 1000")
+
+    def change(d):
+        s = G.settings_of(d)
+        s["scale"] = value
+        G.write_settings(B._model, d, s)
+
+    return _edit(guid, change)
 
 
 def set_drawing_depth(guid: str, depth) -> str:
@@ -1024,7 +1099,7 @@ def _cut_group(guid, loops, to_paper, to_world, path) -> str:
     return f'<g ifc:guid="{guid}">{layers}{outline}</g>'
 
 
-def _plan_base_svg(g, scale=G.SCALE) -> str:
+def _plan_base_svg(g, scale=G.SCALE, hidden=()) -> str:
     """A plan drawing's base SVG from the app's meshes (no hidden-line pass). `g` is the geometry the
     viewport extracted: cut loops (poché) and projection loops, world x,y. Paper millimetres at the
     drawing scale, north up, with the plane/matrix3 the overlay and drafting expect."""
@@ -1053,11 +1128,15 @@ def _plan_base_svg(g, scale=G.SCALE) -> str:
         return '<path d="M' + " L".join(f"{px:.3f},{py:.3f}" for px, py in pts) + ' Z"/>'
 
     parts = []
-    for e in g["cut"]:  # walls and slabs cut by the plane: filled poché (by layer, D96)
+    for e in g["cut"]:  # walls and slabs cut by the plane
+        if e["guid"] in hidden:
+            continue
         group = _cut_group(e["guid"], e["loops"], to_paper, lambda x, y: (x, y, 0.0), one)
         if group:
             parts.append(group)
     for e in g["proj"]:  # below the cut: their top outline, in projection
+        if e["guid"] in hidden:
+            continue
         body = paths(e["loops"])
         if body:
             parts.append(f'<g class="projection" ifc:guid="{e["guid"]}">{body}</g>')
@@ -1083,13 +1162,14 @@ def generate_plan_drawing(guid: str, geometry_json: str) -> str:
     if s is None or s.get("kind") not in ("plan", "detail"):
         return A._fail("not a plan drawing")
     detail = s["kind"] == "detail"
-    scale = max(1, int(s.get("scale") or G.DETAIL_SCALE)) if detail else G.SCALE
-    key = (*_state_key(), "plan", scale, hash(geometry_json))
+    scale = max(1, int(s.get("scale") or (G.DETAIL_SCALE if detail else G.SCALE)))
+    hidden = hidden_by_scale(scale)
+    key = (*_state_key(), "plan", scale, tuple(sorted(hidden)), hash(geometry_json))
     hit = _cache.get(guid, {}).get(key)
     if hit is None:
         try:
             g = json.loads(geometry_json)
-            svg = G.overlay(B._model, d, s, _plan_base_svg(g, scale), None)
+            svg = G.overlay(B._model, d, s, _plan_base_svg(g, scale, hidden), None)
             if detail:  # framed before caching: the cache holds what raw_drawing (sheets) measures
                 svg = G.detail_frame(B._model, d, s, svg)
         except Exception as ex:
@@ -1107,29 +1187,33 @@ def generate_plan_drawing(guid: str, geometry_json: str) -> str:
     return B._dump({"ok": True, "svg": svg, "cached": False})
 
 
-def _view_base_svg(g) -> str:
+def _view_base_svg(g, scale=G.SCALE, hidden=()) -> str:
     """A section/elevation's base SVG from the app's meshes (OCCT polygon hidden-line removal). `g` has
     the visible edges per element (`proj`, in the view plane) and, for a section, the cut loops
     (`cut`), plus the view->world matrix (`view`). Paper millimetres at the drawing scale."""
-    scale = 1000.0 / G.SCALE
+    k = 1000.0 / scale
     flat = g["view"]  # view -> world, row-major (16 numbers)
     plane = [list(flat[i * 4:(i + 1) * 4]) for i in range(4)]
     xs, ys = [], []
     for e in g["proj"]:
+        if e["guid"] in hidden:
+            continue
         for x1, y1, x2, y2 in e["lines"]:
             xs += [x1, x2]
             ys += [y1, y2]
     for e in g["cut"]:
+        if e["guid"] in hidden:
+            continue
         for loop in e["loops"]:
             for x, y in loop:
                 xs.append(x)
                 ys.append(y)
     vx0 = min(xs) if xs else 0.0
     vy1 = max(ys) if ys else 0.0
-    m3 = [[scale, 0, -scale * vx0], [0, scale, scale * vy1], [0, 0, 1]]
+    m3 = [[k, 0, -k * vx0], [0, k, k * vy1], [0, 0, 1]]
 
     def to_paper(x, y):  # view-up (larger y) goes up on the sheet (SVG y grows downward)
-        return scale * (x - vx0), scale * (vy1 - y)
+        return k * (x - vx0), k * (vy1 - y)
 
     def path(points, closed):
         pts = [to_paper(x, y) for x, y in points]
@@ -1140,12 +1224,16 @@ def _view_base_svg(g) -> str:
 
     parts = []
     for e in g["proj"]:
+        if e["guid"] in hidden:
+            continue
         body = "".join(path([(x1, y1), (x2, y2)], False) for x1, y1, x2, y2 in e["lines"])
         if body:
             parts.append(f'<g class="projection" ifc:guid="{e["guid"]}">{body}</g>')
     plane = np.asarray(g["view"], dtype=float).reshape(4, 4)
     strips = g.get("strips") or [{"view": plane.reshape(-1).tolist(), "x": 0.0}]
     for e in g["cut"]:
+        if e["guid"] in hidden:
+            continue
         strip = strips[min(int(e.get("strip", 0)), len(strips) - 1)]
         view = np.asarray(strip["view"], dtype=float).reshape(4, 4)
         shift = float(strip.get("x", 0.0))
@@ -1174,11 +1262,13 @@ def generate_view_drawing(guid: str, geometry_json: str) -> str:
     s = G.settings_of(d)
     if s is None or s.get("kind") not in ("section", "elevation", "3d"):
         return A._fail("not a section, elevation or 3D document")
-    key = (*_state_key(), "view", hash(geometry_json))
+    scale = max(1, int(s.get("scale") or G.SCALE))
+    hidden = hidden_by_scale(scale)
+    key = (*_state_key(), "view", scale, tuple(sorted(hidden)), hash(geometry_json))
     hit = _cache.get(guid, {}).get(key)
     if hit is None:
         try:
-            svg = _view_base_svg(json.loads(geometry_json))
+            svg = _view_base_svg(json.loads(geometry_json), scale, hidden)
         except Exception as ex:
             return A._fail(f"{type(ex).__name__}: {ex}")
         entries = _cache.setdefault(guid, {})

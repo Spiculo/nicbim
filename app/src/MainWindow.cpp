@@ -772,6 +772,33 @@ void MainWindow::buildMenus()
         afterEdit(r);
         m_status->showMessage(tr("3D document added: %1").arg(r.value("name").toString()));
     });
+    QAction* drawingScale = view->addAction(tr("Drawing &scale...")); // D138
+    drawingScale->setObjectName(QStringLiteral("actionDrawingScale"));
+    drawingScale->setToolTip(tr("Set the active drawing's scale; coarser drawings leave out small furnishings"));
+    connect(drawingScale, &QAction::triggered, this, [this] {
+        const QString key = currentViewKey();
+        if (!m_drawingViews.contains(key)) {
+            m_status->showMessage(tr("Open a drawing first: its scale is what this sets"));
+            return;
+        }
+        int current = 100;
+        for (const auto& v : bridge("drawings").value("drawings").toArray())
+            if (v.toObject().value("guid").toString() == key)
+                current = v.toObject().value("scale").toInt(100);
+        bool ok = false;
+        const int scale = QInputDialog::getInt(this, tr("Drawing scale"), tr("Scale 1:"),
+                                               current, 1, 1000, 1, &ok);
+        if (!ok)
+            return;
+        const QJsonObject r = bridge("set_drawing_scale", {key, QString::number(scale)});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Drawing scale"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        regenerateDrawing(key);
+        m_status->showMessage(tr("Drawing scale 1:%1").arg(scale));
+    });
     QAction* through = view->addAction(tr("Select &hidden elements too"));
     through->setObjectName(QStringLiteral("actionSelectThrough"));
     through->setCheckable(true);

@@ -281,14 +281,14 @@ def settings_of(drawing) -> dict | None:
         up = _json_list(data.get("Up")) or [0.0, 0.0, 1.0]
         return {"kind": "3d", "points": [], "look": [], "depth": None, "auto": False, "side": "",
                 "direction": [float(v) for v in direction[:3]], "up": [float(v) for v in up[:3]],
-                "bulges": [], "tilt": 0.0, "base": 0.0}
+                "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0}
     if data["Kind"] in ("plan", "detail"):
         depth = data.get("ViewDepth")
         out = {"kind": data["Kind"], "points": [], "look": [], "depth": None, "auto": True, "side": "",
                "storey": (data.get("Storey") if data["Kind"] == "plan" else data.get("SourceLevel")) or "",
                "cut": float(data.get("Cut") or PLAN_CUT),
                "view_depth": None if depth is None or depth < 0 else float(depth),
-               "bulges": [], "tilt": 0.0, "base": 0.0}
+               "scale": int(data.get("Scale") or SCALE), "bulges": [], "tilt": 0.0, "base": 0.0}
         if data["Kind"] == "detail":
             out["region"] = _region_of(data.get("Region"))
             out["scale"] = int(data.get("Scale") or DETAIL_SCALE)
@@ -302,7 +302,7 @@ def settings_of(drawing) -> dict | None:
     depth = data.get("Depth")
     return {"kind": data["Kind"], "points": points, "look": look,
             "depth": None if depth is None or depth < 0 else float(depth), "auto": bool(data.get("Auto")),
-            "side": data.get("Side") or "", "bulges": bulges,
+            "side": data.get("Side") or "", "scale": int(data.get("Scale") or SCALE), "bulges": bulges,
             "tilt": float(data.get("Tilt") or 0.0), "base": float(data.get("Base") or 0.0)}
 
 
@@ -459,6 +459,7 @@ def write_settings(f, drawing, s):
     pset = f.by_id(pset["id"]) if pset else ifcopenshell.api.pset.add_pset(f, product=drawing, name=PSET)
     props = {"Kind": s["kind"], "Depth": -1.0 if s["depth"] is None else float(s["depth"]), "Auto": bool(s["auto"]),
              "Tilt": float(s.get("tilt", 0.0)), "Base": float(s.get("base", 0.0)),
+             "Scale": int(s.get("scale") or (DETAIL_SCALE if s["kind"] == "detail" else SCALE)),
              **({"Side": s["side"]} if s.get("side") else {})}
     if s["kind"] == "3d":
         props.update({"Direction": json.dumps([round(float(v), 9) for v in s["direction"]], separators=(",", ":")),
@@ -475,7 +476,7 @@ def write_settings(f, drawing, s):
     ifcopenshell.api.pset.edit_pset(f, pset=pset, properties=props)
     epset = ifcopenshell.util.element.get_pset(drawing, "EPset_Drawing")
     epset = f.by_id(epset["id"]) if epset else ifcopenshell.api.pset.add_pset(f, product=drawing, name="EPset_Drawing")
-    scale = int(s.get("scale") or SCALE) if s["kind"] == "detail" else SCALE
+    scale = int(s.get("scale") or (DETAIL_SCALE if s["kind"] == "detail" else SCALE))
     ifcopenshell.api.pset.edit_pset(f, pset=epset, properties={
         "TargetView": TARGET_VIEW[s["kind"]], "Scale": f"1/{scale}", "HumanScale": f"1:{scale}"})
 

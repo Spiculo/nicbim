@@ -102,6 +102,18 @@ def drawings_create(session, kind, level="", line=None, direction="left", up=Non
     return {"guid": bridge(make, x1, y1, x2, y2, lx, ly)["guid"]}
 
 
+@tool("drawings.set_scale", {"required": ["drawing", "scale"], "properties": {
+    "drawing": _DRAWING,
+    "scale": {"type": "integer", "minimum": 1, "maximum": 1000,
+              "description": "1:N, e.g. 100. At 1:200 and coarser, model view options leave out small furnishings."}}},
+    writes=True)
+def drawings_set_scale(session, drawing, scale):
+    """Set a drawing's scale (1:N); coarser drawings use the project's model view options."""
+    guid = _drawing_guid(drawing)
+    r = bridge(DR.set_drawing_scale, guid, int(scale))
+    return {"guid": r.get("guid", guid), "scale": int(scale)}
+
+
 @tool("drawings.export", {"required": ["drawing", "format", "out"], "properties": {
     "drawing": _DRAWING, "format": {"type": "string", "enum": ["svg", "dxf", "pdf"]}, "out": _OUT}})
 def drawings_export(session, drawing, format, out):

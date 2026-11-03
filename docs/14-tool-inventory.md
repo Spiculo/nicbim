@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D137).**
+**Status as of `main` (2026-11-03, after D112–D138).**
 
 ## How to read it
 
@@ -205,7 +205,7 @@ release notes, so check before relying on a single cell.
 | Layered (composite) wall and slab types | all | ✅ | P0 | |
 | Material editor (cut fill, surface, physical data) | all | ✅ | P0 | D96: Graphics › Building materials / Surfaces / Composites; IFC materials, styles and psets |
 | Pen sets / line weights by scale | AC RV VW | 🟡 | new | D73: pen sets (255 pens), element styles, purposes; weights don't change with the scale yet |
-| Graphic overrides and model view options (visibility by kind, rules) | AC RV VW | ✅ | new | D73: visibility sets, override rules (property, layer, material), layer combinations in purposes |
+| Graphic overrides and model view options (visibility by kind, rules) | AC RV VW | ✅ | new | D73: visibility sets, override rules (property, layer, material), layer combinations in purposes. D138: model view options hide small furnishings at coarse drawing scales |
 | Line types and fill patterns (hatches) | all | ✅ | new | D73: line types (dash patterns in mm); D84: fill patterns; D96: cut fills hatched on screen, in print and DXF |
 | Surfaces / textures for 3D and rendering | all | ✅ | new | D96: surfaces (colour, transparency, shine, picture texture, box-mapped) per face in 3D, per-side overrides (D97); no rendering |
 | Attribute manager (import/export standards between projects) | AC RV VW | ✅ | new | D121: Graphics > *Attribute manager...* exports/imports pens, line types, fills, styles, purposes, layers, materials, surfaces and composites (merge or replace, group selection) |
@@ -221,7 +221,7 @@ release notes, so check before relying on a single cell.
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
 | 3D documents / axonometric drawings | AC RV VW | ⬜ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
 | Crop regions, view range, depth | AC RV VW | 🟡 | new | D61 depth (infinite / limited / zero) is in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional bottom limit below its level. A per-view range in generated drawings and model view options by scale are still to do |
-| Model view options (detail level by scale) | AC RV VW | ⬜ | new | |
+| Model view options (detail level by scale) | AC RV VW | ⬜ | new | D138: every drawing has a scale (1–1000); at 1:200 and coarser the project's `model_view_options.coarse_hidden_classes` (default furniture, furnishings, sanitary and appliances) are left out of plans, sections, elevations and 3D documents. Finer drawings keep everything; the table is a versioned project setting |
 | Drawings update when the model changes | all | 🟡 | P1 | Out-of-date bar + Regenerate; regenerated when brought to the front |
 
 ## 12. 2D drafting
@@ -359,6 +359,6 @@ What now most often stops an architect from finishing a real project, roughly in
 11. ✅ **Title block templates / master layouts** (§14): D118 (position, field overrides and paper in project settings; save, apply, rename, delete).
 12. ✅ **IFC export settings and external references** (§18): D117 (scopes, include flags and property renames; linked models as read-only references). D127 refreshes changed links (`links.refresh`, *Update changed*). A live, editable hotlink and copy/monitor are still future.
 13. 🟡 **Point clouds and more imports** (§18): D120 adds OBJ/STL/PLY meshes, D124 COLLADA/glTF/GLB/ASCII FBX, D125 XYZ/PTS/CSV/LAS point clouds, D132 LAZ plus vector PDF underlays and D133 binary FBX. SketchUp `.skp`, E57 and live links are still to do.
-14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range and D137 adds 3D documents; model view options by scale, rendering and VR are still to do.
+14. **The deeper documentation/visualisation tail** (§11, §16): D134/D136 add a live crop region and view range, D137 adds 3D documents and D138 adds model view options by drawing scale; rendering and VR are still to do.
 
 Next step: the owner confirms or reorders the remaining list. 04 is then updated to match. The documentation pack (5, 6), BCF (10), terrain (9), title block templates (11), IFC export/linked models (12) and the deeper detail/curtain/pad UI are in; the largest remaining Archicad gaps are the last import formats (SketchUp `.skp` and E57), the visualisation tail (14) and a live editable hotlink.

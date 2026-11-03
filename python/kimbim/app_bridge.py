@@ -1184,6 +1184,7 @@ _EXPORTS = {
         "set_drawing_depth",
         "set_drawing_hlr",
         "set_drawing_path",
+        "set_drawing_scale",
         "set_drawing_tilt",
         "set_drawing_timeout",
         "set_view_depth",

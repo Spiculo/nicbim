@@ -3175,7 +3175,7 @@ private slots:
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
                  "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
                  "actionViewRange", "actionClearViewRange", "actionCreate3DDocument",
-                 "actionAttributeManager", "actionKeynotes"})
+                 "actionDrawingScale", "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
 

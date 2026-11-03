@@ -2968,6 +2968,36 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1051" />
+      <source>Drawing &amp;scale...</source>
+      <translation>&amp;Escala del dibujo...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1080" />
+      <source>Set the active drawing's scale; coarser drawings leave out small furnishings</source>
+      <translation>Fija la escala del dibujo activo; los dibujos más generales omiten el mobiliario pequeño</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1083" />
+      <source>Open a drawing first: its scale is what this sets</source>
+      <translation>Abre primero un dibujo: esto fija su escala</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1090" />
+      <source>Drawing scale</source>
+      <translation>Escala del dibujo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1090" />
+      <source>Scale 1:</source>
+      <translation>Escala 1:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1097" />
+      <source>Drawing scale 1:%1</source>
+      <translation>Escala del dibujo 1:%1</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1062" />
       <source>3D &amp;document...</source>
       <translation>&amp;Documento 3D...</translation>
     </message>
