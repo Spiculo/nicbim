@@ -1461,6 +1461,7 @@ _EXPORTS = {
         "refresh_links",
         "stale_links",
         "set_link_transform",
+        "sync_monitored",
         "unlink",
         "update_link",
     ),

@@ -256,6 +256,49 @@ def test_explode_a_link_into_monitored_editable_copies(tmp_path):
     assert len(report["removed"]) == 1 and report["changed"] is True
 
 
+def test_monitored_copies_sync_and_report_conflicts(tmp_path):
+    f, _level = open_model(walls=0)
+    src = source(tmp_path, walls=1)
+    linked = call(L.link_model, str(src))
+    exploded = call(L.explode_link, linked["guid"])
+    assert exploded["ok"], exploded
+    host = f.by_guid(exploded["guids"][0])
+
+    # A clean source edit is applied to the unmodified host copy.
+    source_model = ifcopenshell.open(str(src))
+    source_model.by_type("IfcWall")[0].Name = "From source v2"
+    source_model.write(str(src))
+    synced = call(L.sync_monitored, "safe", False)
+    assert synced["ok"], synced
+    assert len(synced["applied"]) == 1 and synced["applied"][0]["guid"] == host.GlobalId
+    assert host.Name == "From source v2"
+    assert call(L.monitor_status)["sources"][0]["changed"] is False
+
+    # A local edit and a source edit conflict: safe leaves the host alone.
+    host.Name = "Edited here"
+    source_model = ifcopenshell.open(str(src))
+    source_model.by_type("IfcWall")[0].Name = "From source v3"
+    source_model.write(str(src))
+    conflicted = call(L.sync_monitored, "safe", False)
+    assert len(conflicted["conflicts"]) == 1
+    assert host.Name == "Edited here"
+    # Source strategy resolves it in favour of the source.
+    resolved = call(L.sync_monitored, "source", False)
+    assert len(resolved["applied"]) == 1
+    assert host.Name == "From source v3"
+
+    # A source element that disappeared is reported; removing orphan copies is opt-in.
+    source_model = ifcopenshell.open(str(src))
+    source_model.remove(source_model.by_type("IfcWall")[0])
+    source_model.write(str(src))
+    reported = call(L.sync_monitored, "safe", False)
+    assert len(reported["removed"]) == 1
+    assert f.by_guid(host.GlobalId) is not None
+    removed = call(L.sync_monitored, "safe", True)
+    assert len(removed["removed"]) == 1
+    assert exploded["guids"][0] not in {w.GlobalId for w in f.by_type("IfcWall")}
+
+
 def test_stale_links_and_refresh(tmp_path):
     f, _level = open_model()
     src = source(tmp_path)

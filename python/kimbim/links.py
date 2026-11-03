@@ -232,12 +232,45 @@ def _signature(product) -> str:
     """A stable hash of a product's attributes, types and property sets (for monitor comparisons)."""
     try:
         info = product.get_info(recursive=False)
-        info.pop("id", None)
-        props = ifcopenshell.util.element.get_psets(product, psets_only=True)
+        # References (Representation, ObjectPlacement, OwnerHistory) are entities whose ids need not
+        # survive a rewrite; monitor attributes and properties, which is what copy/monitor syncs.
+        info = {k: v for k, v in info.items()
+                if k not in ("id", "Representation", "ObjectPlacement", "OwnerHistory")
+                and isinstance(v, (str, int, float, bool, type(None)))}
+        props = {k: v for k, v in ifcopenshell.util.element.get_psets(product, psets_only=True).items()
+                 if not k.startswith("KIMBIM_")}
         payload = json.dumps({"info": info, "psets": props}, sort_keys=True, default=str, separators=(",", ":"))
     except Exception:  # noqa: BLE001 - a malformed product must not break the report
         payload = repr(product)
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
+def _apply_source(element, product) -> None:
+    """Copy a source product's attributes and non-KimBim property sets onto its host copy."""
+    for name, value in product.get_info(recursive=False).items():
+        if name in ("id", "type", "GlobalId", "Representation", "ObjectPlacement", "OwnerHistory"):
+            continue
+        if not isinstance(value, (str, int, float, bool, type(None))):
+            continue
+        try:
+            setattr(element, name, value)
+        except (AttributeError, RuntimeError):
+            continue
+    source_psets = ifcopenshell.util.element.get_psets(product, psets_only=True)
+    wanted = {name: {k: v for k, v in props.items() if k != "id"}
+              for name, props in source_psets.items() if not name.startswith("KIMBIM_")}
+    host_psets = ifcopenshell.util.element.get_psets(element, psets_only=True)
+    for name, props in wanted.items():
+        pset = B._own_pset(element, name)
+        if pset is None:
+            pset = ifcopenshell.api.pset.add_pset(B._model, product=element, name=name)
+        ifcopenshell.api.pset.edit_pset(B._model, pset=pset, properties=props, should_purge=True)
+    for name in host_psets:
+        if name.startswith("KIMBIM_") or name in wanted:
+            continue
+        pset = B._own_pset(element, name)
+        if pset is not None:
+            ifcopenshell.api.pset.remove_pset(B._model, product=element, pset=pset)
 
 
 def _monitored() -> list[tuple]:
@@ -371,6 +404,83 @@ def monitor_status() -> str:
         entry["changed"] = bool(entry["changed_elements"] or entry["removed"] or entry["added"])
         sources.append(entry)
     return B._dump({"ok": True, "sources": sources})
+
+
+def sync_monitored(strategy: str = "safe", remove_orphans: bool = False) -> str:
+    """Bring host copies up to date with their source files.
+
+    A copy whose source changed but whose host was not edited takes the source's **attributes and
+    properties** (not geometry); a copy edited in the host and in the source is a **conflict**:
+    `strategy` "safe" leaves it alone, "source" lets the source win, "host" keeps the host edits and
+    resolves it. Removed source elements are reported (or their host copies deleted with
+    `remove_orphans`); added source elements cannot be matched and are reported. One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    strategy = str(strategy or "safe").lower()
+    if strategy not in ("safe", "source", "host"):
+        return A._fail("strategy is safe, source or host")
+    if isinstance(remove_orphans, str):
+        remove_orphans = remove_orphans.lower() in ("1", "true", "yes")
+    applies, conflicts, removed, added, errors = [], [], [], [], []
+    for element, data in _monitored():
+        path = str(data.get("Source") or "")
+        source_guid = str(data.get("SourceGuid") or "")
+        try:
+            source = ifcopenshell.open(path)
+        except Exception as ex:  # noqa: BLE001
+            errors.append({"guid": element.GlobalId, "error": f"{type(ex).__name__}: {ex}"})
+            continue
+        product = next((p for p in source.by_type("IfcProduct") if p.GlobalId == source_guid), None)
+        if product is None:
+            removed.append({"guid": element.GlobalId, "source_guid": source_guid, "name": element.Name or ""})
+            continue
+        source_sig = _signature(product)
+        host_sig = _signature(element)
+        source_changed = source_sig != str(data.get("SourceSignature") or "")
+        host_changed = host_sig != str(data.get("HostSignature") or "")
+        if not source_changed:
+            continue
+        if host_changed and strategy == "safe":
+            conflicts.append({"guid": element.GlobalId, "source_guid": source_guid,
+                              "name": element.Name or "", "class": product.is_a()})
+            continue
+        if host_changed and strategy == "host":
+            applies.append((element, product, source_sig, "host_kept"))
+            continue
+        applies.append((element, product, source_sig, "synced"))
+    made = {}
+
+    def action():
+        for element, product, source_sig, state in applies:
+            _apply_source(element, product)
+            pset = B._own_pset(element, MONITOR_PSET)
+            if pset is not None:
+                ifcopenshell.api.pset.edit_pset(B._model, pset=pset, properties={
+                    "SourceSignature": source_sig, "HostSignature": _signature(element),
+                    "Synced": _now(), "SyncState": state})
+        if remove_orphans and removed:
+            for item in removed:
+                element = B._model.by_guid(item["guid"])
+                ifcopenshell.api.root.remove_product(B._model, product=element)
+        return len(applies) + (len(removed) if remove_orphans else 0), \
+            [e.GlobalId for e, _p, _s, _st in applies], \
+            [item["guid"] for item in removed] if remove_orphans else []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:  # noqa: BLE001
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    made["applied"] = [{"guid": element.GlobalId, "source_guid": product.GlobalId,
+                        "name": element.Name or "", "state": state}
+                       for element, product, _sig, state in applies]
+    try:
+        for source in json.loads(monitor_status())["sources"]:
+            for item in source.get("added") or []:
+                added.append({"path": source["path"], **item})
+    except (TypeError, ValueError):
+        pass
+    return B._dump({**r, "applied": made["applied"], "conflicts": conflicts, "removed": removed,
+                    "added": added, "errors": errors})
 
 
 # ---------------------------------------------------------------- public commands

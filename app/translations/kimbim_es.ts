@@ -3353,6 +3353,21 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <translation>Monitorizar cambios...</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="7549" />
+      <source>Sync monitored...</source>
+      <translation>Sincronizar monitorizados...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7550" />
+      <source>Apply changed source attributes and properties to host copies that were not edited here</source>
+      <translation>Aplicar los atributos y propiedades de origen cambiados a las copias locales que no se editaron aquí</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="7610" />
+      <source>Monitored links: %1 applied, %2 conflict(s)</source>
+      <translation>Vínculos monitorizados: %1 aplicados, %2 conflicto(s)</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="7566" />
       <source>Make editable</source>
       <translation>Hacer editable</translation>

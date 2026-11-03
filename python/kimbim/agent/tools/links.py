@@ -102,3 +102,14 @@ def explode(session, guid, level=""):
 def monitor_status(session):
     """Report changed, removed and newly added source elements for every monitored (exploded) linked model."""
     return bridge(L.monitor_status)
+
+
+@tool("links.monitor_sync", {"properties": {
+    "strategy": {"type": "string", "enum": ["safe", "source", "host"],
+                 "description": "safe: leave conflicts; source: source wins; host: keep host edits (default safe)."},
+    "remove_orphans": {"type": "boolean",
+                       "description": "Delete host copies whose source element was removed (default false)."}}},
+    writes=True)
+def monitor_sync(session, strategy="safe", remove_orphans=False):
+    """Apply changed source attributes/properties to unmodified host copies; report or resolve conflicts."""
+    return bridge(L.sync_monitored, strategy, bool(remove_orphans))

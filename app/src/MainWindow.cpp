@@ -7515,6 +7515,8 @@ void MainWindow::linksDialog()
     auto* makeEditable = new QPushButton(tr("Make editable..."), &dialog); // D141
     makeEditable->setToolTip(tr("Replace this read-only link with normal, editable elements tagged with their source identity"));
     auto* monitor = new QPushButton(tr("Monitor changes..."), &dialog);
+    auto* syncMonitored = new QPushButton(tr("Sync monitored..."), &dialog); // D142
+    syncMonitored->setToolTip(tr("Apply changed source attributes and properties to host copies that were not edited here"));
     auto* updateChanged = new QPushButton(tr("Update changed"), &dialog);
     auto* update = new QPushButton(tr("Update"), &dialog);
     auto* remove = new QPushButton(tr("Unlink"), &dialog);
@@ -7522,6 +7524,7 @@ void MainWindow::linksDialog()
     buttons->addWidget(openSource);
     buttons->addWidget(makeEditable);
     buttons->addWidget(monitor);
+    buttons->addWidget(syncMonitored);
     buttons->addWidget(updateChanged);
     buttons->addWidget(update);
     buttons->addWidget(remove);
@@ -7561,6 +7564,18 @@ void MainWindow::linksDialog()
         }
         QMessageBox::information(&dialog, tr("Monitor changes"),
                                  lines.isEmpty() ? tr("No monitored linked models.") : lines.join(QLatin1Char('\n')));
+    });
+    connect(syncMonitored, &QPushButton::clicked, &dialog, [&] {
+        const QJsonObject r = bridge("sync_monitored", {QStringLiteral("safe"), QStringLiteral("false")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Linked models"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        refresh();
+        m_status->showMessage(tr("Monitored links: %1 applied, %2 conflict(s)")
+                                  .arg(r.value("applied").toArray().size())
+                                  .arg(r.value("conflicts").toArray().size()));
     });
     connect(openSource, &QPushButton::clicked, &dialog, [&] {
         const QJsonObject link = current();
