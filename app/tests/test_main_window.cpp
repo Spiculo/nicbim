@@ -955,6 +955,10 @@ private slots:
         QVERIFY(w.findChild<QComboBox*>(QStringLiteral("roofKind"))->isVisibleTo(bar));
         w.setTool(kimbim::MainWindow::Tool::Section);
         QVERIFY(w.findChild<QComboBox*>(QStringLiteral("sectionShape"))->isVisibleTo(bar));
+        w.setTool(kimbim::MainWindow::Tool::Slab); // D168: slope and edge fields
+        QVERIFY(w.findChild<QDoubleSpinBox*>(QStringLiteral("slabSlopeX"))->isVisibleTo(bar));
+        QVERIFY(w.findChild<QDoubleSpinBox*>(QStringLiteral("slabSlopeY"))->isVisibleTo(bar));
+        QVERIFY(w.findChild<QCheckBox*>(QStringLiteral("slabEdge"))->isVisibleTo(bar));
         w.setTool(kimbim::MainWindow::Tool::None);
         QVERIFY(bar->isHidden());
         QVERIFY(w.dockLayout()->view(w.currentViewKey())->isAncestorOf(bar)); // in the active tab

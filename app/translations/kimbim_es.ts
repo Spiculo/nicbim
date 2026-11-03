@@ -5415,6 +5415,26 @@ Licencia: GPL-3.0 o posterior</translation>
       </translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="3130" />
+      <source>Slope along X (rise over run; 0 is flat)</source>
+      <translation>Pendiente en X (subida por recorrido; 0 es plano)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3131" />
+      <source>Slope along Y (rise over run; 0 is flat)</source>
+      <translation>Pendiente en Y (subida por recorrido; 0 es plano)</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3132" />
+      <source>Edge</source>
+      <translation>Borde</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3134" />
+      <source>Add a raised edge member around the new slab</source>
+      <translation>Añadir un borde elevado alrededor de la losa nueva</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

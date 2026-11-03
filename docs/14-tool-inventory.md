@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D167).**
+**Status as of `main` (2026-11-03, after D112–D168).**
 
 ## How to read it
 
@@ -135,7 +135,7 @@ release notes, so check before relying on a single cell.
 | Wall attached to a slab or roof above | AC RV | ✅ | new | D97: top linked to the level above (Properties › Geometry › Top link); D164 adds *Slab or roof above*, which follows the underside of the lowest slab/roof over the wall; Model › Trim walls to roof |
 | Slabs by outline or from walls | all | ✅ | P0 | |
 | Slab openings | all | ✅ | P0 | |
-| Sloped slabs, slab edges | AC RV VW | 🟡 | new | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. The Model menu has *Slab slope...* and *Add slab edge*; the Slab tool has no fields for them yet |
+| Sloped slabs, slab edges | AC RV VW | ✅ | new | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. D168 adds slope X/Y and an Edge checkbox to the Slab tool strip, applied to each new slab |
 | Doors and windows in walls (parametric) | all | ✅ | P0 | Basic types |
 | Door/window variety: sliding, double, corner window, skylight, storefront | all | 🟡 | new | D97: double, sliding, double sliding doors; two- and three-panel windows; no corner windows, skylights or storefronts |
 | Door swing and window symbols in plan | all | ✅ | new | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |

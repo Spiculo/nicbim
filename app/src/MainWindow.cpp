@@ -3119,6 +3119,24 @@ void MainWindow::buildModelingToolbar()
                                                    : tr("Straight walls"));
     });
     bar->addField(m_wallGeometry);
+    // D168: the Slab tool's slope (rise over run) and an edge member around the new slab.
+    auto slabSlope = [&](const char* name, const QString& tip) {
+        auto* s = new QDoubleSpinBox(bar);
+        s->setObjectName(QLatin1String(name));
+        s->setRange(-1.0, 1.0);
+        s->setDecimals(3);
+        s->setSingleStep(0.01);
+        s->setValue(0.0);
+        s->setToolTip(tip);
+        bar->addField(s);
+        return s;
+    };
+    m_slabSlopeX = slabSlope("slabSlopeX", tr("Slope along X (rise over run; 0 is flat)"));
+    m_slabSlopeY = slabSlope("slabSlopeY", tr("Slope along Y (rise over run; 0 is flat)"));
+    m_slabEdge = new QCheckBox(tr("Edge"), bar);
+    m_slabEdge->setObjectName(QStringLiteral("slabEdge"));
+    m_slabEdge->setToolTip(tr("Add a raised edge member around the new slab"));
+    bar->addField(m_slabEdge);
     // D97: Archicad's Gravity: a placed object sits on the slab under it.
     m_objectGravity = new QCheckBox(tr("Gravity"), bar);
     m_objectGravity->setObjectName(QStringLiteral("objectGravity"));
@@ -3900,6 +3918,9 @@ void MainWindow::setTool(Tool tool)
         it.value()->setChecked(it.key() == int(tool));
     }
     m_wallHeight->setVisible(tool == Tool::Wall || tool == Tool::Column || tool == Tool::Beam || tool == Tool::Roof || tool == Tool::CurtainWall);
+    m_slabSlopeX->setVisible(tool == Tool::Slab);
+    m_slabSlopeY->setVisible(tool == Tool::Slab);
+    m_slabEdge->setVisible(tool == Tool::Slab);
     m_wallReference->setVisible(tool == Tool::Wall);
     m_wallGeometry->setVisible(tool == Tool::Wall);
     m_objectGravity->setVisible(tool == Tool::Object);
@@ -9237,6 +9258,20 @@ bool MainWindow::createSlab(const QVector<QPointF>& outline)
         return false;
     }
     afterEdit(r);
+    const QString guid = r.value("guid").toString();
+    const double sx = m_slabSlopeX ? m_slabSlopeX->value() : 0.0;
+    const double sy = m_slabSlopeY ? m_slabSlopeY->value() : 0.0;
+    if (!guid.isEmpty() && (sx != 0.0 || sy != 0.0)) { // D168: the tool strip's slope
+        const QJsonObject slope = bridge("set_slab_slope", {jsonList({guid}),
+            QString::number(sx, 'g', 17), QString::number(sy, 'g', 17)});
+        if (slope.value("ok").toBool())
+            afterEdit(slope);
+    }
+    if (!guid.isEmpty() && m_slabEdge && m_slabEdge->isChecked()) { // D168: the edge member
+        const QJsonObject edge = bridge("add_slab_edge", {guid, QStringLiteral("0.02"), QStringLiteral("0.2")});
+        if (edge.value("ok").toBool())
+            afterEdit(edge);
+    }
     return true;
 }
 

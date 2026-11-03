@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D167 plus explicit overrides for the final items.
+after D123–D168 plus explicit overrides for the final items.
 
-**Summary: 152 done, 54 deferred, 3 blocked.**
+**Summary: 153 done, 53 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -101,7 +101,7 @@ after D123–D167 plus explicit overrides for the final items.
 | 6. Building elements | Wall attached to a slab or roof above | **Done** | D97: top linked to the level above (Properties › Geometry › Top link); D164 adds *Slab or roof above*, which follows the underside of the lowest slab/roof over the wall; Model › Trim walls to roof. |
 | 6. Building elements | Slabs by outline or from walls | **Done** |  |
 | 6. Building elements | Slab openings | **Done** |  |
-| 6. Building elements | Sloped slabs, slab edges | **Deferred** | Core done; remainder deferred. D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. The Model menu has *Slab slope...* and *Add slab edge*; the Slab tool has no fields for them yet |
+| 6. Building elements | Sloped slabs, slab edges | **Done** | D109: `elements.set_slab_slope` tilts a slab about its local X/Y (rise over run; 0 returns flat, base kept in `KIMBIM_Slab`) and `create.slab_edge` adds `IfcMember` edges around a slab. D168 adds slope X/Y and an Edge checkbox to the Slab tool strip, applied to each new slab. |
 | 6. Building elements | Doors and windows in walls (parametric) | **Done** | Basic types |
 | 6. Building elements | Door/window variety: sliding, double, corner window, skylight, storefront | **Deferred** | Core done; remainder deferred. D97: double, sliding, double sliding doors; two- and three-panel windows; no corner windows, skylights or storefronts |
 | 6. Building elements | Door swing and window symbols in plan | **Done** | Door leaves and swing arcs in plan drawings (drawgen.door_swings) |

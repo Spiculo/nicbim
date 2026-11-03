@@ -898,6 +898,9 @@ private:
     QComboBox* m_types = nullptr;
     QDoubleSpinBox* m_wallHeight = nullptr;
     QComboBox* m_wallReference = nullptr; // D97: the Wall tool's reference line location
+    QDoubleSpinBox* m_slabSlopeX = nullptr; // D168: the Slab tool's slope (rise over run)
+    QDoubleSpinBox* m_slabSlopeY = nullptr;
+    QCheckBox* m_slabEdge = nullptr;        // D168: add an edge member to the new slab
     QAction* m_gridShow = nullptr; // D98: View > Construction grid
     QJsonObject m_pickedUp;         // D97: the picked-up settings (pick_up's reply)
     QAction* m_gridSnap = nullptr; // D98: View > Grid snap
