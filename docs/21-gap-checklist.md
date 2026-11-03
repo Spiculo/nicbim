@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D185 plus explicit overrides for the final items.
+after D123–D186 plus explicit overrides for the final items.
 
-**Summary: 169 done, 37 deferred, 3 blocked.**
+**Summary: 170 done, 36 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -139,7 +139,7 @@ after D123–D185 plus explicit overrides for the final items.
 | 8. Objects and libraries | Online object catalogues (BIMobject and others) | **Deferred** |  |
 | 8. Objects and libraries | Paste between projects (with types and materials) | **Deferred** |  |
 | 9. Organising the model | Layers (shown, locked, active) | **Done** | D57 |
-| 9. Organising the model | Layer combinations / view templates | **Deferred** | Core done; remainder deferred. D73: layer combinations in purposes; saved views store layer states; no view templates |
+| 9. Organising the model | Layer combinations / view templates | **Done** | D73 layer combinations/purposes and saved-view layer states; D186 adds named view templates (layer state, drawing scale, purpose) saved and applied from View › View templates, deletable. |
 | 9. Organising the model | Graphic overrides / view filters (rules by property) | **Done** | D73: override rules by property, class, kind, layer, material, chosen per purpose |
 | 9. Organising the model | Classifications (Uniclass, OmniClass, local) | **Done** | D106: Model › Classifications..., `IfcClassificationReference` assignment, `classifications.*` bridge/CLI tools; shipped system metadata (Uniclass 2015, OmniClass, Local), codes typed by the office |
 | 9. Organising the model | Element types: assign, edit type, update all | **Done** | D50 type values and overrides; D106 type manager (Model › Type manager...): list, create from selection, assign, edit name/description/tag and properties, update all removes overrides |

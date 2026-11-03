@@ -18,6 +18,23 @@ def test_a_new_model_has_the_default_settings():
     assert call("state")["dirty"] is False
 
 
+def test_view_templates_round_trip():
+    """D186: a template records the layer state, drawing scale and purpose, and applies them back."""
+    assert call("new_project", "Templates")["ok"]
+    assert call("set_project_settings", json.dumps(
+        {"hidden_layers": ["A-WALL"], "drawing_scale": 50, "purpose": "Permit"}))["ok"]
+    assert call("save_view_template", "Presentation")["ok"]
+    assert [t["name"] for t in call("view_templates")["templates"]] == ["Presentation"]
+    assert call("set_project_settings", json.dumps(
+        {"hidden_layers": [], "drawing_scale": 100, "purpose": ""}))["ok"]
+    assert call("apply_view_template", "Presentation")["ok"]
+    s = call("project_settings")["settings"]
+    assert s["hidden_layers"] == ["A-WALL"] and s["drawing_scale"] == 50 and s["purpose"] == "Permit"
+    assert call("delete_view_template", "Presentation")["ok"]
+    assert call("view_templates")["templates"] == []
+    assert not call("apply_view_template", "Presentation")["ok"]
+
+
 def test_changing_a_setting_marks_the_model_unsaved_and_unknown_keys_are_kept():
     assert call("new_project", "x")["ok"]
     r = call("set_project_settings", json.dumps({"plan_cut_height": 1.1, "future_key": {"a": 1}}))

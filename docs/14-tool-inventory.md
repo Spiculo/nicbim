@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D185).**
+**Status as of `main` (2026-11-03, after D112–D186).**
 
 ## How to read it
 
@@ -188,7 +188,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Layers (shown, locked, active) | AC VW | ✅ | — | D57 |
-| Layer combinations / view templates | AC RV VW | 🟡 | new | D73: layer combinations in purposes; saved views store layer states; no view templates |
+| Layer combinations / view templates | AC RV VW | ✅ | new | D73: layer combinations in purposes; saved views store layer states. D186 adds *Save view template...* and a *View templates* menu: a named snapshot of the layer state, drawing scale and purpose, applied back to the project (every view follows); templates can be deleted |
 | Graphic overrides / view filters (rules by property) | AC RV VW | ✅ | new | D73: override rules by property, class, kind, layer, material, chosen per purpose |
 | Classifications (Uniclass, OmniClass, local) | AC RV VW BB | ✅ | P1 | D106: Model › Classifications..., `IfcClassificationReference` assignment, `classifications.*` bridge/CLI tools; shipped system metadata (Uniclass 2015, OmniClass, Local), codes typed by the office |
 | Element types: assign, edit type, update all | all | ✅ | P0 | D50 type values and overrides; D106 type manager (Model › Type manager...): list, create from selection, assign, edit name/description/tag and properties, update all removes overrides |

@@ -5575,6 +5575,66 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Superficie alquilable:</translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="1206" />
+      <source>Save view &amp;template...</source>
+      <translation>Guardar &amp;plantilla de vista...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1208" />
+      <source>Save the current layer state, drawing scale and purpose under a name</source>
+      <translation>Guardar el estado de capas, la escala de dibujo y el propósito actuales con un nombre</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1211" />
+      <source>Save view template</source>
+      <translation>Guardar plantilla de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1217" />
+      <source>View template</source>
+      <translation>Plantilla de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1222" />
+      <source>View template "%1" saved</source>
+      <translation>Plantilla de vista "%1" guardada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1224" />
+      <source>View &amp;templates</source>
+      <translation>&amp;Plantillas de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1229" />
+      <source>No saved templates</source>
+      <translation>No hay plantillas guardadas</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1241" />
+      <source>View template "%1" applied</source>
+      <translation>Plantilla de vista "%1" aplicada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1245" />
+      <source>Delete template...</source>
+      <translation>Eliminar plantilla...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1253" />
+      <source>Delete view template</source>
+      <translation>Eliminar plantilla de vista</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1254" />
+      <source>Template:</source>
+      <translation>Plantilla:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1258" />
+      <source>View template "%1" deleted</source>
+      <translation>Plantilla de vista "%1" eliminada</translation>
+    </message>
+    <message>
       <location filename="../src/MarkupTools.cpp" line="107" />
       <source>Angle</source>
       <translation>Ángulo</translation>

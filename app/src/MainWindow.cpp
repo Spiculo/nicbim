@@ -1203,6 +1203,63 @@ void MainWindow::buildMenus()
     QAction* clearRange = view->addAction(tr("Clear view ran&ge"));
     clearRange->setObjectName(QStringLiteral("actionClearViewRange"));
     connect(clearRange, &QAction::triggered, this, &MainWindow::clearViewRange);
+    // D186: view templates: named snapshots of the layer state, drawing scale and purpose.
+    QAction* saveViewTemplate = view->addAction(tr("Save view &template..."));
+    saveViewTemplate->setObjectName(QStringLiteral("actionSaveViewTemplate"));
+    saveViewTemplate->setToolTip(tr("Save the current layer state, drawing scale and purpose under a name"));
+    connect(saveViewTemplate, &QAction::triggered, this, [this] {
+        bool ok = false;
+        const QString name = QInputDialog::getText(this, tr("Save view template"), tr("Name:"),
+                                                   QLineEdit::Normal, QString(), &ok);
+        if (!ok || name.trimmed().isEmpty())
+            return;
+        const QJsonObject r = bridge("save_view_template", {name.trimmed()});
+        if (!r.value("ok").toBool()) {
+            showError(tr("View template"), r.value("error").toString());
+            return;
+        }
+        m_status->showMessage(tr("View template \"%1\" saved").arg(name.trimmed()));
+    });
+    m_viewTemplatesMenu = view->addMenu(tr("View &templates"));
+    m_viewTemplatesMenu->setObjectName(QStringLiteral("menuViewTemplates"));
+    connect(m_viewTemplatesMenu, &QMenu::aboutToShow, this, [this] {
+        m_viewTemplatesMenu->clear();
+        const QJsonArray templates = bridge("view_templates").value("templates").toArray();
+        if (templates.isEmpty()) {
+            m_viewTemplatesMenu->addAction(tr("No saved templates"))->setEnabled(false);
+            return;
+        }
+        for (const auto& value : templates) {
+            const QString name = value.toObject().value("name").toString();
+            m_viewTemplatesMenu->addAction(name, this, [this, name] {
+                const QJsonObject r = bridge("apply_view_template", {name});
+                if (!r.value("ok").toBool()) {
+                    showError(tr("View template"), r.value("error").toString());
+                    return;
+                }
+                m_settings = bridge("project_settings").value("settings").toObject();
+                refreshLayers();
+                applyGraphics(bridge("graphics_state"));
+                m_status->showMessage(tr("View template \"%1\" applied").arg(name));
+            });
+        }
+        m_viewTemplatesMenu->addSeparator();
+        m_viewTemplatesMenu->addAction(tr("Delete template..."), this, [this] {
+            const QJsonArray list = bridge("view_templates").value("templates").toArray();
+            QStringList names;
+            for (const auto& value : list)
+                names << value.toObject().value("name").toString();
+            if (names.isEmpty())
+                return;
+            bool ok = false;
+            const QString name = QInputDialog::getItem(this, tr("Delete view template"), tr("Template:"),
+                                                       names, 0, false, &ok);
+            if (!ok)
+                return;
+            bridge("delete_view_template", {name});
+            m_status->showMessage(tr("View template \"%1\" deleted").arg(name));
+        });
+    });
     // D95: cut planes of any direction (Archicad's 3D Cutaway).
     m_cutPlanesMenu = view->addMenu(tr("Cut &planes"));
     m_cutPlanesMenu->setObjectName(QStringLiteral("menuCutPlanes"));

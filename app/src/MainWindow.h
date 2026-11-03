@@ -945,6 +945,7 @@ private:
     QVector<std::function<void(Viewport*)>> m_viewConnectors;
     ToolPalette* m_palette = nullptr;
     QMenu* m_viewMenu = nullptr;
+    QMenu* m_viewTemplatesMenu = nullptr; // D186: named layer/scale/purpose snapshots
     ToolOptionsBar* m_toolOptions = nullptr;
     StatusStrip* m_status = nullptr;
     // Each view has its own cuts (a plan tab is cut at its level; the 3D tab need not be).
