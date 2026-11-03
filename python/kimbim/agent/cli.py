@@ -32,7 +32,7 @@ GROUP_HELP = {
     "sheets": "sheets", "schedules": "schedules", "checks": "model checks", "levels": "levels",
     "selection": "the app's selection", "script": "run Python scripts", "snapshot": "pictures of the model",
     "serve": "keep a project open for agent commands", "mcp": "MCP server for AI agents",
-    "setup": "configure an AI client", "sessions": "stored conversations, branches and worktrees (D111)",
+    "setup": "configure an AI client or the file associations", "sessions": "stored conversations, branches and worktrees (D111)",
     "help": "this help, or the agent tools as a Markdown table",
 }
 
@@ -543,10 +543,13 @@ def _people(group, top) -> None:
     mp.add_argument("--session", default="", metavar="ID", help="a stored session to work in")
     mp.set_defaults(handler=_mcp)
     st = top.add_parser("setup", help=GROUP_HELP["setup"],
-                        description="Write the AI client's configuration for `kimbim mcp` (merged into its file).")
-    st.add_argument("client", choices=("claude-desktop", "claude-code", "opencode"))
+                        description="Write the AI client's configuration for `kimbim mcp`, or open .kim/.ifc "
+                                    "files with the app (associations).")
+    st.add_argument("client", choices=("claude-desktop", "claude-code", "opencode", "associations"))
     st.add_argument("--print", dest="print_only", action="store_true",
                     help="print the configuration (for claude-code, the `claude mcp add` line) instead of writing it")
+    st.add_argument("--exe", default="", help="associations: the kimbim-app executable (default: KIMBIM_APP or PATH)")
+    st.add_argument("--remove", action="store_true", help="associations: remove the file associations")
     _add_globals(st, False, only_project)
     st.set_defaults(handler=_setup)
     hp = top.add_parser("help", help=GROUP_HELP["help"], description=GROUP_HELP["help"] + ".")
@@ -955,6 +958,28 @@ def _mcp(ns) -> int:
 
 
 def _setup(ns) -> int:
+    if ns.client == "associations":
+        from .. import associations as assoc
+
+        exe = ns.exe or assoc.default_exe()
+        try:
+            if ns.remove:
+                removed = assoc.remove()
+                for path in removed:
+                    print(f"removed {path}")
+                return 0
+            if ns.print_only:
+                print(assoc.describe(assoc.plan(exe)))
+                return 0
+            written = assoc.apply(exe)
+        except (OSError, ValueError) as e:
+            print(_t("cli_error", message=e), file=sys.stderr)
+            return 1
+        for path in written:
+            print(f"wrote {path}")
+        print(f".kim and .ifc now open with {exe}")
+        return 0
+
     from . import clients
 
     try:

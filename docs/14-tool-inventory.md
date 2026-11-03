@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D138).**
+**Status as of `main` (2026-11-03, after D112–D139).**
 
 ## How to read it
 
@@ -33,7 +33,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Open / save IFC | AC RV VW BB | ✅ | P0 | IFC4; IFC2X3 opens, edits and saves (Duplex and Clinic corpus files; `test_e2e`, `test_levels`, `test_dxf`) |
-| Installer / portable build | AC RV VW | 🟡 | P0 | `pixi run -e pack package` writes a relocatable `dist/KimBim` (app, Python, runtime); `pixi run check-package` launches it with pixi removed and exports the sample sheet. No installer, file association or code signing yet |
+| Installer / portable build | AC RV VW | 🟡 | P0 | `pixi run -e pack package` writes a relocatable `dist/KimBim` (app, Python, runtime); `pixi run check-package` launches it with pixi removed and exports the sample sheet. D139: `kimbim setup associations [--exe PATH] [--print|--remove]` adds per-user `.kim`/`.ifc` associations (HKCU registry on Windows, a `kimbim.desktop` + MIME package + `xdg-mime` on Linux). No installer or code signing yet |
 | New project | all | ✅ | P0 | IFC4 in mm, levels |
 | Project templates (units, levels, types, views, title blocks) | AC RV VW | ✅ | P0 | D72: office templates (File › New from template, Save as template) |
 | Autosave, crash recovery | AC RV VW | ✅ | P0 | D72: recovery copies on a timer, offered again after a crash; no oplog yet ([03](03-versioning.md)) |
