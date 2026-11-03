@@ -128,9 +128,143 @@ def write(tmp_path, name, content):
     return str(path)
 
 
+def dae_cube() -> str:
+    positions = " ".join(f"{c:g}" for p in CUBE_VERTICES for c in p)
+    polygons = " ".join(f"{len(q)} " + " ".join(str(i) for i in q) for q in CUBE_QUADS)
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset><up_axis>Z_UP</up_axis></asset>
+  <library_geometries>
+    <geometry id="cube-mesh" name="cube">
+      <mesh>
+        <source id="cube-positions">
+          <float_array id="cube-positions-array" count="24">{positions}</float_array>
+          <technique_common><accessor source="#cube-positions-array" count="8" stride="3"/></technique_common>
+        </source>
+        <vertices id="cube-vertices"><input semantic="POSITION" source="#cube-positions"/></vertices>
+        <polylist material="default" count="{len(CUBE_QUADS)}">
+          <input semantic="VERTEX" source="#cube-vertices" offset="0"/>
+          <vcount>{' '.join('4' for _ in CUBE_QUADS)}</vcount>
+          <p>{polygons}</p>
+        </polylist>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene">
+      <node id="cube-node">
+        <matrix>1 0 0 10  0 1 0 0  0 0 1 0  0 0 0 1</matrix>
+        <instance_geometry url="#cube-mesh"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+</COLLADA>
+"""
+
+
+GLTF_CUBE = {
+    "asset": {"version": "2.0"},
+    "scene": 0,
+    "scenes": [{"nodes": [0]}],
+    "nodes": [{"mesh": 0, "translation": [2, 0, 0]}],
+    "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+    "accessors": [
+        {"bufferView": 0, "componentType": 5126, "count": 8, "type": "VEC3"},
+        {"bufferView": 1, "componentType": 5123, "count": 36, "type": "SCALAR"},
+    ],
+    "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 96},
+                    {"buffer": 0, "byteOffset": 96, "byteLength": 72}],
+    "buffers": [{"byteLength": 168}],
+}
+
+
+def gltf_bytes() -> bytes:
+    positions = b"".join(struct.pack("<3f", *p) for p in CUBE_VERTICES)
+    indices = []
+    for quad in CUBE_QUADS:
+        indices += [quad[0], quad[1], quad[2], quad[0], quad[2], quad[3]]
+    return positions + b"".join(struct.pack("<H", i) for i in indices)
+
+
+def gltf_file(tmp_path, name="cube.gltf") -> str:
+    import base64
+
+    document = json.loads(json.dumps(GLTF_CUBE))
+    document["buffers"][0]["uri"] = "data:application/octet-stream;base64," + \
+        base64.b64encode(gltf_bytes()).decode("ascii")
+    return write(tmp_path, name, json.dumps(document))
+
+
+def glb_file(tmp_path, name="cube.glb") -> str:
+    document = json.loads(json.dumps(GLTF_CUBE))
+    body = gltf_bytes()
+    document["buffers"][0]["byteLength"] = len(body)
+    payload = json.dumps(document).encode("utf-8")
+    payload += b" " * (-len(payload) % 4)
+    chunks = struct.pack("<II", len(payload), 0x4E4F534A) + payload
+    chunks += struct.pack("<II", len(body), 0x004E4942) + body
+    return write(tmp_path, name, b"glTF" + struct.pack("<II", 2, 12 + len(chunks)) + chunks)
+
+
+FBX_TRIANGLE = """; FBX 7.4.0 project file
+FBXHeaderExtension:  {
+    FBXVersion: 7400
+}
+Objects:  {
+    Geometry: 1, "Geometry::Triangle", "Mesh" {
+        Vertices: *9 {
+            a: 0,0,0,2,0,0,0,2,0
+        }
+        PolygonVertexIndex: *3 {
+            a: 0,1,-3
+        }
+    }
+}
+"""
+
+
 def test_mesh_formats():
     r = call(M.mesh_formats)
-    assert r == {"ok": True, "formats": ["obj", "stl", "ply"]}
+    assert r == {"ok": True, "formats": ["obj", "stl", "ply", "dae", "gltf", "glb", "fbx"]}
+
+
+def test_collada_cube_with_a_node_transform(tmp_path):
+    f, level = open_model()
+    r = call(M.import_mesh, write(tmp_path, "cube.dae", dae_cube()), level, json.dumps({"name": "Collada cube"}))
+    assert r["ok"], r
+    assert r["format"] == "dae" and r["triangles"] == 12  # six quads, fanned by the polylist
+    assert r["bounds"] == {"min": [10.0, 0.0, 0.0], "max": [11.0, 1.0, 1.0]}
+    assert ifcopenshell.util.element.get_pset(f.by_guid(r["guid"]), M.PSET)["Format"] == "dae"
+    assert issues() == []
+
+
+@pytest.mark.parametrize("kind", ["gltf", "glb"])
+def test_gltf_and_glb_cube_are_y_up(tmp_path, kind):
+    f, level = open_model()
+    path = gltf_file(tmp_path) if kind == "gltf" else glb_file(tmp_path)
+    r = call(M.import_mesh, path, level)
+    assert r["ok"], r
+    assert r["format"] == kind and r["triangles"] == 12
+    # glTF Y-up: (x, y, z) -> (x, -z, y); the node sits at x = 2.
+    assert r["bounds"] == {"min": [2.0, -1.0, 0.0], "max": [3.0, 0.0, 1.0]}
+    assert issues() == []
+
+
+def test_ascii_fbx_triangle(tmp_path):
+    f, level = open_model()
+    r = call(M.import_mesh, write(tmp_path, "triangle.fbx", FBX_TRIANGLE), level)
+    assert r["ok"], r
+    assert r["format"] == "fbx" and r["triangles"] == 1
+    assert r["bounds"] == {"min": [0.0, 0.0, 0.0], "max": [2.0, 2.0, 0.0]}
+    assert issues() == []
+
+
+def test_binary_fbx_is_refused_clearly(tmp_path):
+    _f, level = open_model()
+    r = call(M.import_mesh, write(tmp_path, "binary.fbx",
+                                  b"Kaydara FBX Binary  \x00\x1a\x00" + b"\x00" * 64), level)
+    assert r["ok"] is False
+    assert "ASCII FBX" in r["error"]
 
 
 def test_obj_cube_scaled_rotated_and_contained(tmp_path):

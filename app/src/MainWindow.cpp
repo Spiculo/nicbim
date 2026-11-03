@@ -556,8 +556,12 @@ void MainWindow::buildMenus()
     connect(exportIfc, &QAction::triggered, this, &MainWindow::exportIfcDialog);
     QAction* importMesh = file->addAction(tr("Import &mesh...")); // general mesh import
     importMesh->setObjectName(QStringLiteral("actionImportMesh"));
-    importMesh->setToolTip(tr("Import an OBJ, STL or PLY mesh as an object on a level"));
+    importMesh->setToolTip(tr("Import an OBJ, STL, PLY, COLLADA, glTF or ASCII FBX mesh as an object on a level"));
     connect(importMesh, &QAction::triggered, this, &MainWindow::importMeshDialog);
+    QAction* importCloud = file->addAction(tr("Import point c&loud...")); // D125
+    importCloud->setObjectName(QStringLiteral("actionImportPointCloud"));
+    importCloud->setToolTip(tr("Import a scan (XYZ, PTS, CSV or uncompressed LAS) as a visible object on a level"));
+    connect(importCloud, &QAction::triggered, this, &MainWindow::importPointCloudDialog);
     QAction* linkModel = file->addAction(tr("Link &model...")); // D117: an external reference
     linkModel->setObjectName(QStringLiteral("actionLinkModel"));
     linkModel->setToolTip(tr("Show another IFC file in this project as a read-only reference"));
@@ -6925,7 +6929,7 @@ void MainWindow::keynotesDialog()
 void MainWindow::importMeshDialog()
 {
     const QString path = QFileDialog::getOpenFileName(this, tr("Import mesh"), QString(),
-        tr("Meshes (*.obj *.stl *.ply);;All files (*)"));
+        tr("Meshes (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;All files (*)"));
     if (path.isEmpty())
         return;
     const QJsonArray storeys = bridge("storeys").value("storeys").toArray();
@@ -6984,6 +6988,82 @@ void MainWindow::importMeshDialog()
         setSelection({r.value("guid").toString()});
     }
     m_status->showMessage(tr("Mesh imported: %n triangle(s)", nullptr, r.value("triangles").toInt()));
+}
+
+void MainWindow::importPointCloudDialog()
+{
+    const QString path = QFileDialog::getOpenFileName(this, tr("Import point cloud"), QString(),
+        tr("Point clouds (*.xyz *.pts *.csv *.txt *.las);;All files (*)"));
+    if (path.isEmpty())
+        return;
+    const QJsonArray storeys = bridge("storeys").value("storeys").toArray();
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Import point cloud"));
+    auto* form = new QFormLayout(&dialog);
+    auto* level = new QComboBox(&dialog);
+    for (const auto& value : storeys) {
+        const QJsonObject storey = value.toObject();
+        level->addItem(storey.value("name").toString(), storey.value("guid").toString());
+    }
+    auto* name = new QLineEdit(QFileInfo(path).completeBaseName(), &dialog);
+    auto* scale = new QDoubleSpinBox(&dialog);
+    scale->setRange(0.0001, 10000.0);
+    scale->setDecimals(4);
+    scale->setValue(1.0);
+    auto* rotation = new QDoubleSpinBox(&dialog);
+    rotation->setRange(-360.0, 360.0);
+    rotation->setDecimals(2);
+    rotation->setSuffix(tr(" degrees"));
+    auto* maxPoints = new QSpinBox(&dialog);
+    maxPoints->setRange(100, 2000000);
+    maxPoints->setValue(20000);
+    auto* marker = new QDoubleSpinBox(&dialog);
+    marker->setRange(0.001, 2.0);
+    marker->setDecimals(3);
+    marker->setValue(0.03);
+    marker->setSuffix(tr(" m"));
+    auto spin = [&](double lo, double hi, double value) {
+        auto* box = new QDoubleSpinBox(&dialog);
+        box->setRange(lo, hi);
+        box->setDecimals(3);
+        box->setValue(value);
+        box->setSuffix(tr(" m"));
+        return box;
+    };
+    auto* x = spin(-1e6, 1e6, 0.0);
+    auto* y = spin(-1e6, 1e6, 0.0);
+    auto* z = spin(-1e6, 1e6, 0.0);
+    form->addRow(tr("Level:"), level);
+    form->addRow(tr("Name:"), name);
+    form->addRow(tr("Scale:"), scale);
+    form->addRow(tr("Rotation:"), rotation);
+    form->addRow(tr("X:"), x);
+    form->addRow(tr("Y:"), y);
+    form->addRow(tr("Z:"), z);
+    form->addRow(tr("Maximum points:"), maxPoints);
+    form->addRow(tr("Marker size:"), marker);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    QJsonObject options{{"name", name->text().trimmed()}, {"scale", scale->value()},
+        {"rotation", rotation->value()}, {"x", x->value()}, {"y", y->value()}, {"z", z->value()},
+        {"max_points", maxPoints->value()}, {"marker", marker->value()}};
+    const QJsonObject r = bridge("import_pointcloud", {path, level->currentData().toString(),
+        QString::fromUtf8(QJsonDocument(options).toJson(QJsonDocument::Compact))});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Import point cloud"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    if (r.value("guid").isString()) {
+        m_viewport->selectGuids({r.value("guid").toString()});
+        setSelection({r.value("guid").toString()});
+    }
+    m_status->showMessage(tr("Point cloud imported: %1 of %2 point(s)")
+                              .arg(r.value("imported").toInt()).arg(r.value("points").toInt()));
 }
 
 void MainWindow::attributesDialog()

@@ -1,22 +1,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Generic mesh import (SketchUp, Rhino, OBJ, STL, PLY): a triangulated object from a mesh file.
+"""Generic mesh import (SketchUp, Rhino, OBJ, STL, PLY, COLLADA, glTF and ASCII FBX): a triangulated
+object from a mesh file.
 
-The file is parsed here (no extra dependency), polygons are fanned into triangles, and the points are
-scaled, rotated about Z and translated into world metres. The object is one
-`IfcBuildingElementProxy` (ObjectType "Imported mesh", IFC4 and IFC2X3) with a tessellated body: IFC4
-`IfcTriangulatedFaceSet`, IFC2X3 `IfcShellBasedSurfaceModel` (through terrain._representation). It is
-contained in a level and carries `KIMBIM_MeshImport`:
+The file is parsed here (no extra dependency), polygons are fanned into triangles, COLLADA/glTF node
+transforms are applied and glTF's Y-up is turned into IFC's Z-up, then the points are scaled, rotated
+about Z and translated into world metres. The object is one `IfcBuildingElementProxy` (ObjectType
+"Imported mesh", IFC4 and IFC2X3) with a tessellated body: IFC4 `IfcTriangulatedFaceSet`, IFC2X3
+`IfcShellBasedSurfaceModel` (through terrain._representation). It is contained in a level and carries
+`KIMBIM_MeshImport`:
 
-    Source, Format (obj/stl/ply), Triangles, Scale, Rotation, Bounds (JSON)
+    Source, Format (obj/stl/ply/dae/gltf/glb/fbx), Triangles, Scale, Rotation, Bounds (JSON)
 
 Same protocol as app_bridge: strings in, JSON out, never raise.
 """
 from __future__ import annotations
 
+import base64
 import json
 import math
 import pathlib
+import re
 import struct
+import xml.etree.ElementTree as ET
 
 import ifcopenshell.api.geometry
 import ifcopenshell.api.pset
@@ -30,7 +35,7 @@ from . import terrain
 
 PSET = "KIMBIM_MeshImport"
 OBJECT_TYPE = "Imported mesh"
-FORMATS = ("obj", "stl", "ply")
+FORMATS = ("obj", "stl", "ply", "dae", "gltf", "glb", "fbx")
 
 _FLOAT = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?"
 
@@ -242,10 +247,365 @@ def _ply(text: str) -> tuple[list, list]:
     return points, faces
 
 
+# ---------------------------------------------------------------- COLLADA (.dae)
+
+def _local(tag: str) -> str:
+    """An XML tag without its namespace."""
+    return tag.rsplit("}", 1)[-1]
+
+
+def _mat(values, count: int = 16) -> np.ndarray:
+    return np.array([float(v) for v in values], dtype=float).reshape(4, 4)
+
+
+def _dae_transform(node) -> np.ndarray:
+    """A COLLADA node's local matrix (matrix, or translate/rotate/scale)."""
+    matrix = np.eye(4)
+    for child in node:
+        tag = _local(child.tag)
+        text = (child.text or "").split()
+        if tag == "matrix" and len(text) >= 16:
+            matrix = matrix @ _mat(text[:16])
+        elif tag == "translate" and len(text) >= 3:
+            t = np.eye(4)
+            t[:3, 3] = [float(v) for v in text[:3]]
+            matrix = matrix @ t
+        elif tag == "rotate" and len(text) >= 4:
+            axis = np.array([float(v) for v in text[:3]], dtype=float)
+            length = np.linalg.norm(axis)
+            if not length:
+                continue
+            axis /= length
+            angle = math.radians(float(text[3]))
+            c, s = math.cos(angle), math.sin(angle)
+            r = np.eye(4)
+            x, y, z = axis
+            r[:3, :3] = [[c + x * x * (1 - c), x * y * (1 - c) - z * s, x * z * (1 - c) + y * s],
+                         [y * x * (1 - c) + z * s, c + y * y * (1 - c), y * z * (1 - c) - x * s],
+                         [z * x * (1 - c) - y * s, z * y * (1 - c) + x * s, c + z * z * (1 - c)]]
+            matrix = matrix @ r
+        elif tag == "scale" and len(text) >= 3:
+            s = np.diag([float(v) for v in text[:3]] + [1.0])
+            matrix = matrix @ s
+    return matrix
+
+
+def _dae_points(points: list, faces: list, positions, groups: list, world: np.ndarray) -> None:
+    """Append one primitive's positions and triangles, transformed by `world`."""
+    base = len(points)
+    for x, y, z in positions:
+        points.append(tuple(world @ np.array([x, y, z, 1.0]))[:3])
+    for corners in groups:
+        faces.append([base + corners[k] for k in range(len(corners))])
+
+
+def _dae_primitive(el, sources, vertices, points, faces, world) -> None:
+    inputs = [(i.get("semantic"), (i.get("source") or "").lstrip("#"), int(i.get("offset", "0")))
+              for i in el if _local(i.tag) == "input"]
+    vertex = next((i for i in inputs if i[0] == "VERTEX"), None)
+    if vertex is None:
+        return
+    source = vertices.get(vertex[1]) or sources.get(vertex[1])
+    if not source:
+        return
+    stride = max((i[2] for i in inputs), default=0) + 1
+    p = next((c for c in el if _local(c.tag) == "p"), None)
+    if p is None:
+        return
+    values = [int(v) for v in (p.text or "").split()]
+    off = vertex[2]
+    tag = _local(el.tag)
+    groups = []
+    if tag == "triangles":
+        for start in range(0, len(values) - stride * 3 + 1, stride * 3):
+            groups.append([values[start + off], values[start + stride + off], values[start + 2 * stride + off]])
+    elif tag == "polylist":
+        counts = next((c for c in el if _local(c.tag) == "vcount"), None)
+        cursor = 0
+        for count in [int(v) for v in (counts.text or "").split()] if counts is not None else []:
+            corners = [values[cursor + k * stride + off] for k in range(count)]
+            cursor += count * stride
+            groups.extend(_fan(corners))
+    elif tag in ("trifans", "tristrips"):
+        count = len(values) // stride
+        corners = [values[k * stride + off] for k in range(count)]
+        if tag == "trifans":
+            groups.extend(_fan(corners))
+        else:
+            for k in range(len(corners) - 2):
+                groups.append([corners[k], corners[k + 1], corners[k + 2]] if k % 2 == 0
+                              else [corners[k + 1], corners[k], corners[k + 2]])
+    if not groups:
+        return
+    limit = len(source)
+    if any(i < 0 or i >= limit for group in groups for i in group):
+        raise ValueError("a COLLADA face index is outside its vertex list")
+    _dae_points(points, faces, source, groups, world)
+
+
+def _dae(text: str) -> tuple[list, list]:
+    """COLLADA 1.4/1.5 meshes: positions, triangles/polylists/fans/strips and the node transforms."""
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError as ex:
+        raise ValueError(f"not a COLLADA file: {ex}") from None
+    sources, vertices, geometries = {}, {}, {}
+    for el in root.iter():
+        tag = _local(el.tag)
+        if tag != "source":
+            continue
+        source_id = el.get("id")
+        array = next((c for c in el if _local(c.tag) == "float_array"), None)
+        if not source_id or array is None:
+            continue
+        stride = next((int(a.get("stride", "3")) for a in el.iter() if _local(a.tag) == "accessor"), 3)
+        values = [float(v) for v in (array.text or "").split()]
+        sources[source_id] = [tuple(values[k:k + 3])
+                              for k in range(0, len(values) - stride + 1, stride)]
+    for el in root.iter():
+        tag = _local(el.tag)
+        if tag == "vertices" and el.get("id"):
+            position = next((i for i in el if _local(i.tag) == "input"
+                             and i.get("semantic") == "POSITION"), None)
+            if position is not None:
+                vertices[el.get("id")] = sources.get((position.get("source") or "").lstrip("#"))
+        elif tag == "geometry" and el.get("id"):
+            mesh = next((c for c in el if _local(c.tag) == "mesh"), None)
+            if mesh is not None:
+                geometries[el.get("id")] = mesh
+    points, faces = [], []
+    if not geometries:
+        raise ValueError("the COLLADA file has no mesh geometry")
+
+    def mesh_triangles(mesh, world):
+        for primitive in mesh:
+            if _local(primitive.tag) in ("triangles", "polylist", "trifans", "tristrips"):
+                _dae_primitive(primitive, sources, vertices, points, faces, world)
+
+    def walk(node, parent):
+        world = parent @ _dae_transform(node)
+        for child in node:
+            tag = _local(child.tag)
+            if tag == "instance_geometry":
+                mesh = geometries.get((child.get("url") or "").lstrip("#"))
+                if mesh is not None:
+                    mesh_triangles(mesh, world)
+            elif tag == "instance_node":
+                for candidate in root.iter():
+                    if _local(candidate.tag) == "node" and candidate.get("id") == (child.get("url") or "").lstrip("#"):
+                        walk(candidate, world)
+            elif tag == "node":
+                walk(child, world)
+
+    scenes = [el for el in root.iter() if _local(el.tag) == "visual_scene"]
+    if scenes:
+        for scene in scenes:
+            for node in scene:
+                if _local(node.tag) == "node":
+                    walk(node, np.eye(4))
+    else:  # no scene: every node or, failing that, every geometry at the origin
+        nodes = [el for el in root.iter() if _local(el.tag) == "node"]
+        if nodes:
+            for node in nodes:
+                walk(node, np.eye(4))
+        else:
+            for mesh in geometries.values():
+                mesh_triangles(mesh, np.eye(4))
+    if not faces:
+        raise ValueError("the COLLADA file has no triangles")
+    return points, faces
+
+
+# ---------------------------------------------------------------- glTF 2.0 (.gltf/.glb)
+
+_GLTF_COMPONENT = {5120: np.int8, 5121: np.uint8, 5122: np.int16, 5123: np.uint16,
+                   5125: np.uint32, 5126: np.float32}
+_GLTF_WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
+
+
+def _gltf_buffers(document: dict, path: str, binary: bytes | None) -> list[bytes]:
+    out = []
+    for k, buffer in enumerate(document.get("buffers") or []):
+        uri = buffer.get("uri")
+        if not uri:
+            out.append(binary if k == 0 and binary is not None else b"")
+        elif uri.startswith("data:"):
+            out.append(base64.b64decode(uri.split(",", 1)[1]))
+        else:
+            out.append((pathlib.Path(path).parent / uri).read_bytes())
+    return out
+
+
+def _gltf_accessor(document: dict, buffers: list[bytes], index: int):
+    accessor = document["accessors"][index]
+    width = _GLTF_WIDTH[accessor["type"]]
+    dtype = np.dtype(_GLTF_COMPONENT[accessor["componentType"]]).newbyteorder("<")
+    view = document["bufferViews"][accessor["bufferView"]]
+    data = buffers[view.get("buffer", 0)]
+    offset = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+    stride = view.get("byteStride") or dtype.itemsize * width
+    count = accessor["count"]
+    if stride == dtype.itemsize * width:
+        return np.frombuffer(data, dtype=dtype, count=count * width, offset=offset).reshape(count, width)
+    rows = [np.frombuffer(data, dtype=dtype, count=width, offset=offset + k * stride) for k in range(count)]
+    return np.array(rows)
+
+
+def _glb(data: bytes) -> tuple[dict, bytes | None]:
+    if len(data) < 20 or data[:4] != b"glTF":
+        raise ValueError("not a GLB file")
+    version, _length = struct.unpack_from("<II", data, 4)
+    if version != 2:
+        raise ValueError(f"only glTF 2.0 is supported (this file is glTF {version})")
+    cursor, document, binary = 12, None, None
+    while cursor + 8 <= len(data):
+        length, kind = struct.unpack_from("<II", data, cursor)
+        chunk = data[cursor + 8:cursor + 8 + length]
+        if kind == 0x4E4F534A:
+            document = json.loads(chunk.decode("utf-8-sig"))
+        elif kind == 0x004E4942:
+            binary = chunk
+        cursor += 8 + length + (-length % 4)
+    if document is None:
+        raise ValueError("the GLB file has no JSON chunk")
+    return document, binary
+
+
+def _gltf_matrix(node: dict) -> np.ndarray:
+    if "matrix" in node:
+        return _mat(node["matrix"]).T  # glTF stores matrices column-major
+    t = np.eye(4)
+    t[:3, 3] = node.get("translation") or [0, 0, 0]
+    r = np.eye(4)
+    if "rotation" in node:
+        x, y, z, w = node["rotation"]
+        r[:3, :3] = [[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]]
+    s = np.diag([*(node.get("scale") or [1, 1, 1]), 1.0])
+    return t @ r @ s
+
+
+def _gltf(data: bytes, path: str) -> tuple[list, list]:
+    """glTF 2.0 .gltf or .glb: indexed triangles from every mesh, with node transforms, Y-up to Z-up."""
+    is_glb = data[:4] == b"glTF"
+    if is_glb:
+        document, binary = _glb(data)
+    else:
+        document, binary = json.loads(data.decode("utf-8-sig")), None
+    if document.get("asset", {}).get("version", "2").split(".")[0] != "2":
+        raise ValueError("only glTF 2.0 is supported")
+    buffers = _gltf_buffers(document, path, binary)
+    nodes = document.get("nodes") or []
+    scene = (document.get("scenes") or [{}])[document.get("scene", 0)]
+    world = {k: _gltf_matrix(n) for k, n in enumerate(nodes)}
+    done = set()
+
+    def place(k, parent):
+        if k in done:
+            return
+        done.add(k)
+        world[k] = parent @ world[k]
+        for child in nodes[k].get("children") or []:
+            place(child, world[k])
+
+    for k in scene.get("nodes") or list(range(len(nodes))) if (scene or nodes) else []:
+        if k < len(nodes):
+            place(k, np.eye(4))
+
+    # glTF is Y-up: (x, y, z) -> (x, -z, y) in IFC's Z-up world.
+    up = np.array([[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=float)
+    points, faces = [], []
+    for k, node in enumerate(nodes):
+        mesh = document.get("meshes", [])[node["mesh"]] if "mesh" in node else None
+        if mesh is None:
+            continue
+        matrix = up @ world[k]
+        for primitive in mesh.get("primitives") or []:
+            attributes = primitive.get("attributes") or {}
+            if "POSITION" not in attributes:
+                continue
+            mode = primitive.get("mode", 4)
+            if mode not in (4, 5, 6):
+                continue  # points and lines are not triangles
+            vertices = _gltf_accessor(document, buffers, attributes["POSITION"])
+            if "indices" in primitive:
+                indices = _gltf_accessor(document, buffers, primitive["indices"]).reshape(-1).tolist()
+            else:
+                indices = list(range(len(vertices)))
+            base = len(points)
+            for x, y, z in vertices[:, :3]:
+                points.append(tuple(matrix @ np.array([float(x), float(y), float(z), 1.0]))[:3])
+            if mode == 4:
+                for start in range(0, len(indices) - 2, 3):
+                    faces.append([base + int(indices[start]), base + int(indices[start + 1]),
+                                  base + int(indices[start + 2])])
+            elif mode == 5:
+                for start in range(len(indices) - 2):
+                    a, b, c = indices[start:start + 3]
+                    faces.append([base + int(a), base + int(b), base + int(c)] if start % 2 == 0
+                                 else [base + int(b), base + int(a), base + int(c)])
+            else:
+                for start in range(len(indices) - 2):
+                    faces.append([base + int(indices[0]), base + int(indices[start + 1]),
+                                  base + int(indices[start + 2])])
+    if not faces:
+        raise ValueError("the glTF file has no triangles")
+    return points, faces
+
+
+# ---------------------------------------------------------------- ASCII FBX
+
+def _fbx_array(block: str, name: str) -> list[float]:
+    match = re.search(rf"{name}\s*:\s*\*\d+\s*\{{(.*?)\}}", block, re.S)
+    if match is None:
+        return []
+    body = re.sub(r"\ba\s*:", "", match.group(1))
+    return [float(v) for v in re.split(r"[,\s]+", body.strip()) if v]
+
+
+def _fbx(text: str) -> tuple[list, list]:
+    """ASCII FBX: vertices and polygon indices (the binary format is refused with a clear message)."""
+    if text[:23].startswith("Kaydara FBX Binary") or "\x00" in text[:200]:
+        raise ValueError("binary FBX is not supported; export the model as ASCII FBX or glTF")
+    lines = text.splitlines()
+    points, faces = [], []
+    for index, line in enumerate(lines):
+        if not line.lstrip().startswith("Geometry:"):
+            continue
+        depth, started, block = 0, False, []
+        for current in lines[index:]:
+            depth += current.count("{") - current.count("}")
+            block.append(current)
+            started = started or "{" in current
+            if started and depth <= 0:
+                break
+        body = "\n".join(block)
+        vertices = _fbx_array(body, "Vertices")
+        indices = _fbx_array(body, "PolygonVertexIndex")
+        if not vertices or not indices:
+            continue
+        base = len(points)
+        points.extend(tuple(vertices[k:k + 3]) for k in range(0, len(vertices) - 2, 3))
+        corners = []
+        for value in indices:
+            value = int(value)
+            if value < 0:  # the last vertex of an FBX polygon is bitwise-noted
+                corners.append(~value)
+                if len(corners) >= 3 and max(corners) < len(points) - base:
+                    faces.extend([[base + i for i in triangle] for triangle in _fan(corners)])
+                corners = []
+            else:
+                corners.append(value)
+    if not faces:
+        raise ValueError("the FBX file has no polygon geometry")
+    return points, faces
+
+
 def _format(path: str) -> str:
     suffix = pathlib.Path(path).suffix.lower().lstrip(".")
     if suffix not in FORMATS:
-        raise ValueError(f"unsupported mesh format: {suffix or 'none'} (expected obj, stl or ply)")
+        raise ValueError(f"unsupported mesh format: {suffix or 'none'} (expected {', '.join(FORMATS)})")
     return suffix
 
 
@@ -263,8 +623,14 @@ def _read(path: str) -> tuple[list, list, str]:
             points, faces = _obj(data.decode("utf-8-sig", errors="replace"))
         elif fmt == "stl":
             points, faces = _stl(data)
-        else:
+        elif fmt == "ply":
             points, faces = _ply(data.decode("utf-8-sig", errors="replace"))
+        elif fmt == "dae":
+            points, faces = _dae(data.decode("utf-8-sig", errors="replace"))
+        elif fmt in ("gltf", "glb"):
+            points, faces = _gltf(data, path)
+        else:
+            points, faces = _fbx(data.decode("utf-8-sig", errors="replace"))
     except ValueError:
         raise
     except Exception as ex:  # noqa: BLE001 - a malformed file must never raise
@@ -322,7 +688,8 @@ def mesh_formats() -> str:
 
 
 def import_mesh(path: str, level_guid: str = "", options_json: str = "") -> str:
-    """Import an OBJ, STL or PLY file as one proxy. Options: {name, scale, rotation, x, y, z}."""
+    """Import a mesh file (OBJ, STL, PLY, COLLADA, glTF/GLB, ASCII FBX) as one proxy.
+    Options: {name, scale, rotation, x, y, z}."""
     if B._model is None:
         return A._fail("no model open")
     if not isinstance(path, str) or not path.strip():

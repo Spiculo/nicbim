@@ -632,6 +632,7 @@ private:
     void curtainWallDialog();
     void terrainPadDialog();
     void importMeshDialog();
+    void importPointCloudDialog();
     void attributesDialog();
     void keynotesDialog();
     void projectInfoDialog();
