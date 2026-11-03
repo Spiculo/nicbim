@@ -1094,6 +1094,7 @@ _EXPORTS = {
         "create_ceiling",
         "create_wall_opening",
         "create_column",
+        "create_massing",
         "create_curtain_wall",
         "curtain_wall_info",
         "set_curtain_panel",
@@ -1254,7 +1255,7 @@ _EXPORTS = {
         "set_sheet_revision",
         "sheet_revision",
     ),
-    "areas": ("area_plan",),
+    "areas": ("area_plan", "massing_report"),
     "templates": (
         "view_templates",
         "save_view_template",

@@ -51,6 +51,23 @@ def test_area_plan_gross_and_rentable(flat):
     assert not call("area_plan", "nope")["ok"]
 
 
+def test_conceptual_massing_and_floor_areas():
+    """D201: a massing box reports footprint, volume and floor area on each level it spans."""
+    from kimbim import areas
+
+    assert call("new_project", "Massing")["ok"]
+    l1 = call("storeys")["storeys"][0]["guid"]
+    call("add_storey", "Level 2", 3.0)
+    r = call("create_massing", l1, 0, 0, 10, 8, 6.0, "Block")
+    assert r["ok"], r
+    report = json.loads(areas.massing_report())
+    box = report["boxes"][0]
+    assert (box["name"], box["footprint"], box["volume"]) == ("Block", 80.0, 480.0)
+    assert report["total_area"] == 160.0  # the two levels at 0 and 3 m lie inside the 6 m box
+    assert [level["area"] for level in report["levels"]] == [80.0, 80.0]
+    assert not call("create_massing", l1, 0, 0, 0, 8, 6.0)["ok"]
+
+
 def test_room_from_a_click_inside_walls(flat):
     r = call("create_room", flat["l1"], 2.0, 3.0, "Living room")
     assert r["ok"], r

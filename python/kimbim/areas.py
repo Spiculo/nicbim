@@ -32,6 +32,47 @@ def _slab_union(storey) -> float:
     return unary_union(areas).area if areas else 0.0
 
 
+def massing_report() -> str:
+    """D201: massing boxes with their footprint and volume, plus floor area per level."""
+    if B._model is None:
+        return A._fail("no model open")
+    import ifcopenshell.util.element
+
+    levels = sorted(B._model.by_type("IfcBuildingStorey"), key=A._elevation)
+    by_level = {s.GlobalId: 0.0 for s in levels}
+    boxes = []
+    total_area = total_volume = 0.0
+    for box in B._model.by_type("IfcBuildingElementProxy"):
+        data = ifcopenshell.util.element.get_pset(box, "KIMBIM_Massing") or {}
+        if data.get("Role") != "massing":
+            continue
+        width = float(data.get("Width") or 0.0)
+        depth = float(data.get("Depth") or 0.0)
+        height = float(data.get("Height") or 0.0)
+        footprint = width * depth
+        if footprint <= 0 or height <= 0:
+            continue
+        container = ifcopenshell.util.element.get_container(box)
+        base = A._elevation(container) if container is not None else 0.0
+        covered = []
+        for level in levels:
+            z = A._elevation(level)
+            if base - 1e-6 <= z < base + height - 1e-6:
+                by_level[level.GlobalId] += footprint
+                covered.append(level.Name or "")
+        boxes.append({"guid": box.GlobalId, "name": box.Name or "", "width": round(width, 3),
+                      "depth": round(depth, 3), "height": round(height, 3),
+                      "footprint": round(footprint, 3), "volume": round(footprint * height, 3),
+                      "levels": covered})
+        total_area += footprint * len(covered)
+        total_volume += footprint * height
+    return B._dump({"ok": True, "boxes": boxes,
+                    "levels": [{"guid": s.GlobalId, "name": s.Name or "",
+                                "elevation": round(A._elevation(s), 3),
+                                "area": round(by_level[s.GlobalId], 3)} for s in levels],
+                    "total_area": round(total_area, 3), "total_volume": round(total_volume, 3)})
+
+
 def area_plan(storey_guid: str) -> str:
     """{gross, rentable, rooms: [{guid, number, name, area}]} for a level, in m²."""
     if B._model is None:

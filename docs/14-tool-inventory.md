@@ -156,7 +156,7 @@ release notes, so check before relying on a single cell.
 | Area plans (gross, rentable) | RV VW | ✅ | new | D182: File > *Area plan...* shows the active level's gross area (the union of its rooms, or its slab footprint) and rentable area (the sum of the rooms), with each room's area (`area_plan`, agent `areas.plan`) |
 | Generic object (extrusion, revolve, mesh import) | all | ✅ | P1 | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (tests in `test_objedit.py` and `test_library.py`), placed as proxy types |
 | Morph / free-form modelling, push/pull | AC SU VW | ⬜ | new | Massing and odd shapes |
-| Conceptual massing with floor areas | RV VW | ⬜ | new | |
+| Conceptual massing with floor areas | RV VW | ✅ | new | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level; `areas.massing_report` lists footprint and volume per box and sums floor area per level inside each box |
 | Models / modules placed on several levels | AC RV VW | ✅ | — | D58 (Archicad Hotlinked Modules, Revit Groups) |
 
 ## 7. Site

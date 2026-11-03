@@ -1915,6 +1915,55 @@ def create_column(storey_guid: str, type_guid: str, x, y, height, rotation=0.0) 
     return B._dump({**r, "guid": made["element"].GlobalId})
 
 
+MASSING_PSET = "KIMBIM_Massing"  # D201
+
+
+def create_massing(storey_guid: str, x, y, width, depth, height, name: str = "Massing") -> str:
+    """D201: a conceptual massing box on a level (IfcBuildingElementProxy), for massing studies and
+    floor-area totals. Width and depth are the plan footprint and height the rise, in metres."""
+    if B._model is None:
+        return _fail("no model open")
+    storey = _by_guid(storey_guid)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return _fail("unknown level")
+    try:
+        x, y, width, depth, height = (float(v) for v in (x, y, width, depth, height))
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    if width <= 0 or depth <= 0 or height <= 0:
+        return _fail("the massing box needs a positive width, depth and height")
+    name = (name or "Massing").strip() or "Massing"
+    made = {}
+
+    def action():
+        f = B._model
+        s = _scale()
+        box = ifcopenshell.api.root.create_entity(f, ifc_class="IfcBuildingElementProxy", name=name)
+        profile = f.createIfcRectangleProfileDef(
+            "AREA", None, f.createIfcAxis2Placement2D(f.createIfcCartesianPoint((0.0, 0.0)), None),
+            width / s, depth / s)
+        representation = ifcopenshell.api.geometry.add_profile_representation(
+            f, context=_body_context(), profile=profile, depth=height)
+        ifcopenshell.api.geometry.assign_representation(f, product=box, representation=representation)
+        matrix = np.eye(4)
+        matrix[0][3], matrix[1][3], matrix[2][3] = x, y, _elevation(storey)
+        ifcopenshell.api.geometry.edit_object_placement(f, product=box, matrix=matrix, is_si=True)
+        ifcopenshell.api.spatial.assign_container(f, products=[box], relating_structure=storey)
+        pset = ifcopenshell.api.pset.add_pset(f, product=box, name=MASSING_PSET)
+        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
+            "Role": "massing", "Width": width, "Depth": depth, "Height": height})
+        layers.assign_active(box)
+        renovation.stamp_new(box)
+        made["box"] = box
+        return 1, [box.GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["box"].GlobalId})
+
+
 def create_beam(storey_guid: str, type_guid: str, x1, y1, x2, y2, top) -> str:
     """A beam from (x1, y1) to (x2, y2) whose top is at `top` (absolute metres)."""
     if B._model is None:

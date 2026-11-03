@@ -3078,6 +3078,55 @@ void MainWindow::buildModelingToolbar()
         setSelection(inserted);
         m_status->showMessage(tr("2D block \"%1\" inserted").arg(name));
     });
+    QAction* massingBox = model->addAction(tr("Massing &box...")); // D201
+    massingBox->setObjectName(QStringLiteral("actionMassingBox"));
+    massingBox->setToolTip(tr("A conceptual massing box on the active level, with floor-area totals"));
+    connect(massingBox, &QAction::triggered, this, [this] {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Massing box"));
+        auto* form = new QFormLayout(&dialog);
+        auto spin = [&](double value) {
+            auto* box = new QDoubleSpinBox(&dialog);
+            box->setRange(0.1, 1000.0);
+            box->setDecimals(2);
+            box->setSuffix(tr(" m"));
+            box->setValue(value);
+            return box;
+        };
+        auto* width = spin(10.0);
+        auto* depth = spin(10.0);
+        auto* height = spin(12.0);
+        form->addRow(tr("Width:"), width);
+        form->addRow(tr("Depth:"), depth);
+        form->addRow(tr("Height:"), height);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        double x = 0.0, y = 0.0;
+        if (m_viewport && m_viewport->isPlanView()) {
+            gp_Pnt point;
+            const QSize size = m_viewport->size();
+            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
+                x = point.X();
+                y = point.Y();
+            }
+        }
+        const QJsonObject r = bridge("create_massing", {m_levels->activeStorey(),
+            QString::number(x, 'g', 17), QString::number(y, 'g', 17),
+            QString::number(width->value(), 'g', 17), QString::number(depth->value(), 'g', 17),
+            QString::number(height->value(), 'g', 17), tr("Massing")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Massing box"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_viewport->selectGuids({r.value("guid").toString()});
+        setSelection({r.value("guid").toString()});
+        m_status->showMessage(tr("Massing box added"));
+    });
     model->addSeparator();
     QAction* tagAllAction = model->addAction(tr("Tag &all untagged")); // D87
     tagAllAction->setObjectName(QStringLiteral("actionTagAll"));
