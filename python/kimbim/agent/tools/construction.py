@@ -9,7 +9,7 @@ import math
 from ... import authoring as A
 from ... import roofs as R
 from ... import stairs as ST
-from ..catalogue import AgentError, bridge, tool
+from ..catalogue import SELECTOR, AgentError, bridge, tool
 from .common import lengths, level_guid, point
 from .create import _level_height, _level_info
 
@@ -30,6 +30,34 @@ def _angle(session, value) -> float:
 
 def _direction(start, end) -> float:
     return math.atan2(end[1] - start[1], end[0] - start[0])
+
+
+@tool("create.ceiling", {"required": ["level", "points"], "properties": {
+    "level": _LEVEL, "points": {"type": "array", "items": _POINT,
+                                 "description": "The ceiling outline, at least three points."},
+    "thickness": {**_LENGTH, "description": "Ceiling thickness (default 20 cm)."},
+    "offset": {**_LENGTH, "description": "Underside above the level (default 2.7 m)."},
+    "name": {"type": "string"}}}, writes=True)
+def ceiling(session, level, points, thickness="20cm", offset="2.7m", name="Ceiling"):
+    """Create an IfcCovering CEILING over an outline at a height above a level."""
+    outline = [list(point(session, p, "points")) for p in points]
+    if len(outline) < 3:
+        raise AgentError("bad_input", hint="a ceiling needs at least three points")
+    r = bridge(A.create_ceiling, level_guid(level), json.dumps(outline),
+               lengths(session, thickness)[0], lengths(session, offset)[0], name or "Ceiling")
+    return {"guids": [r["guid"]], "points_m": outline}
+
+
+@tool("create.ceiling_from_selection", {"required": ["elements"], "properties": {
+    "elements": SELECTOR,
+    "thickness": {**_LENGTH, "description": "Ceiling thickness (default 20 cm)."},
+    "offset": {**_LENGTH, "description": "Underside above the level (default 2.7 m)."}}}, writes=True)
+def ceiling_from_selection(session, elements, thickness="20cm", offset="2.7m"):
+    """Create a ceiling over a selected slab's outline or a closed loop of selected walls."""
+    guids = session.resolve(elements)
+    r = bridge(A.ceiling_from_selection, json.dumps(guids), lengths(session, thickness)[0],
+               lengths(session, offset)[0])
+    return {"guids": [r["guid"]]}
 
 
 @tool("create.roof", {"required": ["level", "points"], "properties": {

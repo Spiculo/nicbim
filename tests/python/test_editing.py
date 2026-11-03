@@ -5,6 +5,7 @@ import json
 import math
 
 import ifcopenshell.util.element
+import ifcopenshell.util.placement
 import ifcopenshell.util.representation
 import ifcopenshell.validate
 import pytest
@@ -223,6 +224,27 @@ def test_resize_scales_lengths_and_keeps_thicknesses(room):
     assert not call("resize_elements", g(room["w1"]), 0, 0, 1)["ok"]
     call("undo")
     assert axis(room["w1"]) == [[0, 0], [6, 0]]
+    assert not valid()
+
+
+def test_ceiling_from_a_slab_and_from_walls(room):
+    r = call("ceiling_from_selection", g(room["slab"]), 0.15, 2.8)
+    assert r["ok"], r
+    ceiling = b._model.by_guid(r["guid"])
+    assert ceiling.is_a("IfcCovering") and ceiling.PredefinedType == "CEILING"
+    pset = ifcopenshell.util.element.get_pset(ceiling, "KIMBIM_Ceiling")
+    assert pset["Thickness"] == pytest.approx(0.15) and pset["Offset"] == pytest.approx(2.8)
+    matrix = ifcopenshell.util.placement.get_local_placement(ceiling.ObjectPlacement)
+    assert float(matrix[2][3]) * authoring._scale() == pytest.approx(2.8, abs=1e-6)
+    assert ifcopenshell.util.element.get_container(ceiling).GlobalId == room["l1"]
+
+    ext = next(t for t in call("wall_types")["types"] if t["name"] == "Exterior 300")["guid"]
+    w3 = call("create_wall", room["l1"], ext, 6, 4, 0, 4, 3.0, "", "")["guid"]
+    w4 = call("create_wall", room["l1"], ext, 0, 4, 0, 0, 3.0, w3, "")["guid"]
+    walls = call("ceiling_from_selection", g(room["w1"], room["w2"], w3, w4), 0.2, 2.7)
+    assert walls["ok"], walls
+    assert not call("create_ceiling", room["l1"], json.dumps([[0, 0], [1, 0]]), 0.2, 2.7)["ok"]
+    assert not call("create_ceiling", room["l1"], json.dumps([[0, 0], [1, 0], [0, 1]]), 2.0, 2.7)["ok"]
     assert not valid()
 
 

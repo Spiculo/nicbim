@@ -635,6 +635,7 @@ private:
     void refreshLinksIfStale();
     void splitView();          // D153: another viewport beside the active one
     void alignDialog();        // D154: align the selection's edges or centres
+    void ceilingDialog();      // D156: an IfcCovering ceiling over a slab or closed walls
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();

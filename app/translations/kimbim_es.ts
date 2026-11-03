@@ -5115,6 +5115,41 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="1018" />
+      <source>C&amp;eiling...</source>
+      <translation>T&amp;echo...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="3002" />
+      <source>Create an IfcCovering ceiling over a selected slab or a closed loop of selected walls</source>
+      <translation>Crear un techo IfcCovering sobre una losa seleccionada o un bucle cerrado de muros seleccionados</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8710" />
+      <source>Select a slab or a closed loop of walls first</source>
+      <translation>Selecciona primero una losa o un bucle cerrado de muros</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8714" />
+      <source>Ceiling</source>
+      <translation>Techo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8728" />
+      <source>Thickness:</source>
+      <translation>Espesor:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8735" />
+      <source>Underside above the level:</source>
+      <translation>Cara inferior sobre el nivel:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8747" />
+      <source>Ceiling created</source>
+      <translation>Techo creado</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>
     </message>

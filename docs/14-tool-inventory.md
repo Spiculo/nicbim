@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D155).**
+**Status as of `main` (2026-11-03, after D112–D156).**
 
 ## How to read it
 
@@ -151,7 +151,7 @@ release notes, so check before relying on a single cell.
 | Roofs: pitched, hip, gable, multi-plane, by footprint | all | ✅ | P1 | Slice 19 (D66): shed, gable, hip, a slope per edge; walls trimmed to the roof |
 | Shell / free-form roof | AC RV | ⬜ | new | |
 | Curtain walls (grids, mullions, panels) | AC RV VW | 🟡 | P2 | D109: `create.curtain_wall` makes an `IfcCurtainWall` panel (`IfcCurtainWallType`, `KIMBIM_CurtainWall` height/spacing/panel thickness) with vertical mullions and top/bottom rails as aggregated IfcMembers; the Curtain wall tool is in the 3D palette. D116: Model > *Curtain wall settings...* edits height, mullion spacing, panel thickness and mullion/rail sizes and rebuilds the members; D126: the settings dialog lists every bay as Glass, Solid panel or Open, with its own thickness; `create.curtain_panel` and `create.curtain_wall_info` expose the same. Individual panel materials/types and panel-level move/copy are still to do |
-| Ceilings | RV VW | ⬜ | new | Archicad uses slabs |
+| Ceilings | RV VW | ✅ | P2 | D156: Model > *Ceiling...* makes an `IfcCovering` (`PredefinedType=CEILING`) over a selected slab or a closed loop of walls, or a drawn outline; its underside sits at the level + offset (default 2.7 m), with a thickness (default 20 cm) in `KIMBIM_Ceiling`; one undo step, agent `create.ceiling` / `create.ceiling_from_selection` |
 | Zones / rooms / spaces (auto from walls, area, name, number) | all | ✅ | P1 | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | Area plans (gross, rentable) | RV VW | ⬜ | new | |
 | Generic object (extrusion, revolve, mesh import) | all | 🟡 | P1 | D120: File > *Import mesh...* brings OBJ, ASCII/binary STL and ASCII PLY as `IfcBuildingElementProxy` bodies (scale/rotation/position); extrusion/revolve authoring is still part of the parametric object system ([16](16-parametric-objects.md)) |

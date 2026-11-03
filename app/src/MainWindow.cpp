@@ -2985,6 +2985,10 @@ void MainWindow::buildModelingToolbar()
     QAction* slabFromWallsAction = model->addAction(tr("Slab from selected &walls"));
     slabFromWallsAction->setObjectName(QStringLiteral("actionSlabFromWalls"));
     connect(slabFromWallsAction, &QAction::triggered, this, [this] { slabFromWalls(m_selection); });
+    QAction* ceilingAction = model->addAction(tr("C&eiling...")); // D156
+    ceilingAction->setObjectName(QStringLiteral("actionCeiling"));
+    ceilingAction->setToolTip(tr("Create an IfcCovering ceiling over a selected slab or a closed loop of selected walls"));
+    connect(ceilingAction, &QAction::triggered, this, &MainWindow::ceilingDialog);
     QAction* trimAction = model->addAction(tr("&Trim walls to roof"));
     trimAction->setObjectName(QStringLiteral("actionTrimToRoof"));
     trimAction->setToolTip(tr("Select a roof and walls: the walls reach up to the roof and stop at its underside"));
@@ -8612,6 +8616,46 @@ void MainWindow::alignDialog()
     }
     afterEdit(r);
     m_status->showMessage(tr("Aligned %n element(s)", nullptr, r.value("changed").toArray().size()));
+}
+
+void MainWindow::ceilingDialog()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select a slab or a closed loop of walls first"));
+        return;
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Ceiling"));
+    auto* form = new QFormLayout(&dialog);
+    auto* thickness = new QDoubleSpinBox(&dialog);
+    thickness->setRange(0.01, 1.0);
+    thickness->setDecimals(3);
+    thickness->setValue(0.2);
+    thickness->setSuffix(tr(" m"));
+    auto* offset = new QDoubleSpinBox(&dialog);
+    offset->setRange(-10.0, 50.0);
+    offset->setDecimals(3);
+    offset->setValue(2.7);
+    offset->setSuffix(tr(" m"));
+    form->addRow(tr("Thickness:"), thickness);
+    form->addRow(tr("Underside above the level:"), offset);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QJsonArray guids = QJsonArray::fromStringList(m_selection);
+    const QJsonObject r = bridge("ceiling_from_selection", {
+        QString::fromUtf8(QJsonDocument(guids).toJson(QJsonDocument::Compact)),
+        QString::number(thickness->value(), 'g', 17), QString::number(offset->value(), 'g', 17)});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Ceiling"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    setSelection({r.value("guid").toString()});
+    m_status->showMessage(tr("Ceiling created"));
 }
 
 void MainWindow::offsetDialog()

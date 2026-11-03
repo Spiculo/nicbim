@@ -618,6 +618,91 @@ def create_slab(storey_guid: str, type_guid: str, points_json: str, offset=0.0) 
     return B._dump({**r, "guid": made["slab"].GlobalId})
 
 
+CEILING_PSET = "KIMBIM_Ceiling"
+
+
+def create_ceiling(storey_guid: str, points_json: str, thickness=0.2, offset=2.7,
+                   name: str = "Ceiling") -> str:
+    """An `IfcCovering` CEILING over an outline (metres), `thickness` deep with its underside at the
+    level + `offset` (default 2.7 m). One undo step."""
+    if B._model is None:
+        return _fail("no model open")
+    storey = _by_guid(storey_guid)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return _fail("unknown level")
+    try:
+        outline = _clean_polygon(json.loads(points_json))
+        thickness, offset = float(thickness), float(offset)
+    except (TypeError, ValueError) as ex:
+        return _fail(str(ex))
+    if outline is None:
+        return _fail("the outline needs at least 3 points and must not cross itself")
+    if not 0.01 <= thickness <= 1.0:
+        return _fail("the ceiling thickness must be between 1 cm and 1 m")
+    if not -10.0 <= offset <= 50.0:
+        return _fail("the ceiling offset is out of range")
+    made = {}
+
+    def action():
+        f = B._model
+        ceiling = ifcopenshell.api.root.create_entity(f, ifc_class="IfcCovering", name=name)
+        ceiling.PredefinedType = "CEILING"
+        representation = ifcopenshell.api.geometry.add_slab_representation(
+            f, context=_body_context(), depth=thickness, polyline=outline)
+        ifcopenshell.api.geometry.assign_representation(f, product=ceiling, representation=representation)
+        matrix = np.eye(4)
+        matrix[2][3] = _elevation(storey) + offset
+        ifcopenshell.api.geometry.edit_object_placement(f, product=ceiling, matrix=matrix, is_si=True)
+        ifcopenshell.api.spatial.assign_container(f, products=[ceiling], relating_structure=storey)
+        pset = ifcopenshell.api.pset.add_pset(f, product=ceiling, name=CEILING_PSET)
+        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
+            "Thickness": thickness, "Offset": offset})
+        layers.assign_active(ceiling)
+        renovation.stamp_new(ceiling)
+        made["ceiling"] = ceiling
+        return 1, [ceiling.GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["ceiling"].GlobalId})
+
+
+def ceiling_from_selection(guids_json: str, thickness=0.2, offset=2.7) -> str:
+    """A ceiling over a selected slab's outline, or over the closed loop of selected walls. The level
+    comes from the slab/wall's container, else the first storey."""
+    if B._model is None:
+        return _fail("no model open")
+    try:
+        elements = B._elements(guids_json)
+    except ValueError as ex:
+        return _fail(str(ex))
+    if not elements:
+        return _fail("select a slab or a closed loop of walls")
+    storey = None
+    outline = None
+    slab = next((e for e in elements if e.is_a("IfcSlab")), None)
+    if slab is not None:
+        from . import editing
+
+        outline = editing._slab_outline_world(slab)
+        storey = ifcopenshell.util.element.get_container(slab)
+    else:
+        walls = [e for e in elements if e.is_a("IfcWall")]
+        if not walls:
+            return _fail("select a slab or walls")
+        r = slab_outline_from_walls(json.dumps([w.GlobalId for w in walls]))
+        data = json.loads(r)
+        if not data.get("ok"):
+            return _fail(data.get("error") or "the walls do not form one closed loop")
+        outline = data["points"]
+        storey = ifcopenshell.util.element.get_container(walls[0])
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return _fail("the selection is not on a level")
+    return create_ceiling(storey.GlobalId, json.dumps(outline), thickness, offset)
+
+
 def set_slab_slope(guids_json: str, slope_x=0.0, slope_y=0.0) -> str:
     """Tilt slabs: `slope_x`/`slope_y` are rise over run along the slab's local +X/+Y (0 = flat).
 
