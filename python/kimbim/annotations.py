@@ -423,6 +423,7 @@ def annotations(storey_guid: str) -> str:
                 item.update(D.shape_data(kind, points, extra_of(a), DRAWING_SCALE / 1000.0))
                 item["rect"] = bool(extra_of(a).get("Rect"))  # D92: a rectangle stays a rectangle
                 item["closed"] = kind == "fill" or bool(extra_of(a).get("Closed"))  # D98: its last edge too
+                item["bulges"] = D._bulges(extra_of(a))  # D218: curved edges for the grips
             elif kind in S.KINDS:  # D87: what to draw, from the same description as the drawings
                 item.update(S.round_geometry(S.geometry(kind, points, text or S.measured_text(kind, points), size,
                                                         extra_of(a, effective=True), DRAWING_SCALE / 1000.0, north)))
@@ -546,13 +547,13 @@ def _place_at(annotation, origin):
     ifcopenshell.api.geometry.edit_object_placement(B._model, product=annotation, matrix=matrix, is_si=True)
 
 
-def replace_points(annotation, points):
+def replace_points(annotation, points, extra=None):
     """Inside an action: new world points (metres) for an annotation, keeping its kind, text and
-    style; it is placed (unrotated) at the first point."""
+    style; it is placed (unrotated) at the first point. `extra`: drafting values to change."""
     kind, text, _local, size, pen = _read(annotation)
     origin = points[0]
     _place_at(annotation, origin)
-    _set(annotation, kind, text, [(x - origin[0], y - origin[1]) for x, y in points], size, pen)
+    _set(annotation, kind, text, [(x - origin[0], y - origin[1]) for x, y in points], size, pen, extra)
 
 
 def rebuild(annotation):

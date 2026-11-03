@@ -288,32 +288,30 @@ bool MainWindow::fillFromShape()
     return true;
 }
 
-bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool remove)
+bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool remove, bool curve)
 {
     auto send = [this](const QVector<QPointF>& pts) {
         QJsonArray arr;
         for (const QPointF& q : pts)
             arr.append(QJsonArray{q.x(), q.y()});
-        if (m_gripDrawing) {
-            QJsonArray arcs;
-            for (int i = 0; i + 1 < pts.size(); ++i)
-                arcs.append(i < m_gripBulges.size() ? m_gripBulges[i] : 0.0);
-            const QJsonObject r = bridge("set_drawing_path", {m_gripGuid, compact(arr), compact(arcs)});
-            if (!r.value("ok").toBool()) {
-                m_status->showMessage(tr("Could not move the point: %1").arg(r.value("error").toString()));
-                return false;
-            }
-            afterEdit(r);
-            return true;
-        }
-        const QJsonObject r = m_gripSlab ? bridge("set_slab_outline", {m_gripGuid, compact(arr)})
-                                         : bridge("set_annotation_points", {m_gripGuid, compact(arr)});
+        const int edges = m_gripClosed ? int(pts.size()) : int(pts.size()) - 1;
+        QJsonArray arcs;
+        for (int i = 0; i < edges; ++i)
+            arcs.append(i < m_gripBulges.size() ? m_gripBulges[i] : 0.0);
+        QJsonObject r;
+        if (m_gripDrawing)
+            r = bridge("set_drawing_path", {m_gripGuid, compact(arr), compact(arcs)});
+        else if (m_gripSlab)
+            r = bridge("set_slab_outline", {m_gripGuid, compact(arr), compact(arcs)});
+        else
+            r = bridge("set_annotation_points", {m_gripGuid, compact(arr), compact(arcs)});
         if (!r.value("ok").toBool()) {
             m_status->showMessage(tr("Could not move the point: %1").arg(r.value("error").toString()));
             return false;
         }
         afterEdit(r);
-        refreshSnapData();
+        if (!m_gripDrawing)
+            refreshSnapData();
         return true;
     };
     if (m_gripIndex >= 0) { // put the point down, snapped
@@ -353,18 +351,22 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
         a.kind = o.value("kind").toString();
         if (!a.isDrafting() || m_viewport->isLocked(o.value("guid").toString()))
             continue;
-        Outline out{o.value("guid").toString(), {}, {}, {}, o.value("closed").toBool(), o.value("rect").toBool(), false};
+        Outline out{o.value("guid").toString(), {}, {}, {}, o.value("closed").toBool(), o.value("rect").toBool(), false, false};
         for (const auto& q : o.value("points").toArray())
             out.pts << point(q);
+        for (const auto& b : o.value("bulges").toArray())
+            out.bulges << b.toDouble();
         outlines << out;
     }
     for (const auto& v : bridge("slab_outlines", {m_levels->activeStorey()}).value("slabs").toArray()) {
         const QJsonObject o = v.toObject();
         if (m_viewport->isLocked(o.value("guid").toString()))
             continue;
-        Outline out{o.value("guid").toString(), {}, {}, {}, true, false, true};
+        Outline out{o.value("guid").toString(), {}, {}, {}, true, false, true, false};
         for (const auto& q : o.value("points").toArray())
             out.pts << point(q);
+        for (const auto& b : o.value("bulges").toArray())
+            out.bulges << b.toDouble();
         outlines << out;
     }
     for (const auto& v : bridge("drawings").value("drawings").toArray()) {
@@ -376,17 +378,23 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
             out.pts << point(q);
         for (const auto& b : o.value("bulges").toArray())
             out.bulges << b.toDouble();
-        for (int i = 0; i + 1 < out.pts.size(); ++i) {
-            const double b = i < out.bulges.size() ? out.bulges[i] : 0.0;
-            if (std::abs(b) < 1e-9) {
-                out.mids << (out.pts[i] + out.pts[i + 1]) / 2;
-            } else {
-                const QVector<QPointF> arc = sampleArc(out.pts[i], out.pts[i + 1], b, 1.0);
-                out.mids << arc[arc.size() / 2];
-            }
-        }
         if (out.pts.size() >= 2)
             outlines << out;
+    }
+    for (Outline& o : outlines) { // D110/D218: the middle of each edge (an arc's middle)
+        if (!o.mids.isEmpty() || o.pts.size() < 2)
+            continue;
+        const int edges = o.closed ? int(o.pts.size()) : int(o.pts.size()) - 1;
+        for (int i = 0; i < edges; ++i) {
+            const QPointF a = o.pts[i], b = o.pts[(i + 1) % o.pts.size()];
+            const double bulge = i < o.bulges.size() ? o.bulges[i] : 0.0;
+            if (std::abs(bulge) < 1e-9) {
+                o.mids << (a + b) / 2;
+            } else {
+                const QVector<QPointF> arc = sampleArc(a, b, bulge, 1.0);
+                o.mids << arc[arc.size() / 2];
+            }
+        }
     }
     // the nearest point, or (adding a point) the nearest edge's middle
     double best = tolerance;
@@ -422,6 +430,7 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
     m_gripRect = hit->rect;
     m_gripDrawing = hit->drawing;
     m_gripBulges = hit->bulges;
+    m_gripClosed = hit->closed;
     if (remove) { // D98: delete the point
         if (hit->pts.size() <= (hit->closed ? 3 : 2)) {
             m_status->showMessage(tr("It needs the points it has"));
@@ -429,7 +438,7 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
         }
         QVector<QPointF> pts = hit->pts;
         pts.remove(index);
-        if (hit->drawing) {
+        if (!hit->rect) {
             // Keep every arc that survives; the two segments joined by a removed middle vertex
             // become one straight segment (their sweeps alone do not define the joined arc).
             QVector<double> nb;
@@ -444,9 +453,24 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
         return true;
     }
     m_gripPoints = hit->pts;
+    m_gripClosed = hit->closed;
+    if (curve && middle) { // D218: Alt+click an edge's middle to curve it, again to straighten it
+        QVector<double> nb = hit->bulges;
+        const int edges = hit->closed ? int(hit->pts.size()) : int(hit->pts.size()) - 1;
+        while (nb.size() < edges)
+            nb << 0.0;
+        const bool wasCurved = std::abs(nb.value(index, 0.0)) > 1e-9;
+        nb[index] = wasCurved ? 0.0 : 0.5;
+        m_gripBulges = nb;
+        m_gripIndex = -1;
+        send(hit->pts);
+        m_status->showMessage(wasCurved ? tr("Edge straightened")
+                                        : tr("Edge curved (Alt+click it again to straighten it)"));
+        return true;
+    }
     m_gripIndex = index;
     if (middle) { // D98: a new point in the edge's middle, picked up
-        if (hit->drawing) {
+        if (!hit->rect) {
             // D110: split a curved segment into two arcs of half the sweep; its midpoint, for a
             // straight segment, is the chord's middle.
             const double b = index < hit->bulges.size() ? hit->bulges[index] : 0.0;
@@ -468,8 +492,8 @@ bool MainWindow::draftGripClick(QPointF p, double tolerance, bool ortho, bool re
         }
         m_gripIndex = index + 1;
     }
-    m_status->showMessage(m_gripDrawing ? tr("Click the point's new position (click an edge's middle to add one)")
-                                        : tr("Click the point's new position (Esc: leave it)"));
+    m_status->showMessage(m_gripDrawing ? tr("Click the point's new position (click an edge's middle to add one; Alt+click to curve it)")
+                                        : tr("Click the point's new position (Alt+click an edge's middle to curve it; Esc: leave it)"));
     return true;
 }
 

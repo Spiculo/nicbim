@@ -207,6 +207,23 @@ def test_elevate_moves_the_selection_vertically(room):
     assert ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[0][3] == pytest.approx(0.0, abs=1e-9)
 
 
+def test_a_slab_edge_can_be_curved(room):
+    """D218: the Stretch tool's curved edge works on slabs too; the outline keeps its bulges."""
+    slab = room["slab"]
+    points = json.dumps([[0, 0], [6, 0], [6, 4], [2, 4]])
+    assert call("set_slab_outline", slab, points, json.dumps([0.5, 0, 0, 0]))["ok"]
+    info = next(s for s in call("slab_outlines", room["l1"])["slabs"] if s["guid"] == slab)
+    assert info["points"] == [[0, 0], [6, 0], [6, 4], [2, 4]]
+    assert info["bulges"] == pytest.approx([0.5, 0, 0, 0])
+    outline = call("slab_outline", slab)["points"]
+    assert len(outline) > 4
+    assert max(p[1] for p in outline) > 0.1
+    assert call("undo")["ok"]
+    info = next(s for s in call("slab_outlines", room["l1"])["slabs"] if s["guid"] == slab)
+    assert info["bulges"] == [] and len(info["points"]) == 4
+    assert not call("set_slab_outline", slab, points, json.dumps([0, 0.5]))["ok"]
+
+
 def test_locked_elements_refuse_moves_and_deletes(room):
     slab = room["slab"]
     assert call("set_locked", g(slab), "1")["ok"]

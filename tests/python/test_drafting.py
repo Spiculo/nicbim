@@ -236,6 +236,31 @@ def test_2d_blocks_save_and_insert_with_style(plan):
     assert not call("insert_block", "Door symbol", plan["l1"], 0, 0)["ok"]
 
 
+def test_curved_edges_in_polygon_editing(plan):
+    """D218: a stretch grip can make an edge an arc, keeping the style and the other edges."""
+    line = call("add_drafting", plan["l1"], "polyline", pts((0, 0), (4, 0), (4, 3), (0, 3)),
+                json.dumps({"closed": True}))["guid"]
+    assert call("set_annotation_points", line, pts((0, 0), (4, 0), (4, 3), (0, 3)),
+                json.dumps([0.5, 0, 0, 0]))["ok"]
+    row = next(a for a in call("annotations", plan["l1"])["annotations"] if a["guid"] == line)
+    assert row["bulges"] == pytest.approx([0.5, 0, 0, 0])
+    assert len(row["curves"][0]) > 5
+    assert max(p[1] for p in row["curves"][0]) > 0.1  # the bottom edge bows inside
+
+    fill = call("add_drafting", plan["l1"], "fill", pts((0, 0), (4, 0), (4, 3), (0, 3)),
+                json.dumps({"pattern": "Solid", "bulges": [0.5, 0, 0, 0], "show_area": True}))["guid"]
+    data = next(a for a in call("annotations", plan["l1"])["annotations"] if a["guid"] == fill)
+    assert data["area"][1][1] > 0.1 and len(data["area"]) > 4
+    assert data["area_text"]
+
+    assert not call("set_annotation_points", line, pts((0, 0), (4, 0), (4, 3), (0, 3)),
+                    json.dumps([0, 0.5]))["ok"]  # one bulge per edge
+    assert call("undo")["ok"]  # the fill goes
+    assert call("undo")["ok"]  # the line is straight again
+    row = next(a for a in call("annotations", plan["l1"])["annotations"] if a["guid"] == line)
+    assert row["bulges"] == [] and len(row["curves"][0]) == 5
+
+
 def test_snap_data_lists_drafting_circles(plan):
     """D188: circles and arcs are snap targets (their centre and radius reach the snapper)."""
     circle = call("add_drafting", plan["l1"], "circle", pts((5, 5), (6, 5)), "")["guid"]

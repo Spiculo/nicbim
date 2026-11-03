@@ -24,7 +24,7 @@ import math
 KINDS = ("line", "polyline", "arc", "circle", "fill", "spline")  # spline: D98
 SPLINE_STEPS = 12  # points per span of a spline's drawn curve
 EXTRA = ("Closed", "LineType", "Pattern", "BackgroundPen", "ShowArea", "OutlinePen", "PatternScale",
-         "Rect")  # pset keys beside Kind/Points/...
+         "Rect", "Bulges")  # pset keys beside Kind/Points/...
 CIRCLE_SEGMENTS = 72  # tessellation of a full circle on screen and in drawings
 MAX_HATCH_SEGMENTS = 40000  # a finer hatch is not drawn (the fill and its outline still are)
 
@@ -160,29 +160,97 @@ def spline_points(points, closed=False, steps: int = SPLINE_STEPS):
     return out
 
 
-def outline(kind: str, points, closed=False):
-    """The shape's drawn polylines (metres): a list of point lists."""
+def outline(kind: str, points, closed=False, bulges=None):
+    """The shape's drawn polylines (metres): a list of point lists. `bulges`: one tan(sweep/4) per
+    edge, so a segment may be an arc (D218)."""
     pts = [list(p) for p in points]
+    curved = _has_bulges(bulges)
     if kind == "line" and len(pts) >= 2:
         return [pts[:2]]
     if kind == "polyline" and len(pts) >= 2:
+        if curved:
+            return [bulge_points(pts, bulges, closed)]
         return [pts + [pts[0]] if closed else pts]
     if kind == "arc" and len(pts) == 3:
         return [arc_points(*pts)]
     if kind == "circle" and len(pts) == 2:
         return [circle_points(*pts)]
     if kind == "fill" and len(pts) >= 3:
+        if curved:
+            return [bulge_points(pts, bulges, True)]
         return [pts + [pts[0]]]
     if kind == "spline" and len(pts) >= 2:
         return [spline_points(pts, closed)]
     return []
 
 
-def closed_polygon(kind: str, points, closed=False):
+def _has_bulges(bulges) -> bool:
+    return bool(bulges) and any(abs(float(b)) > 1e-9 for b in bulges)
+
+
+def _bulges(data) -> list:
+    """A shape's bulges from its pset (a JSON list or a list); [] when absent or unreadable."""
+    raw = (data or {}).get("Bulges")
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            return []
+    if not isinstance(raw, list):
+        return []
+    try:
+        return [float(v) for v in raw]
+    except (TypeError, ValueError):
+        return []
+
+
+def bulge_points(points, bulges=None, closed=False):
+    """Tessellate a polyline whose edges may be arcs: bulge = tan(sweep/4) per edge, positive to the
+    left of the edge (the section markers' sampleArc convention); 0 is a straight edge (D218)."""
+    pts = [list(p) for p in points]
+    if len(pts) < 2:
+        return pts
+    values = list(bulges or [])
+    edges = len(pts) if closed else len(pts) - 1
+    out = []
+    for i in range(edges):
+        p1, p2 = pts[i], pts[(i + 1) % len(pts)]
+        b = float(values[i]) if i < len(values) else 0.0
+        if abs(b) < 1e-9:
+            out.append(p1)
+            continue
+        chord = math.dist(p1, p2)
+        if chord < 1e-12:
+            out.append(p1)
+            continue
+        mx, my = (p1[0] + p2[0]) / 2.0, (p1[1] + p2[1]) / 2.0
+        dx, dy = (p2[0] - p1[0]) / chord, (p2[1] - p1[1]) / chord
+        nx, ny = -dy, dx  # left normal: a positive bulge arcs to its side (as sampleArc does)
+        sagitta = b * chord / 2.0
+        radius_signed = (chord * chord / 4.0 + sagitta * sagitta) / (2.0 * sagitta)
+        radius = abs(radius_signed)
+        cx, cy = mx + nx * (sagitta - radius_signed), my + ny * (sagitta - radius_signed)
+        a0 = math.atan2(p1[1] - cy, p1[0] - cx)
+        sweep = (-1.0 if b > 0 else 1.0) * 4.0 * math.atan(abs(b))
+        steps = max(2, int(math.ceil(abs(sweep) / (2 * math.pi) * CIRCLE_SEGMENTS)))
+        for k in range(steps):
+            angle = a0 + sweep * k / steps
+            out.append([cx + radius * math.cos(angle), cy + radius * math.sin(angle)])
+    if closed:
+        out.append(list(out[0]) if out else pts[0])
+    else:
+        out.append(pts[-1])
+    return out
+
+
+def closed_polygon(kind: str, points, closed=False, bulges=None):
     """The area a shape encloses (metres), or None: closed polylines, circles and fills."""
     if kind == "circle" and len(points) == 2:
         return circle_points(*points)[:-1]
     if (kind == "polyline" and closed and len(points) >= 3) or (kind == "fill" and len(points) >= 3):
+        if _has_bulges(bulges):
+            poly = bulge_points(points, bulges, True)
+            return poly[:-1] if len(poly) > 1 and math.dist(poly[0], poly[-1]) < 1e-9 else poly
         return [list(p) for p in points]
     if kind == "spline" and closed and len(points) >= 3:
         return spline_points(points, True)[:-1]
@@ -331,20 +399,22 @@ def shape_data(kind: str, world, data: dict, metres_per_mm: float, settings: dic
     dash (mm on paper), and for fills the outline to fill, the hatch, whether solid, the background
     pen and the area label."""
     closed = bool(data.get("Closed"))
-    out = {"curves": outline(kind, world, closed), "line_type": data.get("LineType") or "Solid",
+    bulges = _bulges(data)
+    out = {"curves": outline(kind, world, closed, bulges), "line_type": data.get("LineType") or "Solid",
            "dash": line_dash(data.get("LineType"), settings), "closed": closed}
     if kind == "fill" and len(world) >= 3:
         name = data.get("Pattern") or "Solid"
         pattern = patterns(settings).get(name) or {"solid": True}
         # D92: paper-scaled (default: the same printed spacing at every scale) or model-scaled.
         factor = 0.001 if data.get("PatternScale") == "model" else metres_per_mm
-        out.update({"pattern": name, "solid": bool(pattern.get("solid")), "area": [list(p) for p in world],
-                    "hatch": hatch(world, pattern, factor), "background_pen": int(data.get("BackgroundPen") or 0),
+        poly = closed_polygon(kind, world, closed, bulges) or [list(p) for p in world]
+        out.update({"pattern": name, "solid": bool(pattern.get("solid")), "area": poly,
+                    "hatch": hatch(poly, pattern, factor), "background_pen": int(data.get("BackgroundPen") or 0),
                     "outline_pen": int(data["OutlinePen"]) if "OutlinePen" in data else -1,
                     "show_area": bool(data.get("ShowArea"))})
         if out["show_area"]:
-            out["area_text"] = area_text(area(world))
-            out["label_at"] = [round(v, 6) for v in centroid(world)]
+            out["area_text"] = area_text(area(poly))
+            out["label_at"] = [round(v, 6) for v in centroid(poly)]
     return out
 
 
@@ -404,11 +474,14 @@ def ifc_items(f, kind: str, local, data: dict, pt, scale: float, metres_per_mm: 
 
     items = []
     closed = bool(data.get("Closed"))
+    bulges = _bulges(data)
+    curved = _has_bulges(bulges)
     if kind in ("line", "polyline"):
-        pts = [pt(p) for p in (local[:2] if kind == "line" else local)]
         if kind == "polyline" and closed:
-            pts.append(pts[0])
-        items.append(f.createIfcPolyline(pts))
+            pts = bulge_points(local, bulges, True) if curved else list(local) + [local[0]]
+        else:
+            pts = local[:2] if kind == "line" else list(local)
+        items.append(f.createIfcPolyline([pt(p) for p in pts]))
     elif kind == "arc":
         frame = arc_frame(*local[:3])
         if frame is None:
@@ -422,7 +495,8 @@ def ifc_items(f, kind: str, local, data: dict, pt, scale: float, metres_per_mm: 
     elif kind == "spline":  # D98: drawn as its curve, so every IFC viewer shows the same line
         items.append(f.createIfcPolyline([pt(p) for p in spline_points(local, closed)]))
     elif kind == "fill":
-        boundary = f.createIfcPolyline([pt(p) for p in local] + [pt(local[0])])
+        poly = bulge_points(local, bulges, True) if curved else list(local) + [local[0]]
+        boundary = f.createIfcPolyline([pt(p) for p in poly])
         fill_area = f.createIfcAnnotationFillArea(boundary, None)
         name = data.get("Pattern") or "Solid"
         pattern = patterns().get(name) or {"solid": True}
@@ -472,6 +546,11 @@ def _extra(kind: str, o: dict) -> dict:
         extra["LineType"] = o["line_type"]
     if kind in ("polyline", "spline") and "closed" in o:
         extra["Closed"] = bool(o["closed"])
+    if kind in ("polyline", "fill") and isinstance(o.get("bulges"), list):
+        try:
+            extra["Bulges"] = json.dumps([round(float(v), 9) for v in o["bulges"]], separators=(",", ":"))
+        except (TypeError, ValueError):
+            pass
     if kind == "fill":
         if "pattern" in o:
             extra["Pattern"] = o["pattern"]
@@ -528,7 +607,28 @@ def _shape(kind: str, points, o: dict):
             return "the fill's outline must be closed and not cross itself"
     else:
         return f"unknown drafting kind {kind}"
+    closed = True if kind == "fill" else bool(o.get("closed"))
+    error = _bulge_error(kind, points, o, closed)
+    if error is not None:
+        return error
     return kind, points, _extra(kind, o)
+
+
+def _bulge_error(kind: str, points, o: dict, closed: bool) -> str | None:
+    """Why the bulges don't fit a shape (one number per edge), or None."""
+    if kind not in ("polyline", "fill") or "bulges" not in o:
+        return None
+    values = o["bulges"]
+    if not isinstance(values, list):
+        return "bulges are a list, one per edge"
+    edges = len(points) if (kind == "fill" or closed) else len(points) - 1
+    if len(values) != edges:
+        return f"a bulge for each of the {edges} edges"
+    try:
+        [float(v) for v in values]
+    except (TypeError, ValueError):
+        return "bulges are numbers"
+    return None
 
 
 def add_drafting(storey_guid: str, kind: str, points_json: str, options_json: str = "") -> str:
@@ -666,9 +766,10 @@ def set_drafting_style(guids_json: str, options_json: str) -> str:
     return B._dump(B._run(action))
 
 
-def set_annotation_points(guid: str, points_json: str) -> str:
+def set_annotation_points(guid: str, points_json: str, bulges_json: str = "") -> str:
     """New points (world metres) for a drafting shape (grips: an end or a corner moved), keeping its
-    style. Validated like a new shape."""
+    style. `bulges_json`: one tan(sweep/4) per edge, so an edge may be an arc (D218). Validated like
+    a new shape."""
     from . import annotations as N
     from . import authoring as A
     from . import app_bridge as B
@@ -682,13 +783,19 @@ def set_annotation_points(guid: str, points_json: str) -> str:
     except (TypeError, ValueError) as ex:
         return A._fail(f"bad points: {ex}")
     extra = N.extra_of(a)
-    shape = _shape(data[0], points, {"closed": bool(extra.get("Closed"))})
+    options = {"closed": bool(extra.get("Closed"))}
+    if bulges_json:
+        try:
+            options["bulges"] = json.loads(bulges_json)
+        except ValueError:
+            return A._fail("bad bulges")
+    shape = _shape(data[0], points, options)
     if isinstance(shape, str):
         return A._fail(shape)
-    _kind, points, _ = shape
+    _kind, points, new_extra = shape
 
     def action():
-        N.replace_points(a, points)
+        N.replace_points(a, points, new_extra)
         return 1, [a.GlobalId], []
 
     return B._dump(B._run(action))

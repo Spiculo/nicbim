@@ -408,7 +408,7 @@ public:
     // The Stretch tool on outlines (drafting shapes, D84; slabs, D98, Archicad's pet palette): a click on a
     // point picks it up and the next puts it down; Ctrl+click on a point deletes it; a click on the middle
     // of an edge adds a point there and picks it up.
-    bool draftGripClick(QPointF p, double tolerance, bool ortho, bool remove = false);
+    bool draftGripClick(QPointF p, double tolerance, bool ortho, bool remove = false, bool curve = false);
     bool draftGripActive() const { return m_gripIndex >= 0; }
     // D87: the annotation pack (MarkupTools.cpp). Tag: click an element (with the leader on, then where
     // the text goes); north arrow, scale bar, revision cloud (drawn like a fill), angle (vertex, a point
@@ -875,6 +875,7 @@ private:
     bool m_gripSlab = false; // D98: the gripped outline is a slab's
     bool m_gripDrawing = false; // D110: the gripped outline is a section/elevation marker
     QVector<double> m_gripBulges; // D110: its arcs, one bulge per segment
+    bool m_gripClosed = false; // D218: the gripped outline is closed (its last edge too)
     QComboBox* m_tagStyle = nullptr;   // D87: Automatic (by kind) or a tag style
     QComboBox* m_tagShape = nullptr;   // the style's, or none / circle / box / hexagon
     QToolButton* m_tagLeader = nullptr;

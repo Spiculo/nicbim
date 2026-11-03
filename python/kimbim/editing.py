@@ -12,6 +12,7 @@ import os
 
 import ifcopenshell.api.geometry
 import ifcopenshell.api.project
+import ifcopenshell.api.pset
 import ifcopenshell.api.spatial
 import ifcopenshell.geom
 import ifcopenshell.util.element
@@ -389,8 +390,36 @@ def _curve_points(curve):
     return []
 
 
-def _slab_outline_world(slab):
-    """A slab's outline in world metres (closing point dropped), or [] if it has no simple profile."""
+SLAB_PSET = "KIMBIM_Slab"  # Points (world metres) and Bulges (D218)
+
+
+def _slab_control_outline(slab) -> tuple[list, list]:
+    """(points, bulges) of a slab's editable outline: the pset's control points, or the body's
+    outline (no bulges) for a slab made before D218."""
+    pset = ifcopenshell.util.element.get_pset(slab, SLAB_PSET) or {}
+    raw = pset.get("Points")
+    if raw:
+        try:
+            pts = [(float(p[0]), float(p[1])) for p in json.loads(raw)]
+        except (TypeError, ValueError, IndexError):
+            pts = []
+        if len(pts) >= 3:
+            bulges = []
+            try:
+                values = json.loads(pset.get("Bulges") or "[]")
+                if isinstance(values, list) and len(values) == len(pts):
+                    bulges = [float(v) for v in values]
+            except (TypeError, ValueError):
+                bulges = []
+            # Only a curved outline is authoritative here: straight slabs keep their body's outline,
+            # so mirror, offset, fillet and resize keep working without a second copy to update.
+            if bulges and any(abs(b) > 1e-9 for b in bulges):
+                return pts, bulges
+    return _body_slab_outline(slab), []
+
+
+def _body_slab_outline(slab):
+    """A slab's body outline in world metres (closing point dropped), or [] if it has no simple profile."""
     solid = _slab_solid(slab)
     if solid is None:
         return []
@@ -402,6 +431,19 @@ def _slab_outline_world(slab):
     position = ifcopenshell.util.placement.get_axis2placement(solid.Position) if solid.Position else np.eye(4)
     full = m @ position
     return [tuple((full @ np.array([x, y, 0.0, 1.0]))[:2] * s) for x, y in pts]
+
+
+def _slab_outline_world(slab):
+    """A slab's outline with curved edges tessellated, in world metres (closing point dropped)."""
+    from . import drafting
+
+    pts, bulges = _slab_control_outline(slab)
+    if not pts:
+        return []
+    if bulges and any(abs(b) > 1e-9 for b in bulges):
+        poly = drafting.bulge_points(pts, bulges, True)
+        return poly[:-1] if len(poly) > 1 else poly
+    return pts
 
 
 def _set_slab_outline(slab, outline):
@@ -419,18 +461,24 @@ def _set_slab_outline(slab, outline):
 
 
 def slab_outlines(storey_guid: str) -> str:
-    """[{guid, points}]: the outlines of a level's slabs (world metres), for editing their corners."""
+    """[{guid, points, bulges}]: the control outlines of a level's slabs (world metres), for editing
+    their corners and curved edges (D218)."""
     storey = A._by_guid(storey_guid) if B._model is not None else None
     out = []
     for e in (A._contained(storey) if storey is not None else ()):
-        if e.is_a("IfcSlab") and (pts := _slab_outline_world(e)):
-            out.append({"guid": e.GlobalId, "points": [[round(x, 6), round(y, 6)] for x, y in pts]})
+        if e.is_a("IfcSlab"):
+            pts, bulges = _slab_control_outline(e)
+            if pts:
+                out.append({"guid": e.GlobalId,
+                            "points": [[round(x, 6), round(y, 6)] for x, y in pts],
+                            "bulges": [round(b, 9) for b in bulges]})
     return B._dump({"slabs": out})
 
 
-def set_slab_outline(guid: str, points_json: str) -> str:
-    """A slab's outline from new points (world metres, D98: a corner moved, added or deleted), its
-    thickness and level kept (one undo step). At least three points, not crossing itself."""
+def set_slab_outline(guid: str, points_json: str, bulges_json: str = "") -> str:
+    """A slab's outline from new control points (world metres, D98: a corner moved, added or deleted)
+    and optional bulges (one per edge, so an edge may be an arc; D218), its thickness and level kept
+    (one undo step). At least three points, not crossing itself."""
     from . import drafting
 
     slab = A._by_guid(guid) if B._model is not None else None
@@ -438,15 +486,30 @@ def set_slab_outline(guid: str, points_json: str) -> str:
         return A._fail("not a slab with an outline")
     try:
         points = [(float(x), float(y)) for x, y in json.loads(points_json)]
+        bulges = [float(b) for b in json.loads(bulges_json)] if bulges_json else []
     except (TypeError, ValueError) as ex:
         return A._fail(f"bad points: {ex}")
     if len(points) < 3:
         return A._fail("a slab needs at least three corners")
     if not drafting.is_simple(points) or abs(drafting.area(points)) < 1e-6:
         return A._fail("the outline would cross itself")
+    if bulges and len(bulges) != len(points):
+        return A._fail("a bulge for each edge")
+    edges = bulges or [0.0] * len(points)
+    tessellated = drafting.bulge_points(points, edges, True)
+    if len(tessellated) > 1 and np.allclose(tessellated[0], tessellated[-1]):
+        tessellated = tessellated[:-1]
+    if not drafting.is_simple(tessellated) or abs(drafting.area(tessellated)) < 1e-6:
+        return A._fail("the curved outline would cross itself")
 
     def action():
-        _set_slab_outline(slab, points)
+        f = B._model
+        pset = ifcopenshell.util.element.get_pset(slab, SLAB_PSET)
+        pset = f.by_id(pset["id"]) if pset else ifcopenshell.api.pset.add_pset(f, product=slab, name=SLAB_PSET)
+        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
+            "Points": json.dumps([[round(x, 6), round(y, 6)] for x, y in points], separators=(",", ":")),
+            "Bulges": json.dumps([round(b, 9) for b in edges], separators=(",", ":"))})
+        _set_slab_outline(slab, tessellated)
         return 1, [slab.GlobalId], []
 
     return B._dump(B._run(action))

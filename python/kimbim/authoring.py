@@ -769,6 +769,11 @@ def create_slab(storey_guid: str, type_guid: str, points_json: str, offset=0.0) 
         ifcopenshell.api.spatial.assign_container(f, products=[slab], relating_structure=storey)
         layers.assign_active(slab)
         renovation.stamp_new(slab)
+        data = ifcopenshell.util.element.get_pset(slab, "KIMBIM_Slab")
+        pset = f.by_id(data["id"]) if data else ifcopenshell.api.pset.add_pset(f, product=slab, name="KIMBIM_Slab")
+        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
+            "Points": json.dumps([[round(x, 6), round(y, 6)] for x, y in outline], separators=(",", ":")),
+            "Bulges": "[]"})
         made["slab"] = slab
         return 1, [slab.GlobalId], []
 

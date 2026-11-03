@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D217 plus explicit overrides for the final items.
+after D123–D218 plus explicit overrides for the final items.
 
-**Summary: 198 done, 8 deferred, 3 blocked.**
+**Summary: 199 done, 7 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -80,7 +80,7 @@ after D123–D217 plus explicit overrides for the final items.
 | 4. Editing tools (general) | Elevate (change vertical position) | **Done** | D159: Edit > *Elevate...* moves the selection up or down by a distance without changing its plan position (hosted doors/windows follow); the `move_elements` `dz` path. |
 | 4. Editing tools (general) | Resize / scale | **Done** | D98: Edit › Resize (about the selection's middle) |
 | 4. Editing tools (general) | Pick up and inject settings (eyedropper / match properties) | **Done** | D97: Edit › Pick up / Inject settings (Ctrl+Alt+C / V) |
-| 4. Editing tools (general) | Edit by polygon points (add, move, delete vertices; curve an edge) | **Deferred** | Core done; remainder deferred. D98: Stretch tool on slabs and 2D shapes: move, add at an edge's middle, Ctrl+click delete; no curved edges |
+| 4. Editing tools (general) | Edit by polygon points (add, move, delete vertices; curve an edge) | **Done** | D98: Stretch tool on slabs and 2D shapes: move, add at an edge's middle, Ctrl+click delete; D218: Alt+click an edge's middle to curve it (and again to straighten it) on drafting polylines/fills and slabs, with bulges stored and arcs tessellated for bodies, areas and drawings |
 | 4. Editing tools (general) | Solid element operations (subtract, intersect, add) | **Done** | Cut, intersection and union with one or more tools; `boolean_batch` and the selection-set batch; covered by `tests/python/test_solid_operations.py` (4 tests) and the app action checks. |
 | 4. Editing tools (general) | Lock / pin elements | **Done** | D160: Edit > *Lock selection* / *Unlock selection* writes `KIMBIM_Lock` (`Locked`); locked elements refuse moves, deletes, align/resize/offset/fillet and dimension edits until unlocked; agent `elements.lock`. |
 | 4. Editing tools (general) | Group / ungroup | **Done** | D162: Edit > *Group* / *Ungroup* stores a `KIMBIM_Group` id (agent `elements.group` / `elements.ungroup`); moving or deleting one member moves/deletes the whole group. Models (D58) remain the repeated-unit tool. |

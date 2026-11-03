@@ -269,6 +269,45 @@ private slots:
         QVERIFY(w.close());
     }
 
+    // D218: Alt+click a drafting or slab edge's middle to curve it, again to straighten it.
+    void curvedEdgesByStretch()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        auto& py = kimbim::PythonEngine::instance();
+        const QString level = w.levelsBar()->activeStorey();
+        const QString floor = py.callJson("slab_types", {}, nullptr).object().value("types").toArray().first()
+            .toObject().value("guid").toString();
+        const QString slab = py.callJson("create_slab", {level, floor,
+            QStringLiteral("[[0,0],[4,0],[4,4],[0,4]]"), QStringLiteral("0")}, nullptr).object().value("guid").toString();
+        auto slabBulges = [&] {
+            for (const auto& v : py.callJson("slab_outlines", {level}, nullptr).object().value("slabs").toArray())
+                if (v.toObject().value("guid").toString() == slab)
+                    return v.toObject().value("bulges").toArray();
+            return QJsonArray();
+        };
+        QVERIFY(slabBulges().isEmpty());
+        QVERIFY(w.draftGripClick({2, 0}, 0.1, false, false, true)); // Alt+click the bottom edge: curve it
+        QCOMPARE(slabBulges().size(), 4);
+        QVERIFY(std::abs(slabBulges().at(0).toDouble() - 0.5) < 1e-9);
+        QVERIFY(w.draftGripClick({2, 1}, 0.2, false, false, true)); // Alt+click the arc's middle: straighten
+        QVERIFY(std::abs(slabBulges().at(0).toDouble()) < 1e-9);
+
+        const QString line = py.callJson("add_drafting", {level, QStringLiteral("polyline"),
+            QStringLiteral("[[0,5],[4,5],[4,8],[0,8]]"), QStringLiteral("{\"closed\":true}")}, nullptr)
+            .object().value("guid").toString();
+        auto lineBulges = [&] {
+            for (const auto& v : py.callJson("annotations", {level}, nullptr).object().value("annotations").toArray())
+                if (v.toObject().value("guid").toString() == line)
+                    return v.toObject().value("bulges").toArray();
+            return QJsonArray();
+        };
+        QVERIFY(w.draftGripClick({2, 5}, 0.1, false, false, true));
+        QCOMPARE(lineBulges().size(), 4);
+        QVERIFY(std::abs(lineBulges().at(0).toDouble() - 0.5) < 1e-9);
+        QVERIFY(w.close());
+    }
+
     // D98: a picture standing in the model, its picture on its faces.
     void pictureIn3d()
     {

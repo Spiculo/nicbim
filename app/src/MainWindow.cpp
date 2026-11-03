@@ -4242,7 +4242,8 @@ void MainWindow::buildModelingToolbar()
             m_rotateTool->click(p);
             break;
         case Tool::Stretch:
-            if (!m_gripTool->isDragging() && draftGripClick(p, tolerance, ortho, mods & Qt::ControlModifier))
+            if (!m_gripTool->isDragging() && draftGripClick(p, tolerance, ortho, mods & Qt::ControlModifier,
+                                                            mods & Qt::AltModifier))
                 break; // D84: a drafting shape's point
             m_gripTool->setTolerance(tolerance);
             m_gripTool->setOrtho(ortho);
