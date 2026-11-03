@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D194 plus explicit overrides for the final items.
+after D123–D195 plus explicit overrides for the final items.
 
-**Summary: 177 done, 29 deferred, 3 blocked.**
+**Summary: 178 done, 28 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -167,7 +167,7 @@ after D123–D194 plus explicit overrides for the final items.
 | 12. 2D drafting | Lines, polylines, arcs, circles, splines | **Done** | D84: line, polyline, arc/circle, rectangle; D98: splines; snaps, typed lengths, grips; in plans, drawings, sheets, DXF |
 | 12. 2D drafting | Fills / hatches (regions) | **Done** | D84: IfcAnnotationFillArea + IfcFillAreaStyleHatching; pattern table in project settings; pens fg/bg; area label; magic wand (Alt+click) |
 | 12. 2D drafting | 2D symbols / blocks | **Deferred** |  |
-| 12. 2D drafting | Detail components (repeating patterns such as insulation, brick) | **Deferred** |  |
+| 12. 2D drafting | Detail components (repeating patterns such as insulation, brick) | **Done** | D195: the built-in *Brick* (staggered courses) and *Insulation* (short arc loops; *Zigzag* variant) fill patterns draw repeating detail components in any fill (D73/D84/D93), on screen, in drawings/sheets and DXF; they are fills rather than placed library parts |
 | 12. 2D drafting | Image and PDF underlays (trace over a scan) | **Done** | D85: PDF page (pypdfium2) or PNG/JPEG on a level at 1:N, calibrated by two points; opacity, greyscale, tint, layer, lock, also in 3D; stored in the project and its versions |
 | 13. Annotation | Text labels | **Done** | Screen-sized; paper-unit size is open (doc 13) |
 | 13. Annotation | Linear dimension (two points) | **Done** |  |

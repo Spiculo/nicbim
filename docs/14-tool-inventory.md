@@ -231,7 +231,7 @@ release notes, so check before relying on a single cell.
 | Lines, polylines, arcs, circles, splines | all | ✅ | new | D84: line, polyline, arc/circle, rectangle; D98: splines; snaps, typed lengths, grips; in plans, drawings, sheets, DXF |
 | Fills / hatches (regions) | all | ✅ | new | D84: IfcAnnotationFillArea + IfcFillAreaStyleHatching; pattern table in project settings; pens fg/bg; area label; magic wand (Alt+click) |
 | 2D symbols / blocks | AC VW | ⬜ | new | |
-| Detail components (repeating patterns such as insulation, brick) | RV VW | ⬜ | new | |
+| Detail components (repeating patterns such as insulation, brick) | RV VW | ✅ | new | D195: built-in *Brick* and *Insulation* (and *Zigzag*) fill patterns draw the repeating detail; fills print and export to DXF. They are patterns rather than placed library parts |
 | Image and PDF underlays (trace over a scan) | all | ✅ | new | D85: PDF page (pypdfium2) or PNG/JPEG on a level at 1:N, calibrated by two points; opacity, greyscale, tint, layer, lock, also in 3D; stored in the project and its versions |
 
 ## 13. Annotation
