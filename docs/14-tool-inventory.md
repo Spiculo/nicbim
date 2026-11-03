@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D179).**
+**Status as of `main` (2026-11-03, after D112–D180).**
 
 ## How to read it
 
@@ -263,7 +263,7 @@ release notes, so check before relying on a single cell.
 | Revisions / issue management | AC RV VW | ✅ | new | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools |
 | Print, PDF export | all | ✅ | P1 | Slice 16: PDF and SVG per sheet (Qt, vector) |
 | Batch publishing (sets of sheets to PDF/DWG) | AC RV VW | ✅ | new | File › *Export all sheets as PDF...* publishes every sheet to a folder (one PDF per sheet, collision-safe names); `kimbim-app --export-sheets OUT_DIR model.ifc [--sheets A01,A02]` does it headless. File › *Export DXF...* with the DWG format, or `app_bridge.export_dwg`, batch-converts every ticked drawing/sheet through LibreDWG (`dxf2dwg`); covered by `tests/python/test_batch_dwg.py`. LibreDWG is a separate pixi environment and is not bundled in the portable build, so DWG needs it installed (DXF always works). D172 adds *Publish sheet set...*: pick sheets (or a saved named set), optionally save the choice as a set, and publish only those PDFs (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`) |
-| DWG/DXF export | AC RV VW BB | 🟡 | P1 | D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. DWG not yet (open question) |
+| DWG/DXF export | AC RV VW BB | ✅ | P1 | D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. D180: DWG export writes DXF and converts it through LibreDWG when installed, tested by `tests/python/test_batch_dwg.py` (DWG headers for two sheets); DXF needs nothing extra |
 
 ## 15. Schedules and quantities
 

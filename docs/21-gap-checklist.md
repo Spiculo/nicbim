@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D179 plus explicit overrides for the final items.
+after D123–D180 plus explicit overrides for the final items.
 
-**Summary: 163 done, 43 deferred, 3 blocked.**
+**Summary: 164 done, 42 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -189,7 +189,7 @@ after D123–D179 plus explicit overrides for the final items.
 | 14. Sheets and output | Revisions / issue management | **Done** | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools. |
 | 14. Sheets and output | Print, PDF export | **Done** | Slice 16: PDF and SVG per sheet (Qt, vector) |
 | 14. Sheets and output | Batch publishing (sets of sheets to PDF/DWG) | **Done** | Export all sheets as PDF (one per sheet), headless `--export-sheets`, and DXF/DWG batch export are in; D172 adds *Publish sheet set...* with named sheet subsets (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`). DWG needs LibreDWG installed (DXF always works). |
-| 14. Sheets and output | DWG/DXF export | **Deferred** | Core done; remainder deferred. D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. DWG not yet (open question) |
+| 14. Sheets and output | DWG/DXF export | **Done** | D83 DXF export (model space and paper-space sheets); D180: DWG through LibreDWG when installed, verified by `tests/python/test_batch_dwg.py` (two sheets, DWG headers). DXF always works. |
 | 15. Schedules and quantities | Element schedules (doors, windows, walls), editable | **Done** | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
 | 15. Schedules and quantities | Room / area schedules | **Done** | D77: the Rooms schedule (every IfcSpace) |
 | 15. Schedules and quantities | Material take-off, quantities (area, volume, length) | **Done** | D77 quantities plus D96's *Building materials* take-off: one row per material layer (material, thickness, area, volume, count), tested by `tests/python/test_materials.py::test_material_takeoff_schedule`. |
