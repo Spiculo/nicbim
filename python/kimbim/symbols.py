@@ -19,12 +19,12 @@ from __future__ import annotations
 import json
 import math
 
-KINDS = ("tag", "north", "scalebar", "cloud", "angle", "radius", "diameter", "level", "spot")
+KINDS = ("tag", "north", "scalebar", "cloud", "angle", "radius", "diameter", "level", "spot", "arc")
 # Kind -> (fewest points, most points). A tag: where its text sits, then the element's anchor. An
 # angle: the vertex, a point on each ray, a point the arc passes through. A radius or diameter: the
 # centre, a point on the circle, where the text sits. A spot elevation: the point, where the text sits.
 POINTS = {"tag": (2, 2), "north": (1, 1), "scalebar": (1, 1), "cloud": (3, None), "angle": (4, 4),
-          "radius": (3, 3), "diameter": (3, 3), "level": (1, 1), "spot": (2, 2)}
+          "radius": (3, 3), "diameter": (3, 3), "level": (1, 1), "spot": (2, 2), "arc": (4, 4)}
 # Pset keys beside Kind/Text/Points/Size/Pen: a tag's style, its template and shape (empty: the
 # style's), whether it has a leader, its element (a copy of the IfcRelAssignsToProduct, for copies),
 # where its element's anchor and its text were when last updated (world metres, JSON); Auto: a level
@@ -33,7 +33,7 @@ EXTRA = ("Style", "Template", "Shape", "Leader", "Element", "Anchor", "At", "Aut
 SHAPES = ("none", "circle", "box", "hexagon")
 NAMES = {"tag": "Tag", "north": "North arrow", "scalebar": "Scale bar", "cloud": "Revision cloud",
          "angle": "Angle dimension", "radius": "Radius dimension", "diameter": "Diameter dimension",
-         "level": "Level dimension", "spot": "Spot elevation"}
+         "level": "Level dimension", "spot": "Spot elevation", "arc": "Arc length dimension"}
 NORTH_RADIUS = 6.0  # mm on paper
 CLOUD_ARC = 6.0  # mm on paper: the length of each arc of a revision cloud
 SCALEBAR_LENGTH = 50.0  # mm on paper, about
@@ -271,6 +271,18 @@ def radial_text(kind, points) -> str:
     return ("R " + text) if kind == "radius" else ("Ø " + text)
 
 
+def arc_length_text(points) -> str:
+    """The length along the arc through the first three points (D161); a straight line when they are
+    collinear."""
+    from . import settings
+    from .drafting import arc_frame
+
+    frame = arc_frame(points[0], points[1], points[2])
+    length = math.dist(points[0], points[2]) if frame is None else abs(frame[1] * frame[3])
+    decimals = int(settings.current().get("radius_decimals", 2))
+    return settings.format_length(length, unit=False, decimals=decimals)
+
+
 def elevation_text(z: float, storey=None) -> str:
     """An elevation for a level or spot dimension. D92: the project's reference is project zero
     (default), the level itself (when `storey` is given) or sea level (project zero's `sea_level`)."""
@@ -353,6 +365,18 @@ def geometry(kind, pts, text, size, data, metres_per_mm, north=(0.0, 1.0)) -> di
         anchor = "start" if at[0] >= on[0] - 1e-9 else "end"
         shift = 0.6 * h if anchor == "start" else -0.6 * h
         out["labels"].append(_label(text or radial_text(kind, pts), (at[0] + shift, at[1]), size, anchor))
+    elif kind == "arc" and len(pts) >= 4:
+        a, m, b, at = pts[:4]
+        from .drafting import arc_frame, arc_points
+
+        out["curves"].append(arc_points(a, m, b))
+        frame = arc_frame(a, m, b)
+        if frame is not None:  # D161: a tick at each end, square to the arc
+            (_cx, _cy), _r, _a0, _sweep = frame
+            for p in (a, b):
+                u = _unit((p[0] - _cx, p[1] - _cy))
+                out["curves"].append(_tick(p, (-u[1], u[0]), u, 1.0 * metres_per_mm))
+        out["labels"].append(_label(text or arc_length_text(pts), at, size))
     elif kind == "level" and pts:
         p = pts[0]
         r = 1.5 * metres_per_mm
@@ -384,6 +408,8 @@ def measured_text(kind, pts) -> str:
         return angle_text(pts)
     if kind in ("radius", "diameter") and len(pts) >= 3:
         return radial_text(kind, pts)
+    if kind == "arc" and len(pts) >= 3:
+        return arc_length_text(pts)
     return ""
 
 

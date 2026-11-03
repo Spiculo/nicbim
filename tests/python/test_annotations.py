@@ -94,6 +94,20 @@ def test_leader_points_at_something_with_its_text(plan):
     assert not call("add_annotation", plan["l1"], "leader", json.dumps([[1, 1]]), "x")["ok"]  # needs a line
 
 
+def test_arc_length_dimension_measures_the_arc(plan):
+    """D161: an arc length dimension measures along the arc through its three points."""
+    from kimbim import symbols
+
+    pts = [(0.0, 0.0), (1.0, 1.0), (2.0, 0.0), (1.0, -0.5)]  # a semicircle of radius 1
+    assert symbols.arc_length_text(pts) == "3.14"
+    r = call("add_symbol", plan["l1"], "arc", json.dumps(pts), "{}")
+    assert r["ok"], r
+    assert listed(plan["l1"])[r["guid"]]["kind"] == "arc"
+    geom = symbols.geometry("arc", pts, "", 2.5, {}, 0.001)
+    assert any(label["text"] == "3.14" for label in geom["labels"])
+    assert not call("add_symbol", plan["l1"], "arc", json.dumps(pts[:3]), "{}")["ok"]  # needs the text point
+
+
 def test_text_size_is_in_paper_millimetres(plan):
     t = call("add_annotation", plan["l1"], "text", json.dumps([[1, 2]]), "Hall")["guid"]
     assert listed(plan["l1"])[t]["size"] == 2.5  # the default, as on a printed plan

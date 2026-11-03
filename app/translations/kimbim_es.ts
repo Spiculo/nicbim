@@ -5312,6 +5312,36 @@ Licencia: GPL-3.0 o posterior</translation>
       <translation>Selección desbloqueada</translation>
     </message>
     <message>
+      <location filename="../src/MarkupTools.cpp" line="107" />
+      <source>Angle</source>
+      <translation>Ángulo</translation>
+    </message>
+    <message>
+      <location filename="../src/MarkupTools.cpp" line="108" />
+      <source>Arc length</source>
+      <translation>Longitud de arco</translation>
+    </message>
+    <message>
+      <location filename="../src/MarkupTools.cpp" line="133" />
+      <source>Arc length: click the arc's start</source>
+      <translation>Longitud de arco: haz clic en el inicio del arco</translation>
+    </message>
+    <message>
+      <location filename="../src/MarkupTools.cpp" line="192" />
+      <source>Arc length: click a point on the arc</source>
+      <translation>Longitud de arco: haz clic en un punto del arco</translation>
+    </message>
+    <message>
+      <location filename="../src/MarkupTools.cpp" line="193" />
+      <source>Arc length: click the arc's end</source>
+      <translation>Longitud de arco: haz clic en el final del arco</translation>
+    </message>
+    <message>
+      <location filename="../src/MarkupTools.cpp" line="194" />
+      <source>Arc length: click where the text goes</source>
+      <translation>Longitud de arco: haz clic donde va el texto</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>

@@ -87,7 +87,8 @@ void MainWindow::startMarkupTool(Tool tool)
     m_tagStyle->setVisible(tool == Tool::Tag);
     m_tagShape->setVisible(tool == Tool::Tag);
     m_tagLeader->setVisible(tool == Tool::Tag);
-    m_markupMode->setVisible(tool == Tool::RadialDimension || tool == Tool::LevelDimension);
+    m_markupMode->setVisible(tool == Tool::RadialDimension || tool == Tool::LevelDimension
+                             || tool == Tool::AngleDimension);
     m_markupText->setVisible(tool == Tool::Cloud);
     m_tagElement.clear();
     m_markupHover.reset();
@@ -100,10 +101,13 @@ void MainWindow::startMarkupTool(Tool tool)
         for (auto it = styles.begin(); it != styles.end(); ++it)
             m_tagStyle->addItem(it.value().toObject().value("name").toString(it.key()), it.key());
         m_tagStyle->setCurrentIndex(std::max(0, m_tagStyle->findData(current)));
-    } else if (tool == Tool::RadialDimension || tool == Tool::LevelDimension) {
+    } else if (tool == Tool::AngleDimension || tool == Tool::RadialDimension || tool == Tool::LevelDimension) {
         const QSignalBlocker block(m_markupMode);
         m_markupMode->clear();
-        if (tool == Tool::RadialDimension) {
+        if (tool == Tool::AngleDimension) {
+            m_markupMode->addItem(tr("Angle"), QStringLiteral("angle"));
+            m_markupMode->addItem(tr("Arc length"), QStringLiteral("arc")); // D161
+        } else if (tool == Tool::RadialDimension) {
             m_markupMode->addItem(tr("Radius"), QStringLiteral("radius"));
             m_markupMode->addItem(tr("Diameter"), QStringLiteral("diameter"));
         } else {
@@ -125,7 +129,8 @@ void MainWindow::startMarkupTool(Tool tool)
         m_status->showMessage(tr("Revision cloud: click its outline; click the first point or press Enter to close"));
         break;
     case Tool::AngleDimension:
-        m_status->showMessage(tr("Angle: click the vertex"));
+        m_status->showMessage(m_markupMode->currentData().toString() == QLatin1String("arc")
+            ? tr("Arc length: click the arc's start") : tr("Angle: click the vertex"));
         break;
     case Tool::RadialDimension:
         m_status->showMessage(tr("Radius: click the centre (circle and arc centres snap)"));
@@ -184,9 +189,11 @@ void MainWindow::markupPointer(QPointF p, double tolerance, bool click)
         if (m_annotationPoints.size() < needed) {
             static const char* const angleSteps[] = {"", QT_TR_NOOP("Angle: click a point on the first side"),
                 QT_TR_NOOP("Angle: click a point on the second side"), QT_TR_NOOP("Angle: click where the arc goes")};
+            static const char* const arcSteps[] = {"", QT_TR_NOOP("Arc length: click a point on the arc"),
+                QT_TR_NOOP("Arc length: click the arc's end"), QT_TR_NOOP("Arc length: click where the text goes")};
             const int n = int(m_annotationPoints.size());
             if (m_tool == Tool::AngleDimension)
-                m_status->showMessage(tr(angleSteps[n]));
+                m_status->showMessage(tr(mode == QLatin1String("arc") ? arcSteps[n] : angleSteps[n]));
             else if (m_tool == Tool::RadialDimension)
                 m_status->showMessage(n == 1 ? tr("Click a point on the circle") : tr("Click where the text goes"));
             else
@@ -195,7 +202,8 @@ void MainWindow::markupPointer(QPointF p, double tolerance, bool click)
         }
         const QVector<QPointF> pts = m_annotationPoints;
         m_annotationPoints.clear();
-        const QString kind = m_tool == Tool::AngleDimension ? QStringLiteral("angle") : mode;
+        const QString kind = m_tool == Tool::AngleDimension
+            ? (mode == QLatin1String("arc") ? QStringLiteral("arc") : QStringLiteral("angle")) : mode;
         addSymbol(kind, pts);
         startMarkupTool(m_tool); // the first step's hint again
         break;
