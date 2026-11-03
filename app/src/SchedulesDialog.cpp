@@ -13,6 +13,7 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QJsonDocument>
 #include <QLabel>
 #include <QLineEdit>
@@ -488,6 +489,29 @@ ScheduleSchemeDialog::ScheduleSchemeDialog(const QJsonObject& scheme, QWidget* p
     auto* right = new QVBoxLayout;
     right->addWidget(new QLabel(tr("Schedule fields:"), this));
     right->addWidget(m_fields);
+    auto* formula = new QPushButton(tr("Formula..."), this); // D181
+    formula->setToolTip(tr("A calculated column: reference other fields in braces, e.g. {quantity:volume} * 2"));
+    right->addWidget(formula);
+    connect(formula, &QPushButton::clicked, this, [this] {
+        bool ok = false;
+        const QString expression = QInputDialog::getText(this, tr("Calculated field"),
+            tr("Expression (field references in braces, e.g. {quantity:volume} * 2):"),
+            QLineEdit::Normal, QString(), &ok);
+        if (!ok || expression.trimmed().isEmpty())
+            return;
+        const QString label = QInputDialog::getText(this, tr("Calculated field"), tr("Column label:"),
+                                                    QLineEdit::Normal, tr("Calculated"), &ok);
+        if (!ok)
+            return;
+        const QString shown = label.trimmed().isEmpty() ? expression.trimmed() : label.trimmed();
+        const QJsonObject f{{"source", "formula"}, {"name", expression.trimmed()}, {"label", label.trimmed()}};
+        auto* item = new QListWidgetItem(shown, m_fields);
+        item->setData(Qt::UserRole, f);
+        item->setData(ShownRole, shown);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEditable);
+        item->setCheckState(Qt::Unchecked);
+        item->setToolTip(QStringLiteral("formula:%1").arg(expression.trimmed()));
+    });
     lists->addLayout(left, 1);
     lists->addLayout(centre, 2);
     lists->addLayout(middle);

@@ -154,6 +154,24 @@ def test_quantity_sets_win_over_computed_values(house):
     assert row["quantity:net_side_area"] == 12.5 and row["quantity:length"] == pytest.approx(4.0)
 
 
+def test_calculated_fields_in_a_schedule(house):
+    """D181: a formula field computes from the fields before it, in a sandbox."""
+    scheme = {"name": "Volumes doubled", "classes": ["IfcWall"],
+              "fields": [{"source": "quantity", "name": "volume"},
+                         {"source": "formula", "name": "{quantity:volume} * 2", "label": "Double volume"}]}
+    d = json.loads(b.schedule(json.dumps(scheme)))
+    assert d["ok"], d
+    keys = [c["key"] for c in d["columns"]]
+    volume, doubled = keys.index("quantity:volume"), keys.index("formula:{quantity:volume} * 2")
+    assert d["rows"] and all(row["values"][doubled] == pytest.approx(row["values"][volume] * 2) for row in d["rows"])
+    # A missing field leaves the cell empty; an unsafe expression is refused.
+    missing = {**scheme, "fields": [{"source": "formula", "name": "{quantity:mass} * 2"}]}
+    empty = json.loads(b.schedule(json.dumps(missing)))
+    assert empty["ok"] and empty["rows"][0]["values"][0] is None
+    for bad in ("__import__('os')", "open('x')", "x + 1"):
+        assert not json.loads(b.schedule(json.dumps({**scheme, "fields": [{"source": "formula", "name": bad}]})))["ok"]
+
+
 def test_custom_scheme_in_the_project_settings(house):
     scheme = {"name": "Openings by type", "classes": ["IfcDoor", "IfcWindow"],
               "fields": [{"source": "info", "name": "class"}, {"source": "info", "name": "type"},

@@ -13606,6 +13606,36 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
       <source>Smallest opening to deduct:</source>
       <translation>Abertura mínima a descontar:</translation>
     </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="491" />
+      <source>Formula...</source>
+      <translation>Fórmula...</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="492" />
+      <source>A calculated column: reference other fields in braces, e.g. {quantity:volume} * 2</source>
+      <translation>Una columna calculada: referencia otros campos entre llaves, p. ej. {quantity:volume} * 2</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="495" />
+      <source>Calculated field</source>
+      <translation>Campo calculado</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="496" />
+      <source>Expression (field references in braces, e.g. {quantity:volume} * 2):</source>
+      <translation>Expresión (referencias de campo entre llaves, p. ej. {quantity:volume} * 2):</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="500" />
+      <source>Column label:</source>
+      <translation>Etiqueta de columna:</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="501" />
+      <source>Calculated</source>
+      <translation>Calculado</translation>
+    </message>
   </context>
   <context>
     <name>kimbim::SchedulesDialog</name>

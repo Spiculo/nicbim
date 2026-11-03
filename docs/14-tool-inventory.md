@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D180).**
+**Status as of `main` (2026-11-03, after D112–D181).**
 
 ## How to read it
 
@@ -194,7 +194,7 @@ release notes, so check before relying on a single cell.
 | Element types: assign, edit type, update all | all | ✅ | P0 | D50 type values and overrides; D106 type manager (Model › Type manager...): list, create from selection, assign, edit name/description/tag and properties, update all removes overrides |
 | Property editing, psets, bulk edit | all | ✅ | P0 | |
 | Dimensions group (length, height… edits the shape) | AC RV | ✅ | — | |
-| Expression / calculated properties | AC RV VW | ⬜ | new | Archicad expression-based properties, Revit formulas |
+| Expression / calculated properties | AC RV VW | ✅ | new | D181: schedule fields with `source: formula` evaluate a safe expression over the row's earlier fields, e.g. `{quantity:volume} * 2` (numbers, + - * / // % **, min, max, round, abs); the schedule editor's *Formula...* button adds one and its label |
 | Renovation status (existing / demolish / new) and filters | AC RV VW | ✅ | new | D74: Archicad statuses, renovation filters in purposes, legends; Revit phases not done |
 | Design options | AC RV VW | ✅ | P0 | KimBim uses branches (D56); Archicad and Revit store options inside one file |
 

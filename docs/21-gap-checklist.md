@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D180 plus explicit overrides for the final items.
+after D123–D181 plus explicit overrides for the final items.
 
-**Summary: 164 done, 42 deferred, 3 blocked.**
+**Summary: 165 done, 41 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -145,7 +145,7 @@ after D123–D180 plus explicit overrides for the final items.
 | 9. Organising the model | Element types: assign, edit type, update all | **Done** | D50 type values and overrides; D106 type manager (Model › Type manager...): list, create from selection, assign, edit name/description/tag and properties, update all removes overrides |
 | 9. Organising the model | Property editing, psets, bulk edit | **Done** |  |
 | 9. Organising the model | Dimensions group (length, height… edits the shape) | **Done** |  |
-| 9. Organising the model | Expression / calculated properties | **Deferred** | Archicad expression-based properties, Revit formulas |
+| 9. Organising the model | Expression / calculated properties | **Done** | D181: schedule fields with `source: formula` evaluate a safe expression over the row's earlier fields (`{quantity:volume} * 2`; numbers, + - * / // % **, min, max, round, abs), added with the schedule editor's *Formula...* button. |
 | 9. Organising the model | Renovation status (existing / demolish / new) and filters | **Done** | D74: Archicad statuses, renovation filters in purposes, legends; Revit phases not done |
 | 9. Organising the model | Design options | **Done** | KimBim uses branches (D56); Archicad and Revit store options inside one file |
 | 10. Attributes and graphics standards | Layered (composite) wall and slab types | **Done** |  |

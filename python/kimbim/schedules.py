@@ -20,6 +20,7 @@ import json
 import math
 import re
 import time
+import ast
 
 import ifcopenshell
 import ifcopenshell.api.attribute
@@ -80,6 +81,58 @@ def field_key(f: dict) -> str:
 
 def _label(f: dict) -> str:
     return f.get("label") or LABELS.get(field_key(f)) or f.get("name", "")
+
+
+_FORMULA_NODES = {ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant, ast.Call, ast.Name, ast.Load,
+                  ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow, ast.UAdd, ast.USub}
+_FORMULA_FUNCS = {"min": min, "max": max, "round": round, "abs": abs}
+_FIELD_REF = re.compile(r"\{([^{}]+)\}")
+
+
+def _formula_error(expr: str) -> str | None:
+    """Why a calculated field's expression cannot run, or None."""
+    try:
+        tree = ast.parse(_FIELD_REF.sub("0", str(expr)), mode="eval")
+    except SyntaxError as ex:
+        return f"bad formula: {ex.msg}"
+    for node in ast.walk(tree):
+        if type(node) not in _FORMULA_NODES:
+            return "a formula may use numbers, + - * / // % **, min, max, round and abs"
+        if isinstance(node, ast.Call) and (not isinstance(node.func, ast.Name) or node.func.id not in _FORMULA_FUNCS):
+            return "a formula may call min, max, round or abs only"
+        if isinstance(node, ast.Name) and node.id not in _FORMULA_FUNCS:
+            return f"unknown name {node.id}; write field references as {{source:name}}"
+    return None
+
+
+def _formula_value(expr: str, values: dict):
+    """The value of a calculated field: {field:key} references are replaced by the row's numbers."""
+    missing = False
+
+    def replace(match):
+        nonlocal missing
+        v = values.get(match.group(1))
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            missing = True
+            return "0"
+        return repr(float(v))
+
+    text = _FIELD_REF.sub(replace, str(expr))
+    if missing:
+        return None
+    try:
+        tree = ast.parse(text, mode="eval")
+    except SyntaxError:
+        return None
+    for node in ast.walk(tree):
+        if type(node) not in _FORMULA_NODES:
+            return None
+        if isinstance(node, ast.Call) and (not isinstance(node.func, ast.Name) or node.func.id not in _FORMULA_FUNCS):
+            return None
+    try:
+        return float(eval(compile(tree, "<formula>", "eval"), {"__builtins__": {}}, dict(_FORMULA_FUNCS)))
+    except Exception:  # noqa: BLE001 - a formula that cannot run shows an empty cell
+        return None
 
 
 A_, I_, Q_, P_ = (lambda n, **k: _field("attribute", n, **k)), (lambda n, **k: _field("info", n, **k)), \
@@ -178,7 +231,12 @@ def scheme_error(s) -> str | None:
             return f"unknown quantity {f['name']}"
         if src == "property" and not (isinstance(f.get("pset"), str) and f["pset"] and f["name"]):
             return "a property field needs a property set and a name"
-        if src not in ("attribute", "info", "quantity", "property"):
+        if src == "formula":
+            if not f["name"].strip():
+                return "a formula needs an expression"
+            if (err := _formula_error(f["name"])) is not None:
+                return err
+        if src not in ("attribute", "info", "quantity", "property", "formula"):
             return f"unknown field source {src}"
     group = s.get("group_by", [])
     if not (isinstance(group, list) and all(isinstance(g, str) for g in group)):
@@ -686,6 +744,8 @@ def collect_elements(elements, fields, ctx: _Ctx | None = None) -> list[dict]:
                         quantities = _parametric(e, family, ctx)
                     v = quantities.get(name)
                 values[k] = v
+            elif src == "formula":  # D181: evaluated after the geometry fallback below
+                values[k] = None
         storey = storey or _level(e)
         rec = {"guid": e.GlobalId, "values": values, "elevation": ctx.elevation(storey)}
         records.append(rec)
@@ -707,6 +767,10 @@ def collect_elements(elements, fields, ctx: _Ctx | None = None) -> list[dict]:
                 k = f"quantity:{n}"
                 if rec["values"].get(k) is None and g.get(n) is not None:
                     rec["values"][k] = g[n]
+    formulas = [(field_key(f), f.get("name")) for f in fields if f.get("source") == "formula"]
+    for rec in records:  # D181: calculated fields see every field, including the geometry fallback
+        for key, expression in formulas:
+            rec["values"][key] = _formula_value(expression, rec["values"])
     return records
 
 
@@ -747,6 +811,8 @@ def _columns(scheme) -> list[dict]:
         k, src = field_key(f), f.get("source")
         if src == "quantity":
             kind, summed = QUANTITIES[f["name"]]
+        elif src == "formula":
+            kind, summed = "number", False
         else:
             kind, summed = "text", False
         editable = (src == "attribute" and f["name"] in EDITABLE_ATTRIBUTES) or src == "property"
