@@ -546,6 +546,9 @@ def fillet_corners(guids_json: str, size, mode: str = "fillet") -> str:
     if size <= 0:
         return A._fail("the radius or distance must be more than zero")
     walls = [e for e in B._elements(guids_json) if e.is_a("IfcWall")]
+    pinned = A.locked(walls)
+    if pinned:
+        return A._fail(f"{len(pinned)} element(s) are locked")
     if walls:  # D97: two walls meeting at a corner: a curved (fillet) or straight (chamfer) wall between
         from . import curved_walls
 
@@ -566,6 +569,9 @@ def fillet_corners(guids_json: str, size, mode: str = "fillet") -> str:
                 shapes.append((e, data[0] == "fill" or bool(N.extra_of(e).get("Closed"))))
     if not slabs and not shapes:
         return A._fail("select slabs, polylines or fills")
+    pinned = A.locked([*slabs, *(e for e, _closed in shapes)])
+    if pinned:
+        return A._fail(f"{len(pinned)} element(s) are locked")
 
     def action():
         changed = []
@@ -595,6 +601,9 @@ def offset_elements(guids_json: str, distance) -> str:
     elements = [e for e in B._elements(guids_json) if e.is_a("IfcWall") or e.is_a("IfcSlab")]
     if not elements:
         return A._fail("select walls or slabs to offset")
+    pinned = A.locked(elements)
+    if pinned:
+        return A._fail(f"{len(pinned)} element(s) are locked")
     try:
         distance = float(distance)
     except (TypeError, ValueError) as ex:
@@ -663,6 +672,9 @@ def align_elements(guids_json: str, axis: str, mode: str, reference_guid: str = 
                 if e.is_a("IfcProduct") and getattr(e, "ObjectPlacement", None) is not None]
     if not selected:
         return A._fail("select elements to align")
+    pinned = A.locked(selected)
+    if pinned:
+        return A._fail(f"{len(pinned)} element(s) are locked")
     selected_set = set(selected)
     elements = []
     for e in selected:
@@ -728,6 +740,9 @@ def resize_elements(guids_json: str, cx, cy, factor) -> str:
     if B._model is None:
         return A._fail("no model open")
     picked = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
+    pinned = A.locked(picked)
+    if pinned:
+        return A._fail(f"{len(pinned)} element(s) are locked")
     try:
         k = float(factor)
         if str(cx).strip() == "" or str(cy).strip() == "":  # about the selection's middle

@@ -183,6 +183,26 @@ def test_elevate_moves_the_selection_vertically(room):
     assert ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement)[0][3] == pytest.approx(0.0, abs=1e-9)
 
 
+def test_locked_elements_refuse_moves_and_deletes(room):
+    slab = room["slab"]
+    assert call("set_locked", g(slab), "1")["ok"]
+    assert not call("move_elements", g(slab), 0, 1, 0)["ok"]
+    assert "locked" in call("move_elements", g(slab), 0, 1, 0)["error"]
+    assert not call("delete_elements", g(slab))["ok"]
+    assert not call("align_elements", g(slab), "x", "min")["ok"]
+    assert not call("set_dimension", g(slab), "Thickness", 0.3)["ok"]
+    assert b._model.by_guid(slab) is not None
+    # a locked door also stops its wall being deleted
+    assert call("set_locked", g(room["door"]), "1")["ok"]
+    r = call("delete_elements", g(room["w1"]))
+    assert not r["ok"] and "locked" in r["error"]
+    assert b._model.by_guid(room["w1"]) is not None
+    # unlocking restores editing
+    assert call("set_locked", g(slab, room["door"]), "0")["ok"]
+    assert call("move_elements", g(slab), 0, 1, 0)["ok"]
+    assert call("delete_elements", g(slab))["ok"]
+
+
 def test_round_corners_geometry():
     from kimbim import editing as E
 

@@ -697,6 +697,10 @@ void MainWindow::buildMenus()
     editAction(tr("&Align..."), "actionAlign", QKeySequence(), [this] { alignDialog(); }); // D154
     editAction(tr("El&evate..."), "actionElevate", QKeySequence(), [this] { elevateDialog(); }) // D159
         ->setToolTip(tr("Move the selection up or down without changing its plan position"));
+    editAction(tr("&Lock selection"), "actionLock", QKeySequence(), [this] { setSelectionLocked(true); }) // D160
+        ->setToolTip(tr("Stop the selected elements from being moved, deleted or resized"));
+    editAction(tr("&Unlock selection"), "actionUnlock", QKeySequence(), [this] { setSelectionLocked(false); }) // D160
+        ->setToolTip(tr("Allow the selected elements to be moved, deleted and resized again"));
     editAction(tr("&Offset..."), "actionOffset", QKeySequence(), [this] { offsetDialog(); });
     editAction(tr("Resi&ze..."), "actionResize", QKeySequence(), [this] { // D98: Archicad's Resize
         if (m_selection.isEmpty()) {
@@ -8689,6 +8693,22 @@ void MainWindow::elevateDialog()
     }
     afterEdit(r);
     m_status->showMessage(tr("Elevated %n element(s)", nullptr, m_selection.size()));
+}
+
+void MainWindow::setSelectionLocked(bool locked)
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select what to lock first"));
+        return;
+    }
+    const QJsonObject r = bridge("set_locked", {jsonList(m_selection),
+        locked ? QStringLiteral("1") : QStringLiteral("0")});
+    if (!r.value("ok").toBool()) {
+        showError(locked ? tr("Lock selection") : tr("Unlock selection"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    m_status->showMessage(locked ? tr("Selection locked") : tr("Selection unlocked"));
 }
 
 void MainWindow::overallDimensionDialog()

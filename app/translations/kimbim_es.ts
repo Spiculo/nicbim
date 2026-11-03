@@ -5267,6 +5267,51 @@ Licencia: GPL-3.0 o posterior</translation>
       </translation>
     </message>
     <message>
+      <location filename="../src/MainWindow.cpp" line="700" />
+      <source>&amp;Lock selection</source>
+      <translation>&amp;Bloquear selección</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="702" />
+      <source>&amp;Unlock selection</source>
+      <translation>&amp;Desbloquear selección</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="701" />
+      <source>Stop the selected elements from being moved, deleted or resized</source>
+      <translation>Impedir que los elementos seleccionados se muevan, eliminen o cambien de tamaño</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="703" />
+      <source>Allow the selected elements to be moved, deleted and resized again</source>
+      <translation>Permitir de nuevo que los elementos seleccionados se muevan, eliminen o cambien de tamaño</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8760" />
+      <source>Select what to lock first</source>
+      <translation>Selecciona primero qué bloquear</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8766" />
+      <source>Lock selection</source>
+      <translation>Bloquear selección</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8766" />
+      <source>Unlock selection</source>
+      <translation>Desbloquear selección</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8771" />
+      <source>Selection locked</source>
+      <translation>Selección bloqueada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="8771" />
+      <source>Selection unlocked</source>
+      <translation>Selección desbloqueada</translation>
+    </message>
+    <message>
       <location filename="../src/MainWindow.cpp" line="722" />
       <source>&amp;Marquee selection</source>
       <translation>Selección por &amp;marquesina</translation>

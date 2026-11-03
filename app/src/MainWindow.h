@@ -639,6 +639,7 @@ private:
     void ceilingDialog();      // D156: an IfcCovering ceiling over a slab or closed walls
     void wallOpeningDialog();  // D157: a bare hole through a wall
     void elevateDialog();      // D159: move the selection up or down
+    void setSelectionLocked(bool locked); // D160: pin or unpin the selection
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();

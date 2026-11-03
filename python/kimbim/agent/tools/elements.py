@@ -170,6 +170,16 @@ def rename(session, elements, name):
     return {"elements": len(guids)}
 
 
+@tool("elements.lock", {"required": ["elements"], "properties": {
+    "elements": SELECTOR,
+    "locked": {"type": "boolean", "description": "True to lock (default), false to unlock."}}}, writes=True)
+def lock(session, elements, locked=True):
+    """Pin or unpin elements so they refuse moves, deletes and dimension edits."""
+    guids = session.resolve(elements)
+    bridge(A.set_locked, _guids(guids), "1" if locked else "0")
+    return {"elements": len(guids)}
+
+
 @tool("elements.move", {"required": ["elements"], "properties": {
     "elements": SELECTOR, "dx": _NUMBER, "dy": _NUMBER, "dz": _NUMBER}}, writes=True)
 def move(session, elements, dx=0, dy=0, dz=0):

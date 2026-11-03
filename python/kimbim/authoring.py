@@ -79,6 +79,50 @@ def _by_guid(guid: str):
         return None
 
 
+# D160: a pinned element refuses moves, deletes and dimension edits; the flag is a property set so
+# other IFC tools keep it and the model stays schema-valid.
+LOCK_PSET = "KIMBIM_Lock"
+
+
+class LockedError(Exception):
+    """An edit would move or delete a locked element (D160)."""
+
+
+def is_locked(element) -> bool:
+    """Whether an element is pinned (D160)."""
+    data = ifcopenshell.util.element.get_pset(element, LOCK_PSET) or {}
+    return bool(data.get("Locked"))
+
+
+def locked(elements) -> list:
+    """The locked elements in `elements` (D160)."""
+    return [e for e in elements if is_locked(e)]
+
+
+def set_locked(guids_json: str, locked=True) -> str:
+    """Lock or unlock products; locked elements refuse moves, deletes and dimension edits (D160)."""
+    if B._model is None:
+        return _fail("no model open")
+    elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
+    if not elements:
+        return _fail("nothing to lock")
+    value = bool(_truthy(locked)) if not isinstance(locked, bool) else locked
+
+    def action():
+        f = B._model
+        for e in elements:
+            data = ifcopenshell.util.element.get_pset(e, LOCK_PSET)
+            pset = f.by_id(data["id"]) if data else ifcopenshell.api.pset.add_pset(f, product=e, name=LOCK_PSET)
+            ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={"Locked": value})
+        return len(elements), [e.GlobalId for e in elements], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return _fail(f"{type(ex).__name__}: {ex}")
+    return B._dump(r)
+
+
 # ---------------------------------------------------------------- project and levels
 
 def new_project(name: str = "") -> str:
@@ -370,6 +414,8 @@ def delete_elements(guids_json: str) -> str:
     elements = [e for e in B._elements(guids_json) if e.is_a("IfcProduct")]
     try:
         r = B._run(lambda: _delete_cascade(elements))
+    except LockedError as ex:
+        return _fail(str(ex))
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "removed": len(elements)})
@@ -397,6 +443,10 @@ def _delete_cascade(elements) -> tuple:
             for void in getattr(opening, "VoidsElements", ()) or ():
                 hosts.append(void.RelatingBuildingElement)
     from . import sheets
+
+    pinned = locked([*elements, *openings])
+    if pinned:
+        raise LockedError(f"{len(pinned)} element(s) are locked")
 
     for e in elements:
         if drawgen.is_drawing(e):  # deleting a section/elevation marker also takes it off its sheets
@@ -1959,6 +2009,10 @@ def _transform(guids_json: str, transform_si, detach=False) -> str:
         if float(np.linalg.norm(p2 - p1)) < MIN_WALL_LENGTH:
             return _fail(f"moving this would shrink wall {n.GlobalId} to nothing")
 
+    pinned = locked([*moved, *dragged])
+    if pinned:
+        return _fail(f"{len(pinned)} element(s) are locked")
+
     def action():
         f = B._model
         s = _scale()
@@ -2640,6 +2694,9 @@ def set_dimension(guids_json: str, name: str, value) -> str:
     from . import stairs
 
     elements = stairs.drop_parts(B._elements(guids_json))
+    pinned = locked(elements)
+    if pinned:
+        return _fail(f"{len(pinned)} element(s) are locked")
     from . import curved_walls
 
     parametric = stairs.set_dimension(elements, name, metres)  # D88: stairs, ramps, railings

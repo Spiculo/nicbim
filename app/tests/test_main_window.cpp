@@ -3231,6 +3231,7 @@ private slots:
                  "actionDrawingScale", "actionExportImage", "actionWalkMode", "actionSplitView",
                  "actionAlign", "actionMarqueeSelection", "actionCeiling",
                  "actionWallOpening", "actionOverallDimension", "actionElevate",
+                 "actionLock", "actionUnlock",
                  "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
