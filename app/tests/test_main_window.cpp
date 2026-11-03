@@ -3141,7 +3141,8 @@ private slots:
         for (const char* name : {"actionGeoreferencing", "actionTerrain", "actionIssues", "actionPurgeTypes",
                  "actionDetailTool", "actionExportIfc", "actionLinkModel", "actionLinks",
                  "actionCurtainWallSettings", "actionBuildingPad", "actionImportMesh",
-                 "actionImportPointCloud", "actionAttributeManager", "actionKeynotes"})
+                 "actionImportPointCloud", "actionCropRegion", "actionClearCropRegion",
+                 "actionAttributeManager", "actionKeynotes"})
             QVERIFY2(action(w, name), name);
     }
 

@@ -49,15 +49,17 @@ int planeCount(const CutState& state)
     int n = state.planCut ? 1 : 0;
     if (state.box && !state.bounds.IsVoid())
         n += 6;
+    if (!state.crop.IsVoid())
+        n += 4;
     for (const CutPlane& p : state.planes)
         if (p.enabled)
             ++n;
     return n;
 }
 
-int maxUserPlanes(int driverLimit, bool planCut, bool box)
+int maxUserPlanes(int driverLimit, bool planCut, bool box, bool crop)
 {
-    const int fixed = (planCut ? 1 : 0) + (box ? 6 : 0);
+    const int fixed = (planCut ? 1 : 0) + (box ? 6 : 0) + (crop ? 4 : 0);
     if (driverLimit <= 0)
         return 1 << 20;
     return std::max(0, driverLimit - fixed);
@@ -76,6 +78,15 @@ std::vector<Handle(Graphic3d_ClipPlane)> makePlanes(const CutState& state, int l
         const gp_Dir dirs[] = {gp_Dir(1, 0, 0), gp_Dir(-1, 0, 0), gp_Dir(0, 1, 0),
             gp_Dir(0, -1, 0), gp_Dir(0, 0, 1), gp_Dir(0, 0, -1)};
         for (int i = 0; i < 6; ++i)
+            if (limit <= 0 || int(planes.size()) < limit)
+                planes.push_back(plane(points[i], dirs[i]));
+    }
+    if (!state.crop.IsVoid()) {
+        double x0, y0, _z0, x1, y1, _z1;
+        state.crop.Get(x0, y0, _z0, x1, y1, _z1);
+        const gp_Pnt points[] = {gp_Pnt(x0, 0, 0), gp_Pnt(x1, 0, 0), gp_Pnt(0, y0, 0), gp_Pnt(0, y1, 0)};
+        const gp_Dir dirs[] = {gp_Dir(1, 0, 0), gp_Dir(-1, 0, 0), gp_Dir(0, 1, 0), gp_Dir(0, -1, 0)};
+        for (int i = 0; i < 4; ++i)
             if (limit <= 0 || int(planes.size()) < limit)
                 planes.push_back(plane(points[i], dirs[i]));
     }

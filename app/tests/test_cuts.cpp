@@ -77,6 +77,33 @@ private slots:
         QVERIFY(!kept(planes, 5, 5, 10.5));
     }
 
+    void cropRegionKeepsOnlyItsRectangle()
+    {
+        kimbim::CutState s;
+        s.crop.Update(0, 0, -100, 10, 10, 100);
+        const auto planes = kimbim::makePlanes(s);
+        QCOMPARE(int(planes.size()), 4);
+        QVERIFY(kept(planes, 5, 5, -50));   // inside the rectangle at any height
+        QVERIFY(kept(planes, 5, 5, 50));
+        QVERIFY(!kept(planes, -1, 5, 0));
+        QVERIFY(!kept(planes, 11, 5, 0));
+        QVERIFY(!kept(planes, 5, -1, 0));
+        QVERIFY(!kept(planes, 5, 11, 0));
+        QCOMPARE(kimbim::planeCount(s), 4);
+        QCOMPARE(kimbim::maxUserPlanes(32, false, false, true), 28);
+    }
+
+    void cropAndPlanCutAndBoxCountTogether()
+    {
+        kimbim::CutState s;
+        s.planCut = true;
+        s.box = true;
+        s.bounds.Update(0, 0, 0, 10, 10, 10);
+        s.crop.Update(1, 1, -100, 9, 9, 100);
+        QCOMPARE(kimbim::planeCount(s), 11); // 1 + 6 + 4
+        QCOMPARE(kimbim::maxUserPlanes(32, true, true, true), 21);
+    }
+
     void bothCutsCombine()
     {
         kimbim::CutState s;

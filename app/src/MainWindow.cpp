@@ -1044,6 +1044,14 @@ void MainWindow::buildMenus()
         }
         applyCuts();
     });
+    // D134: crop the active view to a rectangle (a plan's crop region).
+    QAction* cropRegion = view->addAction(tr("Crop &region..."));
+    cropRegion->setObjectName(QStringLiteral("actionCropRegion"));
+    cropRegion->setToolTip(tr("Keep only what lies inside a rectangle in the active view"));
+    connect(cropRegion, &QAction::triggered, this, &MainWindow::cropRegionDialog);
+    QAction* clearCrop = view->addAction(tr("Clear crop re&gion"));
+    clearCrop->setObjectName(QStringLiteral("actionClearCropRegion"));
+    connect(clearCrop, &QAction::triggered, this, &MainWindow::clearCropRegion);
     // D95: cut planes of any direction (Archicad's 3D Cutaway).
     m_cutPlanesMenu = view->addMenu(tr("Cut &planes"));
     m_cutPlanesMenu->setObjectName(QStringLiteral("menuCutPlanes"));
@@ -1389,7 +1397,7 @@ int MainWindow::availableCutPlaneSlots() const
     int limit = modelView()->clipPlaneLimit();
     if (limit <= 0)
         limit = 32; // headless: the driver cannot be asked
-    const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid());
+    const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid());
     int used = 0;
     for (const CutPlane& p : s.planes)
         if (p.enabled)
@@ -1473,7 +1481,7 @@ bool MainWindow::setCutPlaneEnabled(int index, bool on)
         int limit = modelView()->clipPlaneLimit();
         if (limit <= 0)
             limit = 32; // headless: the driver cannot be asked
-        const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid());
+        const int room = maxUserPlanes(limit, s.planCut, s.box && !s.bounds.IsVoid(), !s.crop.IsVoid());
         int used = 0;
         for (int i = 0; i < s.planes.size(); ++i)
             if (i != index && s.planes[i].enabled)
@@ -1643,6 +1651,64 @@ void MainWindow::horizontalCutDialog()
         m_status->showMessage(tr("Horizontal cut at %1 m").arg(QString::number(z, 'f', 2)));
 }
 
+void MainWindow::cropRegionDialog()
+{
+    if (!m_viewport)
+        return;
+    CutSettings& settings = m_cuts[m_viewport];
+    double x0 = 0.0, y0 = 0.0, x1 = 10.0, y1 = 10.0, z0 = 0.0, z1 = 0.0;
+    if (!settings.crop.IsVoid()) {
+        settings.crop.Get(x0, y0, z0, x1, y1, z1);
+    } else {
+        const Bnd_Box bounds = m_viewport->boundsOf({});
+        if (!bounds.IsVoid())
+            bounds.Get(x0, y0, z0, x1, y1, z1);
+    }
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Crop region"));
+    auto* form = new QFormLayout(&dialog);
+    auto spin = [&](double value) {
+        auto* box = new QDoubleSpinBox(&dialog);
+        box->setRange(-1e6, 1e6);
+        box->setDecimals(3);
+        box->setSuffix(tr(" m"));
+        box->setValue(value);
+        return box;
+    };
+    auto* left = spin(std::min(x0, x1));
+    auto* bottom = spin(std::min(y0, y1));
+    auto* right = spin(std::max(x0, x1));
+    auto* top = spin(std::max(y0, y1));
+    form->addRow(tr("Left:"), left);
+    form->addRow(tr("Bottom:"), bottom);
+    form->addRow(tr("Right:"), right);
+    form->addRow(tr("Top:"), top);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    if (right->value() - left->value() < 1e-6 || top->value() - bottom->value() < 1e-6) {
+        showError(tr("Crop region"), tr("The crop region needs a positive width and height."));
+        return;
+    }
+    settings.crop = Bnd_Box();
+    settings.crop.Update(left->value(), bottom->value(), -1e6, right->value(), top->value(), 1e6);
+    applyCutsTo(m_viewport, settings);
+    m_status->showMessage(tr("Crop region set"));
+}
+
+void MainWindow::clearCropRegion()
+{
+    auto it = m_cuts.find(m_viewport);
+    if (it == m_cuts.end() || it->crop.IsVoid())
+        return;
+    it->crop = Bnd_Box();
+    applyCutsTo(m_viewport, *it);
+    m_status->showMessage(tr("Crop region cleared"));
+}
+
 void MainWindow::updateCutSliderRange()
 {
     // From the level up to the next level (or 4 m), in centimetres.
@@ -1669,6 +1735,7 @@ void MainWindow::applyCutsTo(Viewport* view, CutSettings& settings)
     state.height = (m_levels ? m_levels->activeElevation() : 0.0) + settings.height;
     state.box = settings.box;
     state.bounds = settings.bounds;
+    state.crop = settings.crop;
     state.planes.assign(settings.planes.begin(), settings.planes.end());
     int limit = view->clipPlaneLimit();
     if (limit <= 0)
@@ -1695,7 +1762,16 @@ void MainWindow::applyCutsTo(Viewport* view, CutSettings& settings)
         keep.emplace_back(gp_Pnt(0, 0, z0), gp_Dir(0, 0, 1));
         keep.emplace_back(gp_Pnt(0, 0, z1), gp_Dir(0, 0, -1));
     }
-    const int room = maxUserPlanes(limit, state.planCut, state.box && !state.bounds.IsVoid());
+    if (!state.crop.IsVoid()) {
+        double x0, y0, _z0, x1, y1, _z1;
+        state.crop.Get(x0, y0, _z0, x1, y1, _z1);
+        keep.emplace_back(gp_Pnt(x0, 0, 0), gp_Dir(1, 0, 0));
+        keep.emplace_back(gp_Pnt(x1, 0, 0), gp_Dir(-1, 0, 0));
+        keep.emplace_back(gp_Pnt(0, y0, 0), gp_Dir(0, 1, 0));
+        keep.emplace_back(gp_Pnt(0, y1, 0), gp_Dir(0, -1, 0));
+    }
+    const int room = maxUserPlanes(limit, state.planCut, state.box && !state.bounds.IsVoid(),
+                                   !state.crop.IsVoid());
     int used = 0;
     bool selectedClipped = false;
     for (int i = 0; i < settings.planes.size(); ++i) {

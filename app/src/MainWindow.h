@@ -720,6 +720,8 @@ private:
     void endCutTool();
     void cutPlaneClick(const QPointF& p);
     void horizontalCutDialog();
+    void cropRegionDialog(); // D134: crop the active view to an X/Y rectangle
+    void clearCropRegion();
     CutTool m_cutTool = CutTool::None;
     QVector<QPointF> m_cutPoints;
     QVector<CutPlane> m_cutDragBase;
@@ -924,6 +926,7 @@ private:
         bool box = false;
         double height = 1.2;
         Bnd_Box bounds;
+        Bnd_Box crop; // D134: crop region (X/Y only)
         QVector<CutPlane> planes; // D95: user planes (the 3D view's; plan tabs keep them empty)
         int selectedPlane = -1;
     };

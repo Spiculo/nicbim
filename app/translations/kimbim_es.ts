@@ -2898,6 +2898,61 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="922" />
+      <source>Crop &amp;region...</source>
+      <translation>Región de &amp;recorte...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1045" />
+      <source>Keep only what lies inside a rectangle in the active view</source>
+      <translation>Mantener solo lo que queda dentro de un rectángulo en la vista activa</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1048" />
+      <source>Clear crop re&amp;gion</source>
+      <translation>Borrar la región de recorte</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1710" />
+      <source>Crop region</source>
+      <translation>Región de recorte</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1729" />
+      <source>Left:</source>
+      <translation>Izquierda:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1730" />
+      <source>Bottom:</source>
+      <translation>Abajo:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1731" />
+      <source>Right:</source>
+      <translation>Derecha:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1732" />
+      <source>Top:</source>
+      <translation>Arriba:</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1744" />
+      <source>The crop region needs a positive width and height.</source>
+      <translation>La región de recorte necesita un ancho y un alto positivos.</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1749" />
+      <source>Crop region set</source>
+      <translation>Región de recorte aplicada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1759" />
+      <source>Crop region cleared</source>
+      <translation>Región de recorte borrada</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1034" />
       <source>Section &amp;box</source>
       <translation>Caja de &amp;sección</translation>
     </message>
