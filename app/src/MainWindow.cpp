@@ -1706,6 +1706,7 @@ void MainWindow::openDialog()
 void MainWindow::openFile(const QString& path)
 {
     stopLoading();
+    closeLoadProgress();
     ++m_openToken; // a previous model's background panels must not land here
     m_openPending = 0;
     ++m_snapToken; // and its snap data
@@ -1720,6 +1721,7 @@ void MainWindow::openFile(const QString& path)
     m_loadedElements = 0;
     m_loadTimer.start();
     m_status->showMessage(tr("Opening %1...").arg(QFileInfo(path).fileName()));
+    showLoadProgress(tr("Opening %1...").arg(QFileInfo(path).fileName()));
     m_loader->reset();
     QMetaObject::invokeMethod(m_loader, "load", Qt::QueuedConnection, Q_ARG(QString, path));
 }
@@ -1728,10 +1730,47 @@ void MainWindow::stopLoading()
 {
     if (!m_loading)
         return;
+    closeLoadProgress();
     m_loader->requestStop();
     // The loader stops after its current chunk; drain its queued signals so they don't hit a new model.
     while (m_loading)
         QApplication::processEvents(QEventLoop::AllEvents, 50);
+}
+
+void MainWindow::showLoadProgress(const QString& text)
+{
+    if (m_quiet)
+        return; // tests and the self-test drive the window directly, with no dialogs
+    if (!m_loadProgress) {
+        m_loadProgress = new QProgressDialog(this);
+        m_loadProgress->setWindowTitle(tr("Opening model"));
+        m_loadProgress->setWindowModality(Qt::ApplicationModal);
+        m_loadProgress->setCancelButton(nullptr); // a half-loaded model is not a state to go back to
+        m_loadProgress->setAutoClose(false);
+        m_loadProgress->setAutoReset(false);
+        m_loadProgress->setMinimumDuration(0); // a medium model takes a while: no 300 ms grace
+        m_loadProgress->setMinimumWidth(420);
+        m_loadProgress->setRange(0, 0); // busy: the geometry count is the label
+    }
+    m_loadProgress->setLabelText(text);
+    m_loadProgress->show();
+    m_loadProgress->raise();
+}
+
+void MainWindow::updateLoadProgress(const QString& text)
+{
+    if (!m_loadProgress)
+        return;
+    m_loadProgress->setLabelText(text);
+    m_loadProgress->raise();
+}
+
+void MainWindow::closeLoadProgress()
+{
+    if (!m_loadProgress)
+        return;
+    m_loadProgress->hide();
+    m_loadProgress->reset();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -1742,6 +1781,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
     }
     stopAgentLive();
     stopLoading();
+    closeLoadProgress(); // a dialog left by a load that never finished
     bridge("close_document"); // the lock and the working folder go
     if (!m_quiet) {
         m_prefs.setLayout(m_dock->saveLayout()); // D71: the next session's layout (D72: in preferences)
@@ -5685,6 +5725,25 @@ Viewport* MainWindow::modelView() const
     return m_hosts.value(QStringLiteral("3d"))->viewport();
 }
 
+namespace {
+
+// Imported IFCs often have storeys with no Name (a Revit "Level 1" is not always exported). The level
+// list and the plan tabs still need a label: number the unnamed building levels by elevation, so
+// "Level 1 plan" works where the model itself says nothing.
+QString storeyLabel(const QJsonObject& storey, int levelNumber)
+{
+    const QString name = storey.value("name").toString().trimmed();
+    if (!name.isEmpty())
+        return name;
+    if (storey.value("model").toBool())
+        return MainWindow::tr("Model");
+    if (storey.value("worksheet").toBool())
+        return MainWindow::tr("Worksheet");
+    return MainWindow::tr("Level %1").arg(qMax(1, levelNumber));
+}
+
+} // namespace
+
 Viewport* MainWindow::openPlanTab(const QString& storey)
 {
     const QString key = QStringLiteral("plan:") + storey;
@@ -5694,14 +5753,20 @@ Viewport* MainWindow::openPlanTab(const QString& storey)
     }
     double elevation = 0.0;
     QString name;
+    bool found = false;
+    int levelNumber = 0;
     for (const auto& v : bridge("storeys").value("storeys").toArray()) {
         const QJsonObject s = v.toObject();
-        if (s.value("guid").toString() == storey) {
-            elevation = s.value("elevation").toDouble();
-            name = s.value("name").toString();
-        }
+        if (!s.value("model").toBool() && !s.value("worksheet").toBool())
+            ++levelNumber;
+        if (s.value("guid").toString() != storey)
+            continue;
+        elevation = s.value("elevation").toDouble();
+        name = storeyLabel(s, levelNumber);
+        found = true;
+        break;
     }
-    if (name.isEmpty())
+    if (!found)
         return nullptr; // not a level of this model
     auto* view = new Viewport(m_scene);
     view->setSelectThrough(modelView()->selectThrough());
@@ -5715,6 +5780,21 @@ Viewport* MainWindow::openPlanTab(const QString& storey)
     cut.planCut = true; // a plan is a horizontal cut
     cut.height = planCutForLevel(storey); // D91: the level's own slice, else the project setting
     m_cuts.insert(view, cut);
+    // The cut fill (poché) is built synchronously on a medium model: say what is happening instead of
+    // leaving the window looking dead. The first painted frame closes the notice (or the timeout).
+    if (!m_quiet && m_viewport->elementCount() > 5000) {
+        auto* progress = new QProgressDialog(tr("Preparing the plan view..."), QString(), 0, 0, this);
+        progress->setWindowTitle(tr("Plan view"));
+        progress->setWindowModality(Qt::ApplicationModal);
+        progress->setCancelButton(nullptr);
+        progress->setMinimumDuration(0);
+        progress->setMinimumWidth(420);
+        progress->setAttribute(Qt::WA_DeleteOnClose);
+        progress->show();
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents); // paint it before the wait
+        connect(view, &Viewport::painted, progress, [progress] { progress->close(); });
+        QTimer::singleShot(120000, progress, [progress] { progress->close(); }); // never leave it up
+    }
     m_dock->addView(key, tr("%1 plan").arg(name), host, true, newViewPlacement());
     m_dock->raise(key); // activateView(): the level, the cut, the chrome, the annotations
     return view;
@@ -9446,6 +9526,7 @@ void MainWindow::onOpened(const QJsonObject& info)
     // minutes away.
     m_needsOpenRefresh = true;
     m_status->showMessage(tr("Loading %1 (%2)...").arg(QFileInfo(m_path).fileName(), info.value("schema").toString()));
+    updateLoadProgress(tr("Loading %1 (%2)...").arg(QFileInfo(m_path).fileName(), info.value("schema").toString()));
 }
 
 void MainWindow::startOpenTask(quint64 token, std::function<QJsonObject()> job,
@@ -9469,6 +9550,7 @@ void MainWindow::finishOpen(quint64 token)
 {
     StepTimer _(m_timings, "finishOpen");
     m_status->showMessage(tr("Preparing the model tree and graphics..."));
+    updateLoadProgress(tr("Preparing the model tree and graphics..."));
     {
         StepTimer _(m_timings, "finish:settings");
         loadProjectSettings();
@@ -9531,6 +9613,7 @@ void MainWindow::completeOpen(quint64 token)
 {
     if (token != m_openToken)
         return;
+    closeLoadProgress();
     m_needsOpenRefresh = false;
     m_status->showMessage(tr("%n element(s) loaded in %1 s", nullptr, m_openElements)
                                  .arg(double(m_loadTimer.elapsed()) / 1000.0, 0, 'f', 1));
@@ -9551,6 +9634,7 @@ void MainWindow::onChunk(const MeshChunk& chunk)
     }
     m_loadedElements += chunk.elementCount();
     m_status->showMessage(tr("Loading... %n element(s)", nullptr, m_loadedElements));
+    updateLoadProgress(tr("Loading... %n element(s)", nullptr, m_loadedElements));
     if (first) {
         StepTimer _(m_timings, "chunk:fitAll");
         m_viewport->fitAll();
@@ -9561,6 +9645,8 @@ void MainWindow::onChunk(const MeshChunk& chunk)
 void MainWindow::onFinished(int elements, bool stopped)
 {
     m_loading = false;
+    if (stopped)
+        closeLoadProgress(); // a stopped load never reaches completeOpen
     if (!stopped) {
         m_viewport->fitAll();
         if (m_needsOpenRefresh) {
@@ -9582,6 +9668,7 @@ void MainWindow::onFinished(int elements, bool stopped)
 void MainWindow::onFailed(const QString& error)
 {
     m_loading = false;
+    closeLoadProgress();
     m_needsOpenRefresh = false;
     ++m_openToken; // ignore a previous model's background panels
     m_openPending = 0;

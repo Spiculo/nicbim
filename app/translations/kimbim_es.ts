@@ -2500,6 +2500,21 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
       <source>Model: %1</source>
       <translation>Modelo: %1</translation>
     </message>
+    <message>
+      <location filename="../src/LevelsBar.cpp" line="105" />
+      <source>Level %1</source>
+      <translation>Nivel %1</translation>
+    </message>
+    <message>
+      <location filename="../src/LevelsBar.cpp" line="106" />
+      <source>Model</source>
+      <translation>Modelo</translation>
+    </message>
+    <message>
+      <location filename="../src/LevelsBar.cpp" line="107" />
+      <source>Worksheet</source>
+      <translation>Hoja de trabajo</translation>
+    </message>
   </context>
   <context>
     <name>kimbim::LevelsDialog</name>
@@ -3913,6 +3928,26 @@ Licencia: GPL-3.0 o posterior</translation>
       <location filename="../src/MainWindow.cpp" line="1639" />
       <source>Opening %1...</source>
       <translation>Abriendo %1...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="1735" />
+      <source>Opening model</source>
+      <translation>Abriendo el modelo</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5750" />
+      <source>Plan view</source>
+      <translation>Vista en planta</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="5751" />
+      <source>Preparing the plan view...</source>
+      <translation>Preparando la vista en planta...</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow.cpp" line="9615" />
+      <source>Preparing the model tree and graphics...</source>
+      <translation>Preparando el árbol de modelo y los gráficos...</translation>
     </message>
     <message>
       <location filename="../src/MainWindow.cpp" line="239" />

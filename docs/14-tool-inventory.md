@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-01, after D112–D122).**
+**Status as of `main` (2026-11-03, after D112–D123).**
 
 ## How to read it
 
@@ -41,7 +41,7 @@ release notes, so check before relying on a single cell.
 | Imperial units, unit preferences | all | ✅ | P0 | D108: project length units m/cm/mm/**ft/in** and areas m²/cm²/mm²/**ft²/in²**, in Project settings, every length/area field and format; the model stays in metres |
 | Project info (address, client, number) used in title blocks | AC RV VW | ✅ | new | Slice 16: *File › Project info…*, in IFC fields (D63) |
 | Survey point, project base point, georeferencing | AC RV VW BB | ✅ | P2 | D115: File › Georeferencing... (eastings, northings, height, rotation, scale, projected CRS and true north; `IfcMapConversion`/`IfcProjectedCRS`) |
-| Story settings (levels table: edit heights, insert/delete) | AC RV | ✅ | P0 | D79: Model › Levels..., one undo step; elements follow |
+| Story settings (levels table: edit heights, insert/delete) | AC RV | ✅ | P0 | D79: Model › Levels..., one undo step; elements follow. D123: imported storeys without a Name are numbered "Level 1", "Level 2"... in the level list and plan tabs |
 | Purge unused types/materials | RV VW BB | ✅ | new | D96: Graphics › Purge unused materials (surfaces, materials, composites); D115: Model › Purge unused types |
 
 ## 2. Viewing and navigation

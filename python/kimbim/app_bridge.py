@@ -999,8 +999,9 @@ def count_entities(ifc_class: str) -> str:
     return _dump({"count": len(_model.by_type(ifc_class)) if _model is not None else 0})
 
 
-def _write_test_model(path: str) -> str:
-    """Write a small model (2 walls of type "Basic Wall 200" on one storey) for the app's C++ tests and self-test."""
+def _write_test_model(path: str, unnamed_level: str = "") -> str:
+    """Write a small model (2 walls of type "Basic Wall 200" on one storey) for the app's C++ tests and self-test.
+    `unnamed_level` clears the storey's Name, as many imported IFCs have it."""
     from .testing import build_model
 
     import ifcopenshell.api.pset
@@ -1013,6 +1014,9 @@ def _write_test_model(path: str) -> str:
     u = f.createIfcThermalTransmittanceMeasure(0.35)
     ifcopenshell.api.pset.edit_pset(f, pset=ps, properties={"ThermalTransmittance": u})
     ifcopenshell.api.type.assign_type(f, related_objects=f.by_type("IfcWall"), relating_type=wall_type)
+    if unnamed_level:
+        for storey in f.by_type("IfcBuildingStorey"):
+            storey.Name = None
     f.write(path)
     return _dump({"ok": True, "path": path})
 

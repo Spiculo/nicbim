@@ -997,6 +997,7 @@ void Viewport::paintEvent(QPaintEvent*)
         m_lastZoom = zoom;
         emit zoomChanged(zoom);
     }
+    emit painted();
 }
 
 void Viewport::recreateWindow()

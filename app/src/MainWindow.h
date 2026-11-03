@@ -29,6 +29,7 @@
 #include <Bnd_Box.hxx>
 
 class QAction;
+class QProgressDialog;
 namespace kimbim {
 
 class CutPlanesPanel;
@@ -570,6 +571,11 @@ private:
     void showAbout();
     void openDialog();
     void stopLoading();
+    // "Working on it": a modal while a model loads, so an open that takes a while (and input that
+    // would wait on the meshing worker) never looks like a dead window.
+    void showLoadProgress(const QString& text);
+    void updateLoadProgress(const QString& text);
+    void closeLoadProgress();
     void showError(const QString& title, const QString& message);
     void refreshProperties();
     void afterEdit(const QJsonObject& result = {});
@@ -793,6 +799,7 @@ private:
     std::function<LargeIfc(const QString&, double)> m_largeIfcAnswer;
     Preferences m_prefs; // D72: user preferences (in memory only in quiet mode)
     bool m_loading = false;
+    QProgressDialog* m_loadProgress = nullptr; // the modal that says the model is loading
     bool m_needsOpenRefresh = false;
     quint64 m_openToken = 0;
     int m_openPending = 0;

@@ -685,6 +685,39 @@ private slots:
         QCOMPARE(w.viewport(), plan);
     }
 
+    // Imported IFCs can have storeys without a Name: the level list and the plan tabs still work
+    // (they are numbered "Level 1", "Level 2" by elevation).
+    void planTabForAnUnnamedLevel()
+    {
+        QTemporaryDir tmp;
+        const QString path = tmp.filePath(QStringLiteral("sin-nombre-de-nivel.ifc"));
+        auto& py = kimbim::PythonEngine::instance();
+        QString error;
+        QVERIFY(py.start(&error));
+        QVERIFY(py.callJson("_write_test_model", {path, QStringLiteral("1")}).object().value("ok").toBool());
+
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        QSignalSpy done(&w, &kimbim::MainWindow::loadFinished);
+        w.openFile(path);
+        QVERIFY(done.wait(60000));
+
+        const QJsonArray storeys = py.callJson("storeys", {}).object().value("storeys").toArray();
+        QCOMPARE(storeys.size(), 1);
+        const QString level = storeys.first().toObject().value("guid").toString();
+        QCOMPARE(storeys.first().toObject().value("name").toString(), QString());
+
+        QVERIFY(w.openPlanTab(level)); // was refused when an empty Name meant "not a level"
+        QVERIFY(w.viewport()->isPlanView());
+        QVERIFY(w.viewport()->clipPlaneCount() >= 1); // a plan is cut
+        QCOMPARE(w.viewport(), w.openPlanTab(level)); // one tab per level
+
+        action(w, "action3DView")->trigger();
+        QCOMPARE(w.viewport(), w.modelView());
+        action(w, "actionPlanView")->trigger(); // P: the active (unnamed) level's plan tab
+        QVERIFY(w.viewport()->isPlanView());
+        QVERIFY(w.close());
+    }
+
     // D91: a plan tab's hidden slice is the project setting, overridable per level; it has no cut slider.
     void planTabSliceAndNoCutSlider()
     {

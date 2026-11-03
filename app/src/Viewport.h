@@ -392,6 +392,9 @@ signals:
     void facePicked(double x, double y, double z, double nx, double ny, double nz);
 
     void selectionChanged(const QStringList& guids);
+    // A frame finished painting: ends the "preparing the plan view" wait (a plan's cut fills are
+    // built on the first paint, which can take seconds on a medium model).
+    void painted();
     // Drawing mode. tolerance = ~10 screen pixels in metres at that point.
     void workPointMoved(QPointF point, double tolerance, Qt::KeyboardModifiers modifiers);
     void workPointClicked(QPointF point, double tolerance, Qt::KeyboardModifiers modifiers);

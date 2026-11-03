@@ -90,19 +90,25 @@ void LevelsBar::setStoreys(const QJsonArray& storeys)
     m_combo->clear();
     int keep = -1;
     int section = 0;
+    int levelNumber = 0; // unnamed levels read "Level 1", "Level 2" (imported IFCs often have no Name)
     for (const auto& s : sorted) {
+        const bool model = s.value("model").toBool();
+        const bool worksheet = s.value("worksheet").toBool();
+        if (!model && !worksheet)
+            ++levelNumber;
         if (!s.value("show").toBool(true) && s.value("guid").toString() != m_active)
             continue; // D79: not shown in the level list
         const double elevation = s.value("elevation").toDouble();
-        const bool model = s.value("model").toBool();
-        const bool worksheet = s.value("worksheet").toBool();
+        QString name = s.value("name").toString().trimmed();
+        if (name.isEmpty())
+            name = model ? tr("Model") : worksheet ? tr("Worksheet") : tr("Level %1").arg(qMax(1, levelNumber));
         if (group(s) > section) {
             m_combo->insertSeparator(m_combo->count());
             section = group(s);
         }
-        m_combo->addItem(worksheet ? tr("Worksheet: %1").arg(s.value("name").toString())
-                : model ? tr("Model: %1").arg(s.value("name").toString())
-                        : QStringLiteral("%1 (%2 m)").arg(s.value("name").toString(), QLocale().toString(elevation, 'f', 2)));
+        m_combo->addItem(worksheet ? tr("Worksheet: %1").arg(name)
+                : model ? tr("Model: %1").arg(name)
+                        : QStringLiteral("%1 (%2 m)").arg(name, QLocale().toString(elevation, 'f', 2)));
         m_combo->setItemData(m_combo->count() - 1, worksheet, WorksheetRole);
         m_combo->setItemData(m_combo->count() - 1, s.value("name").toString(), NameRole);
         m_combo->setItemData(m_combo->count() - 1, s.value("guid").toString(), GuidRole);
