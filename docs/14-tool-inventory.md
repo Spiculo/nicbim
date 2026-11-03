@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D184).**
+**Status as of `main` (2026-11-03, after D112–D185).**
 
 ## How to read it
 
@@ -220,7 +220,7 @@ release notes, so check before relying on a single cell.
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
 | 3D documents / axonometric drawings | AC RV VW | ✅ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
-| Crop regions, view range, depth | AC RV VW | 🟡 | new | D61 depth (infinite / limited / zero) is in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional bottom limit below its level. A per-view range in generated drawings and model view options by scale are still to do |
+| Crop regions, view range, depth | AC RV VW | ✅ | new | D61 depth (infinite / limited / zero) in the bridge; Project settings sets a drawing's plan view depth. D134: View > *Crop region...* limits the active view to an X/Y rectangle with four clipping planes and *Clear crop region* removes it. D136: View > *View range...* sets the active view's cut height and an optional bottom limit. D185: generated plans/details already use the per-view depth (view → level → project) in the generation job and camera; model view options by scale are D138. Tested by `tests/python/test_drawings.py` (view depth and camera) |
 | Model view options (detail level by scale) | AC RV VW | ✅ | new | D138: every drawing has a scale (1–1000); at 1:200 and coarser the project's `model_view_options.coarse_hidden_classes` (default furniture, furnishings, sanitary and appliances) are left out of plans, sections, elevations and 3D documents. Finer drawings keep everything; the table is a versioned project setting |
 | Drawings update when the model changes | all | ✅ | P1 | Every edit marks the affected drawings stale; the out-of-date bar offers *Regenerate* and a drawing regenerates when brought to the front. `tests/python/test_drawings.py::test_editing_a_wall_makes_drawings_stale_and_regenerating_shows_it` checks staleness, regeneration and undo back to the cached SVG |
 
