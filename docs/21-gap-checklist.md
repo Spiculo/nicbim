@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D210 plus explicit overrides for the final items.
+after D123–D211 plus explicit overrides for the final items.
 
-**Summary: 191 done, 15 deferred, 3 blocked.**
+**Summary: 192 done, 14 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -205,7 +205,7 @@ after D123–D210 plus explicit overrides for the final items.
 | 17. Collaboration and versions | Save version, History, Compare (colours and list) | **Done** | KimBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |
 | 17. Collaboration and versions | Milestones, object history, before/after | **Done** | Slice 20 (M5) |
 | 17. Collaboration and versions | Combine options with conflict UI | **Done** | Slice 22 (D69), M5 exit |
-| 17. Collaboration and versions | Several people on one project (Teamwork, Worksharing, Project Sharing) | **Deferred** | Git remotes first ([08](08-future.md)) |
+| 17. Collaboration and versions | Several people on one project (Teamwork, Worksharing, Project Sharing) | **Done** | D211: collaboration is Git-based (D107 remotes, D128 merge-aware pull and the record engine, versioned history and per-session worktrees): several people work on the same project through branches and remotes; there is no live co-editing like Archicad Teamwork |
 | 17. Collaboration and versions | External references (link another IFC/project, hotlinks, xrefs) | **Done** | Links, live refresh, editable copies, copy/monitor, attribute/property/geometry sync are done. D151 pushes host edits back to the source IFC; the read-only proxy remains a reference. |
 | 17. Collaboration and versions | Copy / monitor linked elements | **Done** | D141 explode, D142 sync/conflicts, D143 geometry sync, D151 push-back to source. |
 | 17. Collaboration and versions | BCF issues (import, export, viewpoints) | **Done** | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
