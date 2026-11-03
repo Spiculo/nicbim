@@ -9,6 +9,11 @@
     </message>
     <message>
       <location filename="../src/LibraryPanel.cpp" line="30" />
+      <source>Lighting</source>
+      <translation>Iluminación</translation>
+    </message>
+    <message>
+      <location filename="../src/LibraryPanel.cpp" line="30" />
       <source>Sanitary</source>
       <translation>Sanitarios</translation>
     </message>

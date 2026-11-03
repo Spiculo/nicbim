@@ -1,0 +1,24 @@
+{
+ "format": "kimbim-object/1",
+ "id": "floor_lamp",
+ "name": {"en": "Floor lamp", "es": "Lámpara de pie"},
+ "category": "lighting",
+ "ifc": {"IFC4": ["IfcLightFixtureType", "USERDEFINED", "LIGHTING"], "IFC2X3": ["IfcLightFixtureType", null, "Lighting"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.4},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.4},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.6},
+  {"key": "shade", "kind": "length", "label": {"en": "Shade height", "es": "Altura de la pantalla"}, "default": 0.3, "min": 0.1, "max": "height / 2"}
+ ],
+ "materials": {"base": {"label": {"en": "Base material", "es": "Material de la base"}, "default": "Steel"},
+               "shade": {"label": {"en": "Shade material", "es": "Material de la pantalla"}, "default": "Glass"}},
+ "parts": [
+  {"id": "base", "material": "base", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "z": 0, "r": "min(width, depth) / 2", "h": 0.03}},
+  {"id": "pole", "material": "base", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "z": 0.03, "r": 0.015, "h": "height - shade - 0.03"}},
+  {"id": "shade", "material": "shade", "cone": {"cx": "width / 2", "cy": "depth / 2", "z": "height - shade", "r1": "min(width, depth) * 0.35", "r2": "min(width, depth) * 0.2", "h": "shade"}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "depth / 2", "r": "min(width, depth) / 2"}},
+  {"circle": {"cx": "width / 2", "cy": "depth / 2", "r": "min(width, depth) * 0.25"}}
+ ]
+}

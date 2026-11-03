@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D166 plus explicit overrides for the final items.
+after D123–D167 plus explicit overrides for the final items.
 
-**Summary: 151 done, 55 deferred, 3 blocked.**
+**Summary: 152 done, 54 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -130,7 +130,7 @@ after D123–D166 plus explicit overrides for the final items.
 | 7. Site | Plants and landscape | **Deferred** |  |
 | 7. Site | North direction, sun study | **Done** | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |
 | 8. Objects and libraries | Library browser (thumbnails, search, categories) | **Done** | D86: Library panel |
-| 8. Objects and libraries | Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | **Deferred** | Core done; remainder deferred. D86/D99: 21 objects as `.kimobj`, a material per part (D97); the chair fully customisable; no lighting yet |
+| 8. Objects and libraries | Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | **Done** | D86/D99: 23 objects as `.kimobj`, a material per part (D97); the chair fully customisable; D167 adds a *Lighting* category with floor and table lamps (IfcLightFixtureType). |
 | 8. Objects and libraries | Place a library object | **Done** | D86: Object tool (Shift+O), Tab turns |
 | 8. Objects and libraries | Object settings dialog with live preview; place or edit a placed object | **Done** | D100: Library panel right click, Properties *Edit...*; modify all or create a new type |
 | 8. Objects and libraries | Saved object versions (project types, shared through the office library, quick switcher, last used) | **Done** | D100: `kimbim-versions.ifc` in the office folder; a click places the last version, a right click in the Object tool switches |

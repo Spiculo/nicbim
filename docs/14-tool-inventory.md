@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D166).**
+**Status as of `main` (2026-11-03, after D112–D167).**
 
 ## How to read it
 
@@ -174,7 +174,7 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Library browser (thumbnails, search, categories) | all | ✅ | P0 | D86: Library panel |
-| Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | all | 🟡 | P0 | D86/D99: 21 objects as `.kimobj`, a material per part (D97); the chair fully customisable; no lighting yet |
+| Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | all | ✅ | P0 | D86/D99: 23 objects as `.kimobj`, a material per part (D97); the chair fully customisable; D167 adds a *Lighting* category with floor and table lamps (IfcLightFixtureType) |
 | Place a library object | all | ✅ | P0 | D86: Object tool (Shift+O), Tab turns |
 | Object settings dialog with live preview; place or edit a placed object | AC RV | ✅ | P0 | D100: Library panel right click, Properties *Edit...*; modify all or create a new type |
 | Saved object versions (project types, shared through the office library, quick switcher, last used) | RV | ✅ | P0 | D100: `kimbim-versions.ifc` in the office folder; a click places the last version, a right click in the Object tool switches |

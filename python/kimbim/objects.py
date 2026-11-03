@@ -17,7 +17,7 @@ from .objexpr import FormulaError, value_of
 
 FORMAT = "kimbim-object/1"
 KINDS = ("length", "angle", "count", "bool", "choice", "material")
-CATEGORIES = ("furniture", "sanitary", "kitchen", "site", "office")
+CATEGORIES = ("furniture", "lighting", "sanitary", "kitchen", "site", "office")
 MAX_FILE_BYTES = 1_000_000
 _FIELDS = {"format", "id", "name", "category", "ifc", "origin", "params", "materials", "parts", "components", "symbol"}
 _PARAM_FIELDS = {"key", "kind", "label", "default", "min", "max", "options", "show_when", "group"}
