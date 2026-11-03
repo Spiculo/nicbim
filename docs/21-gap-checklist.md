@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D224 plus explicit overrides for the final items.
+after D123–D225 plus explicit overrides for the final items.
 
-**Summary: 205 done, 1 deferred, 3 blocked.**
+**Summary: 206 done, 0 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -199,7 +199,7 @@ after D123–D224 plus explicit overrides for the final items.
 | 15. Schedules and quantities | Construction sequencing (4D) | **Done** | D214: dated phases in `construction_phases`; *Construction sequence...* adds/edits phases, assigns the selection (each element gets `KIMBIM_Construction` with Phase/Name/Start/End) and lists Phase, start, end, days and element count. Bonsai remains available for full 4D |
 | 16. Visualisation | Real-time textured 3D | **Done** | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
 | 16. Visualisation | Photorealistic rendering | **Done** | D146 image export, D147 ray tracing, D149 path tracing. Offline CPU render farm is future. |
-| 16. Visualisation | AI visualiser (sketch to image) | **Deferred** |  |
+| 16. Visualisation | AI visualiser (sketch to image) | **Done** | D225: `visualiser.render_sketch` sends a sketch and prompt to a configured OpenAI-compatible image endpoint (`KIMBIM_IMAGE_ENDPOINT` / `KIMBIM_IMAGE_API_KEY` / `KIMBIM_IMAGE_MODEL`) and saves the result; Model > *AI visualiser...* picks the sketch, prompt, output and size. The model itself is an external service, like the online catalogues (D216); without a key the command reports it. |
 | 16. Visualisation | Sun / shadow studies, animations | **Done** | D96: sun shadows for a place, date and time; D198: View > *Sun animation...* renders PNG frames as the sun moves over a time range, at the chosen size and folder |
 | 16. Visualisation | Walkthrough video, VR | **Blocked** | OpenXR SDK is available, but there is no runtime/headset in the environment; deferred (docs/20-vr-feasibility.md). |
 | 17. Collaboration and versions | Save version, History, Compare (colours and list) | **Done** | KimBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |

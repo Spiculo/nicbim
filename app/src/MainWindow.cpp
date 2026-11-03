@@ -3466,6 +3466,10 @@ void MainWindow::buildModelingToolbar()
     analyticalAction->setObjectName(QStringLiteral("actionAnalyticalModel"));
     analyticalAction->setToolTip(tr("Derive an IFC structural analysis model from columns, beams, slabs and roofs"));
     connect(analyticalAction, &QAction::triggered, this, &MainWindow::analyticalModelDialog);
+    QAction* aiAction = model->addAction(tr("AI &visualiser...")); // D225
+    aiAction->setObjectName(QStringLiteral("actionAIVisualiser"));
+    aiAction->setToolTip(tr("Turn a sketch into a rendered image through a configured image model"));
+    connect(aiAction, &QAction::triggered, this, &MainWindow::aiVisualiserDialog);
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));
     skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
@@ -9340,6 +9344,89 @@ void MainWindow::analyticalModelDialog() // D224: derived structural analytical 
         }
         afterEdit(r);
         refresh();
+    });
+    connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    dialog.exec();
+}
+
+void MainWindow::aiVisualiserDialog() // D225: sketch to image through an external model
+{
+    const QJsonObject config = bridge("visualiser_config");
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("AI visualiser"));
+    dialog.resize(600, 380);
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* form = new QFormLayout;
+    layout->addLayout(form);
+    auto* sketch = new QLineEdit(&dialog);
+    sketch->setObjectName(QStringLiteral("aiSketchPath"));
+    auto* browseSketch = new QPushButton(tr("Browse..."), &dialog);
+    auto* sketchRow = new QHBoxLayout;
+    sketchRow->addWidget(sketch, 1);
+    sketchRow->addWidget(browseSketch);
+    form->addRow(tr("Sketch:"), sketchRow);
+    auto* prompt = new QPlainTextEdit(&dialog);
+    prompt->setObjectName(QStringLiteral("aiPrompt"));
+    prompt->setPlaceholderText(tr("Describe the mood, materials and light, e.g. "
+                                  "\"warm timber interior at dusk, soft light, photorealistic\""));
+    form->addRow(tr("Prompt:"), prompt);
+    auto* output = new QLineEdit(&dialog);
+    output->setObjectName(QStringLiteral("aiOutputPath"));
+    output->setPlaceholderText(tr("Next to the sketch as <name>-ai.png"));
+    auto* browseOutput = new QPushButton(tr("Save as..."), &dialog);
+    auto* outputRow = new QHBoxLayout;
+    outputRow->addWidget(output, 1);
+    outputRow->addWidget(browseOutput);
+    form->addRow(tr("Output:"), outputRow);
+    auto* size = new QComboBox(&dialog);
+    for (const auto& value : config.value("sizes").toArray())
+        size->addItem(value.toString(), value.toString());
+    form->addRow(tr("Size:"), size);
+    auto* status = new QLabel(&dialog);
+    status->setWordWrap(true);
+    layout->addWidget(status);
+    const QString endpoint = config.value("endpoint").toString();
+    const QString model = config.value("model").toString();
+    auto* modelInfo = new QLabel(config.value("configured").toBool()
+            ? tr("Model: %1 at %2").arg(model, endpoint)
+            : tr("No image model configured. Set KIMBIM_IMAGE_API_KEY (and optionally "
+                 "KIMBIM_IMAGE_ENDPOINT / KIMBIM_IMAGE_MODEL) before starting the app."),
+        &dialog);
+    modelInfo->setWordWrap(true);
+    layout->addWidget(modelInfo);
+    layout->addStretch(1);
+    auto* buttons = new QHBoxLayout;
+    layout->addLayout(buttons);
+    auto* generate = new QPushButton(tr("Generate"), &dialog);
+    auto* close = new QPushButton(tr("Close"), &dialog);
+    buttons->addStretch(1);
+    buttons->addWidget(generate);
+    buttons->addWidget(close);
+    connect(browseSketch, &QPushButton::clicked, &dialog, [&] {
+        const QString path = QFileDialog::getOpenFileName(&dialog, tr("Choose a sketch"),
+            QString(), tr("Images (*.png *.jpg *.jpeg *.webp)"));
+        if (!path.isEmpty())
+            sketch->setText(path);
+    });
+    connect(browseOutput, &QPushButton::clicked, &dialog, [&] {
+        const QString path = QFileDialog::getSaveFileName(&dialog, tr("Save the visualisation"),
+            output->text(), tr("PNG image (*.png)"));
+        if (!path.isEmpty())
+            output->setText(path);
+    });
+    connect(generate, &QPushButton::clicked, &dialog, [&] {
+        status->setText(tr("Generating..."));
+        QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+        const QJsonObject r = bridge("render_sketch", {sketch->text(), prompt->toPlainText(),
+            output->text(), size->currentData().toString()});
+        QGuiApplication::restoreOverrideCursor();
+        if (!r.value("ok").toBool()) {
+            status->setText(r.value("error").toString());
+            return;
+        }
+        status->setText(tr("Saved %1 (%2 KB)").arg(r.value("path").toString())
+                            .arg(r.value("bytes").toInt() / 1024));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(r.value("path").toString()));
     });
     connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
     dialog.exec();

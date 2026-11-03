@@ -1546,6 +1546,10 @@ _EXPORTS = {
         "create_analysis_model",
         "remove_analysis_model",
     ),
+    "visualiser": (
+        "render_sketch",
+        "visualiser_config",
+    ),
     "bcf": (
         "add_comment",
         "create_issue",

@@ -283,7 +283,7 @@ release notes, so check before relying on a single cell.
 |------|-----|--------|-----|-------|
 | Real-time textured 3D | all | ✅ | new | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
 | Photorealistic rendering | AC RV VW | ✅ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size. D147: *Photorealistic (ray tracing)* uses OCCT's ray tracer (materials, sun/shadows, reflections, adaptive AA) with a shaded fallback; the agent `snapshot.take` style `render` uses the same path. D149: *Global illumination (path tracing)* and `snapshot.take` style `pathtrace` use OCCT's path tracer with filmic tone mapping. VR is deferred (see [20](20-vr-feasibility.md)) |
-| AI visualiser (sketch to image) | AC VW | 🔮 | new | |
+| AI visualiser (sketch to image) | AC VW | ✅ | new | D225: `visualiser.render_sketch` sends a sketch and prompt (multipart) to an OpenAI-compatible image endpoint configured by `KIMBIM_IMAGE_ENDPOINT` / `KIMBIM_IMAGE_API_KEY` / `KIMBIM_IMAGE_MODEL` and saves the returned image; Model > *AI visualiser...* picks the sketch, prompt, output and size. The model is an external service (like D216); no key means a clear error, not a placeholder |
 | Sun / shadow studies, animations | all | ✅ | new | D96: sun shadows for a place, date and time; D198: View > *Sun animation...* renders numbered PNG frames as the sun moves over a time range, at the chosen size and folder |
 | Walkthrough video, VR | AC RV VW | 🔮 | P2 |  |
 
