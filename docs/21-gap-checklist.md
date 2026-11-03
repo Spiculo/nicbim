@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D162 plus explicit overrides for the final items.
+after D123–D163 plus explicit overrides for the final items.
 
-**Summary: 147 done, 59 deferred, 3 blocked.**
+**Summary: 148 done, 58 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -55,7 +55,7 @@ after D123–D162 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Colour by property, class or type | **Done** | D73 override rules (property, class, kind, layer, material) |
 | 2. Viewing and navigation | Show multiple levels at once (ghost story / underlay) | **Done** | D98: View › Trace reference (level below or above, snappable); Level above/below Ctrl+Up/Down |
 | 2. Viewing and navigation | Split views / several windows side by side | **Done** | D153: View > *Split view side by side* (Ctrl+\\) duplicates the active 3D or plan view in a new area, copying its camera/plan and cuts; drawings and sheets are not split. |
-| 2. Viewing and navigation | Navigator / project browser (tree of views, sheets) | **Deferred** | Core done; remainder deferred. Model tree, levels, views; no sheets |
+| 2. Viewing and navigation | Navigator / project browser (tree of views, sheets) | **Done** | D163: Model tree, levels and views; a *Sheets* heading lists every sheet (number and title), double-click or *Open* opens it. Drawings and other views stay in their own panels. |
 | 3. Selection | Click, Ctrl/Shift add and toggle | **Done** |  |
 | 3. Selection | Box selection (visible only; Alt goes through) | **Done** | D52 |
 | 3. Selection | Crossing vs window box (direction decides) | **Done** | D78: right to left crosses (dashed band) |

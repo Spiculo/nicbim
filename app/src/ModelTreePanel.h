@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QHash>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QStringList>
 #include <QWidget>
@@ -21,6 +22,7 @@ public:
     explicit ModelTreePanel(QWidget* parent = nullptr);
 
     void setTree(const QJsonObject& root);
+    void setSheets(const QJsonArray& sheets); // D163: sheets in the navigator
     void clear();
     bool selectGuid(const QString& guid); // programmatic: does not emit guidsSelected
     void selectGuids(const QStringList& guids); // programmatic multi-selection, no echo
@@ -52,6 +54,7 @@ signals:
 private:
     // `merged`: the names of single-child spatial rows above this one, shown as one row with it.
     QTreeWidgetItem* addNode(const QJsonObject& node, QTreeWidgetItem* parent, QStringList merged);
+    void rebuildSheets();
     bool applyFilter(QTreeWidgetItem* item, const QString& text);
     void showContextMenu(const QPoint& pos);
 
@@ -60,6 +63,7 @@ private:
     QHash<QString, QTreeWidgetItem*> m_items;
     bool m_programmatic = false;
     QStringList m_mergedGuids; // guids of the rows merged into the next one being added
+    QJsonArray m_sheets;       // D163: sheets shown after the spatial tree
 };
 
 } // namespace kimbim

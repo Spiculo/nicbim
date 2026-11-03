@@ -127,6 +127,46 @@ void ModelTreePanel::setTree(const QJsonObject& root)
     for (QTreeWidgetItem* item : std::as_const(m_items))
         if (isSpatial(item->data(0, TypeRole).toString()))
             item->setExpanded(true);
+    rebuildSheets();
+}
+
+void ModelTreePanel::setSheets(const QJsonArray& sheets)
+{
+    m_sheets = sheets;
+    rebuildSheets();
+}
+
+void ModelTreePanel::rebuildSheets()
+{
+    for (int i = m_tree->topLevelItemCount() - 1; i >= 0; --i) {
+        QTreeWidgetItem* item = m_tree->topLevelItem(i);
+        if (item->data(0, TypeRole).toString() == QLatin1String("IfcSheets")) {
+            for (int j = 0; j < item->childCount(); ++j)
+                m_items.remove(item->child(j)->data(0, GuidRole).toString());
+            delete m_tree->takeTopLevelItem(i);
+        }
+    }
+    if (m_sheets.isEmpty())
+        return;
+    auto* group = new QTreeWidgetItem(m_tree);
+    group->setText(0, tr("Sheets"));
+    group->setIcon(0, iconFor(QStringLiteral("IfcSheet")));
+    group->setData(0, TypeRole, QStringLiteral("IfcSheets"));
+    group->setFlags(group->flags() & ~Qt::ItemIsSelectable); // a heading, not an element
+    for (const auto& value : m_sheets) {
+        const QJsonObject sheet = value.toObject();
+        const QString number = sheet.value("number").toString();
+        const QString title = sheet.value("title").toString();
+        auto* row = new QTreeWidgetItem(group);
+        row->setText(0, title.isEmpty() ? number : QStringLiteral("%1 — %2").arg(number, title));
+        row->setIcon(0, iconFor(QStringLiteral("IfcSheet")));
+        row->setData(0, GuidRole, QStringLiteral("sheet:") + number);
+        row->setData(0, TypeRole, QStringLiteral("IfcSheet"));
+        row->setToolTip(0, tr("Sheet %1").arg(number) + QLatin1Char('\n') + title);
+        row->setFlags(row->flags() & ~Qt::ItemIsSelectable); // double-click opens it, selection is for elements
+        m_items.insert(QStringLiteral("sheet:") + number, row);
+    }
+    group->setExpanded(true);
 }
 
 QTreeWidgetItem* ModelTreePanel::addNode(const QJsonObject& node, QTreeWidgetItem* parent, QStringList merged)
@@ -327,6 +367,11 @@ void ModelTreePanel::showContextMenu(const QPoint& pos)
         return;
     const QString guid = item->data(0, GuidRole).toString();
     QMenu menu(this);
+    if (guid.startsWith(QLatin1String("sheet:"))) { // D163: open the sheet
+        menu.addAction(tr("Open"), this, [this, guid] { emit guidActivated(guid); });
+        menu.exec(m_tree->viewport()->mapToGlobal(pos));
+        return;
+    }
     menu.addAction(tr("Isolate"), this, [this, guid] { emit isolateRequested(descendantGuids(guid)); });
     menu.addAction(tr("Hide"), this, [this, guid] { emit hideRequested(descendantGuids(guid)); });
     menu.addSeparator();

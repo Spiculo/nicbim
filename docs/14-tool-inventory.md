@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D162).**
+**Status as of `main` (2026-11-03, after D112–D163).**
 
 ## How to read it
 
@@ -69,7 +69,7 @@ release notes, so check before relying on a single cell.
 | Colour by property, class or type | AC RV VW BB | ✅ | P1 | D73 override rules (property, class, kind, layer, material) |
 | Show multiple levels at once (ghost story / underlay) | AC RV VW | ✅ | new | D98: View › Trace reference (level below or above, snappable); Level above/below Ctrl+Up/Down |
 | Split views / several windows side by side | AC RV VW | ✅ | new | D153: View > *Split view side by side* (Ctrl+\) opens another viewport of the active 3D or plan view in a new area beside it; the new view copies the camera/plan and cuts and keeps them independently. Drawings and sheets are not split |
-| Navigator / project browser (tree of views, sheets) | AC RV VW | 🟡 | new | Model tree, levels, views; no sheets |
+| Navigator / project browser (tree of views, sheets) | AC RV VW | ✅ | new | D163: Model tree, levels and views; a *Sheets* heading lists every sheet (number and title), double-click or *Open* opens it. Drawings and other views stay in their own panels |
 
 ## 3. Selection
 

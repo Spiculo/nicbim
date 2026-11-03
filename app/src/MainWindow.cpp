@@ -6070,6 +6070,10 @@ void MainWindow::activateView(const QString& key)
 
 void MainWindow::activateElement(const QString& guid)
 {
+    if (guid.startsWith(QLatin1String("sheet:"))) { // D163: a sheet row in the navigator
+        openSheet(guid.mid(6));
+        return;
+    }
     if (m_tree->ifcTypeOf(guid) == QLatin1String("IfcBuildingStorey")) {
         openPlanTab(guid);
         return;
@@ -6865,6 +6869,7 @@ void MainWindow::refreshSheets(bool changed)
 {
     const QJsonArray list = bridge("sheets").value("sheets").toArray();
     m_sheetsPanel->setSheets(list);
+    m_tree->setSheets(list); // D163: the navigator lists the sheets too
     QHash<QString, QJsonObject> byNumber;
     for (const auto& v : list)
         byNumber.insert(v.toObject().value("number").toString(), v.toObject());

@@ -172,6 +172,25 @@ private slots:
         QVERIFY(panel.hintFor("nope").isEmpty());
     }
 
+    void sheetsAppearInTheNavigator()
+    {
+        kimbim::ModelTreePanel panel;
+        panel.setTree(sampleTree());
+        panel.setSheets(QJsonArray{QJsonObject{{"number", "A01"}, {"title", "Planta"}},
+                                   QJsonObject{{"number", "A02"}}});
+        QTreeWidgetItem* sheet = panel.itemFor("sheet:A01");
+        QVERIFY(sheet);
+        QCOMPARE(sheet->text(0), QString("A01 — Planta"));
+        QCOMPARE(panel.ifcTypeOf("sheet:A01"), QString("IfcSheet"));
+        QCOMPARE(panel.tree()->topLevelItemCount(), 2); // the building and the sheets heading
+        QSignalSpy spy(&panel, &kimbim::ModelTreePanel::guidActivated);
+        emit panel.tree()->itemDoubleClicked(sheet, 0);
+        QCOMPARE(spy.count(), 1);
+        QCOMPARE(spy.first().first().toString(), QString("sheet:A01"));
+        panel.setTree(sampleTree()); // a tree refresh keeps the sheets
+        QVERIFY(panel.itemFor("sheet:A01"));
+    }
+
     void storeyGuidsCollectsDescendants()
     {
         kimbim::ModelTreePanel panel;
