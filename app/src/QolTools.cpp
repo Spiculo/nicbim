@@ -617,6 +617,46 @@ void MainWindow::buildFinishAndMepCommands()
         if (made)
             m_status->showMessage(tr("%n handrail(s) added", nullptr, made));
     });
+    auto detailOnly = [this](bool only) {
+        if (m_selection.isEmpty()) {
+            m_status->showMessage(tr("Select 2D elements first"));
+            return;
+        }
+        QString detail;
+        if (only) {
+            QStringList names, guids;
+            for (const auto& v : bridge("drawings").value("drawings").toArray())
+                if (v.toObject().value("kind").toString() == QLatin1String("detail")) {
+                    names << v.toObject().value("name").toString();
+                    guids << v.toObject().value("guid").toString();
+                }
+            if (guids.isEmpty()) {
+                m_status->showMessage(tr("There is no detail drawing yet: draw one with the Detail tool"));
+                return;
+            }
+            int index = 0;
+            if (!m_quiet && guids.size() > 1) {
+                bool ok = false;
+                const QString name = QInputDialog::getItem(this, tr("Show only on a detail"), tr("Detail:"), names, 0, false, &ok);
+                if (!ok)
+                    return;
+                index = int(names.indexOf(name));
+            }
+            detail = guids.at(index);
+        }
+        const QJsonObject r = bridge("set_detail_only",
+            {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact)), detail});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Detail 2D"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(only ? tr("Shown only on the detail drawing") : tr("Shown on every drawing of the level"), 3000);
+    };
+    add(tr("Show only on a &detail..."), "actionDetailOnly",
+        tr("The selected 2D appears on one detail drawing and not on the level's plan"), [detailOnly] { detailOnly(true); });
+    add(tr("Show on every drawing"), "actionDetailOnlyClear", tr("The selected 2D appears on every drawing of its level again"),
+        [detailOnly] { detailOnly(false); });
     add(tr("&Area label..."), "actionAreaLabel", tr("Click an outline: its area goes in a label at its middle"), [this] {
         pickPoints(-3, false, {tr("Area label: click the first corner"), tr("Area label: click the next corner; Enter places the label")},
             [this](const QVector<QPointF>& p, const QString&) {
@@ -1155,7 +1195,7 @@ void MainWindow::groupModelMenu()
         {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts"}},
         {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionRoadMarking", "actionPlantingArea"}},
         {tr("&Annotation and 2D"), "modelMenuAnnotation",
-            {"actionTagAll", "actionInteriorElevations", "actionAreaLabel", "actionAutoDimension", "actionOverallDimension", "actionGridDimension", "actionKeynotes",
+            {"actionTagAll", "actionInteriorElevations", "actionAreaLabel", "actionDetailOnly", "actionDetailOnlyClear", "actionAutoDimension", "actionOverallDimension", "actionGridDimension", "actionKeynotes",
                 "actionFillFromShape", "actionMake2DBlock", "actionInsert2DBlock"}},
         {tr("&Types, models and library"), "modelMenuTypes",
             {"actionTypeManager", "actionPurgeTypes", "actionClassifications", "actionUpdateModelInstances",

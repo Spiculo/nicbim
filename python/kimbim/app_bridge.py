@@ -1510,6 +1510,7 @@ _EXPORTS = {
         "write_recovery",
     ),
     "drafting": (
+        "set_detail_only",
         "add_drafting",
         "blocks",
         "delete_block",

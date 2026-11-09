@@ -771,8 +771,9 @@ def stair_symbols_svg(storey, to_paper, cut):
     return out
 
 
-def plan_annotations(storey, to_paper, size_default=TEXT_SIZE):
-    """The story's plan annotations (KIMBIM_Annotation): text, dimension chains, marks, leaders."""
+def plan_annotations(storey, to_paper, size_default=TEXT_SIZE, drawing_guid=None):
+    """The story's plan annotations (KIMBIM_Annotation): text, dimension chains, marks, leaders. One
+    that belongs to a detail drawing only (its "OnlyInDrawing", D236) is left out of every other drawing."""
     f = storey.file
     unit = ifcopenshell.util.unit.calculate_unit_scale(f)
     out = []
@@ -783,6 +784,8 @@ def plan_annotations(storey, to_paper, size_default=TEXT_SIZE):
         kind = data.get("Kind")
         if kind not in ("text", "mark", "leader", "dimension"):
             continue  # drafting shapes (D84) are added by drafting.add_to_drawing
+        if data.get("OnlyInDrawing") and data.get("OnlyInDrawing") != drawing_guid:
+            continue  # D236: drawn on one detail only
         try:
             local = json.loads(data.get("Points") or "[]")
         except ValueError:
@@ -1200,7 +1203,8 @@ def overlay(f, drawing, s, svg: str, include=None, plan_symbols: bool = True) ->
             # Room stamps are drawn with the tags on every request (tags.add_to_drawing, D87): their text
             # is the room stamp tag style's, a project setting this process does not see.
             parts += _tagged("stair", stair_symbols_svg(storey, to_paper, s.get("cut", PLAN_CUT)))  # D88
-            parts += plan_annotations(storey, to_paper)  # tags each annotation (guid, pen) itself
+            parts += plan_annotations(storey, to_paper,  # tags each annotation (guid, pen) itself
+                                      drawing_guid=drawing.GlobalId if s["kind"] == "detail" else None)
             if s["kind"] == "plan" and not _is_worksheet(storey):  # D98: a worksheet shows no markers
                 parts += _tagged("marker", markers(f, to_paper, storey_elevation(storey))
                                  + detail_markers(storey, to_paper))

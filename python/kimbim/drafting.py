@@ -21,6 +21,8 @@ from __future__ import annotations
 import json
 import math
 
+import ifcopenshell.util.element
+
 KINDS = ("line", "polyline", "arc", "circle", "fill", "spline")  # spline: D98
 SPLINE_STEPS = 12  # points per span of a spline's drawn curve
 EXTRA = ("Closed", "LineType", "Pattern", "BackgroundPen", "ShowArea", "OutlinePen", "PatternScale",
@@ -977,7 +979,19 @@ def _xml(text: str) -> str:
     return (text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def drawing_parts(storey, to_paper, settings: dict | None = None) -> list:
+def owner_drawing(annotation) -> str:
+    """D236: the detail drawing a 2D element belongs to only ("" for every drawing of its level)."""
+    data = ifcopenshell.util.element.get_pset(annotation, "KIMBIM_Annotation") or {}
+    return str(data.get("OnlyInDrawing") or "")
+
+
+def shown_on(annotation, drawing_guid: str | None) -> bool:
+    """Whether a 2D element is drawn on a drawing: one owned by a detail shows only on that detail."""
+    owner = owner_drawing(annotation)
+    return not owner or owner == drawing_guid
+
+
+def drawing_parts(storey, to_paper, settings: dict | None = None, drawing_guid: str | None = None) -> list:
     """SVG (paper mm) of the level's drafting shapes. Each is a group graphics.style_svg styles like
     an annotation (data-pen: its pen; data-dash: its line type in mm on paper); a fill's area is
     `data-fill="pen"` (solid: the pen's colour) or `data-fill-pen` (its background pen)."""
@@ -991,7 +1005,7 @@ def drawing_parts(storey, to_paper, settings: dict | None = None) -> list:
     z = G.storey_elevation(storey)
     for a in N.on_level(storey.GlobalId):
         data = N._read(a)
-        if data is None or data[0] not in KINDS:
+        if data is None or data[0] not in KINDS or not shown_on(a, drawing_guid):
             continue
         kind, _text, _local, size, pen = data
         world = N.world_points(a)
@@ -1042,13 +1056,13 @@ def add_to_drawing(svg: str, drawing, settings: dict | None = None) -> str:
     from . import drawgen as G
 
     s = G.settings_of(drawing)
-    if s is None or s.get("kind") != "plan":
+    if s is None or s.get("kind") not in ("plan", "detail"):  # D236: details show their level's 2D too
         return svg
     storey = G._storey(drawing, s)
     to_paper = G.paper_mapping(svg)
     if storey is None or to_paper is None:
         return svg
-    parts = drawing_parts(storey, to_paper, settings)
+    parts = drawing_parts(storey, to_paper, settings, drawing.GlobalId if s.get("kind") == "detail" else None)
     from . import underlays
     from .worksheets import is_worksheet
 
@@ -1068,3 +1082,45 @@ def add_to_drawing(svg: str, drawing, settings: dict | None = None) -> str:
         at = svg.find("<g ")
     svg = svg[:at] + group + svg[at:] if at >= 0 else svg.replace("</svg>", group + "</svg>", 1)
     return G.crop(svg)
+
+
+def set_detail_only(guids_json: str, detail_guid: str = "") -> str:
+    """D236: 2D elements (drafting shapes, text, dimensions, marks, leaders) drawn only on one detail
+    drawing, not on the plan of their level; an empty detail shows them on every drawing again. They
+    stay on their level, so they are edited in its plan view, inside the detail's region. One step."""
+    import json as _json
+
+    import ifcopenshell.api.pset
+
+    from . import app_bridge as B
+    from . import authoring as A
+    from . import drawgen as G
+
+    if B._model is None:
+        return A._fail("no model open")
+    if detail_guid:
+        detail = A._by_guid(detail_guid)
+        s = G.settings_of(detail) if detail is not None else None
+        if s is None or s.get("kind") != "detail":
+            return A._fail("that is not a detail drawing")
+    try:
+        elements = [e for e in B._elements(guids_json) if e.is_a("IfcAnnotation")
+                    and ifcopenshell.util.element.get_pset(e, "KIMBIM_Annotation")]
+    except ValueError as ex:
+        return A._fail(str(ex))
+    if not elements:
+        return A._fail("select 2D elements (lines, fills, text, dimensions...)")
+
+    def action():
+        f = B._model
+        for e in elements:
+            data = ifcopenshell.util.element.get_pset(e, "KIMBIM_Annotation")
+            ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(data["id"]), properties={"OnlyInDrawing": detail_guid or None})
+        return len(elements), [e.GlobalId for e in elements], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump(r)
+

@@ -214,3 +214,24 @@ def test_a_detail_goes_on_a_sheet_at_its_own_scale(house):
     svg = call("sheet_svg", number)["svg"]
     assert "scale(50)" in svg  # 1000 mm per metre at 1:20
     assert 'class="kimbim-view"' in svg
+
+
+def test_2d_can_belong_to_one_detail_only(house):
+    """D236: a detail can carry its own 2D: drafting and text on its level shown only on that detail."""
+    guid = json.loads(D.create_detail(house, json.dumps(REGION), 20, "Own 2D"))["guid"]
+    line = call("add_drafting", house, "line", json.dumps([[0.5, 0.5], [2.5, 0.5]]), "")
+    note = call("add_annotation", house, "text", json.dumps([[1.0, 1.0]]), "Detail note")
+    assert line["ok"] and note["ok"], (line, note)
+    plan = next(d["guid"] for d in call("drawings")["drawings"] if d["kind"] == "plan")
+    both = [line["guid"], note["guid"]]
+    def svgs():
+        return call("generate_drawing", guid, "")["svg"], call("generate_drawing", plan, "")["svg"]
+    detail_svg, plan_svg = svgs()
+    assert all(g in detail_svg for g in both) and all(g in plan_svg for g in both)  # everywhere at first
+    assert call("set_detail_only", json.dumps(both), guid)["ok"]
+    detail_svg, plan_svg = svgs()
+    assert all(g in detail_svg for g in both)
+    assert not any(g in plan_svg for g in both)  # off the plan drawing
+    assert call("set_detail_only", json.dumps(both), "")["ok"]  # back on every drawing
+    assert all(g in svgs()[1] for g in both)
+    assert not call("set_detail_only", json.dumps(both), plan)["ok"]  # a plan is not a detail
