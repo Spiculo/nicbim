@@ -73,6 +73,7 @@ qt_add_library(kimbim_core STATIC
     src/ClassificationsDialog.cpp src/ClassificationsDialog.h src/Types.cpp
     src/QolTools.cpp src/QolTools.h
     src/Units.cpp src/Units.h
+    src/NodeGraph.cpp src/NodeGraph.h
 )
 target_include_directories(kimbim_core PUBLIC src)
 # Element icons (owner feedback: objects need an icon and a hint on hover).

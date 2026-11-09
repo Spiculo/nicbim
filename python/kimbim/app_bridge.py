@@ -1409,6 +1409,9 @@ _EXPORTS = {
         "move_vertices",
         "push_pull",
     ),
+    "oplog": (
+        "discard_journal",
+    ),
     "modelplace": (
         "begin_edit_in_place",
         "editing_in_place",
@@ -1661,6 +1664,9 @@ _EXPORTS = {
         "set_energy_settings",
     ),
     "visual": (
+        "graph_to_steps",
+        "save_graph",
+        "steps_to_graph",
         "delete_pipeline",
         "pipeline_ops",
         "pipelines",

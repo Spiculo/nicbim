@@ -583,6 +583,8 @@ def recoveries() -> str:
             continue
         if own is not None and folder == own:
             continue  # this session's own copy
+        if not (folder / "model.ifc").exists() and not (info.get("base") and os.path.exists(info["base"])):
+            continue  # D235: an operation log whose base file is gone cannot be replayed
         source = info.get("source", "")
         if source and os.path.exists(source) and os.path.getmtime(source) >= info.get("time", 0):
             continue  # saved after the copy was made

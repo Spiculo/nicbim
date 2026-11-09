@@ -78,3 +78,20 @@ def test_a_cut_last_line_is_ignored(isolated, tmp_path):
     r = oplog.replay(str(project), str(journal), str(tmp_path / "out.ifc"))
     assert r["steps"] == 1
     assert len(ifcopenshell.open(str(tmp_path / "out.ifc")).by_type("IfcWall")) == 1
+
+
+def test_save_as_and_an_orderly_end_leave_no_log_behind(isolated):
+    first, second = isolated / "a.ifc", isolated / "b.ifc"
+    assert call("new_project", "Log")["ok"]
+    assert call("save", str(first))["ok"]
+    l1 = call("storeys")["storeys"][0]["guid"]
+    ext = {t["name"]: t["guid"] for t in call("wall_types")["types"]}["Exterior 300"]
+    call("create_wall", l1, ext, 0, 0, 4, 0, 3.0, "", "")
+    old = oplog._folder()
+    assert (old / "journal.jsonl").exists()
+    assert call("save", str(second))["ok"]  # Save As: the first file's log is done with
+    assert not old.exists()
+    call("create_wall", l1, ext, 0, 2, 4, 2, 3.0, "", "")
+    assert (oplog._folder() / "journal.jsonl").exists()
+    assert call("discard_journal")["ok"]
+    assert call("recoveries")["items"] == []

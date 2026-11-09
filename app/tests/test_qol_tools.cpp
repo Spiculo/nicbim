@@ -4,6 +4,11 @@
 #include <QAction>
 #include <QDir>
 #include <QFile>
+#include <QGraphicsEllipseItem>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
@@ -15,6 +20,7 @@
 
 #include "LevelsBar.h"
 #include "MainWindow.h"
+#include "NodeGraph.h"
 #include "QolTools.h"
 #include "SheetExport.h"
 #include "Snapper.h"
@@ -420,6 +426,50 @@ private slots:
         QVERIFY(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).size() == 1);
         QVERIFY(w.newProject());
         QVERIFY(w.loadModelFromLibrary(dir.filePath(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).first())));
+    }
+
+    void nodeGraphBuildsWiresAndRuns()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        std::unique_ptr<kimbim::NodeGraphDialog> d(w.makeGraphDialog(QString()));
+        const int number = d->addNode(QStringLiteral("number"), QPointF(0, 0), QJsonObject{{"value", 4}});
+        const int times = d->addNode(QStringLiteral("multiply"), QPointF(250, 0), QJsonObject{{"b", 2.5}});
+        const int box = d->addNode(QStringLiteral("massing"), QPointF(500, 0),
+            QJsonObject{{"x", 0}, {"y", 0}, {"depth", 6}, {"height", 3}});
+        QVERIFY(number && times && box);
+        QCOMPARE(d->addNode(QStringLiteral("nope"), QPointF()), 0);
+        // wire with the scene interaction: from the number's output to the multiply's "a" input
+        const QJsonObject before = d->graph();
+        auto portCentre = [&](int node, bool out, const QString& arg) {
+            for (QGraphicsItem* item : d->view()->scene()->items())
+                if (item->data(0).toInt() == node)
+                    for (QGraphicsItem* child : item->childItems())
+                        if (auto* port = dynamic_cast<QGraphicsEllipseItem*>(child)) {
+                            const QPointF c = port->sceneBoundingRect().center();
+                            const bool isOut = port->rect().x() > 100;
+                            if (out == isOut && (out || child == item->childItems().at(1 + int(QStringList{"a", "b"}.indexOf(arg)) * 2)))
+                                return c;
+                        }
+            return QPointF();
+        };
+        QVERIFY(d->startWire(portCentre(number, true, {})));
+        QVERIFY(d->finishWire(portCentre(times, false, QStringLiteral("a"))));
+        QCOMPARE(d->linkCount(), 1);
+        QVERIFY(d->link(times, box, QStringLiteral("width")));
+        QVERIFY(!d->link(box, box, QStringLiteral("x"))); // no self wires
+        QVERIFY(!d->link(times, box, QStringLiteral("nope")));
+        QCOMPARE(d->graph().value("links").toArray().size(), 2);
+        QCOMPARE(d->onSave(QStringLiteral("Graph box"), d->graph()), QString());
+        QCOMPARE(d->onRun(QStringLiteral("Graph box")), QString());
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Graph box"));
+        // reopened, the saved script is the same graph
+        std::unique_ptr<kimbim::NodeGraphDialog> again(w.makeGraphDialog(QStringLiteral("Graph box")));
+        QCOMPARE(again->nodeCount(), 3);
+        QCOMPARE(again->linkCount(), 2);
+        d->removeNode(times);
+        QCOMPARE(d->linkCount(), 0);
+        Q_UNUSED(before);
     }
 
     void typedLengthsTakeSumsUnitsAndFeetInches()

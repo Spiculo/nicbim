@@ -534,6 +534,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 MainWindow::~MainWindow()
 {
     stopAgentLive(); // the live discovery entry must go with the window
+    bridge("discard_journal"); // D235: an orderly end is no crash: the operation log goes (a timed copy stays)
     for (QThread* t : std::as_const(m_drawingThreads))
         t->wait(); // a drawing being generated: its result is dropped
     stopLoading();

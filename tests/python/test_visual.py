@@ -68,3 +68,38 @@ def test_bad_scripts_and_steps_are_refused():
     assert call(V.pipelines)["pipelines"] and not call(V.delete_pipeline, "Rooms")["ok"]
     ops = {op["op"] for op in call(V.pipeline_ops)["ops"]}
     assert {"massing", "room", "push_pull", "move_vertices"} <= ops
+
+
+# ---------------------------------------------------------------- D238: the node graph
+
+def test_a_node_graph_becomes_a_script_in_dependency_order():
+    import json as _json
+
+    from kimbim import app_bridge as _b
+
+    def c(fn, *a):
+        return _json.loads(getattr(_b, fn)(*a))
+
+    assert c("new_project", "Graph")["ok"]
+    # drawn right to left on purpose: the massing (x=0) needs the two numbers to its right
+    graph = {"nodes": [{"id": 7, "op": "massing", "args": {"x": 0, "y": 0, "depth": 6, "height": 3}, "x": 0, "y": 0},
+                       {"id": 3, "op": "number", "args": {"value": 4}, "x": 300, "y": 0},
+                       {"id": 5, "op": "multiply", "args": {"b": 2.5}, "x": 600, "y": 0}],
+             "links": [{"from": 3, "to": 5, "arg": "a"}, {"from": 5, "to": 7, "arg": "width"}]}
+    steps = c("graph_to_steps", _json.dumps(graph))
+    assert steps["ok"], steps
+    assert [s["op"] for s in steps["steps"]] == ["number", "multiply", "massing"]
+    assert steps["steps"][1]["args"]["a"] == "$1" and steps["steps"][2]["args"]["width"] == "$2"
+    assert c("save_graph", "Box from numbers", _json.dumps(graph))["ok"]
+    run = c("run_pipeline", "Box from numbers", "")
+    assert run["ok"], run
+    assert run["results"][1]["value"] == 10.0
+    box = _b._model.by_guid(run["results"][2]["guid"])
+    import ifcopenshell.util.element as U
+
+    assert abs(U.get_pset(box, "KIMBIM_Massing")["Width"] - 10.0) < 1e-6
+    back = c("steps_to_graph", _json.dumps(steps["steps"]))
+    assert len(back["nodes"]) == 3 and len(back["links"]) == 2
+    loop = {"nodes": [{"id": 1, "op": "add", "args": {}}, {"id": 2, "op": "add", "args": {}}],
+            "links": [{"from": 1, "to": 2, "arg": "a"}, {"from": 2, "to": 1, "arg": "a"}]}
+    assert not c("graph_to_steps", _json.dumps(loop))["ok"]

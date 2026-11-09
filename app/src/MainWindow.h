@@ -79,6 +79,7 @@ class DrawingView;
 class HistoryPanel;
 class UndoHistoryPanel;
 struct PointPick;
+class NodeGraphDialog;
 class LayersPanel;
 class WallTool;
 class PolygonTool;
@@ -398,6 +399,8 @@ public:
     bool saveModelToLibrary(const QString& folder = {}); // D237: default the office library folder
     bool loadModelFromLibrary(const QString& path = {});
     QString chooseModel(const QString& title);
+    NodeGraphDialog* makeGraphDialog(const QString& script); // D238: the caller owns it
+    void visualGraphDialog();
     QString currentViewKey() const;
     bool currentViewShowsCutSlider() const; // D91: false in plan tabs (no cut slider there)
     // A level's plan tab (D71): opened once, raised after; a view of the same model as the 3D tab.

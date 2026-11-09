@@ -9,6 +9,7 @@
 #include "LevelsBar.h"
 #include "MainWindow.h"
 #include "MeasureOverlay.h"
+#include "NodeGraph.h"
 #include "SheetExport.h"
 #include "SheetsPanel.h"
 #include "Snapper.h"
@@ -658,6 +659,9 @@ void MainWindow::buildFinishAndMepCommands()
         tr("The selected 2D appears on one detail drawing and not on the level's plan"), [detailOnly] { detailOnly(true); });
     add(tr("Show on every drawing"), "actionDetailOnlyClear", tr("The selected 2D appears on every drawing of its level again"),
         [detailOnly] { detailOnly(false); });
+    add(tr("Visual script &graph..."), "actionVisualGraph",
+        tr("Build a visual script by wiring nodes: each node's result feeds the inputs it is wired to"),
+        [this] { visualGraphDialog(); });
     add(tr("&Edit model in place"), "actionEditInPlace",
         tr("Edit the selected placed model where it is: the changes go to the model and every placement"),
         [this] { editInstanceInPlace(true); });
@@ -1030,6 +1034,58 @@ bool MainWindow::loadModelFromLibrary(const QString& path)
     return true;
 }
 
+// ---------------------------------------------------------------- D238: visual scripts as a node graph
+
+NodeGraphDialog* MainWindow::makeGraphDialog(const QString& script)
+{
+    QJsonObject graph;
+    if (!script.isEmpty())
+        for (const auto& v : bridge("pipelines").value("pipelines").toArray())
+            if (v.toObject().value("name").toString() == script)
+                graph = bridge("steps_to_graph",
+                    {QString::fromUtf8(QJsonDocument(v.toObject().value("steps").toArray()).toJson(QJsonDocument::Compact))});
+    auto* dialog = new NodeGraphDialog(bridge("pipeline_ops").value("ops").toArray(),
+        script.isEmpty() ? tr("New script") : script, graph, this);
+    dialog->onSave = [this](const QString& name, const QJsonObject& g) -> QString {
+        const QJsonObject r = bridge("save_graph", {name, QString::fromUtf8(QJsonDocument(g).toJson(QJsonDocument::Compact))});
+        if (!r.value("ok").toBool())
+            return r.value("error").toString();
+        reloadProjectSettings();
+        return {};
+    };
+    dialog->onRun = [this](const QString& name) -> QString {
+        const QJsonObject r = bridge("run_pipeline", {name, m_levels->activeStorey()});
+        if (!r.value("ok").toBool())
+            return r.value("error").toString();
+        m_pendingLabel = name;
+        afterEdit(r);
+        m_pendingLabel.clear();
+        m_status->showMessage(tr("Ran \"%1\": %n step(s)", nullptr, r.value("changed").toInt()).arg(name), 3000);
+        return {};
+    };
+    return dialog;
+}
+
+void MainWindow::visualGraphDialog()
+{
+    QStringList names;
+    for (const auto& v : bridge("pipelines").value("pipelines").toArray())
+        names << v.toObject().value("name").toString();
+    QString script;
+    if (!names.isEmpty()) {
+        const QString fresh = tr("(new script)");
+        bool ok = false;
+        const QString chosen = QInputDialog::getItem(this, tr("Visual script graph"), tr("Script:"), QStringList{fresh} + names,
+            0, false, &ok);
+        if (!ok)
+            return;
+        if (chosen != fresh)
+            script = chosen;
+    }
+    std::unique_ptr<NodeGraphDialog> dialog(makeGraphDialog(script));
+    dialog->exec();
+}
+
 void MainWindow::terrainHeightsDialog(const QVector<QPointF>& points)
 {
     // Each clicked point with its height (absolute metres); quiet mode keeps the level's height.
@@ -1304,7 +1360,7 @@ void MainWindow::groupModelMenu()
                 "actionGridSystem", "actionShaft", "actionBeamSystem", "actionLintels", "actionSills", "actionReveals", "actionWallHandrail"}},
         {tr("&Finishes"), "modelMenuFinishes", {"actionFloorFinish", "actionSkirting", "actionWallFinish"}},
         {tr("&MEP"), "modelMenuMep", {"actionDuct", "actionPipe", "actionCableTray"}},
-        {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts"}},
+        {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts", "actionVisualGraph"}},
         {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionRoadMarking", "actionPlantingArea"}},
         {tr("&Annotation and 2D"), "modelMenuAnnotation",
             {"actionTagAll", "actionInteriorElevations", "actionAreaLabel", "actionDetailOnly", "actionDetailOnlyClear", "actionAutoDimension", "actionOverallDimension", "actionGridDimension", "actionKeynotes",

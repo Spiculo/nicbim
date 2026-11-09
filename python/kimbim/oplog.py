@@ -43,8 +43,11 @@ def _info(folder: pathlib.Path, base: str) -> None:
 def start(base: str = "") -> None:
     """A new journal: the model now equals `base` on disk (opened, saved, or a full recovery copy). An
     empty base means the folder's own model.ifc (written by write_recovery)."""
+    previous = _state.get("folder")
     _state.update(folder=None, base=base, lines=0, disabled=False)
     folder = _folder() if B._model is not None else None
+    if previous is not None and previous != folder:  # Save As or another file: the old log is done with
+        _drop(previous)
     journal = folder / JOURNAL if folder is not None else None
     if journal is not None and journal.exists():
         journal.unlink()
@@ -136,3 +139,22 @@ def replay(base: str, journal: str, out: str) -> dict:
                 done.append(t)
     model.write(out)
     return {"steps": steps, "settings": settings}
+
+
+def _drop(folder: pathlib.Path) -> None:
+    """A log that is no longer needed goes, and its folder too unless a timed copy is there."""
+    import shutil
+
+    if folder.exists():
+        (folder / JOURNAL).unlink(missing_ok=True)
+        if not (folder / "model.ifc").exists():
+            shutil.rmtree(folder, ignore_errors=True)
+
+
+def discard_journal() -> str:
+    """The app ends normally (no crash): the session's log goes."""
+    for folder in {f for f in (_folder() if B._model is not None else None, _state.get("folder")) if f is not None}:
+        _drop(folder)
+    _state.update(folder=None, base="", lines=0)
+    return B._dump({"ok": True})
+

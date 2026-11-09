@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D233 plus explicit overrides for the final items.
+after D123–D238 plus explicit overrides for the final items.
 
-**Summary: 225 done, 2 deferred, 3 blocked.**
+**Summary: 227 done, 0 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -18,14 +18,6 @@ after D123–D233 plus explicit overrides for the final items.
 ## Future scope (deferred, not blocked)
 
 - Deeper visualisation beyond the current ray/path-traced exports: offline render farm, animation, walkthrough video.
-- Window and door sills and reveals (lintels are D232).
-- MEP beyond straight runs: fittings, systems, sizing and connections (D231 is coordination level).
-- Extra 2D drafting drawn on a detail view itself (worksheets and details exist separately).
-- Models (D58): editing an instance in place, nested models and a model library across projects.
-- A wired node-graph editor for visual scripts (D223 is a linear list of steps).
-- An operation log (oplog) replayed after a crash between recovery copies.
-- Revit-style phases (the Archicad renovation statuses of D74 cover existing/demolish/new).
-- Road markings as a site tool (they are drafting today).
 
 ## Every item
 
@@ -35,7 +27,7 @@ after D123–D233 plus explicit overrides for the final items.
 | 1. Project and files | Installer / portable build | **Blocked** | Portable install/uninstall (D144) and the signing wrapper (D145) are done; actual signing needs the owner's certificate. |
 | 1. Project and files | New project | **Done** | IFC4 in mm, levels |
 | 1. Project and files | Project templates (units, levels, types, views, title blocks) | **Done** | D72: office templates (File › New from template, Save as template) |
-| 1. Project and files | Autosave, crash recovery | **Done** | D72: recovery copies on a timer, offered again after a crash; no oplog yet ([03](03-versioning.md)) |
+| 1. Project and files | Autosave, crash recovery | **Done** | D72: recovery copies on a timer, offered again after a crash; D235: an operation log replays the steps since the last copy ([03](03-versioning.md)) |
 | 1. Project and files | Recent projects | **Done** | File › Recent files |
 | 1. Project and files | Open or import by dropping files on the window | **Done** | D227: a `.kim`/`.ifc` (or a project folder) opens; DXF/DWG/PDF/PNG/JPEG become an underlay; OBJ/STL/PLY/COLLADA/glTF/FBX import as a mesh; XYZ/PTS/LAS/LAZ/E57 as a point cloud |
 | 1. Project and files | Imperial units, unit preferences | **Done** | D108: project length units m/cm/mm/**ft/in** and areas m²/cm²/mm²/**ft²/in²**, in Project settings, every length/area field and format; the model stays in metres |
@@ -135,8 +127,8 @@ after D123–D233 plus explicit overrides for the final items.
 | 6. Building elements | Curtain walls (grids, mullions, panels) | **Done** | D109/D116/D126/D169/D170: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, a panel building material, and copy-to-all/move-bay panel commands. |
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
 | 6. Building elements | Handrails fixed to walls | **Done** | D233: Model > *Handrail on wall...*: a round IfcRailing HANDRAIL on the chosen face of each selected wall |
-| 6. Building elements | MEP runs (ducts, pipes, cable trays) | **Deferred** | D231: Model > *MEP*: straight `IfcDuctSegment`, `IfcPipeSegment` and `IfcCableCarrierSegment` runs drawn point to point at a centreline height; no fittings, systems or sizing (coordination level) |
-| 6. Building elements | Lintels, sills and reveals | **Deferred** | D232: Model > *Lintels* puts an `IfcBeam` LINTEL over each selected door, window or opening; sills and reveals are not modelled yet |
+| 6. Building elements | MEP runs (ducts, pipes, cable trays) | **Done** | D231: Model > *MEP*: duct, pipe and cable-tray runs; D234: elbow fittings at the bends and a named distribution system per run (coordination level: no sizing) |
+| 6. Building elements | Lintels, sills and reveals | **Done** | D232: *Lintels*; D234: *Sills* and *Reveals* on each selected opening |
 | 6. Building elements | Beam systems (joists, rafters) | **Done** | D232: Model > *Beam system...*: a beam type at a spacing and direction across two clicked corners, one undo step |
 | 6. Building elements | Shafts through several levels | **Done** | D231: Model > *Shaft...*: two corners, then up to which level; the rectangle is cut through every slab between, one undo step |
 | 6. Building elements | Floor finishes, wall finishes and skirtings | **Done** | D231: Model > *Finishes*: an `IfcCovering` FLOORING over each selected room, SKIRTINGBOARD or CLADDING as a band inside its walls; made again, it replaces the room's earlier finish |
@@ -145,9 +137,9 @@ after D123–D233 plus explicit overrides for the final items.
 | 6. Building elements | Generic object (extrusion, revolve, mesh import) | **Done** | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (with tests), and they place as proxy types like any library object |
 | 6. Building elements | Morph / free-form modelling, push/pull | **Done** | D220: `morph.push_pull` moves a massing box side/top/bottom or a mesh's named face (world-space vertices), `morph.move_vertices` moves chosen mesh vertices; Model > *Push/pull...* asks for the face and distance. Each call is one undo step and refuses a collapse or a bad face. |
 | 6. Building elements | Conceptual massing with floor areas | **Done** | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level; `areas.massing_report` lists each box's footprint and volume and sums floor area per level, counting a level when it lies inside the box |
-| 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups) |
+| 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups); D237: edit an instance in place, nest models, share them through the library |
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
-| 7. Site | Kerbs and planting areas | **Done** | D233: Model > *Site > Kerb...* (along a clicked path, IfcCivilElement) and *Planting area...* (a clicked outline, IfcGeographicElement with its planting); road markings remain drafting |
+| 7. Site | Kerbs and planting areas | **Done** | D233: Model > *Site > Kerb...* (along a clicked path, IfcCivilElement) and *Planting area...* (a clicked outline, IfcGeographicElement with its planting); D234: *Road marking...* paints solid, dashed or double lines |
 | 7. Site | Building pad / cut-and-fill | **Done** | D116 flattens a polygonal terrain part to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad against the pre-pad surface (`pad_cut_fill`, agent `terrain.pad_volumes`), shown in the dialog's status line. |
 | 7. Site | Hardscape, paths, parking | **Done** | D194: bundled *Paving*, *Path* and *Parking space* objects in the site category (IFC geographic/proxy types, thin box bodies and plan symbols); hardscape areas are placed and edited like any library object |
 | 7. Site | Plants and landscape | **Done** | D192: bundled *Shrub* and *Hedge* objects in the site category (tree was already there), with IFC geographic/proxy types, body and plan symbol; plant objects place on any level like the rest of the library |
@@ -169,7 +161,7 @@ after D123–D233 plus explicit overrides for the final items.
 | 9. Organising the model | Property editing, psets, bulk edit | **Done** |  |
 | 9. Organising the model | Dimensions group (length, height… edits the shape) | **Done** |  |
 | 9. Organising the model | Expression / calculated properties | **Done** | D181: schedule fields with `source: formula` evaluate a safe expression over the row's earlier fields (`{quantity:volume} * 2`; numbers, + - * / // % **, min, max, round, abs), added with the schedule editor's *Formula...* button. |
-| 9. Organising the model | Renovation status (existing / demolish / new) and filters | **Done** | D74: Archicad statuses, renovation filters in purposes, legends; Revit phases not done |
+| 9. Organising the model | Renovation status (existing / demolish / new) and filters | **Done** | D74: Archicad statuses, renovation filters in purposes, legends; D234: Revit-style phases and phase filters (View > *Phases*) |
 | 9. Organising the model | Design options | **Done** | KimBim uses branches (D56); Archicad and Revit store options inside one file |
 | 10. Attributes and graphics standards | Layered (composite) wall and slab types | **Done** |  |
 | 10. Attributes and graphics standards | Material editor (cut fill, surface, physical data) | **Done** | D96: Graphics › Building materials / Surfaces / Composites; IFC materials, styles and psets |
@@ -181,7 +173,7 @@ after D123–D233 plus explicit overrides for the final items.
 | 11. Drawings (views made from the model) | Floor plan drawings (one per story, cut plane, symbols) | **Done** | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
 | 11. Drawings (views made from the model) | Section views (marker in plan, linked view) | **Done** | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; D138 scale and detail level; D190 the drawing scale in generation and a hand crop (View > *Crop drawing...*). SVG from IfcOpenShell's serializer, in a tab (D60, D61) |
 | 11. Drawings (views made from the model) | Elevations (building, interior) | **Done** | Template N/S/E/W elevations, *Create elevations*, Elevation tool (Shift+V); D173 adds the depth choice to the tool strip (infinite, cut only or a limited depth, the last being an interior elevation). |
-| 11. Drawings (views made from the model) | Detail views (enlarged, cropped, with extra 2D) | **Done** | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
+| 11. Drawings (views made from the model) | Detail views (enlarged, cropped, with extra 2D) | **Done** | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. D236: 2D shown only on one detail (*Show only on a detail...*) |
 | 11. Drawings (views made from the model) | Drafting views (2D only) | **Done** | D98: worksheets |
 | 11. Drawings (views made from the model) | 3D documents / axonometric drawings | **Done** | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
 | 11. Drawings (views made from the model) | Crop regions, view range, depth | **Done** | D61 depth, D134 crop region with four clipping planes (and Clear), D136 per-view cut height/bottom limit, D138 model view options by scale; generated plans/details already use the per-view depth (view → level → project) in the generation job and camera, tested by `tests/python/test_drawings.py`. |
