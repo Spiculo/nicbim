@@ -36,6 +36,7 @@
 #include <QApplication>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QInputDialog>
 #include <QJsonArray>
@@ -657,6 +658,15 @@ void MainWindow::buildFinishAndMepCommands()
         tr("The selected 2D appears on one detail drawing and not on the level's plan"), [detailOnly] { detailOnly(true); });
     add(tr("Show on every drawing"), "actionDetailOnlyClear", tr("The selected 2D appears on every drawing of its level again"),
         [detailOnly] { detailOnly(false); });
+    add(tr("&Edit model in place"), "actionEditInPlace",
+        tr("Edit the selected placed model where it is: the changes go to the model and every placement"),
+        [this] { editInstanceInPlace(true); });
+    add(tr("&Finish editing in place"), "actionFinishInPlace", tr("Stop sending edits back to the model"),
+        [this] { editInstanceInPlace(false); });
+    add(tr("Save model to &library..."), "actionSaveModelToLibrary", tr("Save a model in the office library for other projects"),
+        [this] { saveModelToLibrary(); });
+    add(tr("Load model from l&ibrary..."), "actionLoadModelFromLibrary", tr("Bring a model saved in the library into this project"),
+        [this] { loadModelFromLibrary(); });
     add(tr("&Area label..."), "actionAreaLabel", tr("Click an outline: its area goes in a label at its middle"), [this] {
         pickPoints(-3, false, {tr("Area label: click the first corner"), tr("Area label: click the next corner; Enter places the label")},
             [this](const QVector<QPointF>& p, const QString&) {
@@ -916,6 +926,108 @@ void MainWindow::assignPhaseDialog()
     }
     afterEdit(r);
     refreshLayers();
+}
+
+// ---------------------------------------------------------------- D237: models in place and in the library
+
+bool MainWindow::editInstanceInPlace(bool on)
+{
+    if (!on) {
+        bridge("end_edit_in_place");
+        m_status->showMessage(tr("Finished editing the model in place"), 3000);
+        return true;
+    }
+    QString instance;
+    for (const QString& g : std::as_const(m_selection))
+        if (m_instanceOf.contains(g)) {
+            instance = m_instanceOf.value(g);
+            break;
+        }
+    if (instance.isEmpty()) {
+        m_status->showMessage(tr("Select an element of a placed model first"));
+        return false;
+    }
+    const QJsonObject r = bridge("begin_edit_in_place", {instance});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Edit in place"), r.value("error").toString());
+        return false;
+    }
+    m_status->showMessage(tr("Editing model %1 in place: its changes go to every placement. "
+                             "Model > Finish editing in place when done").arg(r.value("name").toString()));
+    return true;
+}
+
+QString MainWindow::chooseModel(const QString& title)
+{
+    QStringList names, guids;
+    for (const auto& v : bridge("models").value("models").toArray()) {
+        names << v.toObject().value("name").toString();
+        guids << v.toObject().value("guid").toString();
+    }
+    if (guids.isEmpty()) {
+        m_status->showMessage(tr("There are no models yet: use New model... next to the levels"));
+        return {};
+    }
+    if (m_quiet || guids.size() == 1)
+        return guids.first();
+    bool ok = false;
+    const QString name = QInputDialog::getItem(this, title, tr("Model:"), names, 0, false, &ok);
+    return ok ? guids.at(int(names.indexOf(name))) : QString();
+}
+
+bool MainWindow::saveModelToLibrary(const QString& folder)
+{
+    const QString model = chooseModel(tr("Save model to library"));
+    if (model.isEmpty())
+        return false;
+    QString target = folder.isEmpty() ? m_prefs.value(QStringLiteral("office_library")).toString() : folder;
+    if (target.isEmpty() && !m_quiet)
+        target = QFileDialog::getExistingDirectory(this, tr("Library folder"));
+    if (target.isEmpty())
+        return false;
+    const QJsonObject r = bridge("save_model_to_library", {model, target});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Save model to library"), r.value("error").toString());
+        return false;
+    }
+    m_status->showMessage(tr("Model saved to %1").arg(r.value("path").toString()), 4000);
+    return true;
+}
+
+bool MainWindow::loadModelFromLibrary(const QString& path)
+{
+    QString file = path;
+    if (file.isEmpty()) {
+        const QString folder = m_prefs.value(QStringLiteral("office_library")).toString();
+        QStringList names, paths;
+        for (const auto& v : bridge("library_models", {folder}).value("models").toArray()) {
+            names << v.toObject().value("name").toString();
+            paths << v.toObject().value("path").toString();
+        }
+        if (!names.isEmpty() && !m_quiet) {
+            names << tr("Another file...");
+            bool ok = false;
+            const QString name = QInputDialog::getItem(this, tr("Load model from library"), tr("Model:"), names, 0, false, &ok);
+            if (!ok)
+                return false;
+            const int i = int(names.indexOf(name));
+            file = i < paths.size() ? paths.at(i) : QString();
+        } else if (!paths.isEmpty()) {
+            file = paths.first();
+        }
+        if (file.isEmpty() && !m_quiet)
+            file = QFileDialog::getOpenFileName(this, tr("Load model from library"), folder, tr("Library models (*.kimmodel.ifc)"));
+    }
+    if (file.isEmpty())
+        return false;
+    const QJsonObject r = bridge("load_model_from_library", {file, QString()});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Load model from library"), r.value("error").toString());
+        return false;
+    }
+    afterEdit(r);
+    m_status->showMessage(tr("Model %1 loaded: place it with the Place model tool").arg(r.value("name").toString()), 4000);
+    return true;
 }
 
 void MainWindow::terrainHeightsDialog(const QVector<QPointF>& points)
@@ -1199,7 +1311,8 @@ void MainWindow::groupModelMenu()
                 "actionFillFromShape", "actionMake2DBlock", "actionInsert2DBlock"}},
         {tr("&Types, models and library"), "modelMenuTypes",
             {"actionTypeManager", "actionPurgeTypes", "actionClassifications", "actionUpdateModelInstances",
-                "actionExplodeInstance", "actionUpdateLibraryObjects", "actionCustomiseObjectCopy"}},
+                "actionExplodeInstance", "actionEditInPlace", "actionFinishInPlace", "actionSaveModelToLibrary",
+                "actionLoadModelFromLibrary", "actionUpdateLibraryObjects", "actionCustomiseObjectCopy"}},
         {tr("&Links"), "modelMenuLinks", {"actionLinks", "actionMeshLink"}},
         {tr("A&nalysis and checking"), "modelMenuAnalysis",
             {"actionCheckModel", "actionIssues", "actionEnergyReport", "actionAnalyticalModel", "actionCostEstimate",

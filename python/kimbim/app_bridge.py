@@ -456,6 +456,10 @@ def _model_content(elements) -> list:
     placement, even when the edit has no geometry (a name, a property)."""
     from . import authoring as A
 
+    import sys
+
+    editing = sys.modules.get(f"{__package__}.modelplace")  # D237: an instance edited in place counts too
+    in_place = editing._edit["instance"] if editing is not None else None
     out = []
     for e in elements:
         try:
@@ -463,6 +467,8 @@ def _model_content(elements) -> list:
         except Exception:  # noqa: BLE001  (not a product)
             continue
         if storey is not None and A._is_model(storey):
+            out.append(e.GlobalId)
+        elif in_place and A._instance_info(e).get("Instance") == in_place:
             out.append(e.GlobalId)
     return out
 
@@ -1402,6 +1408,14 @@ _EXPORTS = {
     "morph": (
         "move_vertices",
         "push_pull",
+    ),
+    "modelplace": (
+        "begin_edit_in_place",
+        "editing_in_place",
+        "end_edit_in_place",
+        "library_models",
+        "load_model_from_library",
+        "save_model_to_library",
     ),
     "phases": (
         "assign_phase",

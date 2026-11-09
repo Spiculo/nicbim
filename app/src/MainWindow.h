@@ -394,6 +394,10 @@ public:
     void clipUnderlayCommand(bool clear); // a DXF/vector underlay clipped to a clicked rectangle (or not)
     bool setPhaseView(const QString& phase, const QString& filter); // D234: the phase the views show
     void assignPhaseDialog();             // D234: the selection's created/demolished phases
+    bool editInstanceInPlace(bool on);    // D237: the selected placed model's edits go back to it
+    bool saveModelToLibrary(const QString& folder = {}); // D237: default the office library folder
+    bool loadModelFromLibrary(const QString& path = {});
+    QString chooseModel(const QString& title);
     QString currentViewKey() const;
     bool currentViewShowsCutSlider() const; // D91: false in plan tabs (no cut slider there)
     // A level's plan tab (D71): opened once, raised after; a view of the same model as the 3D tab.

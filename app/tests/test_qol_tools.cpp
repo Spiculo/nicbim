@@ -2,6 +2,7 @@
 // QolTools.cpp: the view's right-click menu, command search, Repeat last command, the Undo history
 // panel, nudging, the object-snap and ortho toggles, dropped files and printing sheets.
 #include <QAction>
+#include <QDir>
 #include <QFile>
 #include <QLineEdit>
 #include <QListWidget>
@@ -12,6 +13,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include "LevelsBar.h"
 #include "MainWindow.h"
 #include "QolTools.h"
 #include "SheetExport.h"
@@ -391,6 +393,33 @@ private slots:
         QVERIFY(w.setPhaseView(QStringLiteral("New Construction"), QStringLiteral("new")));
         QVERIFY(!w.viewport()->isElementHidden(wall));
         QVERIFY(!w.setPhaseView(QStringLiteral("Nope"), QStringLiteral("all")));
+    }
+
+    void modelsEditInPlaceAndTravelThroughTheLibrary()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        const QString level = w.levelsBar()->activeStorey();
+        QVERIFY(!w.editInstanceInPlace(true)); // nothing selected
+        QVERIFY(w.createModel(QStringLiteral("Unit")));
+        w.setTool(kimbim::MainWindow::Tool::Wall);
+        w.wallTool()->click({0, 0});
+        w.wallTool()->click({5, 0});
+        w.wallTool()->finish();
+        w.setTool(kimbim::MainWindow::Tool::None);
+        w.levelsBar()->setActive(level);
+        w.setTool(kimbim::MainWindow::Tool::PlaceModel);
+        QVERIFY(w.placeModelAt(QPointF(10, 0), false));
+        w.setTool(kimbim::MainWindow::Tool::None);
+        const QString part = w.viewport()->guids().last();
+        w.setSelection({part});
+        QVERIFY(w.editInstanceInPlace(true));
+        QVERIFY(w.editInstanceInPlace(false));
+        QTemporaryDir dir;
+        QVERIFY(w.saveModelToLibrary(dir.path()));
+        QVERIFY(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).size() == 1);
+        QVERIFY(w.newProject());
+        QVERIFY(w.loadModelFromLibrary(dir.filePath(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).first())));
     }
 
     void typedLengthsTakeSumsUnitsAndFeetInches()

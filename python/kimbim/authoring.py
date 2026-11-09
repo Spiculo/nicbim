@@ -3331,7 +3331,10 @@ def _place_instance(model, target, transform, instance_id, keep_guids=None):
     def tag(source, copy):
         if keep_guids and source.GlobalId in keep_guids:
             copy.GlobalId = keep_guids[source.GlobalId]  # same element of the same instance: same identity
-        pset = ifcopenshell.api.pset.add_pset(B._model, product=copy, name=INSTANCE_PSET)
+        # D237: a nested model's copy already carries the inner instance's link: it now belongs to this one
+        existing = ifcopenshell.util.element.get_pset(copy, INSTANCE_PSET)
+        pset = B._model.by_id(existing["id"]) if existing else ifcopenshell.api.pset.add_pset(
+            B._model, product=copy, name=INSTANCE_PSET)
         ifcopenshell.api.pset.edit_pset(B._model, pset=pset, properties={
             "Model": model.GlobalId, "Instance": instance_id, "Source": source.GlobalId,
             "X": float(x), "Y": float(y), "Angle": float(angle)})
@@ -3349,8 +3352,10 @@ def place_model(model_guid: str, storey_guid: str, x, y, angle=0.0) -> str:
     model, target = _by_guid(model_guid), _by_guid(storey_guid)
     if model is None or not _is_model(model):
         return _fail("not a model")
-    if target is None or not target.is_a("IfcBuildingStorey") or _is_model(target):
-        return _fail("place models on a level of the building")
+    if target is None or not target.is_a("IfcBuildingStorey"):
+        return _fail("place models on a level of the building or inside another model")
+    if _is_model(target) and _contains_model(model, target):  # D237: nesting, never a loop
+        return _fail("a model cannot be placed inside itself or a model inside it")
     try:
         x, y, angle = float(x), float(y), float(angle or 0.0)
     except (TypeError, ValueError) as ex:
@@ -3370,6 +3375,26 @@ def place_model(model_guid: str, storey_guid: str, x, y, angle=0.0) -> str:
     except Exception as ex:
         return _fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "instance": instance_id, "guids": made["guids"]})
+
+
+def _nested_models(model) -> set:
+    """D237: the GlobalIds of the models placed (directly or deeper) inside `model`."""
+    out, todo = set(), [model]
+    while todo:
+        m = todo.pop()
+        for e in _contained(m):
+            inner = _instance_info(e).get("Model")
+            if inner and inner not in out:
+                out.add(inner)
+                inner_model = _by_guid(inner)
+                if inner_model is not None:
+                    todo.append(inner_model)
+    return out
+
+
+def _contains_model(outer, inner) -> bool:
+    """Whether placing `outer` inside `inner` would make a loop (`inner` is, or is inside, `outer`)."""
+    return inner == outer or inner.GlobalId in _nested_models(outer)
 
 
 def _remove_products(elements) -> None:
@@ -3475,11 +3500,23 @@ def _follow_model_edits(changed, removed) -> list:
                 if model is not None and _is_model(model):
                     models[model.GlobalId] = model
     out = []
-    for model in models.values():
+    done = set()
+    todo = list(models.values())
+    while todo:  # D237: a nested model's update changes the models it is placed in: they follow too
+        model = todo.pop(0)
+        if model.GlobalId in done:
+            continue
+        done.add(model.GlobalId)
         try:
-            out += _update_model_in_action(model)
+            changed_now = _update_model_in_action(model)
         except Exception:  # noqa: BLE001  (the edit's own result is the one to report)
             continue
+        out += changed_now
+        for guid in changed_now:
+            e = _by_guid(guid)
+            container = ifcopenshell.util.element.get_container(e) if e is not None else None
+            if container is not None and _is_model(container) and container.GlobalId not in done:
+                todo.append(container)
     return out
 
 

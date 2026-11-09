@@ -140,3 +140,61 @@ def test_model_elements_lists_what_is_drawn_in_models(apartment):
     call("place_model", apartment["model"], apartment["l1"], 10, 0, 0)
     inside = set(call("model_elements")["guids"])
     assert inside == {*apartment["walls"], apartment["door"]}
+
+
+# ---------------------------------------------------------------- D237: in place, nested, library
+
+def _instance_walls(level, instance):
+    return [e for e in contained(level) if e.is_a("IfcWall")
+            and ifcopenshell.util.element.get_psets(e).get("KIMBIM_ModelInstance", {}).get("Instance") == instance]
+
+
+def test_editing_an_instance_in_place_changes_the_model_and_every_instance(apartment):
+    one = call("place_model", apartment["model"], apartment["l1"], 10, 0, 0)
+    two = call("place_model", apartment["model"], apartment["l2"], 10, 0, 0)
+    assert call("begin_edit_in_place", one["instance"])["ok"]
+    wall = next(e for e in _instance_walls(apartment["l1"], one["instance"])
+                if ifcopenshell.util.element.get_psets(e)["KIMBIM_ModelInstance"]["Source"] == apartment["walls"][1])
+    assert call("set_name", g(wall.GlobalId), "Edited in place")["ok"]
+    assert b._model.by_guid(apartment["walls"][1]).Name == "Edited in place"  # the model's own wall
+    assert "Edited in place" in {e.Name for e in _instance_walls(apartment["l2"], two["instance"])}  # the other floor
+    # a wall drawn on the level while editing joins the model
+    new = call("create_wall", apartment["l1"], apartment["type"], 10, 4, 16, 4, 3.0, "", "")
+    assert new["ok"]
+    assert len([e for e in contained(apartment["model"]) if e.is_a("IfcWall")]) == 3
+    assert len(_instance_walls(apartment["l2"], two["instance"])) == 3
+    assert call("end_edit_in_place")["ok"]
+    assert call("editing_in_place")["instance"] == ""
+    # after editing, an ordinary edit of an instance element stays local again
+    local = _instance_walls(apartment["l1"], one["instance"])[0]
+    call("set_name", g(local.GlobalId), "Only here")
+    assert "Only here" not in {e.Name for e in contained(apartment["model"])}
+
+
+def test_models_nest_and_the_outer_follows_the_inner(apartment):
+    tower = call("create_model", "Tower core")["guid"]
+    nested = call("place_model", apartment["model"], tower, 0, 0, 0)
+    assert nested["ok"], nested
+    assert not call("place_model", tower, apartment["model"], 0, 0, 0)["ok"]  # no loops
+    assert not call("place_model", tower, tower, 0, 0, 0)["ok"]
+    placed = call("place_model", tower, apartment["l1"], 20, 0, 0)
+    assert placed["ok"], placed
+    assert len([e for e in contained(apartment["l1"]) if e.is_a("IfcWall")]) == 2
+    call("set_name", g(apartment["walls"][0]), "Inner change")  # edit the innermost model
+    assert "Inner change" in {e.Name for e in contained(tower)}  # its instance inside the tower
+    assert "Inner change" in {e.Name for e in contained(apartment["l1"])}  # and the tower on level 1
+
+
+def test_a_model_travels_through_the_library(apartment, tmp_path):
+    saved = call("save_model_to_library", apartment["model"], str(tmp_path))
+    assert saved["ok"], saved
+    assert [m["name"] for m in call("library_models", str(tmp_path))["models"]] == ["Apartment A"]
+    assert call("new_project", "Other")["ok"]
+    loaded = call("load_model_from_library", saved["path"], "")
+    assert loaded["ok"], loaded
+    assert loaded["name"] == "Apartment A"
+    walls = [e for e in contained(loaded["model"]) if e.is_a("IfcWall")]
+    assert len(walls) == 2 and all(ifcopenshell.util.element.get_type(w) is not None for w in walls)
+    level = next(s["guid"] for s in call("storeys")["storeys"] if not s["model"])
+    assert call("place_model", loaded["model"], level, 0, 0, 0)["ok"]
+    assert not call("load_model_from_library", str(tmp_path / "missing.ifc"))["ok"]
