@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DraftTool.h"
+#include "Units.h"
 
 #include <QLocale>
 #include <QRegularExpression>
@@ -20,16 +21,10 @@ double dist(QPointF a, QPointF b)
     return std::hypot(a.x() - b.x(), a.y() - b.y());
 }
 
-std::optional<double> number(const QString& text)
+// Typed text in the typed unit (`metresPerUnit` metres each): sums, units and feet-inches too.
+std::optional<double> number(const QString& text, double metresPerUnit = 1.0)
 {
-    const QString t = text.trimmed();
-    if (t.isEmpty())
-        return std::nullopt;
-    bool ok = false;
-    double v = QLocale().toDouble(t, &ok);
-    if (!ok)
-        v = QLocale::c().toDouble(QString(t).replace(QLatin1Char(','), QLatin1Char('.')), &ok);
-    return ok ? std::optional<double>(v) : std::nullopt;
+    return units::evaluate(text, metresPerUnit);
 }
 
 } // namespace
@@ -183,10 +178,10 @@ bool DraftTool::typeInput(const QString& text)
         dir = QPointF(1, 0);
     // A rectangle's width;height (signs from where the mouse is).
     if (m_mode == Mode::Rectangle) {
-        const QStringList parts = text.split(QRegularExpression(QStringLiteral("[;xX*\\s]+")), Qt::SkipEmptyParts);
+        const QStringList parts = text.split(QRegularExpression(QStringLiteral("\\s*[;xX]\\s*")), Qt::SkipEmptyParts);
         if (parts.size() != 2)
             return false;
-        const auto w = number(parts[0]), h = number(parts[1]);
+        const auto w = number(parts[0], m_lengthFactor), h = number(parts[1], m_lengthFactor);
         if (!w || !h || *w == 0 || *h == 0)
             return false;
         const double sx = m_hover && m_hover->x() < last.x() ? -1 : 1, sy = m_hover && m_hover->y() < last.y() ? -1 : 1;
@@ -195,7 +190,7 @@ bool DraftTool::typeInput(const QString& text)
     }
     // "length<angle": polar, the angle in degrees from the x axis.
     const qsizetype lt = text.indexOf(QLatin1Char('<'));
-    std::optional<double> value = number(lt >= 0 ? text.left(lt) : text);
+    std::optional<double> value = number(lt >= 0 ? text.left(lt) : text, m_lengthFactor);
     if (lt >= 0) {
         const auto angle = number(text.mid(lt + 1));
         if (!angle)

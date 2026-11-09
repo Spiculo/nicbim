@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QJsonObject>
 #include <QPointF>
+#include <QRectF>
 #include <QSizeF>
 #include <QString>
 #include <QVector>
@@ -54,6 +55,9 @@ struct Underlay {
     double opacity = 1.0;
     bool greyscale = false, visible = true, locked = false, show3d = false, missing = false;
     bool vector = false; // D132: a PDF placed as vector linework instead of a raster page
+    QRectF clip;         // D232: drawing-unit rectangle its linework is clipped to (null: none)
+    // What its linework is cached under: the file, and the clip when there is one.
+    QString linesKey() const;
 
     static Underlay fromJson(const QJsonObject& o);
     QJsonObject placementJson() const; // {x, y, rotation, scale} for set_underlay

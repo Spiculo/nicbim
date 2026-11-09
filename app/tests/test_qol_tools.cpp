@@ -16,6 +16,7 @@
 #include "QolTools.h"
 #include "SheetExport.h"
 #include "Snapper.h"
+#include "Units.h"
 #include "Viewport.h"
 #include "WallTool.h"
 
@@ -98,6 +99,22 @@ private slots:
         QCOMPARE(kimbim::commandText(dialog.chosen()), QStringLiteral("Fit all"));
         QCOMPARE(dialog.result(), int(QDialog::Accepted));
         QVERIFY(action(w, "actionSearchCommands")->shortcuts().contains(QKeySequence(Qt::CTRL | Qt::Key_K)));
+    }
+
+    void modelMenuIsGroupedIntoSubmenus()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        for (const char* name : {"modelMenuElements", "modelMenuMassing", "modelMenuSite", "modelMenuAnnotation",
+                 "modelMenuTypes", "modelMenuLinks", "modelMenuAnalysis"})
+            QVERIFY2(w.findChild<QMenu*>(QLatin1String(name)), name);
+        auto* massing = w.findChild<QMenu*>(QStringLiteral("modelMenuMassing"));
+        QVERIFY(massing->actions().contains(action(w, "actionPushPull")));
+        auto* analysis = w.findChild<QMenu*>(QStringLiteral("modelMenuAnalysis"));
+        QVERIFY(analysis->actions().contains(action(w, "actionEnergyReport")));
+        // still found by the command search, with the submenu in its path
+        for (const auto& e : kimbim::collectCommands(&w))
+            if (e.action == action(w, "actionPushPull"))
+                QVERIFY(e.path.contains(kimbim::commandText(massing->menuAction())));
     }
 
     void rightClickMenuOffersCommandsForTheSelection()
@@ -239,6 +256,166 @@ private slots:
         QVERIFY(w.newProject());
         QVERIFY(w.openDroppedFiles({ifc}));
         QVERIFY(w.acceptDrops());
+    }
+
+    void commandsPlaceWhereYouClick()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        // a massing box from two corners (quiet: the default 12 m height)
+        const QStringList before = w.viewport()->guids();
+        w.massingBoxCommand();
+        QVERIFY(w.pickingPoints());
+        w.pickPointMoved(QPointF(10, 10), 0.01, {});
+        w.pickPointAt(QPointF(10, 10), 0.01);
+        QVERIFY(w.pickingPoints());
+        w.pickPointAt(QPointF(16, 14), 0.01);
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(w.selection().size(), 1);
+        const QString box = w.selection().first();
+        QVERIFY(!before.contains(box));
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Massing box"));
+        // push/pull: the face comes from the clicked face's normal
+        QCOMPARE(kimbim::faceFromNormal(0.1, 0.0, 0.99), QStringLiteral("+z"));
+        QCOMPARE(kimbim::faceFromNormal(-0.9, 0.2, 0.1), QStringLiteral("-x"));
+        QCOMPARE(kimbim::faceFromNormal(0.0, 1.0, 0.0), QStringLiteral("+y"));
+        w.pushPullCommand();
+        QVERIFY(w.pushPullPicking());
+        emit w.viewport()->facePicked(16, 12, 6, 1, 0, 0); // the +X side, quiet: 1 m
+        QVERIFY(!w.pushPullPicking());
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Push/pull"));
+        // Esc cancels a pick
+        w.massingBoxCommand();
+        emit w.viewport()->drawingEnded();
+        QVERIFY(!w.pickingPoints());
+
+        // a wall opening where the wall is clicked
+        const QString wall = drawWall(w, QPointF(0, 0), QPointF(6, 0));
+        QVERIFY(!wall.isEmpty());
+        action(w, "actionWallOpening")->trigger();
+        QVERIFY(w.pickingPoints());
+        w.pickPointAt(QPointF(3, 0.02), 0.1);
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Wall opening"));
+        // clicking off any wall makes nothing
+        const int steps = w.undoHistoryPanel()->current();
+        w.setSelection({});
+        action(w, "actionWallOpening")->trigger();
+        w.pickPointAt(QPointF(50, 50), 0.1);
+        QCOMPARE(w.undoHistoryPanel()->current(), steps);
+    }
+
+    void mepRunsContinueFromPointToPoint()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        const int before = int(w.viewport()->guids().size());
+        w.runCommand(action(w, "actionDuct"));
+        QVERIFY(w.pickingPoints());
+        w.pickPointAt(QPointF(0, 0), 0.01);
+        w.pickPointAt(QPointF(5, 0), 0.01);
+        QVERIFY(w.pickingPoints()); // the next segment starts at (5, 0)
+        w.pickPointAt(QPointF(5, 4), 0.01);
+        QCOMPARE(int(w.viewport()->guids().size()), before + 2);
+        emit w.viewport()->drawingEnded(); // Esc ends the run
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).mid(1), (QStringList{"Duct", "Duct"}));
+        for (const char* name : {"modelMenuMep", "modelMenuFinishes"})
+            QVERIFY2(w.findChild<QMenu*>(QLatin1String(name)), name);
+        // finishes need rooms selected; a shaft needs slabs to cut
+        w.setSelection({});
+        w.runCommand(action(w, "actionFloorFinish"));
+        QCOMPARE(w.undoHistoryPanel()->current(), 2);
+        w.runCommand(action(w, "actionShaft"));
+        w.pickPointAt(QPointF(1, 1), 0.01);
+        w.pickPointAt(QPointF(2, 2), 0.01);
+        QCOMPARE(w.undoHistoryPanel()->current(), 2); // no slab there: nothing cut
+    }
+
+    void openEndedPicksFinishWithEnter()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        w.runCommand(action(w, "actionKerb"));
+        w.pickPointAt(QPointF(0, 0), 0.01);
+        emit w.viewport()->drawingConfirmed(); // one point is not a kerb yet
+        QVERIFY(w.pickingPoints());
+        w.pickPointAt(QPointF(4, 0), 0.01);
+        w.pickPointAt(QPointF(4, 3), 0.01);
+        QVERIFY(w.pickingPoints());
+        emit w.viewport()->drawingConfirmed();
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Kerb"));
+        w.runCommand(action(w, "actionPlantingArea"));
+        for (const QPointF& p : {QPointF(10, 0), QPointF(12, 0), QPointF(12, 2)})
+            w.pickPointAt(p, 0.01);
+        emit w.viewport()->drawingConfirmed();
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Planting area"));
+        // a terrain from clicked survey points (quiet: at the level's height)
+        w.runCommand(action(w, "actionTerrainPoints"));
+        for (const QPointF& p : {QPointF(-20, -20), QPointF(20, -20), QPointF(20, 20), QPointF(-20, 20)})
+            w.pickPointAt(p, 0.01);
+        emit w.viewport()->drawingConfirmed();
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Terrain"));
+        // an area label: the outline's area as text
+        w.runCommand(action(w, "actionAreaLabel"));
+        for (const QPointF& p : {QPointF(30, 0), QPointF(34, 0), QPointF(34, 2)})
+            w.pickPointAt(p, 0.01);
+        emit w.viewport()->drawingConfirmed();
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(), QStringLiteral("Area label"));
+        // a handrail on the selected wall
+        const QString wall = drawWall(w, QPointF(0, 10), QPointF(5, 10));
+        w.setSelection({wall});
+        w.runCommand(action(w, "actionWallHandrail"));
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).last(),
+            kimbim::commandText(action(w, "actionWallHandrail")).remove(QStringLiteral("...")).trimmed());
+    }
+
+    void typedLengthsTakeSumsUnitsAndFeetInches()
+    {
+        using kimbim::units::evaluate;
+        auto approx = [](std::optional<double> v, double want) { return v && std::abs(*v - want) < 1e-9; };
+        QVERIFY(approx(evaluate(QStringLiteral("3.6")), 3.6));
+        QVERIFY(approx(evaluate(QStringLiteral("3,6")), 3.6));
+        QVERIFY(approx(evaluate(QStringLiteral("3.6/2")), 1.8));
+        QVERIFY(approx(evaluate(QStringLiteral("(1+2)*0.5")), 1.5));
+        QVERIFY(approx(evaluate(QStringLiteral("-0.3")), -0.3));
+        QVERIFY(approx(evaluate(QStringLiteral("3600mm")), 3.6));        // a unit converts to the default (m)
+        QVERIFY(approx(evaluate(QStringLiteral("1m + 250 mm")), 1.25));
+        QVERIFY(approx(evaluate(QStringLiteral("12'")), 12 * 0.3048));
+        QVERIFY(approx(evaluate(QStringLiteral("5'6\"")), 5 * 0.3048 + 6 * 0.0254));
+        QVERIFY(approx(evaluate(QStringLiteral("5' 6")), 5 * 0.3048 + 6 * 0.0254));
+        QVERIFY(approx(evaluate(QStringLiteral("5'-6 1/2\"")), 5 * 0.3048 + 6.5 * 0.0254));
+        QVERIFY(approx(evaluate(QStringLiteral("12' - 3'")), 9 * 0.3048)); // feet minus feet subtracts
+        QVERIFY(approx(evaluate(QStringLiteral("2.5m*2")), 5.0));
+        QVERIFY(approx(evaluate(QStringLiteral("1200"), 0.001), 1200));  // default mm: a plain number stays
+        QVERIFY(approx(evaluate(QStringLiteral("1.2m"), 0.001), 1200));
+        QVERIFY(approx(evaluate(QStringLiteral("10'"), 0.3048), 10));
+        QVERIFY(!evaluate(QStringLiteral("abc")));
+        QVERIFY(!evaluate(QStringLiteral("3+")));
+        QVERIFY(!evaluate(QStringLiteral("2m*2m"))); // an area is not a length
+        QVERIFY(!evaluate(QStringLiteral("1/0")));
+        QVERIFY(!evaluate(QStringLiteral("")));
+    }
+
+    void lengthFieldsShowAndTakeTheProjectUnit()
+    {
+        kimbim::units::setProject(QStringLiteral("mm"), 0);
+        kimbim::LengthSpinBox box;
+        box.setRange(0, 100);
+        box.setValue(2.4);
+        QCOMPARE(box.value(), 2.4); // always metres
+        QCOMPARE(box.text(), QLocale().toString(2400.0, 'f', 0) + QStringLiteral(" mm"));
+        box.findChild<QLineEdit*>()->setText(QStringLiteral("2400+150"));
+        box.interpretText();
+        QCOMPARE(box.value(), 2.55);
+        box.findChild<QLineEdit*>()->setText(QStringLiteral("10'"));
+        box.interpretText();
+        QVERIFY(std::abs(box.value() - 3.048) < 1e-6);
+        kimbim::units::setProject(QStringLiteral("ft"), 2);
+        QCOMPARE(box.text(), QLocale().toString(10.0, 'f', 2) + QStringLiteral(" ft")); // follows the project
+        kimbim::units::setProject(QStringLiteral("m"), 2);
+        QCOMPARE(box.text(), QLocale().toString(3.05, 'f', 2) + QStringLiteral(" m"));
     }
 
     void sheetsPrintToAPdfPrinter()

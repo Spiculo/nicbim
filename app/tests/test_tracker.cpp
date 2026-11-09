@@ -139,6 +139,29 @@ private slots:
         QCOMPARE(end->y(), 0.0);
     }
 
+    // D232: absolute x, y from the user origin, in the typed unit like lengths; sums and units work.
+    void typedCoordinatesUseTheUserOriginAndUnit()
+    {
+        Tracker::setUserOrigin(QPointF(10, 20));
+        Tracker t; // no anchor: absolute
+        t.setCursor(QPointF(11, 22));
+        QCOMPARE(t.live(Tracker::X), 1.0);
+        t.type(QStringLiteral("2+0.5;3m"));
+        auto p = t.target();
+        QVERIFY(p);
+        QCOMPARE(p->x(), 12.5);
+        QCOMPARE(p->y(), 23.0);
+        Tracker mm;
+        mm.setLengthFactor(0.001);
+        mm.setCursor(QPointF(10, 20));
+        mm.type(QStringLiteral("1500;2m"));
+        p = mm.target();
+        QVERIFY(p);
+        QCOMPARE(p->x(), 11.5); // 1500 mm from the origin
+        QCOMPARE(p->y(), 22.0);
+        Tracker::setUserOrigin(QPointF());
+    }
+
     void trackerModesAndTypedLengthUnitPreferences()
     {
         MainWindow w(nullptr, /*quiet=*/true);

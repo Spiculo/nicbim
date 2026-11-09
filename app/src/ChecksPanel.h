@@ -69,6 +69,7 @@ signals:
     void issueActivated(const QStringList& guids);
     void refreshRequested(); // shown: the IDS files, clash sets and choices may be stale
     void precommitChanged(const QJsonArray& entries); // M6: the user picked what runs on Save version
+    void sendToIssuesRequested(const QJsonArray& findings); // [{"message", "guids"}] of the shown rows
 
 protected:
     void showEvent(QShowEvent* event) override;

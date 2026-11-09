@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SheetDialog.h"
 
+#include <QCoreApplication>
+
 #include <QAbstractItemView>
 #include <QColorDialog>
 #include <QComboBox>
@@ -23,6 +25,15 @@
 #include <algorithm>
 
 namespace kimbim {
+
+QList<QPair<QString, QString>> sheetPapers()
+{
+    return {{QStringLiteral("A0"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "A0 (1189 x 841 mm)")}, {QStringLiteral("A1"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "A1 (841 x 594 mm)")},
+        {QStringLiteral("A2"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "A2 (594 x 420 mm)")}, {QStringLiteral("A3"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "A3 (420 x 297 mm)")},
+        {QStringLiteral("A4"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "A4 (297 x 210 mm)")}, {QStringLiteral("ANSI B"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "ANSI B (17 x 11 in)")},
+        {QStringLiteral("ANSI D"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "ANSI D (34 x 22 in)")}, {QStringLiteral("ARCH D"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "ARCH D (36 x 24 in)")},
+        {QStringLiteral("ARCH E1"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "ARCH E1 (42 x 30 in)")}, {QStringLiteral("ARCH E"), QCoreApplication::translate("kimbim::SheetSettingsDialog", "ARCH E (48 x 36 in)")}};
+}
 
 namespace {
 QString kindLabel(const QString& kind)
@@ -52,8 +63,8 @@ SheetSettingsDialog::SheetSettingsDialog(const QJsonObject& sheet, QWidget* pare
     m_title->setObjectName(QStringLiteral("sheetSettingsTitle"));
     m_number->setObjectName(QStringLiteral("sheetSettingsNumber"));
     m_paper->setObjectName(QStringLiteral("sheetSettingsPaper"));
-    m_paper->addItem(tr("A1 (841 x 594 mm)"), QStringLiteral("A1"));
-    m_paper->addItem(tr("A3 (420 x 297 mm)"), QStringLiteral("A3"));
+    for (const auto& [id, label] : sheetPapers())
+        m_paper->addItem(label, id);
     const int paper = m_paper->findData(sheet.value(QStringLiteral("paper")).toString());
     m_paper->setCurrentIndex(std::max(0, paper));
     m_background->setObjectName(QStringLiteral("sheetSettingsBackground"));

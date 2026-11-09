@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ObjectSettingsDialog.h"
+#include "Units.h"
 
 #include "LibraryPanel.h"
 #include "MainWindow.h"
@@ -174,20 +175,18 @@ void ParameterForm::build()
             connect(spin, &QSpinBox::valueChanged, this, [this, key](int n) { edited(key, n, false); });
             field = spin;
         } else {
-            auto* spin = new QDoubleSpinBox(this);
+            QDoubleSpinBox* spin = kind == QLatin1String("angle") ? new QDoubleSpinBox(this) : new LengthSpinBox(this);
             if (kind == QLatin1String("angle")) {
                 spin->setDecimals(1);
                 spin->setSingleStep(1.0);
                 spin->setSuffix(QStringLiteral("°"));
                 spin->setRange(p.value("min").toDouble(-360), p.value("max").toDouble(360));
             } else {
-                spin->setDecimals(3);
                 spin->setSingleStep(0.05);
                 // A length's own minimum (e.g. a seat height) holds; the general 0.01 m does not, so a
                 // typed 0 reaches Python and shows why it doesn't build instead of jumping to 0.01.
                 const double lo = p.value("min").toDouble(0.01);
                 spin->setRange(lo > 0.01 ? lo : 0.0, p.value("max").toDouble(50.0));
-                spin->setSuffix(QStringLiteral(" m"));
             }
             spin->setValue(value.toDouble());
             connect(spin, &QDoubleSpinBox::valueChanged, this, [this, key](double d) { edited(key, d, false); });

@@ -18,3 +18,12 @@ def test_module_imports_alone(name):
     r = subprocess.run([sys.executable, "-c", f"import kimbim.{name}"], capture_output=True, text=True,
                        cwd=PACKAGE.parent, timeout=120)
     assert r.returncode == 0, r.stderr
+
+
+def test_every_exported_bridge_function_resolves():
+    """The app calls bridge functions by name; an _EXPORTS module that was never imported failed only
+    when the app used it (push/pull, energy, visual scripts... could not run from the menus)."""
+    from kimbim import app_bridge
+
+    missing = [name for name in app_bridge._EXPORTED if not callable(getattr(app_bridge, name, None))]
+    assert missing == []

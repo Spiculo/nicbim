@@ -3,6 +3,7 @@
 // drawing them in the views (Viewport::setUnderlays), their snap index for every drawing tool, and
 // calibrating or moving one by two clicks in the plan.
 #include "MainWindow.h"
+#include "Units.h"
 
 #include "DraftTool.h"
 #include "GripTool.h"
@@ -82,7 +83,7 @@ void MainWindow::addUnderlayActions(QMenu* file)
         if (path.isEmpty())
             return;
         bool ok = false;
-        const double width = QInputDialog::getDouble(this, tr("Place picture"), tr("Width (m):"), 2.0, 0.01, 10000.0, 3, &ok);
+        const double width = askLength(this, tr("Place picture"), tr("Width:"), 2.0, 0.01, 10000.0, &ok);
         if (ok)
             placeFigure(path, width, QPointF(0, 0));
     });
@@ -96,7 +97,7 @@ void MainWindow::addUnderlayActions(QMenu* file)
         if (path.isEmpty())
             return;
         bool ok = false;
-        const double width = QInputDialog::getDouble(this, tr("Place picture in 3D"), tr("Width (m):"), 1.0, 0.01, 1000.0, 3, &ok);
+        const double width = askLength(this, tr("Place picture in 3D"), tr("Width:"), 1.0, 0.01, 1000.0, &ok);
         if (ok)
             placePicture3d(path, width, QPointF(0, 0));
     });
@@ -374,7 +375,7 @@ void MainWindow::refreshUnderlays()
     QHash<QString, QImage> images;
     for (const Underlay& u : std::as_const(all)) {
         if (!u.isRaster()) {
-            auto cached = m_underlayLines.value(u.file);
+            auto cached = m_underlayLines.value(u.linesKey());
             if (!cached) {
                 QList<QByteArray> parts;
                 bool none = false;
@@ -385,7 +386,7 @@ void MainWindow::refreshUnderlays()
                     m_status->showMessage(tr("Could not read underlay %1: %2").arg(u.name, error));
             }
             if (cached)
-                lines.insert(u.file, cached);
+                lines.insert(u.linesKey(), cached);
         } else {
             const QString key = QStringLiteral("%1|%2|%3|%4|%5").arg(u.file).arg(u.page).arg(u.dpi).arg(u.greyscale).arg(u.tint);
             QImage img = m_underlayImages.value(key);
@@ -406,7 +407,7 @@ void MainWindow::refreshUnderlays()
     m_underlayLines = lines;
     m_underlayImages = images;
     auto view = [&](const Underlay& u, double z) {
-        Viewport::UnderlayView v{u, lines.value(u.file), {}, z};
+        Viewport::UnderlayView v{u, lines.value(u.linesKey()), {}, z};
         if (u.isRaster())
             v.image = images.value(QStringLiteral("%1|%2|%3|%4|%5").arg(u.file).arg(u.page).arg(u.dpi).arg(u.greyscale).arg(u.tint));
         return v;
@@ -438,8 +439,8 @@ void MainWindow::refreshUnderlays()
     // Snapping: the active level's DXF linework, rebuilt only when it or its placement changed.
     QString key;
     for (const Underlay& u : std::as_const(all))
-        if (!u.isRaster() && u.storey == m_levels->activeStorey() && lines.contains(u.file))
-            key += u.id + compact(u.placementJson()) + QString::number(u.placement.base.x(), 'g', 17)
+        if (!u.isRaster() && u.storey == m_levels->activeStorey() && lines.contains(u.linesKey()))
+            key += u.id + u.linesKey() + compact(u.placementJson()) + QString::number(u.placement.base.x(), 'g', 17)
                 + QString::number(u.placement.base.y(), 'g', 17) + QLatin1Char(';');
     Underlay trace; // D98: the traced level's lines snap too (Archicad's Trace & Reference)
     std::shared_ptr<const UnderlayLines> traceLines;
@@ -452,8 +453,8 @@ void MainWindow::refreshUnderlays()
         if (!key.isEmpty()) {
             index = std::make_shared<UnderlaySnapIndex>();
             for (const Underlay& u : std::as_const(all))
-                if (!u.isRaster() && u.storey == m_levels->activeStorey() && lines.contains(u.file))
-                    index->add(*lines.value(u.file), u.placement);
+                if (!u.isRaster() && u.storey == m_levels->activeStorey() && lines.contains(u.linesKey()))
+                    index->add(*lines.value(u.linesKey()), u.placement);
             if (traced)
                 index->add(*traceLines, trace.placement);
             index->build();

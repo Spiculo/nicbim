@@ -3,6 +3,8 @@
 
 #include <QColor>
 #include <QDialog>
+#include <QList>
+#include <QPair>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSet>
@@ -19,6 +21,9 @@ class QTableWidget;
 class QTableWidgetItem;
 
 namespace kimbim {
+
+// The sheet papers (sheets.PAPERS in Python): the id and a label with its size, ISO first, then US.
+QList<QPair<QString, QString>> sheetPapers();
 
 // The Sheets panel's Settings...: the sheet's title, number, paper and background, and the drawings
 // already placed on it (scale, or remove). One undo step through the bridge's update_sheet.

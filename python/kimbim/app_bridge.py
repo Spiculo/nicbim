@@ -1316,6 +1316,8 @@ _EXPORTS = {
         "sheet_schedules",
         "place_drawing_list",
         "place_sheet_list",
+        "papers",
+        "place_revision_list",
         "remove_list",
         "place_sheet_image",
         "place_sheet_symbol",
@@ -1385,6 +1387,20 @@ _EXPORTS = {
     "morph": (
         "move_vertices",
         "push_pull",
+    ),
+    "layouts": (
+        "add_lintels",
+        "create_beam_system",
+        "create_kerb",
+        "create_planting_area",
+        "interior_elevations",
+        "wall_handrail",
+    ),
+    "finishes": (
+        "create_mep_segment",
+        "create_shaft",
+        "finish_rooms",
+        "make_finish",
     ),
     "settings": (
         "load_settings_file",
@@ -1625,6 +1641,7 @@ _EXPORTS = {
         "export_bcf",
         "import_bcf",
         "issue_viewpoint",
+        "issues_from_findings",
         "list_issues",
         "update_issue",
     ),
@@ -1865,7 +1882,12 @@ def __getattr__(name: str):
     module = _EXPORTED.get(name)
     if module is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    value = getattr(globals()["_" + module], name)
+    owner = globals().get("_" + module)
+    if owner is None:  # not imported above (it would import us back): load it the first time it's used
+        import importlib
+
+        owner = globals()["_" + module] = importlib.import_module(f"{__package__}.{module}")
+    value = getattr(owner, name)
     globals()[name] = value  # later lookups skip this function
     return value
 

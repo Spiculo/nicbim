@@ -169,3 +169,15 @@ def test_a_settings_file_is_put_in_place_for_the_open_model(tmp_path):
     assert call("state")["dirty"] is False
     bad = call("load_settings_file", str(tmp_path / "missing.json"))
     assert bad["ok"] is False and "missing.json" in bad["error"]
+
+
+def test_user_origin_setting():
+    import json as _json
+
+    from kimbim import app_bridge as _b
+
+    assert _json.loads(_b.new_project("Origin"))["ok"]
+    assert _json.loads(_b.project_settings())["settings"]["user_origin"] == [0.0, 0.0]
+    assert _json.loads(_b.set_project_settings(_json.dumps({"user_origin": [12.5, -3.0]})))["ok"]
+    assert _json.loads(_b.project_settings())["settings"]["user_origin"] == [12.5, -3.0]
+    assert not _json.loads(_b.set_project_settings(_json.dumps({"user_origin": [1]})))["ok"]

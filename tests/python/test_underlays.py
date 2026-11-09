@@ -483,3 +483,33 @@ def test_a_dwg_underlay_is_converted_to_dxf(tmp_path):
     meta, coords, _colours = U.underlay_lines(underlay["id"])
     assert json.loads(meta)["ok"] and len(coords) > 0
     assert call("remove_underlay", underlay["id"])["ok"]
+
+
+def test_clip_segments_keeps_only_the_inside():
+    coords = np.array([[0, 0, 10, 0],      # crosses the clip: cut to 2..8
+                       [3, 3, 4, 4],       # inside: kept as is
+                       [20, 20, 30, 30],   # outside: dropped
+                       [5, -10, 5, 10]], dtype=np.float32)  # vertical through it
+    colours = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]], dtype=np.uint8)
+    out, cols = U.clip_segments(coords, colours, (0.0, 0.0), [2, -1, 8, 6])
+    assert len(out) == 3 and [int(c[0]) for c in cols] == [1, 2, 4]
+    assert np.allclose(out[0], [2, 0, 8, 0]) and np.allclose(out[1], [3, 3, 4, 4])
+    assert np.allclose(out[2], [5, -1, 5, 6])
+    shifted, _ = U.clip_segments(coords - [1, 0, 1, 0], colours, (1.0, 0.0), [2, -1, 8, 6])  # origin offset
+    assert np.allclose(shifted[0], [1, 0, 7, 0])
+
+
+def test_a_dxf_underlay_can_be_clipped(tmp_path):
+    assert call("new_project", "Under")["ok"]
+    storey = call("storeys")["storeys"][0]["guid"]
+    u = call("add_underlay", str(survey_dxf(tmp_path / "s.dxf")), json.dumps({"storey": storey}))["underlay"]
+    whole = json.loads(b.underlay_lines(u["id"])[0])["count"]
+    ext = json.loads(b.underlay_lines(u["id"])[0])["extents"]
+    x0, y0, x1, y1 = ext[0], ext[1], ext[2], ext[3]
+    half = [x0, y0, (x0 + x1) / 2, (y0 + y1) / 2]
+    assert call("set_underlay", u["id"], json.dumps({"clip": half}))["ok"]
+    meta = json.loads(b.underlay_lines(u["id"])[0])
+    assert meta["clipped"] and 0 < meta["count"] < whole
+    assert call("set_underlay", u["id"], json.dumps({"clip": []}))["ok"]  # cleared
+    assert json.loads(b.underlay_lines(u["id"])[0])["count"] == whole
+    assert not call("set_underlay", u["id"], json.dumps({"clip": [1, 1, 0, 0]}))["ok"]

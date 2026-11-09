@@ -48,6 +48,10 @@ public:
     void setReferenceAngle(std::optional<double> radians) { m_reference = radians; }
     // D92: metres per typed length unit (1 for metres, 0.01 for centimetres...).
     void setLengthFactor(double factor) { m_lengthFactor = factor > 0 ? factor : 1.0; }
+    // Absolute x, y are measured from the user origin (View > Set user origin; default the project
+    // origin), shared by every tool's tracker.
+    static void setUserOrigin(QPointF origin) { s_origin = origin; }
+    static QPointF userOrigin() { return s_origin; }
     bool hasInput() const;
     QString typed(Field f) const { return m_text[f]; }
     std::optional<double> value(Field f) const; // the typed number, if any and valid
@@ -67,6 +71,7 @@ private:
     AngleMode m_angleMode = AbsoluteAngle;
     std::optional<double> m_reference;
     double m_lengthFactor = 1.0;
+    static inline QPointF s_origin;
 };
 
 } // namespace kimbim

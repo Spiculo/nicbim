@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Tracker.h"
+#include "Units.h"
 
 #include <cmath>
 
@@ -73,10 +74,15 @@ bool Tracker::key(int key, const QString& text, Qt::KeyboardModifiers modifiers)
         m_text[m_focus] += c;
         return true;
     }
-    if (c == QLatin1Char('-')) {
-        if (!m_text[m_focus].isEmpty())
-            return true; // only as a sign
-        m_text[m_focus] = c;
+    if (c == QLatin1Char('-')) { // a sign first, then a minus or a feet-inches dash (5'-6")
+        m_text[m_focus] += c;
+        return true;
+    }
+    // Sums, products, units and feet-inches: 3.6/2, 1200+150, 3600mm, 5'6" (units::evaluate).
+    static const QString operators = QStringLiteral("+*/()'\"");
+    static const QString unitLetters = QStringLiteral("mcftin");
+    if (operators.contains(c) || ((unitLetters.contains(c.toLower()) || c == QLatin1Char(' ')) && !m_text[m_focus].isEmpty())) {
+        m_text[m_focus] += c;
         return true;
     }
     if (c == QLatin1Char('<') && m_anchor) {
@@ -112,13 +118,8 @@ void Tracker::type(const QString& text)
 
 std::optional<double> Tracker::value(Field f) const
 {
-    QString t = m_text[f];
-    t.replace(QLatin1Char(','), QLatin1Char('.'));
-    bool ok = false;
-    const double v = t.toDouble(&ok);
-    if (!ok || !std::isfinite(v))
-        return std::nullopt;
-    return v;
+    // A length with its own unit is converted to the typed unit (m_lengthFactor metres each).
+    return units::evaluate(m_text[f], f == Length || f == X || f == Y ? m_lengthFactor : 1.0);
 }
 
 double Tracker::live(Field f) const
@@ -139,10 +140,10 @@ double Tracker::live(Field f) const
             deg += 360.0;
         return std::abs(deg - 360.0) < 1e-9 ? 0.0 : deg;
     }
-    case X:
-        return absolute() ? m_cursor.x() : d.x();
+    case X: // in the typed unit, like the length
+        return (absolute() ? m_cursor.x() - s_origin.x() : d.x()) / m_lengthFactor;
     case Y:
-        return absolute() ? m_cursor.y() : d.y();
+        return (absolute() ? m_cursor.y() - s_origin.y() : d.y()) / m_lengthFactor;
     }
     return 0.0;
 }
@@ -157,9 +158,9 @@ InputAids::Locks Tracker::locks() const
     InputAids::Locks l;
     const QPointF a = m_anchor.value_or(QPointF());
     if (const auto x = value(X))
-        l.x = absolute() ? *x : a.x() + *x;
+        l.x = (absolute() ? s_origin.x() : a.x()) + *x * m_lengthFactor;
     if (const auto y = value(Y))
-        l.y = absolute() ? *y : a.y() + *y;
+        l.y = (absolute() ? s_origin.y() : a.y()) + *y * m_lengthFactor;
     if (m_anchor) {
         if (const auto deg = value(Angle)) {
             double radians = *deg * kPi / 180.0;

@@ -2,6 +2,8 @@
 #define _USE_MATH_DEFINES
 #include "MainWindow.h"
 #include "QolTools.h"
+#include "Tracker.h"
+#include "Units.h"
 #include "DockLayout.h"
 #include "ShortcutsDialog.h"
 #include <DockManager.h>
@@ -831,10 +833,8 @@ void MainWindow::buildMenus()
         dialog.setWindowTitle(tr("Guide line"));
         auto* form = new QFormLayout(&dialog);
         auto number = [&](double value) {
-            auto* box = new QDoubleSpinBox(&dialog);
+            auto* box = new LengthSpinBox(&dialog);
             box->setRange(-1e6, 1e6);
-            box->setDecimals(3);
-            box->setSuffix(tr(" m"));
             box->setValue(value);
             return box;
         };
@@ -1096,11 +1096,9 @@ void MainWindow::buildMenus()
         divisions->setSpecialValueText(tr("Off (middle only)"));
         divisions->setValue(std::max(2, m_prefs.value(QStringLiteral("snap_divisions")).toInt(2)));
         form->addRow(tr("Divide walls into:"), divisions);
-        auto* distance = new QDoubleSpinBox(&dialog);
+        auto* distance = new LengthSpinBox(&dialog);
         distance->setObjectName(QStringLiteral("snapDistance"));
         distance->setRange(0.0, 100.0);
-        distance->setDecimals(3);
-        distance->setSuffix(QStringLiteral(" m"));
         distance->setSpecialValueText(tr("Off"));
         distance->setValue(m_prefs.value(QStringLiteral("snap_distance")).toDouble(0.0));
         form->addRow(tr("Distance from the ends:"), distance);
@@ -1741,12 +1739,10 @@ void MainWindow::buildCutsToolbar()
     };
     m_cutSeparator = m_titleBar->addControlSeparator();
     m_planCutButton = cutButton(m_planCut);
-    m_cutHeight = new QDoubleSpinBox(m_titleBar);
+    m_cutHeight = new LengthSpinBox(m_titleBar);
     m_cutHeight->setObjectName(QStringLiteral("planCutHeight"));
     m_cutHeight->setRange(-1000.0, 10000.0);
-    m_cutHeight->setDecimals(2);
     m_cutHeight->setSingleStep(0.1);
-    m_cutHeight->setSuffix(QStringLiteral(" m"));
     m_cutHeight->setValue(1.2); // typical plan cut height above a floor
     m_cutHeight->setToolTip(tr("Plan cut height"));
     m_cutHeight->setMaximumWidth(fontMetrics().horizontalAdvance(QStringLiteral("-000.00 m")) + 64); // not as wide as -1000..10000
@@ -2054,8 +2050,8 @@ void MainWindow::horizontalCutDialog()
     double z = (m_levels ? m_levels->activeElevation() : 0.0) + m_cutHeight->value();
     if (!m_quiet) {
         bool accepted = false;
-        z = QInputDialog::getDouble(this, tr("Horizontal cut"), tr("Height above the project zero (m):"), z,
-            -1000.0, 10000.0, 2, &accepted);
+        z = askLength(this, tr("Horizontal cut"), tr("Height above the project zero:"), z,
+            -1000.0, 10000.0, &accepted);
         if (!accepted)
             return;
     }
@@ -2080,10 +2076,8 @@ void MainWindow::cropRegionDialog()
     dialog.setWindowTitle(tr("Crop region"));
     auto* form = new QFormLayout(&dialog);
     auto spin = [&](double value) {
-        auto* box = new QDoubleSpinBox(&dialog);
+        auto* box = new LengthSpinBox(&dialog);
         box->setRange(-1e6, 1e6);
-        box->setDecimals(3);
-        box->setSuffix(tr(" m"));
         box->setValue(value);
         return box;
     };
@@ -2214,17 +2208,13 @@ void MainWindow::viewRangeDialog()
     QDialog dialog(this);
     dialog.setWindowTitle(tr("View range"));
     auto* form = new QFormLayout(&dialog);
-    auto* top = new QDoubleSpinBox(&dialog);
+    auto* top = new LengthSpinBox(&dialog);
     top->setRange(0.0, 100.0);
-    top->setDecimals(3);
-    top->setSuffix(tr(" m"));
     top->setValue(settings.height);
     auto* limited = new QCheckBox(tr("Show down to a limit below the level"), &dialog);
     limited->setChecked(settings.viewDepth >= 0.0);
-    auto* bottom = new QDoubleSpinBox(&dialog);
+    auto* bottom = new LengthSpinBox(&dialog);
     bottom->setRange(0.0, 50.0);
-    bottom->setDecimals(3);
-    bottom->setSuffix(tr(" m"));
     bottom->setValue(settings.viewDepth >= 0.0 ? settings.viewDepth : 1.0);
     bottom->setEnabled(limited->isChecked());
     connect(limited, &QCheckBox::toggled, bottom, &QDoubleSpinBox::setEnabled);
@@ -2827,13 +2817,11 @@ void MainWindow::addLevelDialog()
     auto* nameEdit = new QLineEdit(tr("Level %1").arg(m_levels->count() + 1), &dialog);
     nameEdit->setObjectName(QStringLiteral("levelName"));
     form->addRow(tr("Name:"), nameEdit);
-    auto* elev = new QDoubleSpinBox(&dialog);
+    auto* elev = new LengthSpinBox(&dialog);
     elev->setObjectName(QStringLiteral("levelElevation"));
-    elev->setDecimals(m_settings.value("length_decimals").toInt(2));
     elev->setRange(-1000.0, 10000.0);
     elev->setValue(any ? highest + 3.0 : 0.0);
-    elev->setSuffix(QStringLiteral(" m"));
-    form->addRow(tr("Elevation (m):"), elev);
+    form->addRow(tr("Elevation:"), elev);
     // D92: push above (default, Archicad) or fit in the middle of the gap (Revit).
     auto* fit = new QCheckBox(tr("Fit between the levels around this elevation (Revit)"), &dialog);
     fit->setObjectName(QStringLiteral("levelFitBetween"));
@@ -3233,134 +3221,16 @@ void MainWindow::buildModelingToolbar()
     });
     QAction* insertBlock = model->addAction(tr("Insert 2D b&lock...")); // D196
     insertBlock->setObjectName(QStringLiteral("actionInsert2DBlock"));
-    insertBlock->setToolTip(tr("Place a saved 2D block at the centre of the plan view"));
-    connect(insertBlock, &QAction::triggered, this, [this] {
-        QStringList names;
-        for (const auto& v : bridge("blocks").value("blocks").toArray())
-            names << v.toObject().value("name").toString();
-        if (names.isEmpty()) {
-            m_status->showMessage(tr("No 2D blocks yet: save one with Create 2D block"));
-            return;
-        }
-        bool ok = false;
-        const QString name = QInputDialog::getItem(this, tr("Insert 2D block"), tr("Block:"), names, 0, false, &ok);
-        if (!ok || name.isEmpty())
-            return;
-        double x = 0.0, y = 0.0;
-        if (m_viewport && m_viewport->isPlanView()) {
-            gp_Pnt point;
-            const QSize size = m_viewport->size();
-            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
-                x = point.X();
-                y = point.Y();
-            }
-        }
-        const QJsonObject r = bridge("insert_block", {name, m_levels->activeStorey(),
-            QString::number(x, 'g', 17), QString::number(y, 'g', 17), QStringLiteral("0"), QStringLiteral("1")});
-        if (!r.value("ok").toBool()) {
-            showError(tr("Insert 2D block"), r.value("error").toString());
-            return;
-        }
-        afterEdit(r);
-        QStringList inserted;
-        for (const auto& v : r.value("guids").toArray())
-            inserted << v.toString();
-        if (m_viewport)
-            m_viewport->selectGuids(inserted);
-        setSelection(inserted);
-        m_status->showMessage(tr("2D block \"%1\" inserted").arg(name));
-    });
+    insertBlock->setToolTip(tr("Place a saved 2D block where you click"));
+    connect(insertBlock, &QAction::triggered, this, &MainWindow::insertBlockCommand); // click in the view (QolTools.cpp)
     QAction* massingBox = model->addAction(tr("Massing &box...")); // D201
     massingBox->setObjectName(QStringLiteral("actionMassingBox"));
     massingBox->setToolTip(tr("A conceptual massing box on the active level, with floor-area totals"));
-    connect(massingBox, &QAction::triggered, this, [this] {
-        QDialog dialog(this);
-        dialog.setWindowTitle(tr("Massing box"));
-        auto* form = new QFormLayout(&dialog);
-        auto spin = [&](double value) {
-            auto* box = new QDoubleSpinBox(&dialog);
-            box->setRange(0.1, 1000.0);
-            box->setDecimals(2);
-            box->setSuffix(tr(" m"));
-            box->setValue(value);
-            return box;
-        };
-        auto* width = spin(10.0);
-        auto* depth = spin(10.0);
-        auto* height = spin(12.0);
-        form->addRow(tr("Width:"), width);
-        form->addRow(tr("Depth:"), depth);
-        form->addRow(tr("Height:"), height);
-        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-        form->addRow(buttons);
-        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-        if (dialog.exec() != QDialog::Accepted)
-            return;
-        double x = 0.0, y = 0.0;
-        if (m_viewport && m_viewport->isPlanView()) {
-            gp_Pnt point;
-            const QSize size = m_viewport->size();
-            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
-                x = point.X();
-                y = point.Y();
-            }
-        }
-        const QJsonObject r = bridge("create_massing", {m_levels->activeStorey(),
-            QString::number(x, 'g', 17), QString::number(y, 'g', 17),
-            QString::number(width->value(), 'g', 17), QString::number(depth->value(), 'g', 17),
-            QString::number(height->value(), 'g', 17), tr("Massing")});
-        if (!r.value("ok").toBool()) {
-            showError(tr("Massing box"), r.value("error").toString());
-            return;
-        }
-        afterEdit(r);
-        m_viewport->selectGuids({r.value("guid").toString()});
-        setSelection({r.value("guid").toString()});
-        m_status->showMessage(tr("Massing box added"));
-    });
+    connect(massingBox, &QAction::triggered, this, &MainWindow::massingBoxCommand); // click in the view (QolTools.cpp)
     QAction* pushPull = model->addAction(tr("&Push/pull...")); // D220
     pushPull->setObjectName(QStringLiteral("actionPushPull"));
     pushPull->setToolTip(tr("Push or pull a face of a massing box or a triangulated mesh"));
-    connect(pushPull, &QAction::triggered, this, [this] {
-        if (m_selection.size() != 1) {
-            m_status->showMessage(tr("Select one massing box or mesh to push/pull"));
-            return;
-        }
-        QDialog dialog(this);
-        dialog.setWindowTitle(tr("Push/pull"));
-        auto* form = new QFormLayout(&dialog);
-        auto* face = new QComboBox(&dialog);
-        for (const auto& item : {std::pair{tr("+X (right)"), QStringLiteral("+x")},
-                 std::pair{tr("-X (left)"), QStringLiteral("-x")},
-                 std::pair{tr("+Y (back)"), QStringLiteral("+y")},
-                 std::pair{tr("-Y (front)"), QStringLiteral("-y")},
-                 std::pair{tr("+Z (top)"), QStringLiteral("+z")},
-                 std::pair{tr("-Z (bottom)"), QStringLiteral("-z")}})
-            face->addItem(item.first, item.second);
-        auto* distance = new QDoubleSpinBox(&dialog);
-        distance->setRange(-1000.0, 1000.0);
-        distance->setDecimals(3);
-        distance->setSuffix(tr(" m"));
-        distance->setValue(1.0);
-        form->addRow(tr("Face:"), face);
-        form->addRow(tr("Distance (negative pulls inward):"), distance);
-        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-        form->addRow(buttons);
-        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-        if (dialog.exec() != QDialog::Accepted)
-            return;
-        const QJsonObject r = bridge("push_pull", {m_selection.first(),
-            face->currentData().toString(), QString::number(distance->value(), 'g', 17)});
-        if (!r.value("ok").toBool()) {
-            showError(tr("Push/pull"), r.value("error").toString());
-            return;
-        }
-        afterEdit(r);
-        m_status->showMessage(
-            tr("Face %1 moved %2 m").arg(face->currentText()).arg(distance->value()));
-    });
+    connect(pushPull, &QAction::triggered, this, &MainWindow::pushPullCommand); // click in the view (QolTools.cpp)
     QAction* energyAction = model->addAction(tr("&Energy and daylight...")); // D222
     energyAction->setObjectName(QStringLiteral("actionEnergyReport"));
     energyAction->setToolTip(tr("Early-stage heating, lighting and daylight estimate from the model envelope"));
@@ -3481,54 +3351,7 @@ void MainWindow::buildModelingToolbar()
     QAction* skylight = model->addAction(tr("S&kylight...")); // D209
     skylight->setObjectName(QStringLiteral("actionSkylight"));
     skylight->setToolTip(tr("A horizontal window filling an opening in the selected slab"));
-    connect(skylight, &QAction::triggered, this, [this] {
-        if (m_selection.size() != 1) {
-            m_status->showMessage(tr("Select one slab first: the skylight goes in it"));
-            return;
-        }
-        QDialog dialog(this);
-        dialog.setWindowTitle(tr("Skylight"));
-        auto* form = new QFormLayout(&dialog);
-        auto spin = [&](double value) {
-            auto* box = new QDoubleSpinBox(&dialog);
-            box->setRange(0.1, 50.0);
-            box->setDecimals(2);
-            box->setSuffix(tr(" m"));
-            box->setValue(value);
-            return box;
-        };
-        auto* width = spin(1.2);
-        auto* depth = spin(1.2);
-        form->addRow(tr("Width:"), width);
-        form->addRow(tr("Depth:"), depth);
-        auto* skyButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-        form->addRow(skyButtons);
-        connect(skyButtons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(skyButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-        if (dialog.exec() != QDialog::Accepted)
-            return;
-        double x = 0.0, y = 0.0;
-        if (m_viewport && m_viewport->isPlanView()) {
-            gp_Pnt point;
-            const QSize size = m_viewport->size();
-            if (m_viewport->pointOnPlane(size.width() / 2, size.height() / 2, m_levels->activeElevation(), &point)) {
-                x = point.X();
-                y = point.Y();
-            }
-        }
-        auto num = [](double v) { return QString::number(v, 'g', 17); };
-        const QJsonObject r = bridge("create_skylight", {m_selection.first(),
-            num(x - width->value() / 2), num(y - depth->value() / 2),
-            num(width->value()), num(depth->value()), QString()});
-        if (!r.value("ok").toBool()) {
-            showError(tr("Skylight"), r.value("error").toString());
-            return;
-        }
-        afterEdit(r);
-        m_viewport->selectGuids({r.value("guid").toString()});
-        setSelection({r.value("guid").toString()});
-        m_status->showMessage(tr("Skylight added"));
-    });
+    connect(skylight, &QAction::triggered, this, &MainWindow::skylightCommand); // click in the view (QolTools.cpp)
     QAction* cornerWindow = model->addAction(tr("&Corner window...")); // D210
     cornerWindow->setObjectName(QStringLiteral("actionCornerWindow"));
     cornerWindow->setToolTip(tr("Two windows meeting at the corner of the two selected walls"));
@@ -3551,10 +3374,8 @@ void MainWindow::buildModelingToolbar()
             type->addItem(t.value("name").toString(), t.value("guid").toString());
         }
         auto spin = [&](double value) {
-            auto* box = new QDoubleSpinBox(&dialog);
+            auto* box = new LengthSpinBox(&dialog);
             box->setRange(0.0, 50.0);
-            box->setDecimals(2);
-            box->setSuffix(tr(" m"));
             box->setValue(value);
             return box;
         };
@@ -3762,8 +3583,8 @@ void MainWindow::buildModelingToolbar()
     autoDims->setToolTip(tr("A dimension chain along each selected wall: its ends and its doors' and windows' edges"));
     connect(autoDims, &QAction::triggered, this, [this] {
         bool ok = false;
-        const double offset = QInputDialog::getDouble(this, tr("Dimension selected walls"),
-            tr("Distance of the dimension line from the wall's outside face (m):"), 0.8, 0.0, 100.0, 2, &ok);
+        const double offset = askLength(this, tr("Dimension selected walls"),
+            tr("Distance of the dimension line from the wall's outside face:"), 0.8, 0.0, 100.0, &ok);
         if (ok)
             autoDimension(offset);
     });
@@ -3778,8 +3599,8 @@ void MainWindow::buildModelingToolbar()
     gridDim->setToolTip(tr("A dimension chain between the level's grid axes"));
     connect(gridDim, &QAction::triggered, this, [this] {
         bool ok = false;
-        const double offset = QInputDialog::getDouble(this, tr("Dimension grid"),
-            tr("Distance of the dimension line from the grid (m):"), 0.8, 0.0, 100.0, 2, &ok);
+        const double offset = askLength(this, tr("Dimension grid"),
+            tr("Distance of the dimension line from the grid:"), 0.8, 0.0, 100.0, &ok);
         if (ok)
             gridDimension(offset);
     });
@@ -3977,13 +3798,11 @@ void MainWindow::buildModelingToolbar()
         m_hostTool->setWidth(currentType().value("width").toDouble(0.9));
         updateToolPreview();
     });
-    m_wallHeight = new QDoubleSpinBox(bar);
+    m_wallHeight = new LengthSpinBox(bar);
     m_wallHeight->setObjectName(QStringLiteral("wallHeight"));
     m_wallHeight->setRange(0.1, 100.0);
-    m_wallHeight->setDecimals(2);
     m_wallHeight->setSingleStep(0.1);
     m_wallHeight->setValue(3.0);
-    m_wallHeight->setSuffix(QStringLiteral(" m"));
     m_wallHeight->setToolTip(tr("Wall height"));
     bar->addField(m_wallHeight);
     auto memberSpin = [&](const char* name, const QString& tip, double lo, double hi, double value,
@@ -4126,12 +3945,10 @@ void MainWindow::buildModelingToolbar()
     m_drawingDepthMode->addItem(tr("Cut only"), QStringLiteral("0"));
     m_drawingDepthMode->addItem(tr("Limited depth"), QStringLiteral("1"));
     m_drawingDepthMode->setToolTip(tr("How far the section or elevation sees: infinite, the cut only, or a limited depth (an interior elevation)"));
-    m_drawingDepth = new QDoubleSpinBox(depthBox);
+    m_drawingDepth = new LengthSpinBox(depthBox);
     m_drawingDepth->setObjectName(QStringLiteral("drawingDepth"));
     m_drawingDepth->setRange(0.1, 100.0);
-    m_drawingDepth->setDecimals(2);
     m_drawingDepth->setValue(6.0);
-    m_drawingDepth->setSuffix(tr(" m"));
     m_drawingDepth->setEnabled(false);
     m_drawingDepth->setToolTip(tr("The limited depth"));
     connect(m_drawingDepthMode, &QComboBox::currentIndexChanged, m_drawingDepth, [this] {
@@ -4159,7 +3976,8 @@ void MainWindow::buildModelingToolbar()
     });
     m_lengthInput = new QLineEdit(bar);
     m_lengthInput->setObjectName(QStringLiteral("lengthInput"));
-    m_lengthInput->setPlaceholderText(tr("Length (m)"));
+    m_lengthInput->setPlaceholderText(tr("Length"));
+    m_lengthInput->setToolTip(tr("Type a length and Enter: 3.6, 3600mm, 12'6\", or a sum such as 2.4+0.15"));
     m_lengthInput->setMaximumWidth(110);
     bar->addField(m_lengthInput);
     m_measureCopy = new QToolButton(bar);
@@ -4175,10 +3993,12 @@ void MainWindow::buildModelingToolbar()
     setupStairTools(bar);  // D88
     m_hosts.value(QStringLiteral("3d"))->adoptChrome(m_toolOptions, nullptr);
     connect(m_lengthInput, &QLineEdit::returnPressed, this, [this] {
-        bool ok = false;
-        double value = QLocale().toDouble(m_lengthInput->text(), &ok);
-        if (!ok)
-            value = QLocale::c().toDouble(QString(m_lengthInput->text()).replace(QLatin1Char(','), QLatin1Char('.')), &ok);
+        // Sums, units and feet-inches too ("3.6/2", "3600mm", "12'6\""), in the typed unit.
+        const double typedMetres = m_prefs.typedLengthUnit() == QLatin1String("project")
+            ? unitToMetres(m_settings.value("length_unit").toString(QStringLiteral("m"))) : 1.0;
+        const std::optional<double> parsed = units::evaluate(m_lengthInput->text(), typedMetres);
+        bool ok = parsed.has_value();
+        double value = parsed.value_or(0.0);
         bool typed = false;
         if (isDraftTool(m_tool)) { // D84: lengths, length<angle, radii, width;height
             if (m_draftTool->typeInput(m_lengthInput->text()))
@@ -5137,7 +4957,7 @@ void MainWindow::wallHeightDialog()
         return;
     }
     bool ok = false;
-    const double height = QInputDialog::getDouble(this, tr("Wall height"), tr("Height (m):"), m_wallHeight->value(), 0.1, 100.0, 2, &ok);
+    const double height = askLength(this, tr("Wall height"), tr("Height:"), m_wallHeight->value(), 0.1, 100.0, &ok);
     if (ok)
         setWallHeight(walls, height);
 }
@@ -5153,11 +4973,9 @@ void MainWindow::openingSizeDialog()
     dialog.setWindowTitle(tr("Door/window size"));
     auto* form = new QFormLayout(&dialog);
     auto spin = [&](double value) {
-        auto* box = new QDoubleSpinBox(&dialog);
+        auto* box = new LengthSpinBox(&dialog);
         box->setRange(0.0, 20.0);
-        box->setDecimals(3);
         box->setSingleStep(0.05);
-        box->setSuffix(QStringLiteral(" m"));
         box->setValue(value);
         return box;
     };
@@ -5178,9 +4996,9 @@ void MainWindow::openingSizeDialog()
 void MainWindow::editWorkPlane()
 {
     bool ok = false;
-    const double z = QInputDialog::getDouble(this, tr("Free work plane"),
-        tr("Height above project zero (m). Drawing and snapping use this plane instead of the active level:"),
-        workPlaneZ(), -1000.0, 1000.0, 3, &ok);
+    const double z = askLength(this, tr("Free work plane"),
+        tr("Height above project zero. Drawing and snapping use this plane instead of the active level:"),
+        workPlaneZ(), -1000.0, 1000.0, &ok);
     if (!ok)
         return;
     const QJsonObject result = bridge("set_work_plane", {QString::number(z), QStringLiteral("true"),
@@ -7832,8 +7650,10 @@ bool MainWindow::placeSchedule(const QString& number)
 
 bool MainWindow::placeSheetList(const QString& number, const QString& kind)
 {
-    const QJsonObject r = bridge(kind == QLatin1String("drawings") ? "place_drawing_list" : "place_sheet_list",
-        {number});
+    const char* fn = kind == QLatin1String("drawings") ? "place_drawing_list"
+        : kind == QLatin1String("revisions")           ? "place_revision_list"
+                                                       : "place_sheet_list";
+    const QJsonObject r = bridge(fn, {number});
     if (!r.value("ok").toBool()) {
         showError(tr("List"), r.value("error").toString());
         return false;
@@ -8470,10 +8290,8 @@ void MainWindow::terrainPadDialog()
         const QJsonObject t = value.toObject();
         terrain->addItem(t.value("name").toString(), t.value("guid").toString());
     }
-    auto* elevation = new QDoubleSpinBox(&dialog);
+    auto* elevation = new LengthSpinBox(&dialog);
     elevation->setRange(-1000.0, 10000.0);
-    elevation->setDecimals(3);
-    elevation->setSuffix(tr(" m"));
     auto* points = new QPlainTextEdit(&dialog);
     points->setPlaceholderText(tr("One point per line: x, y (metres); the polygon closes itself"));
     points->setMinimumSize(380, 180);
@@ -8700,11 +8518,9 @@ void MainWindow::importMeshDialog(QString path)
     rotation->setDecimals(2);
     rotation->setSuffix(tr(" degrees"));
     auto spin = [&](double lo, double hi, double value) {
-        auto* box = new QDoubleSpinBox(&dialog);
+        auto* box = new LengthSpinBox(&dialog);
         box->setRange(lo, hi);
-        box->setDecimals(3);
         box->setValue(value);
-        box->setSuffix(tr(" m"));
         return box;
     };
     auto* x = spin(-1e6, 1e6, 0.0);
@@ -8767,17 +8583,13 @@ void MainWindow::importPointCloudDialog(QString path)
     auto* maxPoints = new QSpinBox(&dialog);
     maxPoints->setRange(100, 2000000);
     maxPoints->setValue(20000);
-    auto* marker = new QDoubleSpinBox(&dialog);
+    auto* marker = new LengthSpinBox(&dialog);
     marker->setRange(0.001, 2.0);
-    marker->setDecimals(3);
     marker->setValue(0.03);
-    marker->setSuffix(tr(" m"));
     auto spin = [&](double lo, double hi, double value) {
-        auto* box = new QDoubleSpinBox(&dialog);
+        auto* box = new LengthSpinBox(&dialog);
         box->setRange(lo, hi);
-        box->setDecimals(3);
         box->setValue(value);
-        box->setSuffix(tr(" m"));
         return box;
     };
     auto* x = spin(-1e6, 1e6, 0.0);
@@ -9978,11 +9790,9 @@ void MainWindow::terrainDialog()
     source->addItem(tr("Survey points"), QStringLiteral("points"));
     source->addItem(tr("Contour polylines"), QStringLiteral("contours"));
     auto* name = new QLineEdit(tr("Terrain"), &dialog);
-    auto* spacing = new QDoubleSpinBox(&dialog);
+    auto* spacing = new LengthSpinBox(&dialog);
     spacing->setRange(0.01, 1000.0);
-    spacing->setDecimals(3);
     spacing->setValue(2.0);
-    spacing->setSuffix(tr(" m"));
     auto* points = new QPlainTextEdit(&dialog);
     points->setPlaceholderText(tr("One point per line: x, y, z (metres).\nContours: a blank line between polylines."));
     points->setMinimumSize(420, 220);
@@ -10303,16 +10113,22 @@ void MainWindow::multiplyDialog()
     auto* ny = new QSpinBox(&dialog);
     ny->setRange(1, 1000);
     ny->setValue(2);
-    QDoubleSpinBox *dx = spin(-1e4, 1e4, 1.0, 3), *dy = spin(-1e4, 1e4, 0.0, 3);
-    QDoubleSpinBox *cx = spin(-1e5, 1e5, 0.0, 3), *cy = spin(-1e5, 1e5, 0.0, 3), *angle = spin(-360, 360, 90, 2);
+    auto length = [&](double lo, double hi, double value) {
+        auto* b = new LengthSpinBox(&dialog);
+        b->setRange(lo, hi);
+        b->setValue(value);
+        return b;
+    };
+    QDoubleSpinBox *dx = length(-1e4, 1e4, 1.0), *dy = length(-1e4, 1e4, 0.0);
+    QDoubleSpinBox *cx = length(-1e5, 1e5, 0.0), *cy = length(-1e5, 1e5, 0.0), *angle = spin(-360, 360, 90, 2);
     form->addRow(tr("Kind:"), kind);
     form->addRow(tr("Number of copies:"), count);
     form->addRow(tr("Copies in X (grid):"), nx);
     form->addRow(tr("Copies in Y (grid):"), ny);
-    form->addRow(tr("Distance X (m):"), dx);
-    form->addRow(tr("Distance Y (m):"), dy);
-    form->addRow(tr("Centre X (m):"), cx);
-    form->addRow(tr("Centre Y (m):"), cy);
+    form->addRow(tr("Distance X:"), dx);
+    form->addRow(tr("Distance Y:"), dy);
+    form->addRow(tr("Centre X:"), cx);
+    form->addRow(tr("Centre Y:"), cy);
     form->addRow(tr("Angle per copy (degrees):"), angle);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttons);
@@ -10377,16 +10193,12 @@ void MainWindow::ceilingDialog()
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Ceiling"));
     auto* form = new QFormLayout(&dialog);
-    auto* thickness = new QDoubleSpinBox(&dialog);
+    auto* thickness = new LengthSpinBox(&dialog);
     thickness->setRange(0.01, 1.0);
-    thickness->setDecimals(3);
     thickness->setValue(0.2);
-    thickness->setSuffix(tr(" m"));
-    auto* offset = new QDoubleSpinBox(&dialog);
+    auto* offset = new LengthSpinBox(&dialog);
     offset->setRange(-10.0, 50.0);
-    offset->setDecimals(3);
     offset->setValue(2.7);
-    offset->setSuffix(tr(" m"));
     form->addRow(tr("Thickness:"), thickness);
     form->addRow(tr("Underside above the level:"), offset);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
@@ -10415,8 +10227,8 @@ void MainWindow::elevateDialog()
         return;
     }
     bool ok = false;
-    const double delta = QInputDialog::getDouble(this, tr("Elevate"),
-        tr("Distance up (+) or down (-) in metres:"), 0.3, -1000.0, 1000.0, 3, &ok);
+    const double delta = askLength(this, tr("Elevate"),
+        tr("Distance up (+) or down (-):"), 0.3, -1000.0, 1000.0, &ok);
     if (!ok)
         return;
     auto num = [](double v) { return QString::number(v, 'g', 17); };
@@ -10472,11 +10284,9 @@ void MainWindow::overallDimensionDialog()
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Overall dimension"));
     auto* form = new QFormLayout(&dialog);
-    auto* offset = new QDoubleSpinBox(&dialog);
+    auto* offset = new LengthSpinBox(&dialog);
     offset->setRange(0.0, 100.0);
-    offset->setDecimals(3);
     offset->setValue(0.8);
-    offset->setSuffix(tr(" m"));
     auto* axis = new QComboBox(&dialog);
     axis->addItem(tr("Auto (longer side)"), QStringLiteral("auto"));
     axis->addItem(tr("Horizontal (X)"), QStringLiteral("x"));
@@ -10500,58 +10310,6 @@ void MainWindow::overallDimensionDialog()
     m_status->showMessage(tr("Overall dimension added"));
 }
 
-void MainWindow::wallOpeningDialog()
-{
-    if (m_selection.size() != 1) {
-        m_status->showMessage(tr("Select one wall first"));
-        return;
-    }
-    QDialog dialog(this);
-    dialog.setWindowTitle(tr("Wall opening"));
-    auto* form = new QFormLayout(&dialog);
-    auto* along = new QDoubleSpinBox(&dialog);
-    along->setRange(0.0, 1000.0);
-    along->setDecimals(3);
-    along->setValue(2.0);
-    along->setSuffix(tr(" m"));
-    auto* width = new QDoubleSpinBox(&dialog);
-    width->setRange(0.01, 100.0);
-    width->setDecimals(3);
-    width->setValue(0.9);
-    width->setSuffix(tr(" m"));
-    auto* height = new QDoubleSpinBox(&dialog);
-    height->setRange(0.01, 100.0);
-    height->setDecimals(3);
-    height->setValue(2.1);
-    height->setSuffix(tr(" m"));
-    auto* sill = new QDoubleSpinBox(&dialog);
-    sill->setRange(0.0, 100.0);
-    sill->setDecimals(3);
-    sill->setValue(0.0);
-    sill->setSuffix(tr(" m"));
-    form->addRow(tr("Centre along the wall:"), along);
-    form->addRow(tr("Width:"), width);
-    form->addRow(tr("Height:"), height);
-    form->addRow(tr("Sill above the base:"), sill);
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    form->addRow(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    if (dialog.exec() != QDialog::Accepted)
-        return;
-    auto num = [](double v) { return QString::number(v, 'g', 17); };
-    const QJsonObject r = bridge("create_wall_opening", {
-        m_selection.first(), num(along->value()), num(width->value()),
-        num(height->value()), num(sill->value())});
-    if (!r.value("ok").toBool()) {
-        showError(tr("Wall opening"), r.value("error").toString());
-        return;
-    }
-    afterEdit(r);
-    setSelection({r.value("guid").toString()});
-    m_status->showMessage(tr("Wall opening created"));
-}
-
 void MainWindow::offsetDialog()
 {
     if (m_selection.isEmpty()) {
@@ -10559,9 +10317,9 @@ void MainWindow::offsetDialog()
         return;
     }
     bool ok = false;
-    const double distance = QInputDialog::getDouble(this, tr("Offset"),
-        tr("Distance (m): walls get a parallel copy to the left of their axis (negative: right); slabs grow (negative: shrink)"),
-        0.5, -1000, 1000, 3, &ok);
+    const double distance = askLength(this, tr("Offset"),
+        tr("Distance: walls get a parallel copy to the left of their axis (negative: right); slabs grow (negative: shrink)"),
+        0.5, -1000, 1000, &ok);
     if (ok)
         offsetSelection(distance);
 }
@@ -10595,11 +10353,9 @@ void MainWindow::filletDialog()
     mode->addItem(tr("Chamfer (cut)"), QStringLiteral("chamfer"));
     mode->setCurrentIndex(std::max(0, mode->findData(m_prefs.value(QStringLiteral("fillet_mode")).toString())));
     form->addRow(tr("Corners:"), mode);
-    auto* size = new QDoubleSpinBox(&dialog);
+    auto* size = new LengthSpinBox(&dialog);
     size->setObjectName(QStringLiteral("filletSize"));
     size->setRange(0.001, 1000.0);
-    size->setDecimals(3);
-    size->setSuffix(QStringLiteral(" m"));
     size->setValue(m_prefs.value(QStringLiteral("fillet_size")).toDouble(0.5));
     form->addRow(tr("Radius or distance:"), size);
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
@@ -12066,6 +11822,12 @@ void MainWindow::loadProjectSettings()
     if (m_library) { // D100: this project's last used versions
         refreshObjectLabels();
         loadObjectVersion();
+    }
+    units::setProject(m_settings.value("length_unit").toString(QStringLiteral("m")),
+        m_settings.value("length_decimals").toInt(2)); // every length field follows
+    { // D232: typed absolute coordinates are measured from the user origin
+        const QJsonArray origin = m_settings.value("user_origin").toArray();
+        Tracker::setUserOrigin(origin.size() == 2 ? QPointF(origin.at(0).toDouble(), origin.at(1).toDouble()) : QPointF());
     }
     if (m_draftTool) { // D92: typed lengths (and a rectangle's width;height) in the project unit
         const QString unit = m_settings.value("length_unit").toString(QStringLiteral("m"));

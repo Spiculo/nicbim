@@ -27,7 +27,20 @@ from . import authoring as A
 from . import drawings as D
 
 PURPOSE = "SHEET"
-PAPERS = {"A1": (841, 594), "A3": (420, 297)}  # landscape, millimetres
+# Landscape, millimetres: ISO A sizes and the US ANSI/ARCH sizes (D232) in inches x 25.4.
+PAPERS = {"A0": (1189, 841), "A1": (841, 594), "A2": (594, 420), "A3": (420, 297), "A4": (297, 210),
+          "ANSI B": (431.8, 279.4), "ANSI D": (863.6, 558.8), "ARCH D": (914.4, 609.6),
+          "ARCH E1": (1066.8, 762.0), "ARCH E": (1219.2, 914.4)}
+PAPER_LABELS = {"A0": "A0 (1189 x 841 mm)", "A1": "A1 (841 x 594 mm)", "A2": "A2 (594 x 420 mm)",
+                "A3": "A3 (420 x 297 mm)", "A4": "A4 (297 x 210 mm)", "ANSI B": "ANSI B (17 x 11 in)",
+                "ANSI D": "ANSI D (34 x 22 in)", "ARCH D": "ARCH D (36 x 24 in)", "ARCH E1": "ARCH E1 (42 x 30 in)",
+                "ARCH E": "ARCH E (48 x 36 in)"}
+
+
+def papers() -> str:
+    """The sheet papers, in order: [{"name", "label", "width", "height"}] (millimetres, landscape)."""
+    return B._dump({"ok": True, "papers": [{"name": k, "label": PAPER_LABELS[k], "width": w, "height": h}
+                                           for k, (w, h) in PAPERS.items()]})
 MARGIN = 10.0
 TITLE_W, TITLE_H = 180.0, 50.0
 TITLE_BLOCK = "title_block"
@@ -331,7 +344,7 @@ def _next_number() -> str:
 
 
 def add_sheet(paper: str, title: str) -> str:
-    """A new sheet (A1 or A3, landscape), numbered automatically A01, A02..."""
+    """A new sheet on one of PAPERS (landscape), numbered automatically A01, A02..."""
     if B._model is None:
         return A._fail("no model open")
     if paper not in PAPERS:
@@ -1054,7 +1067,7 @@ def _symbol_listing(sheet) -> list:
 
 SCHEDULES = "schedules"
 LISTS = "lists"
-LIST_KINDS = ("drawings", "sheets")
+LIST_KINDS = ("drawings", "sheets", "revisions")
 TABLE_TITLE_H = 6.0
 TABLE_HEADER_H = 6.0
 TABLE_ROW_H = 6.0
@@ -1132,6 +1145,18 @@ def _list_rows(kind: str):
             rows.append([d.Name or "", ", ".join(f"1:{s}" for s in scales), ", ".join(numbers)])
         rows.sort(key=lambda r: Sch._natural(r[0]))
         return ["Drawing", "Scale", "Sheet"], rows
+    if kind == "revisions":  # the revision schedule: each revision and the sheets that carry it
+        from . import revisions as R
+
+        carried: dict = {}
+        for sheet in _sheets():
+            code = str(_title_block_fields(sheet).get("revision") or "").strip()
+            if code:
+                carried.setdefault(code, []).append(_number(sheet) or "")
+        rows = [[str(r["code"]), str(r.get("date") or ""), str(r.get("description") or ""),
+                 ", ".join(sorted(carried.get(str(r["code"]), []), key=Sch._natural))]
+                for r in sorted(R._rows(), key=lambda r: Sch._natural(str(r["code"])))]
+        return ["Rev", "Date", "Description", "Sheets"], rows
     rows = []
     for sheet in sorted(_sheets(), key=lambda s: Sch._natural(_number(s) or "")):
         rows.append([_number(sheet) or "", sheet.Name or "", sheet.Scope or "",
@@ -1279,7 +1304,7 @@ def _list_group(entry, index):
     if kind not in LIST_KINDS:
         return ""
     header, rows = _list_rows(kind)
-    title = "Drawing list" if kind == "drawings" else "Sheet list"
+    title = {"drawings": "Drawing list", "sheets": "Sheet list", "revisions": "Revision schedule"}[kind]
     return _table_svg(title, header, rows, None, entry, "kimbim-list", "list", kind)
 
 
@@ -1408,6 +1433,12 @@ def place_drawing_list(number: str, x=-1, y=-1, width=180) -> str:
 def place_sheet_list(number: str, x=-1, y=-1, width=180) -> str:
     """An auto-generated list of the project's sheets (number, title, paper, date)."""
     return _place_list(number, "sheets", x, y, width)
+
+
+def place_revision_list(number: str, x=-1, y=-1, width=180) -> str:
+    """The revision schedule: every project revision (code, date, description) and the sheets whose
+    title block shows it, live from the project like the other lists."""
+    return _place_list(number, "revisions", x, y, width)
 
 
 def remove_list(number: str, index: int) -> str:

@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D225 plus explicit overrides for the final items.
+after D123–D233 plus explicit overrides for the final items.
 
-**Summary: 206 done, 0 deferred, 3 blocked.**
+**Summary: 225 done, 2 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -18,6 +18,14 @@ after D123–D225 plus explicit overrides for the final items.
 ## Future scope (deferred, not blocked)
 
 - Deeper visualisation beyond the current ray/path-traced exports: offline render farm, animation, walkthrough video.
+- Window and door sills and reveals (lintels are D232).
+- MEP beyond straight runs: fittings, systems, sizing and connections (D231 is coordination level).
+- Extra 2D drafting drawn on a detail view itself (worksheets and details exist separately).
+- Models (D58): editing an instance in place, nested models and a model library across projects.
+- A wired node-graph editor for visual scripts (D223 is a linear list of steps).
+- An operation log (oplog) replayed after a crash between recovery copies.
+- Revit-style phases (the Archicad renovation statuses of D74 cover existing/demolish/new).
+- Road markings as a site tool (they are drafting today).
 
 ## Every item
 
@@ -29,6 +37,7 @@ after D123–D225 plus explicit overrides for the final items.
 | 1. Project and files | Project templates (units, levels, types, views, title blocks) | **Done** | D72: office templates (File › New from template, Save as template) |
 | 1. Project and files | Autosave, crash recovery | **Done** | D72: recovery copies on a timer, offered again after a crash; no oplog yet ([03](03-versioning.md)) |
 | 1. Project and files | Recent projects | **Done** | File › Recent files |
+| 1. Project and files | Open or import by dropping files on the window | **Done** | D227: a `.kim`/`.ifc` (or a project folder) opens; DXF/DWG/PDF/PNG/JPEG become an underlay; OBJ/STL/PLY/COLLADA/glTF/FBX import as a mesh; XYZ/PTS/LAS/LAZ/E57 as a point cloud |
 | 1. Project and files | Imperial units, unit preferences | **Done** | D108: project length units m/cm/mm/**ft/in** and areas m²/cm²/mm²/**ft²/in²**, in Project settings, every length/area field and format; the model stays in metres |
 | 1. Project and files | Project info (address, client, number) used in title blocks | **Done** | Slice 16: *File › Project info…*, in IFC fields (D63) |
 | 1. Project and files | Survey point, project base point, georeferencing | **Done** | D115: File › Georeferencing... (eastings, northings, height, rotation, scale, projected CRS and true north; `IfcMapConversion`/`IfcProjectedCRS`) |
@@ -56,6 +65,7 @@ after D123–D225 plus explicit overrides for the final items.
 | 2. Viewing and navigation | Show multiple levels at once (ghost story / underlay) | **Done** | D98: View › Trace reference (level below or above, snappable); Level above/below Ctrl+Up/Down |
 | 2. Viewing and navigation | Split views / several windows side by side | **Done** | D153: View > *Split view side by side* (Ctrl+\\) duplicates the active 3D or plan view in a new area, copying its camera/plan and cuts; drawings and sheets are not split. |
 | 2. Viewing and navigation | Navigator / project browser (tree of views, sheets) | **Done** | D163: Model tree, levels and views; a *Sheets* heading lists every sheet (number and title), double-click or *Open* opens it. Drawings and other views stay in their own panels. |
+| 2. Viewing and navigation | Right-click (context) menu in the view | **Done** | D227: a right click without a drag selects the element under the cursor and offers its commands (properties, zoom, move/rotate/mirror/copy, select similar, hide/isolate, group, lock, pick up/inject, delete); with nothing selected, paste/show all/fit all; *Repeat* on top |
 | 3. Selection | Click, Ctrl/Shift add and toggle | **Done** |  |
 | 3. Selection | Box selection (visible only; Alt goes through) | **Done** | D52 |
 | 3. Selection | Crossing vs window box (direction decides) | **Done** | D78: right to left crosses (dashed band) |
@@ -66,6 +76,9 @@ after D123–D225 plus explicit overrides for the final items.
 | 3. Selection | Magic wand (pick a shape from existing lines or edges) | **Done** | D84/D165: Model > *Fill from selected shape* fills a selected closed polyline, circle or fill (magic wand); the Fill tool's Alt+click fills the closed shape around the click (`fill_at`). |
 | 3. Selection | Tab cycling through overlapping elements | **Done** | D89: Tab / Shift+Tab, the click selects the highlighted one |
 | 4. Editing tools (general) | Undo / redo | **Done** |  |
+| 4. Editing tools (general) | Nudge the selection with the arrow keys | **Done** | D227: 10 mm a press, Shift 100 mm, one *Nudge* undo step each |
+| 4. Editing tools (general) | Repeat last command | **Done** | D227: Edit > *Repeat last command* (Ctrl+Shift+R) and the right-click menu's first item |
+| 4. Editing tools (general) | Undo history (named steps, jump back several) | **Done** | D227: the Undo history panel lists each step by the command or tool that made it; a click undoes or redoes to just after that step (`undo_history`, `undo_steps`, `redo_steps`) |
 | 4. Editing tools (general) | Move, drag to move | **Done** | Joined walls follow; Ctrl detaches (D54) |
 | 4. Editing tools (general) | Rotate | **Done** |  |
 | 4. Editing tools (general) | Stretch / extend a wall end | **Done** |  |
@@ -88,6 +101,9 @@ after D123–D225 plus explicit overrides for the final items.
 | 5. Input aids | Ortho / angle steps | **Done** | 15° steps, Shift = ortho |
 | 5. Input aids | Typed lengths | **Done** |  |
 | 5. Input aids | Typed angles | **Done** | D89: the tracker's angle box (`<`), locks the direction |
+| 5. Input aids | User origin for typed coordinates | **Done** | D233: View > *Set user origin* clicks where typed absolute x, y are measured from (a project setting); *Reset user origin* |
+| 5. Input aids | Object-snap and ortho toggles | **Done** | D227: View > *Object snaps* (F3) and *Ortho* (F8; Shift then frees it), also as status-bar buttons |
+| 5. Input aids | Typed sums, units and feet-inches | **Done** | D228: `3.6/2`, `1200+150`, `3600mm`, `12'`, `5'6"`, `5'-6 1/2"` in the tracker, the length box, drafting input and every length field (`LengthSpinBox`, in the project's unit) |
 | 5. Input aids | Coordinate input (absolute and relative x, y; polar) | **Done** | D89: tracker beside the cursor in every point tool; Tab between boxes, `a`/`#` absolute |
 | 5. Input aids | Guide lines, temporary references, inference lines | **Done** | D89: temporary guides (rest 0.5 s on a snap point), extensions and parallels; D202: permanent guide lines kept in the project settings, added and cleared from the View menu, snapped like grid lines |
 | 5. Input aids | Snap to perpendicular, tangent, intersection, wall faces | **Done** | D89 intersections and parallels; D188 tangent snapping from the previous point to drafting circles/arcs (`snap_data.circles` + `Snap::Tangent`); wall-face snapping is the dimension option. |
@@ -118,6 +134,12 @@ after D123–D225 plus explicit overrides for the final items.
 | 6. Building elements | Shell / free-form roof | **Done** | D204: the Roof tool's *Custom slopes* kind asks for a slope on each edge (0 = gable end) and builds an `IfcRoof` FREEFORM with per-edge slopes; the engine already supported it (`roofs.create_roof` kind `custom`, tested in `test_roofs.py`) |
 | 6. Building elements | Curtain walls (grids, mullions, panels) | **Done** | D109/D116/D126/D169/D170: curtain wall with mullions and rails, settings dialog, per-bay Glass/Solid/Open panels with their own thickness, a panel building material, and copy-to-all/move-bay panel commands. |
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
+| 6. Building elements | Handrails fixed to walls | **Done** | D233: Model > *Handrail on wall...*: a round IfcRailing HANDRAIL on the chosen face of each selected wall |
+| 6. Building elements | MEP runs (ducts, pipes, cable trays) | **Deferred** | D231: Model > *MEP*: straight `IfcDuctSegment`, `IfcPipeSegment` and `IfcCableCarrierSegment` runs drawn point to point at a centreline height; no fittings, systems or sizing (coordination level) |
+| 6. Building elements | Lintels, sills and reveals | **Deferred** | D232: Model > *Lintels* puts an `IfcBeam` LINTEL over each selected door, window or opening; sills and reveals are not modelled yet |
+| 6. Building elements | Beam systems (joists, rafters) | **Done** | D232: Model > *Beam system...*: a beam type at a spacing and direction across two clicked corners, one undo step |
+| 6. Building elements | Shafts through several levels | **Done** | D231: Model > *Shaft...*: two corners, then up to which level; the rectangle is cut through every slab between, one undo step |
+| 6. Building elements | Floor finishes, wall finishes and skirtings | **Done** | D231: Model > *Finishes*: an `IfcCovering` FLOORING over each selected room, SKIRTINGBOARD or CLADDING as a band inside its walls; made again, it replaces the room's earlier finish |
 | 6. Building elements | Zones / rooms / spaces (auto from walls, area, name, number) | **Done** | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | 6. Building elements | Area plans (gross, rentable) | **Done** | D182: File > *Area plan...* shows the level's gross area (rooms' union or slab footprint) and rentable area (sum of rooms), with each room's area (`area_plan`, agent `areas.plan`). |
 | 6. Building elements | Generic object (extrusion, revolve, mesh import) | **Done** | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (with tests), and they place as proxy types like any library object |
@@ -125,6 +147,7 @@ after D123–D225 plus explicit overrides for the final items.
 | 6. Building elements | Conceptual massing with floor areas | **Done** | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level; `areas.massing_report` lists each box's footprint and volume and sums floor area per level, counting a level when it lies inside the box |
 | 6. Building elements | Models / modules placed on several levels | **Done** | D58 (Archicad Hotlinked Modules, Revit Groups) |
 | 7. Site | Terrain from survey points or contours | **Done** | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
+| 7. Site | Kerbs and planting areas | **Done** | D233: Model > *Site > Kerb...* (along a clicked path, IfcCivilElement) and *Planting area...* (a clicked outline, IfcGeographicElement with its planting); road markings remain drafting |
 | 7. Site | Building pad / cut-and-fill | **Done** | D116 flattens a polygonal terrain part to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad against the pre-pad surface (`pad_cut_fill`, agent `terrain.pad_volumes`), shown in the dialog's status line. |
 | 7. Site | Hardscape, paths, parking | **Done** | D194: bundled *Paving*, *Path* and *Parking space* objects in the site category (IFC geographic/proxy types, thin box bodies and plan symbols); hardscape areas are placed and edited like any library object |
 | 7. Site | Plants and landscape | **Done** | D192: bundled *Shrub* and *Hedge* objects in the site category (tree was already there), with IFC geographic/proxy types, body and plan symbol; plant objects place on any level like the rest of the library |
@@ -183,11 +206,15 @@ after D123–D225 plus explicit overrides for the final items.
 | 13. Annotation | North arrow, scale bar | **Done** | D87: on plans and sheets; north follows IFC TrueNorth; the sheet's bar shows its drawing's scale |
 | 13. Annotation | Keynotes | **Done** | D122: Model > *Keynotes...* table (code/text/category), `place_keynote` with optional leader, and refresh of placed keynotes from the table |
 | 13. Annotation | Room / zone stamps (name, number, area) | **Done** | Slice 18; D87: their text is the Room stamp tag style |
+| 13. Annotation | Area labels (placeable) | **Done** | D233: Model > *Annotation and 2D > Area label...*: click an outline; its area goes in a text label at its middle |
 | 14. Sheets and output | Sheets / layouts with drawings placed at scale | **Done** | Slice 16 (M4 exit): A1/A3, numbered, drag to place (D62) |
 | 14. Sheets and output | Title blocks filled from project data | **Done** | Slice 16: a built-in title block; D118: title block templates / master layouts (position, field overrides and paper in project settings; save, apply, rename, delete) |
 | 14. Sheets and output | Drawing and sheet lists (auto-numbered) | **Done** | D112: Sheets › Place drawing list / Place sheet list (natural sort, live from the project; dragged and removed like drawings) |
 | 14. Sheets and output | Revisions / issue management | **Done** | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools. |
 | 14. Sheets and output | Print, PDF export | **Done** | Slice 16: PDF and SVG per sheet (Qt, vector) |
+| 14. Sheets and output | ISO and US paper sizes | **Done** | D233: A0–A4 and ANSI B/D, ARCH D/E1/E for sheets (Sheets panel > New > Other paper, sheet settings, project settings) |
+| 14. Sheets and output | Revision schedule on a sheet | **Done** | D232: Sheets panel > *Place revision schedule*: each project revision (code, date, description) and the sheets that carry it, live |
+| 14. Sheets and output | Print to a printer, with preview | **Done** | D227: File > *Print sheet...* (Ctrl+P): the open or selected sheet through Qt's print preview, fitted to the paper |
 | 14. Sheets and output | Batch publishing (sets of sheets to PDF/DWG) | **Done** | Export all sheets as PDF (one per sheet), headless `--export-sheets`, and DXF/DWG batch export are in; D172 adds *Publish sheet set...* with named sheet subsets (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`). DWG needs LibreDWG installed (DXF always works). |
 | 14. Sheets and output | DWG/DXF export | **Done** | D83 DXF export (model space and paper-space sheets); D180: DWG through LibreDWG when installed, verified by `tests/python/test_batch_dwg.py` (two sheets, DWG headers). DXF always works. |
 | 15. Schedules and quantities | Element schedules (doors, windows, walls), editable | **Done** | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
@@ -230,5 +257,6 @@ after D123–D225 plus explicit overrides for the final items.
 | 20. Automation and customisation | Visual programming | **Done** | D223: linear visual scripts in the `visual_scripts` project setting; `run_pipeline` runs whitelisted ops (massing, room, push/pull, move_vertices) as one undo step with `"$n"` wiring, and Model > *Visual scripts...* lists/edits/runs/deletes them. A linear program rather than a wired node graph. |
 | 20. Automation and customisation | Plugins / add-ons | **Done** | D212: `.py` add-ons in the app's `plugins` folder run at startup and on *Reload*; they may define `register(api)` with the `kimbim.app_bridge` module; Help > *Plugins...* lists loaded/failed files (errors on hover), reloads them and opens the folder |
 | 20. Automation and customisation | Customisable shortcuts, toolbars and workspaces | **Done** | Help › *Keyboard shortcuts* lists, rebinds and resets keys (per user); View › *Workspaces* saves and reapplies panel layouts (D131); View › *Toolbars* shows/hides and remembers them (D135). `test_shortcuts.cpp` and `test_preferences.cpp` verify all three. |
+| 20. Automation and customisation | Command search | **Done** | D227: Help > *Search commands...* (Ctrl+K): any menu command by words, with its menu path; D229 groups the Model menu into submenus |
 | 20. Automation and customisation | UI languages | **Done** | English and Spanish |
 | 20. Automation and customisation | AI assistant | **Done** | D203: the in-app Assistant panel (View > Panels > Assistant) drives the same live agent tools as the CLI and MCP server, with Anthropic or OpenAI-compatible providers and keys in the OS credential store; the whole tool catalogue, review bar, undo steps and session worktrees are in place. Tests: `tests/python/test_agent_credentials.py`, `test_agent_modify.py`, `test_agent_sessions.py` |

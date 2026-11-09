@@ -265,6 +265,39 @@ def create_issue(issue_json: str) -> str:
         return _fail(f"{type(ex).__name__}: {ex}")
 
 
+def issues_from_findings(findings_json: str, kind: str = "Clash") -> str:
+    """One Open issue per check finding ({"message", "guids"}), its elements as the viewpoint's
+    components. A finding that already has an open issue (same title and elements) is skipped."""
+    try:
+        findings = json.loads(findings_json or "[]")
+    except ValueError as ex:
+        return _fail(f"bad input: {ex}")
+    if not isinstance(findings, list):
+        return _fail("bad input: expected a list")
+    try:
+        issues = _issues()
+        seen = {(i.get("title"), tuple(sorted((i.get("viewpoint") or {}).get("components") or [])))
+                for i in issues if i.get("status") != "Closed"}
+        made = []
+        for finding in findings:
+            if not isinstance(finding, dict):
+                continue
+            title = str(finding.get("message") or "").strip()[:200]
+            guids = [g for g in finding.get("guids") or [] if isinstance(g, str) and g.strip()]
+            if not title or (title, tuple(sorted(guids))) in seen:
+                continue
+            issue = _new_issue({"title": title, "type": kind, "description": str(finding.get("group") or ""),
+                                "viewpoint": {"components": guids}})
+            seen.add((title, tuple(sorted(guids))))
+            issues.append(issue)
+            made.append(issue["id"])
+        if made:
+            _save(issues)
+        return _dump({"ok": True, "created": len(made), "ids": made})
+    except Exception as ex:  # noqa: BLE001
+        return _fail(f"{type(ex).__name__}: {ex}")
+
+
 def update_issue(issue_id: str, changes_json: str) -> str:
     """Change an issue's title, description, type, status, priority, assignee, viewpoint or comments."""
     try:

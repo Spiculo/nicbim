@@ -91,6 +91,17 @@ ChecksPanel* MainWindow::checksPanel()
             linkIdsFile(path);
     });
     connect(m_checks, &ChecksPanel::removeIdsRequested, this, &MainWindow::removeIdsFile);
+    connect(m_checks, &ChecksPanel::sendToIssuesRequested, this, [this](const QJsonArray& findings) {
+        const QJsonObject r = bridge("issues_from_findings",
+            {QString::fromUtf8(QJsonDocument(findings).toJson(QJsonDocument::Compact)), QStringLiteral("Clash")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Send to issues"), r.value("error").toString());
+            return;
+        }
+        reloadProjectSettings(); // the issues live in the project settings
+        m_status->showMessage(tr("%n issue(s) made; see Model > Analysis and checking > Issues", nullptr,
+            r.value("created").toInt()));
+    });
     connect(m_checks, &ChecksPanel::exportReportRequested, this, [this] {
         if (m_quiet)
             return;

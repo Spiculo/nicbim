@@ -100,6 +100,14 @@ std::shared_ptr<const UnderlayLines> UnderlayLines::fromParts(const QList<QByteA
     return lines;
 }
 
+QString Underlay::linesKey() const
+{
+    if (clip.isNull())
+        return file;
+    return QStringLiteral("%1|%2,%3,%4,%5").arg(file).arg(clip.left(), 0, 'g', 17).arg(clip.top(), 0, 'g', 17)
+        .arg(clip.right(), 0, 'g', 17).arg(clip.bottom(), 0, 'g', 17);
+}
+
 Underlay Underlay::fromJson(const QJsonObject& o)
 {
     Underlay u;
@@ -111,6 +119,9 @@ Underlay Underlay::fromJson(const QJsonObject& o)
     u.layer = o.value("layer").toString();
     u.tint = o.value("tint").toString();
     u.path = o.value("path").toString();
+    const QJsonArray clip = o.value("clip").toArray();
+    if (clip.size() == 4)
+        u.clip = QRectF(QPointF(clip.at(0).toDouble(), clip.at(1).toDouble()), QPointF(clip.at(2).toDouble(), clip.at(3).toDouble()));
     const QJsonArray base = o.value("base").toArray();
     u.placement.base = QPointF(base.at(0).toDouble(), base.at(1).toDouble());
     u.placement.at = QPointF(o.value("x").toDouble(), o.value("y").toDouble());

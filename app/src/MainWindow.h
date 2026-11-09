@@ -78,6 +78,7 @@ class SchedulesDialog;
 class DrawingView;
 class HistoryPanel;
 class UndoHistoryPanel;
+struct PointPick;
 class LayersPanel;
 class WallTool;
 class PolygonTool;
@@ -369,6 +370,28 @@ public:
     bool printSheet(const QString& number, QPrinter* printer);
     void printSheetDialog();
     bool orthoLocked() const { return m_orthoLock; }
+    // Click points instead of typing them (QolTools.cpp): `done` gets the points and the wall under
+    // the last one. pickPointAt/pickPointMoved are what the view's clicks call (and tests).
+    void pickPoints(int count, bool rectangle, const QStringList& hints,
+        std::function<void(const QVector<QPointF>&, const QString&)> done);
+    bool pickingPoints() const { return bool(m_pick); }
+    void pickPointAt(QPointF p, double tolerance = 0.05, Qt::KeyboardModifiers mods = {});
+    void pickPointMoved(QPointF p, double tolerance, Qt::KeyboardModifiers mods);
+    void cancelPick();
+    void finishPick(); // an open-ended pick's Enter (needs its minimum of points)
+    void setUserOrigin(QPointF origin); // typed absolute x, y measured from here (a project setting)
+    void massingBoxCommand();   // height, then two corners
+    void insertBlockCommand();  // the block, then where it goes
+    void skylightCommand();     // the size, then its centre in the selected slab
+    void pushPullCommand();     // click the face, then the distance
+    bool pushPullFace(const QString& face, double distance);
+    bool pushPullPicking() const { return m_pushPullPick; }
+    void finishCommand(const QString& kind); // "floor", "skirting" or "wall", for the selected rooms
+    void shaftCommand();                     // two corners, then up to which level
+    void mepCommand(const QString& kind);    // "duct", "pipe" or "cable_tray": a run of clicked points
+    void beamSystemCommand();                // the type and spacing, then two corners
+    void terrainHeightsDialog(const QVector<QPointF>& points); // clicked survey points: their heights
+    void clipUnderlayCommand(bool clear); // a DXF/vector underlay clipped to a clicked rectangle (or not)
     QString currentViewKey() const;
     bool currentViewShowsCutSlider() const; // D91: false in plan tabs (no cut slider there)
     // A level's plan tab (D71): opened once, raised after; a view of the same model as the 3D tab.
@@ -883,9 +906,14 @@ private:
     QAction* m_objectSnaps = nullptr;
     QAction* m_orthoAction = nullptr;
     QString m_pendingLabel; // the command being run: its undo step's name
-    int m_pendingToken = 0;
+    QTimer* m_pendingTimer = nullptr; // drops the label once the command (and its dialog) is done
     int m_seenStepId = 0;   // the newest undo step already named
     bool m_orthoLock = false;
+    std::shared_ptr<PointPick> m_pick; // a command waiting for clicked points
+    bool m_pushPullPick = false;       // push/pull waiting for a face
+    void connectPickSignals();
+    void groupModelMenu(); // the Model menu's commands in submenus
+    void buildFinishAndMepCommands();
     QSlider* m_cutSlider = nullptr;
     QLabel* m_cutLabel = nullptr;
     void updateCutSliderRange();

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "UnderlayDialogs.h"
+#include "Units.h"
 
 #include <QCheckBox>
 #include <QColorDialog>
@@ -38,10 +39,8 @@ const UnitChoice kUnits[] = {{QT_TRANSLATE_NOOP("kimbim::PlaceUnderlayDialog", "
 
 QDoubleSpinBox* lengthBox(double value, double range = 1e6)
 {
-    auto* b = new QDoubleSpinBox;
+    auto* b = new LengthSpinBox;
     b->setRange(-range, range);
-    b->setDecimals(3);
-    b->setSuffix(QStringLiteral(" m"));
     b->setValue(value);
     return b;
 }

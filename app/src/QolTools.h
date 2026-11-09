@@ -11,7 +11,12 @@
 #include <QStringList>
 #include <QWidget>
 
+#include <QPointF>
+#include <QVector>
+
 #include <functional>
+
+#include "Snapper.h"
 
 class QAction;
 class QLineEdit;
@@ -93,6 +98,26 @@ protected:
 private:
     std::function<void(QAction*)> m_started;
 };
+
+// Clicking points in the view for a command that used to ask for coordinates (massing box, 2D
+// block, skylight, wall opening): `count` points (a negative count: at least -count, Enter finishes),
+// snapped like any tool's; with `rectangle` the two
+// points are opposite corners and the preview is the rectangle. `done` gets the points and the wall
+// the last point snapped to ("" for none).
+struct PointPick {
+    using Done = std::function<void(const QVector<QPointF>& points, const QString& wall)>;
+    int count = 1;   // 0: as many as the user clicks, Enter finishes once there are `minimum`
+    int minimum = 1;
+    bool rectangle = false;
+    QStringList hints; // one per point still to click
+    QVector<QPointF> points;
+    QString wall;
+    Done done;
+    Snapper snapper;
+};
+
+// The face of a box a picked normal points out of: "+x", "-x", "+y", "-y", "+z" or "-z" (push/pull).
+QString faceFromNormal(double nx, double ny, double nz);
 
 // What a dropped file does: "open" (.kim, .ifc, a folder), "underlay" (DXF, DWG, PDF, pictures),
 // "mesh", "cloud" (point clouds), or "" (not something NicBim takes).

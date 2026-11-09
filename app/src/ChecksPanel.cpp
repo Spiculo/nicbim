@@ -215,6 +215,18 @@ ChecksPanel::ChecksPanel(QWidget* parent)
     layout->addWidget(clash);
     layout->addWidget(m_summary);
     layout->addWidget(m_results, 1);
+    // Clashes and other findings become BCF issues (with their elements as the viewpoint's components).
+    auto* toIssues = new QPushButton(tr("Send to issues"), this);
+    toIssues->setObjectName(QStringLiteral("checksToIssues"));
+    toIssues->setToolTip(tr("Make a BCF issue of each finding shown, its elements selected in the viewpoint"));
+    connect(toIssues, &QPushButton::clicked, this, [this] {
+        QJsonArray findings;
+        for (int n = 0; n < issueCount(); ++n)
+            findings.append(QJsonObject{{"message", issueText(n)}, {"guids", QJsonArray::fromStringList(issueGuids(n))}});
+        if (!findings.isEmpty())
+            emit sendToIssuesRequested(findings);
+    });
+    layout->addWidget(toIssues);
 }
 
 QStringList ChecksPanel::checkedChecks() const

@@ -5,7 +5,7 @@ A checklist of the tools that mainstream BIM and CAD apps give architects, with 
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
-**Status as of `main` (2026-11-03, after D112–D188).**
+**Status as of `main` (2026-11-03, after D112–D232).**
 
 ## How to read it
 
@@ -38,6 +38,7 @@ release notes, so check before relying on a single cell.
 | Project templates (units, levels, types, views, title blocks) | AC RV VW | ✅ | P0 | D72: office templates (File › New from template, Save as template) |
 | Autosave, crash recovery | AC RV VW | ✅ | P0 | D72: recovery copies on a timer, offered again after a crash; no oplog yet ([03](03-versioning.md)) |
 | Recent projects | all | ✅ | P0 | File › Recent files |
+| Open or import by dropping files on the window | AC RV VW SU | ✅ | new | D227: a `.kim`/`.ifc` (or a project folder) opens; DXF/DWG/PDF/PNG/JPEG become an underlay; OBJ/STL/PLY/COLLADA/glTF/FBX import as a mesh; XYZ/PTS/LAS/LAZ/E57 as a point cloud |
 | Imperial units, unit preferences | all | ✅ | P0 | D108: project length units m/cm/mm/**ft/in** and areas m²/cm²/mm²/**ft²/in²**, in Project settings, every length/area field and format; the model stays in metres |
 | Project info (address, client, number) used in title blocks | AC RV VW | ✅ | new | Slice 16: *File › Project info…*, in IFC fields (D63) |
 | Survey point, project base point, georeferencing | AC RV VW BB | ✅ | P2 | D115: File › Georeferencing... (eastings, northings, height, rotation, scale, projected CRS and true north; `IfcMapConversion`/`IfcProjectedCRS`) |
@@ -70,6 +71,7 @@ release notes, so check before relying on a single cell.
 | Show multiple levels at once (ghost story / underlay) | AC RV VW | ✅ | new | D98: View › Trace reference (level below or above, snappable); Level above/below Ctrl+Up/Down |
 | Split views / several windows side by side | AC RV VW | ✅ | new | D153: View > *Split view side by side* (Ctrl+\) opens another viewport of the active 3D or plan view in a new area beside it; the new view copies the camera/plan and cuts and keeps them independently. Drawings and sheets are not split |
 | Navigator / project browser (tree of views, sheets) | AC RV VW | ✅ | new | D163: Model tree, levels and views; a *Sheets* heading lists every sheet (number and title), double-click or *Open* opens it. Drawings and other views stay in their own panels |
+| Right-click (context) menu in the view | all | ✅ | new | D227: a right click without a drag selects the element under the cursor and offers its commands (properties, zoom, move/rotate/mirror/copy, select similar, hide/isolate, group, lock, pick up/inject, delete); with nothing selected, paste/show all/fit all; *Repeat* on top |
 
 ## 3. Selection
 
@@ -90,6 +92,9 @@ release notes, so check before relying on a single cell.
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Undo / redo | all | ✅ | P0 | |
+| Undo history (named steps, jump back several) | AC RV VW SU | ✅ | new | D227: the Undo history panel lists each step by the command or tool that made it; a click undoes or redoes to just after that step (`undo_history`, `undo_steps`, `redo_steps`) |
+| Repeat last command | AC VW SU | ✅ | new | D227: Edit > *Repeat last command* (Ctrl+Shift+R) and the right-click menu's first item |
+| Nudge the selection with the arrow keys | RV VW SU | ✅ | new | D227: 10 mm a press, Shift 100 mm, one *Nudge* undo step each |
 | Move, drag to move | all | ✅ | P0 | Joined walls follow; Ctrl detaches (D54) |
 | Rotate | all | ✅ | P0 | |
 | Stretch / extend a wall end | all | ✅ | P0 | |
@@ -117,7 +122,10 @@ release notes, so check before relying on a single cell.
 | Ortho / angle steps | all | ✅ | P0 | 15° steps, Shift = ortho |
 | Typed lengths | all | ✅ | P0 | |
 | Typed angles | all | ✅ | P0 | D89: the tracker's angle box (`<`), locks the direction |
+| Typed sums, units and feet-inches | AC RV VW | ✅ | new | D228: `3.6/2`, `1200+150`, `3600mm`, `12'`, `5'6"`, `5'-6 1/2"` in the tracker, the length box, drafting input and every length field (`LengthSpinBox`, in the project's unit) |
+| Object-snap and ortho toggles | all | ✅ | new | D227: View > *Object snaps* (F3) and *Ortho* (F8; Shift then frees it), also as status-bar buttons |
 | Coordinate input (absolute and relative x, y; polar) | AC VW | ✅ | new | D89: tracker beside the cursor in every point tool; Tab between boxes, `a`/`#` absolute |
+| User origin for typed coordinates | AC VW | ✅ | new | D233: View > *Set user origin* clicks where typed absolute x, y are measured from (a project setting); *Reset user origin* |
 | Guide lines, temporary references, inference lines | AC VW SU | ✅ | new | D89: temporary guides (rest 0.5 s on a snap point), extensions and parallels; D202: permanent guide lines in the project settings, added/cleared from the View menu and snapped like grid lines |
 | Snap to perpendicular, tangent, intersection, wall faces | all | ✅ | P0 | D89: intersections and parallels; D188 adds **tangent** snapping: `snap_data` publishes the drafting circles' centres and radii and the snapper returns the tangent points from the previous point (closest within tolerance). Wall-face snapping is the dimensions' option (Slice 15) |
 | Work planes (custom drawing planes) | AC RV VW SU | ✅ | P0 | D219: free work plane at a user height, plan rotation and an arbitrary tilt (0–85°) and bearing (0–360°) in the `work_plane` project setting; the viewport intersects the view ray with the tilted plane for drawing/snapping and the preview follows the plane's elevation. View > *Free work plane...* (height), *Work plane rotation...* (plan angle), *Work plane tilt...* (tilt/bearing, *Level* reset) and *Use level work plane*. D98 construction grid (spacing, angle, origin, grid snap) remains |
@@ -146,27 +154,34 @@ release notes, so check before relying on a single cell.
 | Stairs: straight flight | all | ✅ | P1 | |
 | Stairs: landings, L/U shapes, spiral, by sketch | all | ✅ | P1 | D88: L, U, by sketch with landings, risers from the height, code warnings, floor opening, plan symbol; D207: spiral stairs (wedge steps about a central well, either turn); D208: *Winders* on L stairs (three winder steps at the inner corner) |
 | Railings | all | ✅ | P1 | D88: on a stair or ramp's sides (they follow it) or by path; posts, top rail, balusters |
+| Handrails fixed to walls | AC RV | ✅ | new | D233: Model > *Handrail on wall...*: a round IfcRailing HANDRAIL on the chosen face of each selected wall |
 | Ramps | AC RV VW | ✅ | new | D88: straight and L, slope with a 1:12 warning, plan arrow |
 | Roofs: flat | all | ✅ | P1 | Slice 19 (D66) |
 | Roofs: pitched, hip, gable, multi-plane, by footprint | all | ✅ | P1 | Slice 19 (D66): shed, gable, hip, a slope per edge; walls trimmed to the roof |
 | Shell / free-form roof | AC RV | ✅ | new | D204: the Roof tool's *Custom slopes* kind asks for a slope on each edge (0 = gable end) and builds an `IfcRoof` FREEFORM; the engine supports per-edge slopes (`roofs.create_roof` kind `custom`, tested in `test_roofs.py`) |
 | Curtain walls (grids, mullions, panels) | AC RV VW | ✅ | P2 | D109: `create.curtain_wall` makes an `IfcCurtainWall` panel (`IfcCurtainWallType`, `KIMBIM_CurtainWall` height/spacing/panel thickness) with vertical mullions and top/bottom rails as aggregated IfcMembers; the Curtain wall tool is in the 3D palette. D116: Model > *Curtain wall settings...* edits height, mullion spacing, panel thickness and mullion/rail sizes and rebuilds the members; D126: the settings dialog lists every bay as Glass, Solid panel or Open, with its own thickness; `create.curtain_panel` and `create.curtain_wall_info` expose the same. D169: the panels take a building material (*Panel material*). D170: *Copy to all bays* and *Move bay down* in the dialog (engine `copy_curtain_panel`/`swap_curtain_panels`) move and copy individual panel settings |
 | Ceilings | RV VW | ✅ | P2 | D156: Model > *Ceiling...* makes an `IfcCovering` (`PredefinedType=CEILING`) over a selected slab or a closed loop of walls, or a drawn outline; its underside sits at the level + offset (default 2.7 m), with a thickness (default 20 cm) in `KIMBIM_Ceiling`; one undo step, agent `create.ceiling` / `create.ceiling_from_selection` |
+| Floor finishes, wall finishes and skirtings | AC RV VW | ✅ | new | D231: Model > *Finishes*: an `IfcCovering` FLOORING over each selected room, SKIRTINGBOARD or CLADDING as a band inside its walls; made again, it replaces the room's earlier finish |
+| Shafts through several levels | AC RV | ✅ | new | D231: Model > *Shaft...*: two corners, then up to which level; the rectangle is cut through every slab between, one undo step |
+| Beam systems (joists, rafters) | RV VW | ✅ | new | D232: Model > *Beam system...*: a beam type at a spacing and direction across two clicked corners, one undo step |
+| Lintels, sills and reveals | AC RV | 🟡 | new | D232: Model > *Lintels* puts an `IfcBeam` LINTEL over each selected door, window or opening; sills and reveals are not modelled yet |
+| MEP runs (ducts, pipes, cable trays) | RV AC | 🟡 | new | D231: Model > *MEP*: straight `IfcDuctSegment`, `IfcPipeSegment` and `IfcCableCarrierSegment` runs drawn point to point at a centreline height; no fittings, systems or sizing (coordination level) |
 | Zones / rooms / spaces (auto from walls, area, name, number) | all | ✅ | P1 | Slice 18 (D65): Room tool (Z), stamps, room schedule |
 | Area plans (gross, rentable) | RV VW | ✅ | new | D182: File > *Area plan...* shows the active level's gross area (the union of its rooms, or its slab footprint) and rentable area (the sum of the rooms), with each room's area (`area_plan`, agent `areas.plan`) |
 | Generic object (extrusion, revolve, mesh import) | all | ✅ | P1 | D197: D120 imports OBJ/STL/PLY as `IfcBuildingElementProxy` bodies; the parametric object system (D101, [16](16-parametric-objects.md)) authors generic objects from box/prism extrusions, revolve and sweep parts (tests in `test_objedit.py` and `test_library.py`), placed as proxy types |
-| Morph / free-form modelling, push/pull | AC SU VW | ✅ | new | D220: `morph.push_pull` moves a massing box side/top/bottom (rebuilds the extrusion and the `KIMBIM_Massing` sizes) or every vertex on a named face of a triangulated mesh; `morph.move_vertices` moves chosen mesh vertices for free-form shaping. Model > *Push/pull...* asks for the face and distance; one undo step per call |
-| Conceptual massing with floor areas | RV VW | ✅ | new | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level; `areas.massing_report` lists footprint and volume per box and sums floor area per level inside each box |
+| Morph / free-form modelling, push/pull | AC SU VW | ✅ | new | D220: `morph.push_pull` moves a massing box side/top/bottom (rebuilds the extrusion and the `KIMBIM_Massing` sizes) or every vertex on a named face of a triangulated mesh; `morph.move_vertices` moves chosen mesh vertices for free-form shaping. Model > *Push/pull...* (D229: click the face, then the distance); one undo step per call |
+| Conceptual massing with floor areas | RV VW | ✅ | new | D201: Model > *Massing box...* makes an `IfcBuildingElementProxy` box on the active level (D229: from two clicked corners); `areas.massing_report` lists footprint and volume per box and sums floor area per level inside each box |
 | Models / modules placed on several levels | AC RV VW | ✅ | — | D58 (Archicad Hotlinked Modules, Revit Groups) |
 
 ## 7. Site
 
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
-| Terrain from survey points or contours | AC RV VW BB | ✅ | new | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. No interactive point tool yet |
+| Terrain from survey points or contours | AC RV VW BB | ✅ | new | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. D233: *Terrain from clicked points...* |
+| Kerbs and planting areas | VW RV | ✅ | new | D233: Model > *Site > Kerb...* (along a clicked path, IfcCivilElement) and *Planting area...* (a clicked outline, IfcGeographicElement with its planting); road markings remain drafting |
 | Building pad / cut-and-fill | RV VW | ✅ | new | D116: *Building pad...* flattens a polygonal part of a terrain to an elevation and stores/clears pads; D178 adds the automatic cut and fill volumes (m³) per pad, computed against the surface stored before the first pad (`pad_cut_fill`, agent `terrain.pad_volumes`); the dialog reports them in the status line |
-| Hardscape, paths, parking | VW RV | ✅ | new | D194: bundled *Paving*, *Path* and *Parking space* objects in the site category (IFC geographic/proxy types, thin box bodies, plan symbols); no kerb or road-marking tool yet |
-| Plants and landscape | VW AC | ✅ | new | D192: bundled *Tree*, *Shrub* and *Hedge* objects in the site category (IFC geographic/proxy types, body and plan symbol), placed like any library object; no planting-area tool yet |
+| Hardscape, paths, parking | VW RV | ✅ | new | D194: bundled *Paving*, *Path* and *Parking space* objects in the site category (IFC geographic/proxy types, thin box bodies, plan symbols); D233: kerbs; no road-marking tool yet |
+| Plants and landscape | VW AC | ✅ | new | D192: bundled *Tree*, *Shrub* and *Hedge* objects in the site category (IFC geographic/proxy types, body and plan symbol), placed like any library object; D233: planting areas |
 | North direction, sun study | all | ✅ | new | D87: north arrow from IFC TrueNorth; D96: View › Sun... by place, date and time; no animation (§16) |
 
 ## 8. Objects and libraries
@@ -217,6 +232,7 @@ release notes, so check before relying on a single cell.
 | Floor plan drawings (one per story, cut plane, symbols) | all | ✅ | P1 | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
 | Section views (marker in plan, linked view) | all | ✅ | P1 | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; D138 scale and detail level; D190 the scale in generation and a hand crop (View > *Crop drawing...*). SVG from IfcOpenShell's serializer, in a tab (D60, D61) |
 | Elevations (building, interior) | all | ✅ | P1 | Slice 14: template N/S/E/W elevations in new projects, *Create elevations*, Elevation tool (Shift+V). D173 adds a depth choice to the Section/Elevation tool strip (infinite, cut only or a limited depth); a limited depth gives an interior elevation |
+| Interior elevations from a room | AC RV | ✅ | new | D232: Model > *Annotation and 2D > Interior elevations*: one elevation per wall of the selected room, seen from inside it ("<room> Interior A"...) |
 | Detail views (enlarged, cropped, with extra 2D) | all | ✅ | P1 | D98: worksheets (independent 2D, figures, on sheets); D112: linked detail drawings (region, 1:20 default, plan marker, sheet placement); D116: the View palette Detail tool draws the region and scale. No extra 2D on the detail yet |
 | Drafting views (2D only) | all | ✅ | new | D98: worksheets |
 | 3D documents / axonometric drawings | AC RV VW | ✅ | new | D137: View > *3D document...* makes an orthographic axonometric from the active 3D view's direction and screen up, with hidden-line removal from the app's meshes; the camera is stored with the drawing, so it regenerates when the model changes and places on sheets like any drawing |
@@ -247,21 +263,25 @@ release notes, so check before relying on a single cell.
 | Angle, radius, arc-length, level and spot-elevation dimensions | all | ✅ | P1 | D87: angle, radius, diameter, level (plan: slab top or level; sections: story levels) and spot elevation; D161 adds the arc-length mode of the angle-dimension tool (start, a point on the arc, end, text point) |
 | Associative labels and tags (show a property, follow the element) | all | ✅ | P1 | D87: Tag tool and Tag all; templates of schedule fields; styles (door/window marker, wall tag, room stamp, mark, label) in project settings; IfcRelAssignsToProduct |
 | Leaders and arrows | all | ✅ | P1 | Slice 15: Leader tool (Shift+A) |
-| Revision clouds | AC RV VW | ✅ | new | D87: on plans and sheets, revision in a triangle; no revision schedule yet |
+| Revision clouds | AC RV VW | ✅ | new | D87: on plans and sheets, revision in a triangle; D232: revision schedule on sheets |
 | Section, elevation and detail markers | all | ✅ | P1 | Section and elevation markers in plan (Slice 14); D112: detail markers (bubble, leader, linked drawing) |
 | North arrow, scale bar | all | ✅ | new | D87: on plans and sheets; north follows IFC TrueNorth; the sheet's bar shows its drawing's scale |
 | Keynotes | RV VW AC | ✅ | new | D122: Model > *Keynotes...* table (code/text/category), `place_keynote` with optional leader, and refresh of placed keynotes from the table |
 | Room / zone stamps (name, number, area) | all | ✅ | P1 | Slice 18; D87: their text is the Room stamp tag style |
+| Area labels (placeable) | AC VW | ✅ | new | D233: Model > *Annotation and 2D > Area label...*: click an outline; its area goes in a text label at its middle |
 
 ## 14. Sheets and output
 
 | Tool | Has | KimBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Sheets / layouts with drawings placed at scale | all | ✅ | P1 | Slice 16 (M4 exit): A1/A3, numbered, drag to place (D62) |
+| ISO and US paper sizes | all | ✅ | new | D233: A0–A4 and ANSI B/D, ARCH D/E1/E for sheets (Sheets panel > New > Other paper, sheet settings, project settings) |
 | Title blocks filled from project data | all | ✅ | P1 | Slice 16: a built-in title block; D118: title block templates / master layouts (position, field overrides and paper in project settings; save, apply, rename, delete) |
 | Drawing and sheet lists (auto-numbered) | AC RV VW | ✅ | new | D112: Sheets › Place drawing list / Place sheet list (natural sort, live from the project; dragged and removed like drawings) |
 | Revisions / issue management | AC RV VW | ✅ | new | D171: Project > *New revision...* stores revision records (`revisions` setting: code, date, description); a sheet's revision is set in its title block (*Revision:* field) and prints in the title block. Versions and milestones remain the history tools |
 | Print, PDF export | all | ✅ | P1 | Slice 16: PDF and SVG per sheet (Qt, vector) |
+| Print to a printer, with preview | all | ✅ | new | D227: File > *Print sheet...* (Ctrl+P): the open or selected sheet through Qt's print preview, fitted to the paper |
+| Revision schedule on a sheet | AC RV VW | ✅ | new | D232: Sheets panel > *Place revision schedule*: each project revision (code, date, description) and the sheets that carry it, live |
 | Batch publishing (sets of sheets to PDF/DWG) | AC RV VW | ✅ | new | File › *Export all sheets as PDF...* publishes every sheet to a folder (one PDF per sheet, collision-safe names); `kimbim-app --export-sheets OUT_DIR model.ifc [--sheets A01,A02]` does it headless. File › *Export DXF...* with the DWG format, or `app_bridge.export_dwg`, batch-converts every ticked drawing/sheet through LibreDWG (`dxf2dwg`); covered by `tests/python/test_batch_dwg.py`. LibreDWG is a separate pixi environment and is not bundled in the portable build, so DWG needs it installed (DXF always works). D172 adds *Publish sheet set...*: pick sheets (or a saved named set), optionally save the choice as a set, and publish only those PDFs (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`) |
 | DWG/DXF export | AC RV VW BB | ✅ | P1 | D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. D180: DWG export writes DXF and converts it through LibreDWG when installed, tested by `tests/python/test_batch_dwg.py` (DWG headers for two sheets); DXF needs nothing extra |
 
@@ -308,7 +328,7 @@ release notes, so check before relying on a single cell.
 | IFC export, valid against the schema | all | ✅ | P0 | Checked in CI: IfcOpenShell validator (schema + EXPRESS rules), web-ifc geometry and the independent xBIM .NET parser (`pixi run interop`, `pixi run interop-xbim`) |
 | IFC export settings (what to export, property mapping) | AC RV VW | ✅ | new | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |
 | Re-import with reconciliation report | — | ✅ | P1 | D104: `kimbim versions import` matches by GlobalId, Tag, then a reviewed heuristic; dry run and JSON report |
-| DWG/DXF import (underlay and convert) | all | ✅ | new | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings), DWG through LibreDWG/ODA conversion; D199: *Convert underlay to 2D lines...* turns DXF/DWG/vector-PDF linework into editable drafting lines at the underlay's placement |
+| DWG/DXF import (underlay and convert) | all | ✅ | new | D85: DXF as an underlay (units, exploded blocks, snapping to ends, midpoints, crossings), DWG through LibreDWG/ODA conversion; D199: *Convert underlay to 2D lines...* turns DXF/DWG/vector-PDF linework into editable drafting lines at the underlay's placement; D233: File > *Clip underlay...* keeps only what is inside a clicked rectangle |
 | PDF import | AC RV VW | ✅ | new | D85: a PDF page as an underlay (an image); D132: a PDF placed as **vector linework** (PyMuPDF paths, selectable/snappable); D200: converting a vector PDF to 2D imports its **text** as editable free text |
 | SketchUp, Rhino, OBJ, FBX import | AC RV VW | 🟡 | new | D120: OBJ, STL and PLY. D124: COLLADA (SketchUp's export), glTF/GLB (Rhino and modern tools) and ASCII FBX; D133 adds binary FBX through Assimp. The Rhino/Grasshopper live link is D221; SketchUp `.skp` remains blocked on Trimble's proprietary SDK. Re-checked 2026-11-03: conda-forge has no SketchUp package; `.skp` needs Trimble's SDK |
 | Point clouds | AC RV VW | ✅ | new | D125: XYZ, PTS, CSV/TXT and uncompressed LAS scans imported as a decimated, visible marker proxy (`KIMBIM_PointCloud`); D132 adds LAZ (lazrs). D148 adds E57 through the `e57dump` C++ bridge built on conda-forge's `libe57format` (BSD-3); the bridge ships in the portable build |
@@ -321,7 +341,7 @@ release notes, so check before relying on a single cell.
 | Measure distance, angle, area | all | ✅ | P1 | D79: Shift+M, snaps, 3D surfaces, copy to clipboard |
 | IFC schema validation in the app | BB | ✅ | P1 | Checks panel, EXPRESS rules included (D81) |
 | IDS checks | AC BB | ✅ | P1 | IfcTester; IDS files kept in the project; HTML/JSON report (D81) |
-| Clash detection | AC RV VW BB | ✅ | P2 | Hard and clearance between classes or Find & Select criteria (D81); no BCF yet |
+| Clash detection | AC RV VW BB | ✅ | P2 | Hard and clearance between classes or Find & Select criteria (D81); D232: the Checks panel's *Send to issues* makes a BCF issue of each finding |
 | Model checks (duplicates, overlaps, rooms without a number) | AC RV | ✅ | P2 | Duplicates, rooms, zero-length walls, not on a level, hostless openings (D81) |
 | Energy evaluation, daylight | AC RV VW | ✅ | new | D222: `energy.energy_report` gives a steady-state heating/lighting estimate and an average daylight factor per level from the envelope areas, rooms and `energy_settings` (U-values, glazing transmittance, air changes, degree days, lighting power, occupied hours); Model > *Energy and daylight...* shows the table, total and inputs. Early-stage comparison, not a compliance calculation |
 | Structural analytical model | AC RV | ✅ | new | D224: `structural.create_analysis_model` derives an `IfcStructuralAnalysisModel` (LOADING_3D) from columns/beams (curve members along the extrusion axis) and slabs/roofs (surface members from the footprint), tagged with their source; re-derive replaces in place, removal leaves the physical model. Geometry-only idealisation, no loads/results |
@@ -334,6 +354,7 @@ release notes, so check before relying on a single cell.
 | Visual programming | AC RV VW | ✅ | new | D223: linear visual scripts saved in the project (`visual_scripts`): whitelisted engine ops (massing, room, push/pull, move_vertices) run top to bottom as one undo step, with `"$n"` wiring an earlier step's element; Model > *Visual scripts...* lists/edits/runs/deletes them. A linear program rather than a wired node graph |
 | Plugins / add-ons | all | ✅ | P2 | D212: `.py` add-ons in the app's `plugins` folder run at startup and on *Reload*; they may define `register(api)` with the `kimbim.app_bridge` module; Help > *Plugins...* lists loaded/failed files, reloads and opens the folder |
 | Customisable shortcuts, toolbars and workspaces | all | ✅ | new | Help › *Keyboard shortcuts* lists every command with its keys (searchable) and lets you rebind it; changes are saved per user and Reset restores the built-in key. D131: View > *Workspaces* saves the current panel layout under a name and reapplies it; layouts live in the user preferences. D135: View > *Toolbars* shows or hides each toolbar and remembers the choice. D187 verifies all three with `test_shortcuts.cpp` (rebind/reset) and `test_preferences.cpp` (workspace and toolbar round-trips) |
+| Command search | RV VW | ✅ | new | D227: Help > *Search commands...* (Ctrl+K): any menu command by words, with its menu path; D229 groups the Model menu into submenus |
 | UI languages | all | ✅ | P0 | English and Spanish |
 | AI assistant | AC RV VW | ✅ | — | D203: the in-app Assistant panel drives the same live agent tools as the CLI and MCP server, with Anthropic or OpenAI-compatible providers, keys in the OS credential store, a review bar, undo steps and session worktrees (`tests/python/test_agent_credentials.py`, `test_agent_modify.py`, `test_agent_sessions.py`) |
 

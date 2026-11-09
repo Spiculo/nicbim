@@ -77,6 +77,7 @@ DEFAULTS = {
     "stair_riser_numbers": False,  # D92: number the risers on the plan
     "construction_grid": {"spacing": 1.0, "subdivisions": 4, "angle": 0.0, "origin": [0.0, 0.0]},  # D98
     "work_plane": {"enabled": False, "z": 0.0, "angle": 0.0, "tilt": 0.0, "bearing": 0.0},  # D219
+    "user_origin": [0.0, 0.0],  # D232: where typed absolute x, y are measured from (plan metres)
     "wall_reference_line": "Outside face",
     "layers_in_3d": True,
     "member_material_scope": "element",  # D97: a column's or beam's material: its own (Archicad) or its type's (Revit)
@@ -197,6 +198,9 @@ def _error(key: str, value) -> str | None:
     if key == "scales" and not (isinstance(value, list) and value and all(
             isinstance(v, int) and not isinstance(v, bool) and v > 0 for v in value)):
         return "the scales must be a non-empty list of whole numbers above 0"
+    if key == "user_origin" and not (isinstance(value, list) and len(value) == 2 and all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) and abs(v) <= 1e7 for v in value)):
+        return "the user origin is [x, y] in metres"
     if key == "sheet_paper" and value not in PAPERS:
         return f"unknown paper size {value}"
     if key == "length_unit" and value not in UNITS:

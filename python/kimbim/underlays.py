@@ -55,6 +55,7 @@ FIELDS = {  # editable fields and their checks
     "name": str, "storey": str, "x": float, "y": float, "rotation": float, "scale": float, "base": list,
     "page": int, "opacity": float, "greyscale": bool, "tint": str, "visible": bool, "locked": bool,
     "layer": str, "show_3d": bool, "dpi": int, "vector": bool,
+    "clip": list,  # D232: [x1, y1, x2, y2] in drawing units; linework outside is not shown or snapped
 }
 
 _segments_cache: dict = {}  # file name -> (coords float32 (n, 4), colours uint8 (n, 3), origin (2,), info)
@@ -586,8 +587,13 @@ def _field_error(k: str, v) -> str | None:
         if isinstance(v, bool) or not isinstance(v, int) or v < 0:
             return f"{k} must be a whole number"
     elif t is list:
-        if not (isinstance(v, list) and len(v) == 2 and all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v)):
-            return f"{k} must be two numbers"
+        n = 4 if k == "clip" else 2
+        if k == "clip" and v == []:
+            return None  # no clip
+        if not (isinstance(v, list) and len(v) == n and all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v)):
+            return f"{k} must be {'four' if n == 4 else 'two'} numbers"
+        if k == "clip" and (v[2] - v[0] <= 0 or v[3] - v[1] <= 0):
+            return "the clip rectangle needs a positive width and height"
     elif not isinstance(v, t):
         return f"{k} has the wrong type"
     if k == "tint" and v and not re.fullmatch(r"#[0-9a-fA-F]{6}", v):
@@ -780,6 +786,30 @@ def remove_underlay(id: str) -> str:
     return B._dump({"ok": bool(r.get("ok")), "dirty": r.get("dirty"), **({"error": r["error"]} if "error" in r else {})})
 
 
+def clip_segments(coords, colours, origin, clip):
+    """Segments (n, 4: x1 y1 x2 y2 relative to `origin`) clipped to the rectangle `clip` [x1, y1, x2,
+    y2] in drawing units (Liang-Barsky, vectorised); what lies outside is dropped."""
+    c = np.asarray(coords, dtype=float).reshape(-1, 4)
+    if not len(c):
+        return coords, colours
+    ox, oy = float(origin[0]), float(origin[1])
+    xmin, ymin, xmax, ymax = clip[0] - ox, clip[1] - oy, clip[2] - ox, clip[3] - oy
+    x1, y1, dx, dy = c[:, 0], c[:, 1], c[:, 2] - c[:, 0], c[:, 3] - c[:, 1]
+    t0, t1 = np.zeros(len(c)), np.ones(len(c))
+    keep = np.ones(len(c), dtype=bool)
+    for p, q in ((-dx, x1 - xmin), (dx, xmax - x1), (-dy, y1 - ymin), (dy, ymax - y1)):
+        parallel = np.abs(p) < 1e-12
+        keep &= ~(parallel & (q < 0))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            r = np.where(parallel, 0.0, q / np.where(parallel, 1.0, p))
+        entering, leaving = (p < 0) & ~parallel, (p > 0) & ~parallel
+        t0 = np.where(entering, np.maximum(t0, r), t0)
+        t1 = np.where(leaving, np.minimum(t1, r), t1)
+    keep &= t0 <= t1
+    out = np.stack([x1 + t0 * dx, y1 + t0 * dy, x1 + t1 * dx, y1 + t1 * dy], axis=1)[keep]
+    return out.astype(np.float32), np.asarray(colours)[keep]
+
+
 def underlay_lines(id: str):
     """A DXF underlay's linework: (meta JSON, coords float32 LE x1 y1 x2 y2 per segment in drawing units
     relative to meta["origin"], colours uint8 RGB per segment). None when unknown."""
@@ -795,8 +825,10 @@ def underlay_lines(id: str):
             coords, colours, origin, info = _segments(u["file"])
     except Exception as ex:
         return (B._dump({"ok": False, "error": str(ex)}), b"", b"")
+    if u.get("clip"):
+        coords, colours = clip_segments(coords, colours, origin, u["clip"])
     meta = {"ok": True, "count": int(len(coords)), "origin": list(origin), "extents": info["extents"],
-            "skipped": info["skipped"]}
+            "skipped": info["skipped"], "clipped": bool(u.get("clip"))}
     return (B._dump(meta), np.ascontiguousarray(coords, dtype="<f4").tobytes(), np.ascontiguousarray(colours).tobytes())
 
 
@@ -825,6 +857,8 @@ def convert_to_drafting(id: str, options_json: str = "") -> str:
             coords, _colours, origin, _info = _segments(u["file"])
     except Exception as ex:
         return _fail(f"could not read the underlay: {ex}")
+    if u.get("clip"):  # D232: only what the clip shows becomes 2D
+        coords, _colours = clip_segments(coords, _colours, origin, u["clip"])
     limit = 2000
     if len(coords) > limit:
         return _fail(f"the drawing has {len(coords)} segments (the limit is {limit}): convert a smaller area")

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MaterialsDialog.h"
+#include "Units.h"
 
 #include <QCheckBox>
 #include <QColorDialog>
@@ -382,10 +383,8 @@ void MaterialsDialog::buildSurfaces(QWidget* page)
     form->addRow(tr("Texture:"), texRow);
     auto* sizeRow = new QHBoxLayout;
     for (QDoubleSpinBox** box : {&m_sTexW, &m_sTexH}) {
-        *box = new QDoubleSpinBox(page);
+        *box = new LengthSpinBox(page);
         (*box)->setRange(0.01, 100.0);
-        (*box)->setDecimals(3);
-        (*box)->setSuffix(QStringLiteral(" m"));
         (*box)->setValue(1.0);
         sizeRow->addWidget(*box);
         connect(*box, &QDoubleSpinBox::valueChanged, this, &MaterialsDialog::storeSurface);

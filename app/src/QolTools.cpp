@@ -6,12 +6,29 @@
 
 #include "DockLayout.h"
 #include "DrawingView.h"
+#include "LevelsBar.h"
 #include "MainWindow.h"
+#include "MeasureOverlay.h"
 #include "SheetExport.h"
 #include "SheetsPanel.h"
 #include "Snapper.h"
 #include "StatusStrip.h"
+#include "Tracker.h"
+#include "TwoPointTool.h"
+#include "Underlay.h"
+#include "Units.h"
 #include "Viewport.h"
+
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <optional>
 
 #include <QAbstractButton>
 #include <QAction>
@@ -34,6 +51,7 @@
 #include <QPrintPreviewDialog>
 #include <QPrinter>
 #include <QTimer>
+#include <QTableWidget>
 #include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -275,6 +293,16 @@ bool CommandTracker::eventFilter(QObject* watched, QEvent* event)
     return false;
 }
 
+QString faceFromNormal(double nx, double ny, double nz)
+{
+    const double ax = std::abs(nx), ay = std::abs(ny), az = std::abs(nz);
+    if (az >= ax && az >= ay)
+        return nz >= 0 ? QStringLiteral("+z") : QStringLiteral("-z");
+    if (ax >= ay)
+        return nx >= 0 ? QStringLiteral("+x") : QStringLiteral("-x");
+    return ny >= 0 ? QStringLiteral("+y") : QStringLiteral("-y");
+}
+
 QString dropKind(const QString& path)
 {
     const QFileInfo info(path);
@@ -376,10 +404,26 @@ void MainWindow::buildQolTools()
         m_orthoLock = on;
         m_status->showMessage(on ? tr("Ortho on") : tr("Ortho off"), 2000);
     });
+    // The user origin: typed absolute x, y are measured from it (a project setting).
+    auto* setOrigin = new QAction(tr("Set user &origin"), this);
+    setOrigin->setObjectName(QStringLiteral("actionSetUserOrigin"));
+    setOrigin->setToolTip(tr("Click the point that typed absolute x, y are measured from"));
+    connect(setOrigin, &QAction::triggered, this, [this] {
+        pickPoints(1, false, {tr("User origin: click the point typed x, y are measured from (Esc cancels)")},
+            [this](const QVector<QPointF>& p, const QString&) { setUserOrigin(p.at(0)); });
+    });
+    auto* resetOrigin = new QAction(tr("Reset user origin"), this);
+    resetOrigin->setObjectName(QStringLiteral("actionResetUserOrigin"));
+    connect(resetOrigin, &QAction::triggered, this, [this] { setUserOrigin(QPointF()); });
     if (m_viewMenu) {
         m_viewMenu->addSeparator();
         m_viewMenu->addAction(m_objectSnaps);
         m_viewMenu->addAction(m_orthoAction);
+        m_viewMenu->addAction(setOrigin);
+        m_viewMenu->addAction(resetOrigin);
+    } else {
+        addAction(setOrigin);
+        addAction(resetOrigin);
     }
     m_status->addToggle(m_objectSnaps);
     m_status->addToggle(m_orthoAction);
@@ -389,6 +433,25 @@ void MainWindow::buildQolTools()
     print->setShortcut(QKeySequence::Print);
     print->setToolTip(tr("Print the open or selected sheet, with a preview"));
     connect(print, &QAction::triggered, this, &MainWindow::printSheetDialog);
+    // Clip a DXF/DWG/vector-PDF underlay to a clicked rectangle (D232), next to File > Underlays.
+    auto* clip = new QAction(tr("C&lip underlay..."), this);
+    clip->setObjectName(QStringLiteral("actionClipUnderlay"));
+    clip->setToolTip(tr("Show and snap to only the part of an underlay inside a clicked rectangle"));
+    connect(clip, &QAction::triggered, this, [this] { clipUnderlayCommand(false); });
+    auto* unclip = new QAction(tr("Clear underlay clip..."), this);
+    unclip->setObjectName(QStringLiteral("actionClearUnderlayClip"));
+    connect(unclip, &QAction::triggered, this, [this] { clipUnderlayCommand(true); });
+    QAction* underlays = findChild<QAction*>(QStringLiteral("actionUnderlays"));
+    if (auto* fileMenu = underlays ? qobject_cast<QMenu*>(underlays->parent()) : nullptr) {
+        const QList<QAction*> acts = fileMenu->actions();
+        const int at = int(acts.indexOf(underlays));
+        QAction* before = at >= 0 && at + 1 < acts.size() ? acts.at(at + 1) : nullptr;
+        fileMenu->insertAction(before, clip);
+        fileMenu->insertAction(before, unclip);
+    } else {
+        addAction(clip);
+        addAction(unclip);
+    }
     QAction* pdf = findChild<QAction*>(QStringLiteral("actionExportSheetPdf"));
     if (auto* file = pdf ? qobject_cast<QMenu*>(pdf->parent()) : nullptr)
         file->insertAction(pdf, print);
@@ -407,7 +470,535 @@ void MainWindow::buildQolTools()
         });
         connect(v, &Viewport::nudgeRequested, this, [this](int dx, int dy, bool coarse) { nudgeSelection(dx, dy, coarse); });
     });
+    connectPickSignals();
     setAcceptDrops(true);
+    buildFinishAndMepCommands();
+    groupModelMenu();
+}
+
+void MainWindow::setUserOrigin(QPointF origin)
+{
+    Tracker::setUserOrigin(origin);
+    setProjectSettings({{"user_origin", QJsonArray{origin.x(), origin.y()}}});
+    m_status->showMessage(origin.isNull() ? tr("User origin reset to the project origin")
+                                          : tr("User origin at %1, %2").arg(formatLength(origin.x()), formatLength(origin.y())), 3000);
+}
+
+void MainWindow::buildFinishAndMepCommands()
+{
+    QMenu* model = nullptr;
+    for (QAction* top : m_menuBar->actions())
+        if (top->menu() && top->menu()->title() == tr("&Model"))
+            model = top->menu();
+    auto add = [&](const QString& text, const char* name, const QString& tip, auto&& run) {
+        auto* a = model ? model->addAction(text) : new QAction(text, this);
+        if (!model)
+            addAction(a);
+        a->setObjectName(QLatin1String(name));
+        a->setToolTip(tip);
+        connect(a, &QAction::triggered, this, run);
+        return a;
+    };
+    add(tr("&Floor finish..."), "actionFloorFinish", tr("A floor finish over each selected room"),
+        [this] { finishCommand(QStringLiteral("floor")); });
+    add(tr("S&kirting..."), "actionSkirting", tr("A skirting just inside the walls of each selected room"),
+        [this] { finishCommand(QStringLiteral("skirting")); });
+    add(tr("Wall &finish..."), "actionWallFinish", tr("Plaster or tiles on the walls of each selected room"),
+        [this] { finishCommand(QStringLiteral("wall")); });
+    add(tr("S&haft..."), "actionShaft", tr("Cut a rectangle through every slab from this level up to another"),
+        [this] { shaftCommand(); });
+    add(tr("&Duct..."), "actionDuct", tr("Draw a straight duct run: click its points, Esc ends"),
+        [this] { mepCommand(QStringLiteral("duct")); });
+    add(tr("&Pipe..."), "actionPipe", tr("Draw a straight pipe run: click its points, Esc ends"),
+        [this] { mepCommand(QStringLiteral("pipe")); });
+    add(tr("Cable &tray..."), "actionCableTray", tr("Draw a straight cable-tray run: click its points, Esc ends"),
+        [this] { mepCommand(QStringLiteral("cable_tray")); });
+    add(tr("&Kerb..."), "actionKerb", tr("A kerb along a path: click its points, Enter finishes"), [this] {
+        pickPoints(-2, false, {tr("Kerb: click where it starts"), tr("Kerb: click the next point; Enter finishes, Esc cancels")},
+            [this](const QVector<QPointF>& p, const QString&) {
+                QJsonArray points;
+                for (const QPointF& q : p)
+                    points.append(QJsonArray{q.x(), q.y()});
+                const QJsonObject r = bridge("create_kerb", {m_levels->activeStorey(),
+                    QString::fromUtf8(QJsonDocument(points).toJson(QJsonDocument::Compact)), QStringLiteral("0.15"),
+                    QStringLiteral("0.15")});
+                if (!r.value("ok").toBool()) {
+                    showError(tr("Kerb"), r.value("error").toString());
+                    return;
+                }
+                m_pendingLabel = tr("Kerb");
+                afterEdit(r);
+                m_pendingLabel.clear();
+            });
+    });
+    add(tr("&Planting area..."), "actionPlantingArea", tr("A planting bed: click its outline, Enter closes it"), [this] {
+        QString planting;
+        if (!m_quiet) {
+            bool ok = false;
+            planting = QInputDialog::getText(this, tr("Planting area"), tr("Planting (species or mix):"), QLineEdit::Normal,
+                QString(), &ok);
+            if (!ok)
+                return;
+        }
+        pickPoints(-3, false, {tr("Planting area: click the first corner"), tr("Planting area: click the next corner; Enter closes it")},
+            [this, planting](const QVector<QPointF>& p, const QString&) {
+                QJsonArray points;
+                for (const QPointF& q : p)
+                    points.append(QJsonArray{q.x(), q.y()});
+                const QJsonObject r = bridge("create_planting_area", {m_levels->activeStorey(),
+                    QString::fromUtf8(QJsonDocument(points).toJson(QJsonDocument::Compact)), QStringLiteral("0.3"), planting});
+                if (!r.value("ok").toBool()) {
+                    showError(tr("Planting area"), r.value("error").toString());
+                    return;
+                }
+                m_pendingLabel = tr("Planting area");
+                afterEdit(r);
+                m_pendingLabel.clear();
+            });
+    });
+    add(tr("Terrain from &clicked points..."), "actionTerrainPoints",
+        tr("Click survey points in the view, then type each one's height"), [this] {
+            pickPoints(-3, false, {tr("Terrain: click the first survey point"),
+                                      tr("Terrain: click the next survey point; Enter when done (at least 3)")},
+                [this](const QVector<QPointF>& p, const QString&) { terrainHeightsDialog(p); });
+        });
+    add(tr("&Handrail on wall..."), "actionWallHandrail", tr("A handrail fixed to a face of each selected wall"), [this] {
+        if (m_selection.isEmpty()) {
+            m_status->showMessage(tr("Select one or more walls first"));
+            return;
+        }
+        QString side = QStringLiteral("left");
+        if (!m_quiet) {
+            bool ok = false;
+            const QStringList sides{tr("Left of the wall's direction"), tr("Right of the wall's direction")};
+            const QString chosen = QInputDialog::getItem(this, tr("Handrail on wall"), tr("Face:"), sides, 0, false, &ok);
+            if (!ok)
+                return;
+            side = sides.indexOf(chosen) == 1 ? QStringLiteral("right") : QStringLiteral("left");
+        }
+        int made = 0;
+        for (const QString& wall : m_selection) {
+            const QJsonObject r = bridge("wall_handrail", {wall, side, QStringLiteral("0.9")});
+            if (r.value("ok").toBool()) {
+                afterEdit(r);
+                ++made;
+            } else if (m_selection.size() == 1) {
+                showError(tr("Handrail on wall"), r.value("error").toString());
+            }
+        }
+        if (made)
+            m_status->showMessage(tr("%n handrail(s) added", nullptr, made));
+    });
+    add(tr("&Area label..."), "actionAreaLabel", tr("Click an outline: its area goes in a label at its middle"), [this] {
+        pickPoints(-3, false, {tr("Area label: click the first corner"), tr("Area label: click the next corner; Enter places the label")},
+            [this](const QVector<QPointF>& p, const QString&) {
+                double twice = 0.0, cx = 0.0, cy = 0.0;
+                for (int i = 0; i < p.size(); ++i) {
+                    const QPointF a = p.at(i), b = p.at((i + 1) % p.size());
+                    const double cross = a.x() * b.y() - b.x() * a.y();
+                    twice += cross;
+                    cx += (a.x() + b.x()) * cross;
+                    cy += (a.y() + b.y()) * cross;
+                }
+                if (std::abs(twice) < 1e-9) {
+                    m_status->showMessage(tr("Area label: the outline has no area"));
+                    return;
+                }
+                const QPointF centre(cx / (3 * twice), cy / (3 * twice));
+                m_pendingLabel = tr("Area label");
+                addAnnotation(QStringLiteral("text"), {centre}, formatArea(std::abs(twice) / 2));
+                m_pendingLabel.clear();
+            });
+    });
+    add(tr("&Beam system..."), "actionBeamSystem", tr("Joists or rafters at a spacing across an area: click two corners"),
+        [this] { beamSystemCommand(); });
+    add(tr("&Lintels"), "actionLintels", tr("A lintel over each selected door, window or wall opening"), [this] {
+        const QJsonObject r = bridge("add_lintels",
+            {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact)),
+                QStringLiteral("0.15"), QStringLiteral("0.2")});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Lintels"), r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(tr("%n lintel(s) added", nullptr, int(r.value("guids").toArray().size())));
+    });
+    add(tr("&Interior elevations"), "actionInteriorElevations",
+        tr("An elevation of each wall of the selected room, seen from inside it"), [this] {
+            if (m_selection.size() != 1) {
+                m_status->showMessage(tr("Select one room first"));
+                return;
+            }
+            const QJsonObject r = bridge("interior_elevations", {m_selection.first(), QStringLiteral("0.5")});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Interior elevations"), r.value("error").toString());
+                return;
+            }
+            afterEdit(r);
+            m_status->showMessage(tr("%n interior elevation(s) added to the Drawings panel", nullptr,
+                int(r.value("guids").toArray().size())));
+        });
+}
+
+void MainWindow::clipUnderlayCommand(bool clear)
+{
+    QVector<Underlay> lineworks;
+    QStringList names;
+    for (const auto& v : bridge("underlays").value("underlays").toArray()) {
+        const Underlay u = Underlay::fromJson(v.toObject());
+        if (!u.isRaster() && (!clear || !u.clip.isNull())) {
+            lineworks << u;
+            names << u.name;
+        }
+    }
+    if (lineworks.isEmpty()) {
+        m_status->showMessage(clear ? tr("No underlay is clipped") : tr("No DXF, DWG or vector-PDF underlay to clip"));
+        return;
+    }
+    int index = 0;
+    if (!m_quiet && lineworks.size() > 1) {
+        bool ok = false;
+        const QString name = QInputDialog::getItem(this, clear ? tr("Clear underlay clip") : tr("Clip underlay"),
+            tr("Underlay:"), names, 0, false, &ok);
+        if (!ok)
+            return;
+        index = int(names.indexOf(name));
+    }
+    const Underlay u = lineworks.at(index);
+    auto apply = [this, u](const QJsonArray& clip) {
+        const QJsonObject r = bridge("set_underlay", {u.id,
+            QString::fromUtf8(QJsonDocument(QJsonObject{{"clip", clip}}).toJson(QJsonDocument::Compact))});
+        if (!r.value("ok").toBool()) {
+            showError(tr("Clip underlay"), r.value("error").toString());
+            return;
+        }
+        refreshUnderlays();
+        m_status->showMessage(clip.isEmpty() ? tr("Underlay %1 shown whole again").arg(u.name)
+                                             : tr("Underlay %1 clipped").arg(u.name), 3000);
+    };
+    if (clear) {
+        apply(QJsonArray());
+        return;
+    }
+    pickPoints(2, true, {tr("Clip underlay: click a corner of what to keep"), tr("Clip underlay: click the opposite corner (Esc cancels)")},
+        [u, apply](const QVector<QPointF>& p, const QString&) {
+            // the clicked rectangle in the drawing's own units (it may be turned on the level)
+            QRectF box;
+            for (const QPointF& c : {p.at(0), QPointF(p.at(1).x(), p.at(0).y()), p.at(1), QPointF(p.at(0).x(), p.at(1).y())}) {
+                const QPointF d = u.placement.toDrawing(c);
+                box = box.isNull() ? QRectF(d, QSizeF(0, 0)) : box.united(QRectF(d, QSizeF(0, 0)));
+            }
+            if (box.width() <= 0 || box.height() <= 0)
+                return;
+            apply(QJsonArray{box.left(), box.top(), box.right(), box.bottom()});
+        });
+}
+
+void MainWindow::terrainHeightsDialog(const QVector<QPointF>& points)
+{
+    // Each clicked point with its height (absolute metres); quiet mode keeps the level's height.
+    const double level = m_levels->activeElevation();
+    QVector<double> heights(points.size(), level);
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Terrain heights"));
+        auto* layout = new QVBoxLayout(&dialog);
+        layout->addWidget(new QLabel(tr("The height of each survey point above the project zero:"), &dialog));
+        auto* table = new QTableWidget(int(points.size()), 3, &dialog);
+        table->setHorizontalHeaderLabels({tr("X"), tr("Y"), tr("Height")});
+        QVector<LengthSpinBox*> boxes;
+        for (int i = 0; i < points.size(); ++i) {
+            for (int c = 0; c < 2; ++c) {
+                auto* item = new QTableWidgetItem(formatLength(c == 0 ? points.at(i).x() : points.at(i).y()));
+                item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+                table->setItem(i, c, item);
+            }
+            auto* box = new LengthSpinBox(table);
+            box->setRange(-10000.0, 10000.0);
+            box->setValue(level);
+            table->setCellWidget(i, 2, box);
+            boxes << box;
+        }
+        layout->addWidget(table);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        layout->addWidget(buttons);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        for (int i = 0; i < boxes.size(); ++i)
+            heights[i] = boxes.at(i)->value();
+    }
+    QJsonArray survey;
+    for (int i = 0; i < points.size(); ++i)
+        survey.append(QJsonArray{points.at(i).x(), points.at(i).y(), heights.at(i)});
+    const QJsonObject r = bridge("create_terrain", {m_levels->activeStorey(),
+        QString::fromUtf8(QJsonDocument(survey).toJson(QJsonDocument::Compact)), QString()});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Terrain"), r.value("error").toString());
+        return;
+    }
+    m_pendingLabel = tr("Terrain");
+    afterEdit(r);
+    m_pendingLabel.clear();
+    m_status->showMessage(tr("Terrain made from %n point(s)", nullptr, int(points.size())));
+}
+
+void MainWindow::beamSystemCommand()
+{
+    QStringList names, guids;
+    for (const auto& v : bridge("beam_types").value("types").toArray()) {
+        names << v.toObject().value("name").toString();
+        guids << v.toObject().value("guid").toString();
+    }
+    if (guids.isEmpty()) {
+        m_status->showMessage(tr("There is no beam type yet"));
+        return;
+    }
+    int type = 0;
+    double spacing = 0.4, angle = 0.0;
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Beam system"));
+        auto* form = new QFormLayout(&dialog);
+        auto* kind = new QComboBox(&dialog);
+        kind->addItems(names);
+        auto* gap = new LengthSpinBox(&dialog);
+        gap->setRange(0.1, 20.0);
+        gap->setValue(spacing);
+        auto* turn = new QDoubleSpinBox(&dialog);
+        turn->setRange(-180, 180);
+        turn->setSuffix(tr(" degrees"));
+        form->addRow(tr("Beam type:"), kind);
+        form->addRow(tr("Spacing:"), gap);
+        form->addRow(tr("Direction from +X:"), turn);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        type = kind->currentIndex();
+        spacing = gap->value();
+        angle = turn->value();
+    }
+    const QString typeGuid = guids.at(type);
+    pickPoints(2, true, {tr("Beam system: click a corner of the area"), tr("Beam system: click the opposite corner (Esc cancels)")},
+        [this, typeGuid, spacing, angle](const QVector<QPointF>& p, const QString&) {
+            const QPointF a = p.at(0), b = p.at(1);
+            const QJsonArray outline{QJsonArray{a.x(), a.y()}, QJsonArray{b.x(), a.y()}, QJsonArray{b.x(), b.y()},
+                QJsonArray{a.x(), b.y()}};
+            const QJsonObject r = bridge("create_beam_system", {m_levels->activeStorey(), typeGuid,
+                QString::fromUtf8(QJsonDocument(outline).toJson(QJsonDocument::Compact)), QString::number(spacing, 'g', 17),
+                QString::number(angle, 'g', 17), QString()});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Beam system"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Beam system");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            m_status->showMessage(tr("%n beam(s) added", nullptr, r.value("count").toInt()));
+        });
+}
+
+void MainWindow::finishCommand(const QString& kind)
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select one or more rooms first"));
+        return;
+    }
+    QString thickness, height;
+    if (!m_quiet) {
+        bool ok = false;
+        const double t = askLength(this, tr("Finish"), tr("Thickness:"), kind == QLatin1String("floor") ? 0.02 : 0.015,
+            0.001, 0.5, &ok);
+        if (!ok)
+            return;
+        thickness = QString::number(t, 'g', 17);
+        if (kind == QLatin1String("skirting")) {
+            const double h = askLength(this, tr("Skirting"), tr("Height:"), 0.1, 0.01, 1.0, &ok);
+            if (!ok)
+                return;
+            height = QString::number(h, 'g', 17);
+        }
+    }
+    const QJsonObject r = bridge("finish_rooms",
+        {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact)), kind,
+            thickness, height});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Finish"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    const int failed = int(r.value("failed").toArray().size());
+    m_status->showMessage(failed ? tr("%n finish(es) made; some of the selection are not rooms", nullptr,
+                                       int(r.value("guids").toArray().size()))
+                                 : tr("%n finish(es) made", nullptr, int(r.value("guids").toArray().size())));
+}
+
+void MainWindow::shaftCommand()
+{
+    pickPoints(2, true, {tr("Shaft: click a corner"), tr("Shaft: click the opposite corner (Esc cancels)")},
+        [this](const QVector<QPointF>& p, const QString&) {
+            const QPointF a = p.at(0), b = p.at(1);
+            if (std::abs(b.x() - a.x()) < 0.01 || std::abs(b.y() - a.y()) < 0.01) {
+                m_status->showMessage(tr("Shaft: the corners must differ in X and Y"));
+                return;
+            }
+            const QString bottom = m_levels->activeStorey();
+            double base = m_levels->activeElevation();
+            QStringList names, guids;
+            for (const auto& v : bridge("storeys").value("storeys").toArray()) {
+                const QJsonObject s = v.toObject();
+                if (s.value("model").toBool() || s.value("elevation").toDouble() < base - 1e-6)
+                    continue;
+                names << s.value("name").toString();
+                guids << s.value("guid").toString();
+            }
+            if (guids.isEmpty())
+                return;
+            int index = int(guids.size()) - 1; // up to the top by default
+            if (!m_quiet && guids.size() > 1) {
+                bool ok = false;
+                const QString name = QInputDialog::getItem(this, tr("Shaft"), tr("Up to level:"), names, index, false, &ok);
+                if (!ok)
+                    return;
+                index = int(names.indexOf(name));
+            }
+            const QJsonArray outline{QJsonArray{a.x(), a.y()}, QJsonArray{b.x(), a.y()}, QJsonArray{b.x(), b.y()},
+                QJsonArray{a.x(), b.y()}};
+            const QJsonObject r = bridge("create_shaft", {QString::fromUtf8(QJsonDocument(outline).toJson(QJsonDocument::Compact)),
+                bottom, guids.at(index)});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Shaft"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Shaft");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            m_status->showMessage(tr("Shaft cut through %n slab(s)", nullptr, int(r.value("slabs").toArray().size())));
+        });
+}
+
+void MainWindow::mepCommand(const QString& kind)
+{
+    double width = kind == QLatin1String("pipe") ? 0.1 : 0.4, height = 0.25, elevation = 2.6;
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(kind == QLatin1String("duct") ? tr("Duct") : kind == QLatin1String("pipe") ? tr("Pipe") : tr("Cable tray"));
+        auto* form = new QFormLayout(&dialog);
+        auto box = [&](double value) {
+            auto* b = new LengthSpinBox(&dialog);
+            b->setRange(0.005, 50.0);
+            b->setValue(value);
+            return b;
+        };
+        auto* w = box(width);
+        auto* h = box(height);
+        auto* e = box(elevation);
+        form->addRow(kind == QLatin1String("pipe") ? tr("Diameter:") : tr("Width:"), w);
+        if (kind != QLatin1String("pipe"))
+            form->addRow(tr("Height:"), h);
+        form->addRow(tr("Centreline above the level:"), e);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        width = w->value();
+        height = h->value();
+        elevation = e->value();
+    }
+    // One segment per pair of clicks; the next starts where the last ended, until Esc.
+    // The pick holds the continuation while it waits; the continuation only holds itself weakly.
+    auto next = std::make_shared<std::function<void(std::optional<QPointF>)>>();
+    const std::weak_ptr<std::function<void(std::optional<QPointF>)>> weak = next;
+    *next = [this, kind, width, height, elevation, weak](std::optional<QPointF> start) {
+        const auto self = weak.lock();
+        if (!self)
+            return;
+        pickPoints(2, false, {tr("Click where the run starts"), tr("Click where this segment ends (Esc ends the run)")},
+            [this, kind, width, height, elevation, self](const QVector<QPointF>& p, const QString&) {
+                auto num = [](double v) { return QString::number(v, 'g', 17); };
+                const QJsonObject r = bridge("create_mep_segment", {m_levels->activeStorey(), kind, num(p.at(0).x()),
+                    num(p.at(0).y()), num(p.at(1).x()), num(p.at(1).y()), num(elevation), num(width), num(height)});
+                if (!r.value("ok").toBool()) {
+                    showError(tr("MEP run"), r.value("error").toString());
+                    return;
+                }
+                m_pendingLabel = kind == QLatin1String("duct") ? tr("Duct") : kind == QLatin1String("pipe") ? tr("Pipe") : tr("Cable tray");
+                afterEdit(r);
+                m_pendingLabel.clear();
+                (*self)(p.at(1));
+            });
+        if (start && m_pick)
+            m_pick->points = {*start};
+    };
+    (*next)(std::nullopt);
+}
+
+// The Model menu had grown to some sixty commands in one list: group them by what they work on.
+// Tools and anything not listed here stay at the top; actions keep their object names (shortcuts,
+// tests and the command search find them wherever they are).
+void MainWindow::groupModelMenu()
+{
+    QMenu* model = nullptr;
+    for (QAction* top : m_menuBar->actions())
+        if (top->menu() && top->menu()->title() == tr("&Model"))
+            model = top->menu();
+    if (!model)
+        return;
+    struct Group {
+        QString title;
+        const char* name;
+        QStringList actions;
+    };
+    const QList<Group> groups{
+        {tr("&Walls, slabs and openings"), "modelMenuElements",
+            {"actionWallHeight", "actionFlipWalls", "actionSaveWallProfile", "actionTrimToRoof", "actionReleaseFromRoof",
+                "actionSlabFromWalls", "actionAddSlabEdge", "actionSlabSlope", "actionCeiling", "actionWallOpening",
+                "actionOpeningSize", "actionSkylight", "actionCornerWindow", "actionCurtainWallSettings",
+                "actionGridSystem", "actionShaft", "actionBeamSystem", "actionLintels", "actionWallHandrail"}},
+        {tr("&Finishes"), "modelMenuFinishes", {"actionFloorFinish", "actionSkirting", "actionWallFinish"}},
+        {tr("&MEP"), "modelMenuMep", {"actionDuct", "actionPipe", "actionCableTray"}},
+        {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts"}},
+        {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionPlantingArea"}},
+        {tr("&Annotation and 2D"), "modelMenuAnnotation",
+            {"actionTagAll", "actionInteriorElevations", "actionAreaLabel", "actionAutoDimension", "actionOverallDimension", "actionGridDimension", "actionKeynotes",
+                "actionFillFromShape", "actionMake2DBlock", "actionInsert2DBlock"}},
+        {tr("&Types, models and library"), "modelMenuTypes",
+            {"actionTypeManager", "actionPurgeTypes", "actionClassifications", "actionUpdateModelInstances",
+                "actionExplodeInstance", "actionUpdateLibraryObjects", "actionCustomiseObjectCopy"}},
+        {tr("&Links"), "modelMenuLinks", {"actionLinks", "actionMeshLink"}},
+        {tr("A&nalysis and checking"), "modelMenuAnalysis",
+            {"actionCheckModel", "actionIssues", "actionEnergyReport", "actionAnalyticalModel", "actionCostEstimate",
+                "actionConstructionSequence", "actionAIVisualiser"}},
+    };
+    model->addSeparator();
+    for (const Group& g : groups) {
+        QMenu* sub = nullptr;
+        for (const QString& name : g.actions) {
+            QAction* a = findChild<QAction*>(name);
+            if (!a || !model->actions().contains(a))
+                continue;
+            if (!sub) {
+                sub = model->addMenu(g.title);
+                sub->setObjectName(QLatin1String(g.name));
+            }
+            model->removeAction(a);
+            sub->addAction(a);
+        }
+    }
+    // separators left back to back by the moves
+    QAction* previous = nullptr;
+    for (QAction* a : model->actions()) {
+        if (a->isSeparator() && (!previous || previous->isSeparator()))
+            model->removeAction(a);
+        else
+            previous = a;
+    }
 }
 
 QMenu* MainWindow::buildViewContextMenu()
@@ -463,17 +1054,17 @@ void MainWindow::noteCommand(QAction* action)
     m_pendingLabel = m_pendingLabel.trimmed();
     // The label is for the edit this command makes, even after its dialog: it is dropped when the
     // event loop is back with no dialog open.
-    auto clear = std::make_shared<std::function<void()>>();
-    *clear = [this, clear, token = ++m_pendingToken] {
-        if (token != m_pendingToken)
-            return;
-        if (QApplication::activeModalWidget()) {
-            QTimer::singleShot(50, this, *clear);
-            return;
-        }
-        m_pendingLabel.clear();
-    };
-    QTimer::singleShot(0, this, *clear);
+    if (!m_pendingTimer) {
+        m_pendingTimer = new QTimer(this);
+        m_pendingTimer->setSingleShot(true);
+        connect(m_pendingTimer, &QTimer::timeout, this, [this] {
+            if (QApplication::activeModalWidget())
+                m_pendingTimer->start(50); // still in the command's dialog
+            else
+                m_pendingLabel.clear();
+        });
+    }
+    m_pendingTimer->start(0);
 }
 
 void MainWindow::runCommand(QAction* action)
@@ -612,6 +1203,328 @@ void MainWindow::printSheetDialog()
     preview.setWindowTitle(tr("Print sheet %1").arg(number));
     connect(&preview, &QPrintPreviewDialog::paintRequested, this, [this, number](QPrinter* p) { printSheet(number, p); });
     preview.exec();
+}
+
+// ---------------------------------------------------------------- clicking points instead of typing them
+
+void MainWindow::pickPoints(int count, bool rectangle, const QStringList& hints, PointPick::Done done)
+{
+    setTool(Tool::None);
+    m_pick = std::make_shared<PointPick>();
+    m_pick->count = rectangle ? 2 : count < 0 ? 0 : std::max(1, count);
+    m_pick->minimum = count < 0 ? -count : m_pick->count;
+    m_pick->rectangle = rectangle;
+    m_pick->hints = hints;
+    m_pick->done = std::move(done);
+    Snapper& s = m_pick->snapper;
+    s.setWalls(m_twoPointTool->snapper().walls());
+    s.setGridLines(m_twoPointTool->snapper().gridLines());
+    s.setPoints(m_twoPointTool->snapper().points());
+    s.setUnderlays(m_underlaySnap);
+    m_viewport->setDrawingMode(true, m_levels->activeElevation());
+    m_viewport->setFocus();
+    m_status->showMessage(hints.value(0));
+}
+
+void MainWindow::cancelPick()
+{
+    if (!m_pick)
+        return;
+    m_pick.reset();
+    m_viewport->setToolOverlay({});
+    m_viewport->setDrawingMode(false);
+    m_status->showMessage(tr("Cancelled"), 2000);
+}
+
+void MainWindow::pickPointMoved(QPointF p, double tolerance, Qt::KeyboardModifiers mods)
+{
+    if (!m_pick)
+        return;
+    const bool ortho = bool(mods & Qt::ShiftModifier) != m_orthoLock;
+    const QPointF* from = m_pick->points.isEmpty() ? nullptr : &m_pick->points.last();
+    const QPointF q = m_pick->snapper.snap(p, tolerance, from, ortho).point;
+    const double z = m_levels->activeElevation();
+    QVector<MeasurePoint> path;
+    QString label;
+    if (m_pick->rectangle && !m_pick->points.isEmpty()) {
+        const QPointF a = m_pick->points.first();
+        for (const QPointF& c : {a, QPointF(q.x(), a.y()), q, QPointF(a.x(), q.y()), a})
+            path.push_back({c.x(), c.y(), z});
+        label = formatLength(std::abs(q.x() - a.x())) + QStringLiteral(" × ") + formatLength(std::abs(q.y() - a.y()));
+    } else {
+        for (const QPointF& c : m_pick->points)
+            path.push_back({c.x(), c.y(), z});
+        path.push_back({q.x(), q.y(), z});
+    }
+    m_viewport->setToolOverlay(new MeasureOverlay(path, label));
+    m_status->showMessage(m_pick->hints.value(std::min(int(m_pick->points.size()), int(m_pick->hints.size()) - 1)));
+}
+
+void MainWindow::pickPointAt(QPointF p, double tolerance, Qt::KeyboardModifiers mods)
+{
+    if (!m_pick)
+        return;
+    const bool ortho = bool(mods & Qt::ShiftModifier) != m_orthoLock;
+    const QPointF* from = m_pick->points.isEmpty() ? nullptr : &m_pick->points.last();
+    const Snap s = m_pick->snapper.snap(p, tolerance, from, ortho);
+    m_pick->points.push_back(s.point);
+    m_pick->wall = s.wallGuid;
+    if (m_pick->count == 0 || m_pick->points.size() < m_pick->count) {
+        m_status->showMessage(m_pick->hints.value(std::min(int(m_pick->points.size()), int(m_pick->hints.size()) - 1)));
+        return;
+    }
+    finishPick();
+}
+
+void MainWindow::finishPick()
+{
+    if (!m_pick || m_pick->points.size() < m_pick->minimum)
+        return;
+    const std::shared_ptr<PointPick> pick = std::move(m_pick);
+    m_viewport->setToolOverlay({});
+    m_viewport->setDrawingMode(false);
+    pick->done(pick->points, pick->wall);
+}
+
+void MainWindow::massingBoxCommand()
+{
+    bool ok = true;
+    const double height = m_quiet ? 12.0 : askLength(this, tr("Massing box"), tr("Height of the box:"), 12.0, 0.1, 1000.0, &ok);
+    if (!ok)
+        return;
+    pickPoints(2, true, {tr("Massing box: click a corner"), tr("Massing box: click the opposite corner (Esc cancels)")},
+        [this, height](const QVector<QPointF>& p, const QString&) {
+            const QPointF a = p.at(0), b = p.at(1);
+            const double w = std::abs(b.x() - a.x()), d = std::abs(b.y() - a.y());
+            if (w < 0.01 || d < 0.01) {
+                m_status->showMessage(tr("Massing box: the corners must differ in X and Y"));
+                return;
+            }
+            auto num = [](double v) { return QString::number(v, 'g', 17); };
+            const QJsonObject r = bridge("create_massing", {m_levels->activeStorey(), num((a.x() + b.x()) / 2),
+                num((a.y() + b.y()) / 2), num(w), num(d), num(height), tr("Massing")});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Massing box"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Massing box");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            m_viewport->selectGuids({r.value("guid").toString()});
+            setSelection({r.value("guid").toString()});
+            m_status->showMessage(tr("Massing box added"));
+        });
+}
+
+void MainWindow::insertBlockCommand()
+{
+    QStringList names;
+    for (const auto& v : bridge("blocks").value("blocks").toArray())
+        names << v.toObject().value("name").toString();
+    if (names.isEmpty()) {
+        m_status->showMessage(tr("No 2D blocks yet: save one with Create 2D block"));
+        return;
+    }
+    bool ok = true;
+    const QString name = m_quiet || names.size() == 1 ? names.first()
+        : QInputDialog::getItem(this, tr("Insert 2D block"), tr("Block:"), names, 0, false, &ok);
+    if (!ok || name.isEmpty())
+        return;
+    pickPoints(1, false, {tr("Insert 2D block \"%1\": click where it goes (Esc cancels)").arg(name)},
+        [this, name](const QVector<QPointF>& p, const QString&) {
+            const QJsonObject r = bridge("insert_block", {name, m_levels->activeStorey(),
+                QString::number(p.at(0).x(), 'g', 17), QString::number(p.at(0).y(), 'g', 17), QStringLiteral("0"),
+                QStringLiteral("1")});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Insert 2D block"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Insert 2D block");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            QStringList inserted;
+            for (const auto& v : r.value("guids").toArray())
+                inserted << v.toString();
+            m_viewport->selectGuids(inserted);
+            setSelection(inserted);
+            m_status->showMessage(tr("2D block \"%1\" inserted").arg(name));
+        });
+}
+
+void MainWindow::skylightCommand()
+{
+    if (m_selection.size() != 1) {
+        m_status->showMessage(tr("Select one slab first: the skylight goes in it"));
+        return;
+    }
+    const QString slab = m_selection.first();
+    double width = 1.2, depth = 1.2;
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Skylight"));
+        auto* form = new QFormLayout(&dialog);
+        auto spin = [&](double value) {
+            auto* box = new LengthSpinBox(&dialog);
+            box->setRange(0.1, 50.0);
+            box->setValue(value);
+            return box;
+        };
+        auto* w = spin(width);
+        auto* d = spin(depth);
+        form->addRow(tr("Width:"), w);
+        form->addRow(tr("Depth:"), d);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        width = w->value();
+        depth = d->value();
+    }
+    pickPoints(1, false, {tr("Skylight: click its centre in the slab (Esc cancels)")},
+        [this, slab, width, depth](const QVector<QPointF>& p, const QString&) {
+            auto num = [](double v) { return QString::number(v, 'g', 17); };
+            const QJsonObject r = bridge("create_skylight", {slab, num(p.at(0).x() - width / 2),
+                num(p.at(0).y() - depth / 2), num(width), num(depth), QString()});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Skylight"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Skylight");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            m_viewport->selectGuids({r.value("guid").toString()});
+            setSelection({r.value("guid").toString()});
+            m_status->showMessage(tr("Skylight added"));
+        });
+}
+
+void MainWindow::wallOpeningDialog()
+{
+    double width = 0.9, height = 2.1, sill = 0.0;
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Wall opening"));
+        auto* form = new QFormLayout(&dialog);
+        auto box = [&](double lo, double value) {
+            auto* b = new LengthSpinBox(&dialog);
+            b->setRange(lo, 100.0);
+            b->setValue(value);
+            return b;
+        };
+        auto* w = box(0.01, width);
+        auto* h = box(0.01, height);
+        auto* s = box(0.0, sill);
+        form->addRow(tr("Width:"), w);
+        form->addRow(tr("Height:"), h);
+        form->addRow(tr("Sill above the base:"), s);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        width = w->value();
+        height = h->value();
+        sill = s->value();
+    }
+    pickPoints(1, false, {tr("Wall opening: click its centre on a wall (Esc cancels)")},
+        [this, width, height, sill](const QVector<QPointF>& p, const QString& wallGuid) {
+            QString wall = wallGuid;
+            if (wall.isEmpty() && m_selection.size() == 1)
+                wall = m_selection.first();
+            const QVector<SnapWall> walls = m_twoPointTool->snapper().walls();
+            const auto it = std::find_if(walls.begin(), walls.end(), [&](const SnapWall& w) { return w.guid == wall; });
+            if (it == walls.end()) {
+                m_status->showMessage(tr("Wall opening: click on a wall"));
+                return;
+            }
+            const QPointF axis = it->b - it->a;
+            const double length = std::hypot(axis.x(), axis.y());
+            if (length < 1e-9)
+                return;
+            const QPointF d = p.at(0) - it->a;
+            const double along = (d.x() * axis.x() + d.y() * axis.y()) / length;
+            auto num = [](double v) { return QString::number(v, 'g', 17); };
+            const QJsonObject r = bridge("create_wall_opening", {wall, num(along), num(width), num(height), num(sill)});
+            if (!r.value("ok").toBool()) {
+                showError(tr("Wall opening"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = tr("Wall opening");
+            afterEdit(r);
+            m_pendingLabel.clear();
+            setSelection({r.value("guid").toString()});
+            m_status->showMessage(tr("Wall opening created"));
+        });
+}
+
+void MainWindow::pushPullCommand()
+{
+    if (m_selection.size() != 1) {
+        m_status->showMessage(tr("Select one massing box or mesh to push/pull"));
+        return;
+    }
+    setTool(Tool::None);
+    m_pushPullPick = true;
+    m_viewport->setFacePickMode(true);
+    m_viewport->setFocus();
+    m_status->showMessage(tr("Push/pull: click the face to move (Esc cancels)"));
+}
+
+bool MainWindow::pushPullFace(const QString& face, double distance)
+{
+    if (m_selection.size() != 1)
+        return false;
+    const QJsonObject r = bridge("push_pull", {m_selection.first(), face, QString::number(distance, 'g', 17)});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Push/pull"), r.value("error").toString());
+        return false;
+    }
+    m_pendingLabel = tr("Push/pull");
+    afterEdit(r);
+    m_pendingLabel.clear();
+    m_status->showMessage(tr("Face %1 moved %2").arg(face, formatLength(distance)));
+    return true;
+}
+
+void MainWindow::connectPickSignals()
+{
+    onEachView([this](Viewport* v) {
+        connect(v, &Viewport::workPointMoved, this, [this](QPointF p, double tolerance, Qt::KeyboardModifiers mods) {
+            pickPointMoved(p, tolerance, mods);
+        });
+        connect(v, &Viewport::workPointClicked, this, [this](QPointF p, double tolerance, Qt::KeyboardModifiers mods) {
+            pickPointAt(p, tolerance, mods);
+        });
+        connect(v, &Viewport::drawingConfirmed, this, [this] { // Enter or a double click
+            if (m_pick && m_pick->count == 0)
+                finishPick();
+        });
+        connect(v, &Viewport::drawingEnded, this, [this, v] {
+            if (m_pick)
+                cancelPick();
+            if (m_pushPullPick) {
+                m_pushPullPick = false;
+                v->setFacePickMode(false);
+                m_status->showMessage(tr("Cancelled"), 2000);
+            }
+        });
+        connect(v, &Viewport::facePicked, this, [this, v](double, double, double, double nx, double ny, double nz) {
+            if (!m_pushPullPick)
+                return;
+            m_pushPullPick = false;
+            v->setFacePickMode(false);
+            const QString face = faceFromNormal(nx, ny, nz);
+            bool ok = true;
+            const double distance = m_quiet ? 1.0
+                : askLength(this, tr("Push/pull"), tr("Move face %1 by (negative pulls inward):").arg(face), 1.0,
+                    -1000.0, 1000.0, &ok);
+            if (ok)
+                pushPullFace(face, distance);
+        });
+    });
 }
 
 } // namespace kimbim

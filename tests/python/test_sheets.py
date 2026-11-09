@@ -599,3 +599,25 @@ def test_title_block_templates_fail_cleanly(house):
     assert not json.loads(Sh.apply_title_block_template(number, "nope", "{nope"))["ok"]
     assert not json.loads(Sh.rename_title_block_template("nope", "Master"))["ok"]
     assert not json.loads(Sh.rename_title_block_template("nope", ""))["ok"]
+
+
+def test_revision_schedule_lists_revisions_and_their_sheets(house):
+    number = call("add_sheet", "A3", "Revised")["number"]
+    assert call("save_revision", "A", "2026-11-01", "Planning issue")["ok"]
+    assert call("save_revision", "B", "2026-11-09", "Client comments")["ok"]
+    assert call("set_sheet_revision", number, "B")["ok"]
+    assert json.loads(Sh.place_revision_list(number, 20, 200, 150))["ok"]
+    svg = call("sheet_svg", number)["svg"]
+    table = _list_group(svg, "revisions")
+    assert "Revision schedule" in table and "Planning issue" in table and "Client comments" in table
+    assert number in table  # sheet B is on
+
+
+def test_iso_and_us_papers(house):
+    papers = {p["name"]: p for p in call("papers")["papers"]}
+    assert {"A0", "A1", "A2", "A3", "A4", "ANSI B", "ANSI D", "ARCH D", "ARCH E1", "ARCH E"} <= set(papers)
+    assert papers["ARCH D"]["width"] == 914.4 and papers["ARCH D"]["height"] == 609.6  # 36 x 24 in
+    number = call("add_sheet", "ARCH D", "US sheet")["number"]
+    sheet = next(s for s in call("sheets")["sheets"] if s["number"] == number)
+    assert sheet["width"] == 914.4 and sheet["height"] == 609.6
+    assert call("sheet_svg", number)["ok"]

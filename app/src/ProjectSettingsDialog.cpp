@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ProjectSettingsDialog.h"
+#include "Units.h"
+#include "SheetDialog.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -31,21 +33,17 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
     scroll->setFrameShape(QFrame::NoFrame);
     auto* page = new QWidget(scroll);
     auto* form = new QFormLayout(page);
-    m_cut = new QDoubleSpinBox(this);
+    m_cut = new LengthSpinBox(this);
     m_cut->setObjectName(QStringLiteral("cutHeight"));
     m_cut->setRange(0.01, 20.0);
-    m_cut->setDecimals(2);
     m_cut->setSingleStep(0.05);
-    m_cut->setSuffix(QStringLiteral(" m"));
     m_cut->setValue(settings.value("plan_cut_height").toDouble(1.2));
     form->addRow(tr("Plan cut height:"), m_cut);
     // D91: how far below the level a plan still sees (Revit's view range).
-    m_viewDepth = new QDoubleSpinBox(this);
+    m_viewDepth = new LengthSpinBox(this);
     m_viewDepth->setObjectName(QStringLiteral("viewDepth"));
     m_viewDepth->setRange(0.0, 20.0);
-    m_viewDepth->setDecimals(2);
     m_viewDepth->setSingleStep(0.05);
-    m_viewDepth->setSuffix(QStringLiteral(" m"));
     m_viewDepth->setValue(settings.value("view_depth").toDouble(0.5));
     form->addRow(tr("Plan view depth below:"), m_viewDepth);
     // D93: the built-in scales (1:500, 1:100, 1:50, 1:20) plus the project's own; type a new one.
@@ -62,7 +60,8 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
     form->addRow(tr("Drawings placed on sheets at:"), m_scale);
     m_paper = new QComboBox(this);
     m_paper->setObjectName(QStringLiteral("sheetPaper"));
-    m_paper->addItems({QStringLiteral("A1"), QStringLiteral("A3")});
+    for (const auto& paper : sheetPapers())
+        m_paper->addItem(paper.first);
     m_paper->setCurrentText(settings.value("sheet_paper").toString(QStringLiteral("A1")));
     form->addRow(tr("New sheets:"), m_paper);
     m_unit = new QComboBox(this);
@@ -86,12 +85,10 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
         settings.value("level_reference").toString(QStringLiteral("project")))));
     m_levelReference->setToolTip(tr("What level and spot dimensions measure from"));
     form->addRow(tr("Level dimensions from:"), m_levelReference);
-    m_seaLevel = new QDoubleSpinBox(this); // D92: the datum the sea-level reference needs
+    m_seaLevel = new LengthSpinBox(this); // D92: the datum the sea-level reference needs
     m_seaLevel->setObjectName(QStringLiteral("seaLevel"));
     m_seaLevel->setRange(-10000.0, 10000.0);
-    m_seaLevel->setDecimals(2);
     m_seaLevel->setSingleStep(0.5);
-    m_seaLevel->setSuffix(QStringLiteral(" m"));
     m_seaLevel->setValue(settings.value("sea_level").toDouble(0.0));
     m_seaLevel->setToolTip(tr("The project zero's elevation above sea level"));
     m_seaLevel->setEnabled(m_levelReference->currentData().toString() == QLatin1String("sea"));
@@ -115,12 +112,10 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
         settings.value("scale_bar_style").toString(QStringLiteral("bar")))));
     m_scaleBarStyle->setToolTip(tr("The scale bar the Scale bar tool and the plan drawings place"));
     form->addRow(tr("Scale bar:"), m_scaleBarStyle);
-    m_stairRiser = new QDoubleSpinBox(this); // D92: stairs
+    m_stairRiser = new LengthSpinBox(this); // D92: stairs
     m_stairRiser->setObjectName(QStringLiteral("stairRiser"));
     m_stairRiser->setRange(0.05, 0.5);
-    m_stairRiser->setDecimals(3);
     m_stairRiser->setSingleStep(0.005);
-    m_stairRiser->setSuffix(QStringLiteral(" m"));
     m_stairRiser->setValue(settings.value("stair_riser").toDouble(0.175));
     m_stairRiser->setToolTip(tr("A new stair's target riser height"));
     form->addRow(tr("Stair riser target:"), m_stairRiser);
@@ -132,12 +127,10 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
         settings.value("stair_tread_mode").toString(QStringLiteral("fixed")))));
     m_stairTreadMode->setToolTip(tr("A new stair's tread: a fixed depth, or computed from the 2R+G rule"));
     form->addRow(tr("Stair tread:"), m_stairTreadMode);
-    m_stairTread = new QDoubleSpinBox(this);
+    m_stairTread = new LengthSpinBox(this);
     m_stairTread->setObjectName(QStringLiteral("stairTread"));
     m_stairTread->setRange(0.05, 1.0);
-    m_stairTread->setDecimals(3);
     m_stairTread->setSingleStep(0.005);
-    m_stairTread->setSuffix(QStringLiteral(" m"));
     m_stairTread->setValue(settings.value("stair_tread").toDouble(0.28));
     m_stairTread->setEnabled(m_stairTreadMode->currentData().toString() == QLatin1String("fixed"));
     connect(m_stairTreadMode, &QComboBox::currentIndexChanged, this,

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SheetsPanel.h"
+#include "SheetDialog.h"
 
 #include <QHBoxLayout>
 #include <QJsonObject>
@@ -24,6 +25,10 @@ SheetsPanel::SheetsPanel(QWidget* parent)
     auto* menu = new QMenu(add);
     menu->addAction(tr("A1 sheet"), this, [this] { emit newRequested(QStringLiteral("A1")); });
     menu->addAction(tr("A3 sheet"), this, [this] { emit newRequested(QStringLiteral("A3")); });
+    QMenu* other = menu->addMenu(tr("Other paper"));
+    for (const auto& [id, label] : sheetPapers())
+        if (id != QLatin1String("A1") && id != QLatin1String("A3"))
+            other->addAction(label, this, [this, id] { emit newRequested(id); });
     add->setMenu(menu);
     auto* place = new QPushButton(tr("Place drawing..."), this);
     place->setObjectName(QStringLiteral("sheetPlaceDrawing"));
@@ -71,6 +76,7 @@ SheetsPanel::SheetsPanel(QWidget* parent)
         menu.addAction(tr("Place schedule..."), this, [this, number] { emit scheduleRequested(number); });
         menu.addAction(tr("Place drawing list"), this, [this, number] { emit listRequested(number, QStringLiteral("drawings")); });
         menu.addAction(tr("Place sheet list"), this, [this, number] { emit listRequested(number, QStringLiteral("sheets")); });
+        menu.addAction(tr("Place revision schedule"), this, [this, number] { emit listRequested(number, QStringLiteral("revisions")); });
         menu.addSeparator();
         menu.addAction(tr("Save title block as template..."), this,
             [this, number] { emit saveTitleBlockTemplateRequested(number); });
