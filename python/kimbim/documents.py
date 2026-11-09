@@ -566,6 +566,9 @@ def write_recovery() -> str:
         (folder / "info.json").write_text(json.dumps({"source": source, "mode": _doc["mode"], "time": time.time()}))
     except OSError as ex:
         return _fail(str(ex))
+    from . import oplog
+
+    oplog.start("")  # the operation log continues from this copy
     return B._dump({"ok": True, "written": True})
 
 
@@ -603,6 +606,22 @@ def recover(id: str) -> str:
     except (OSError, ValueError):
         return _fail("that recovery copy is gone")
     source, mode = info.get("source", ""), info.get("mode", "plain")
+    journal = folder / "journal.jsonl"
+    if journal.exists():  # the operation log: replay it onto the last full copy, else the opened file
+        from . import oplog
+
+        copy = folder / "model.ifc"
+        base = info.get("base") or str(copy)  # each journal line records the base it applies to
+        try:
+            replayed = oplog.replay(base, str(journal), str(folder / "replayed.ifc"))
+        except Exception as ex:  # noqa: BLE001 - a damaged log falls back to the last copy
+            replayed = None
+            if not copy.exists():
+                return _fail(f"the recovery log could not be replayed: {ex}")
+        if replayed is not None:
+            (folder / "replayed.ifc").replace(copy)
+            if replayed["settings"] is not None:
+                (folder / "settings.json").write_bytes(S.to_bytes(replayed["settings"]))
     settings = S.from_bytes(_read(folder / "settings.json"))
     if mode in ("kim", "folder", "template") and source and os.path.exists(source):
         r = json.loads(open_folder(source) if mode == "folder" else open_kim(source))

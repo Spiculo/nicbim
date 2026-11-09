@@ -245,6 +245,9 @@ def _reset_history(path: str):
     _base_drawing_id, _drawing_ids, _future_drawing_ids = 0, [], []
     _settings_before, _future_settings_before = [], []
     _inconsistent = False
+    from . import oplog
+
+    oplog.start(path)  # the log replays from the file as opened
     from . import versioning  # a different model leaves versioned mode (not the project's own working copy)
 
     versioning.forget(path)
@@ -407,6 +410,9 @@ def _commit(count, geo_changed, geo_removed, affects_drawings: bool = True) -> d
     _drawing_ids.append(_drawing_rev() + (1 if affects_drawings else 0))
     _settings_before.append(_pending_settings)  # D92: a settings change undone with its step
     _labels.append(_caller_label())
+    from . import oplog
+
+    oplog.committed()  # the step's operations, for recovery after a crash
     _pending_settings = None
     _next_id += 1
     _future_ids.clear()
@@ -761,6 +767,9 @@ def undo() -> str:
     _future_labels.append(_labels.pop() if _labels else "")
     if before is not None:
         settings.restore(before)
+    from . import oplog
+
+    oplog.undone()
     return _dump({"ok": True, **_flags(), "geometry": _geometry_now(_future_deltas[-1])})
 
 
@@ -780,6 +789,9 @@ def redo() -> str:
     _labels.append(_future_labels.pop() if _future_labels else "")
     if after is not None:
         settings.restore(after)
+    from . import oplog
+
+    oplog.redone()
     return _dump({"ok": True, **_flags(), "geometry": _geometry_now(_deltas[-1])})
 
 
@@ -836,6 +848,9 @@ def save(path: str = "") -> str:
     except Exception as ex:
         return _dump({"ok": False, "error": f"{type(ex).__name__}: {ex}"})
     _saved_id, _path = _current_id(), target
+    from . import oplog
+
+    oplog.start(target)  # saved: the log starts again from the saved file
     return _dump({"ok": True, "path": target})
 
 
