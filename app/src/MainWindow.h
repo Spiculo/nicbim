@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include <QPointer>
 #include <QElapsedTimer>
 #include <QJsonArray>
 #include <QTimer>
@@ -29,6 +30,9 @@
 #include <Bnd_Box.hxx>
 
 class QAction;
+class QDragEnterEvent;
+class QDropEvent;
+class QPrinter;
 class QFileSystemWatcher;
 class QProgressDialog;
 namespace kimbim {
@@ -73,6 +77,7 @@ class SheetsPanel;
 class SchedulesDialog;
 class DrawingView;
 class HistoryPanel;
+class UndoHistoryPanel;
 class LayersPanel;
 class WallTool;
 class PolygonTool;
@@ -353,6 +358,17 @@ public:
     // D71: the docking layout; the key of the current center view ("3d", "plan:<guid>", a drawing
     // guid or "sheet:<number>").
     DockLayout* dockLayout() const { return m_dock; }
+    QMenu* buildViewContextMenu(); // for the current selection (empty: the view's commands)
+    void showCommandSearch();
+    void runCommand(QAction* action); // as if the user started it (named undo step, repeatable)
+    UndoHistoryPanel* undoHistoryPanel() const { return m_undoPanel; }
+    void jumpInHistory(int steps); // < 0 undo, > 0 redo, several steps at once
+    QAction* lastCommand() const { return m_lastCommand; }
+    void nudgeSelection(int dx, int dy, bool coarse);
+    bool openDroppedFiles(const QStringList& paths);
+    bool printSheet(const QString& number, QPrinter* printer);
+    void printSheetDialog();
+    bool orthoLocked() const { return m_orthoLock; }
     QString currentViewKey() const;
     bool currentViewShowsCutSlider() const; // D91: false in plan tabs (no cut slider there)
     // A level's plan tab (D71): opened once, raised after; a view of the same model as the 3D tab.
@@ -566,6 +582,8 @@ signals:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
 
@@ -656,8 +674,8 @@ private:
     void curtainWallDialog();
     void terrainPadDialog();
     void exportImageDialog();
-    void importMeshDialog();
-    void importPointCloudDialog();
+    void importMeshDialog(QString path = {});      // a dropped file skips the file dialog
+    void importPointCloudDialog(QString path = {});
     void attributesDialog();
     void keynotesDialog();
     void projectInfoDialog();
@@ -672,6 +690,11 @@ private:
     void onDrawingGenerated(const QString& guid, const QJsonObject& result, const QString& error);
     void activateView(const QString& key);
     void activateElement(const QString& guid); // double-click: properties, or a level's plan
+    // QolTools.cpp: the view's right-click menu, command search, Repeat last command, Undo history,
+    // nudging, snap/ortho toggles, dropped files and printing.
+    void buildQolTools();
+    void noteCommand(QAction* action); // the user started it: names its undo step, may be repeated
+    void refreshUndoHistory();
     // Every model view gets the same signal handlers: `connect` runs for the views open now and
     // for every plan tab opened later.
     void onEachView(const std::function<void(Viewport*)>& connect);
@@ -854,6 +877,15 @@ private:
     QThread m_thread;
     ModelLoader* m_loader;
     QStringList m_selection;
+    UndoHistoryPanel* m_undoPanel = nullptr;
+    QPointer<QAction> m_lastCommand;
+    QAction* m_repeatLast = nullptr;
+    QAction* m_objectSnaps = nullptr;
+    QAction* m_orthoAction = nullptr;
+    QString m_pendingLabel; // the command being run: its undo step's name
+    int m_pendingToken = 0;
+    int m_seenStepId = 0;   // the newest undo step already named
+    bool m_orthoLock = false;
     QSlider* m_cutSlider = nullptr;
     QLabel* m_cutLabel = nullptr;
     void updateCutSliderRange();

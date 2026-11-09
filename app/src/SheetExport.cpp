@@ -8,7 +8,9 @@
 #include <QJsonObject>
 #include <QPageSize>
 #include <QPainter>
+#include <algorithm>
 #include <QPdfWriter>
+#include <QPrinter>
 #include <QSet>
 #include <QSvgRenderer>
 
@@ -57,6 +59,33 @@ bool exportSvgToPdf(const QByteArray& svg, double widthMm, double heightMm, cons
         return false;
     }
     renderer.render(&painter, QRectF(0, 0, pdf.width(), pdf.height()));
+    painter.end();
+    return true;
+}
+
+bool printSvg(const QByteArray& svg, double widthMm, double heightMm, QPrinter* printer, QString* error)
+{
+    QSvgRenderer renderer(svg);
+    if (!renderer.isValid() || !printer) {
+        if (error)
+            *error = QStringLiteral("the sheet's SVG could not be read");
+        return false;
+    }
+    // The printer keeps its paper when the user chose one; the sheet is fitted, centred, aspect kept.
+    if (printer->outputFormat() == QPrinter::PdfFormat || !printer->isValid())
+        printer->setPageSize(QPageSize(QSizeF(widthMm, heightMm), QPageSize::Millimeter));
+    printer->setPageOrientation(widthMm >= heightMm ? QPageLayout::Landscape : QPageLayout::Portrait);
+    QPainter painter;
+    if (!painter.begin(printer)) {
+        if (error)
+            *error = QStringLiteral("the printer could not start");
+        return false;
+    }
+    const QRectF page = printer->pageLayout().paintRectPixels(printer->resolution());
+    const QRectF area(0, 0, page.width(), page.height());
+    const double k = std::min(area.width() / widthMm, area.height() / heightMm);
+    const QSizeF size(widthMm * k, heightMm * k);
+    renderer.render(&painter, QRectF(area.center() - QPointF(size.width() / 2, size.height() / 2), size));
     painter.end();
     return true;
 }

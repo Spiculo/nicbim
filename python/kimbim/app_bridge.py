@@ -8,6 +8,7 @@ returned as {"ok": false, "error": ...} or {"error": ...} so the GUI can show th
 from __future__ import annotations
 
 import json
+import sys
 import traceback
 
 import ifcopenshell
@@ -221,6 +222,10 @@ _future_drawing_ids: list[int] = []
 _settings_before: list = []
 _future_settings_before: list = []
 _pending_settings = None  # set by _run_settings: the settings state before its transaction
+# What each step did, parallel to _ids/_future_ids, for the Undo history panel. Defaults to the
+# bridge function's name; the app replaces it with the command's (translated) text (label_last_step).
+_labels: list[str] = []
+_future_labels: list[str] = []
 
 
 # Set when a failed edit could not be rolled back: the model may be half-changed, so edits and
@@ -233,7 +238,9 @@ INCONSISTENT = ("The edit failed and could not be undone, so the model may be in
 def _reset_history(path: str):
     global _path, _base_id, _ids, _future_ids, _saved_id, _next_id, _deltas, _future_deltas, _inconsistent
     global _base_drawing_id, _drawing_ids, _future_drawing_ids, _settings_before, _future_settings_before
+    global _labels, _future_labels
     _path, _base_id, _ids, _future_ids, _saved_id, _next_id = path, 0, [], [], 0, 1
+    _labels, _future_labels = [], []
     _deltas, _future_deltas = [], []
     _base_drawing_id, _drawing_ids, _future_drawing_ids = 0, [], []
     _settings_before, _future_settings_before = [], []
@@ -382,6 +389,8 @@ def _abort(failure: BaseException) -> None:
         _future_drawing_ids.clear()
         _settings_before.clear()
         _future_settings_before.clear()
+        _labels.clear()
+        _future_labels.clear()
         _model.history.clear()
         _model.future.clear()
         _base_id = -1  # differs from any saved state: the model counts as changed
@@ -397,19 +406,33 @@ def _commit(count, geo_changed, geo_removed, affects_drawings: bool = True) -> d
     _deltas.append(list(dict.fromkeys([*geo_changed, *geo_removed])))
     _drawing_ids.append(_drawing_rev() + (1 if affects_drawings else 0))
     _settings_before.append(_pending_settings)  # D92: a settings change undone with its step
+    _labels.append(_caller_label())
     _pending_settings = None
     _next_id += 1
     _future_ids.clear()
     _future_deltas.clear()
     _future_drawing_ids.clear()
     _future_settings_before.clear()
+    _future_labels.clear()
     while len(_ids) > len(_model.history):  # ifcopenshell dropped its oldest transaction
         _base_id = _ids.pop(0)
         _deltas.pop(0)
         _base_drawing_id = _drawing_ids.pop(0)
         _settings_before.pop(0)
+        _labels.pop(0)
     geometry = {"changed": list(dict.fromkeys(geo_changed)), "removed": list(dict.fromkeys(geo_removed))}
     return {"ok": True, "changed": count, "geometry": geometry}
+
+
+def _caller_label() -> str:
+    """The public function that ran this step ("move_elements" -> "Move elements"), as a default label."""
+    frame = sys._getframe(2)
+    while frame is not None:
+        name = frame.f_code.co_name
+        if not name.startswith("_") and name not in ("action", "edit", "<lambda>", "<module>"):
+            return name.replace("_", " ").strip().capitalize()
+        frame = frame.f_back
+    return "Edit"
 
 
 def _elements(guids_json: str) -> list:
@@ -735,6 +758,7 @@ def undo() -> str:
     _future_drawing_ids.append(_drawing_ids.pop())
     _future_settings_before.append(after)
     _settings_before.pop()
+    _future_labels.append(_labels.pop() if _labels else "")
     if before is not None:
         settings.restore(before)
     return _dump({"ok": True, **_flags(), "geometry": _geometry_now(_future_deltas[-1])})
@@ -753,9 +777,53 @@ def redo() -> str:
     _drawing_ids.append(_future_drawing_ids.pop())
     _settings_before.append(before)
     _future_settings_before.pop()
+    _labels.append(_future_labels.pop() if _future_labels else "")
     if after is not None:
         settings.restore(after)
     return _dump({"ok": True, **_flags(), "geometry": _geometry_now(_deltas[-1])})
+
+
+def undo_history() -> str:
+    """The undo steps oldest first and the redo steps next first, by label (Undo history panel)."""
+    if _model is None:
+        return _dump({"ok": True, "undo": [], "redo": []})
+    # last_id only grows with new steps (undo/redo move between existing ones): the app labels a step
+    # once, when it first sees its id.
+    return _dump({"ok": True, "undo": list(_labels), "redo": list(reversed(_future_labels)),
+                  "last_id": _ids[-1] if _ids else 0, "max_id": _next_id - 1, **_flags()})
+
+
+def label_last_step(label: str) -> str:
+    """Name the newest undo step (the app passes the command's text, in the UI language)."""
+    if not _labels or not label.strip():
+        return _dump({"ok": False, "error": "no step to label"})
+    _labels[-1] = label.strip()
+    return _dump({"ok": True})
+
+
+def _repeat(step, count: str) -> str:
+    n = max(0, int(count or 0))
+    touched: list[str] = []
+    done = 0
+    for _ in range(n):
+        r = json.loads(step())
+        if not r.get("ok"):
+            break
+        done += 1
+        touched += r["geometry"]["changed"] + r["geometry"]["removed"]
+    if not done:
+        return _dump({"ok": False, "error": "nothing to undo or redo", **(_flags() if _model else {})})
+    return _dump({"ok": True, "steps": done, **_flags(), "geometry": _geometry_now(touched)})
+
+
+def undo_steps(count: str) -> str:
+    """Undo `count` steps at once (clicking an older row of the Undo history)."""
+    return _repeat(undo, count)
+
+
+def redo_steps(count: str) -> str:
+    """Redo `count` steps at once."""
+    return _repeat(redo, count)
 
 
 def save(path: str = "") -> str:

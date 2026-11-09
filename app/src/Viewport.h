@@ -424,6 +424,10 @@ signals:
     void workPointClicked(QPointF point, double tolerance, Qt::KeyboardModifiers modifiers);
     void drawingEnded();      // Esc or right click: cancel / stop
     void drawingContextRequested(const QPoint& globalPos); // a right click with setRightClickMenu
+    // A right click without a drag outside drawing mode: the element under the cursor ("" for none).
+    void contextMenuRequested(const QPoint& globalPos, const QString& guid);
+    // An arrow key outside drawing and walk mode: move the selection one step (coarse: Shift held).
+    void nudgeRequested(int dx, int dy, bool coarse);
     void drawingConfirmed();  // Enter or double click: finish the current shape
     void lengthKeyTyped(const QString& text);
     // The mouse rested on an element ("" when it left it): the app shows a hint.
@@ -498,6 +502,8 @@ private:
     bool m_walkLooking = false;
     bool m_drawingMode = false;
     bool m_rightClickMenu = false;
+    bool m_rightPress = false;   // a right press outside drawing mode, waiting for its release
+    QPointF m_rightPressPos;
     QTimer* m_hoverTimer = nullptr;
     bool m_dragCandidate = false;
     bool m_dragging = false;

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #define _USE_MATH_DEFINES
 #include "MainWindow.h"
+#include "QolTools.h"
 #include "DockLayout.h"
 #include "ShortcutsDialog.h"
 #include <DockManager.h>
@@ -333,6 +334,7 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     connect(m_linkWatcher, &QFileSystemWatcher::directoryChanged, this, [this] { m_linkRefreshTimer->start(); });
     buildVersions();       // the Versions menu and the title bar's Versions button
     buildPalette();
+    buildQolTools();       // context menu, command search, repeat, undo history, toggles, drops
     applyShortcutOverrides(this); // saved user rebindings, after every menu/tool action exists
     applyTitleBarPreferences(); // D92: which title bar controls the preferences keep
     m_status->showMessage(tr("Ready"));
@@ -585,11 +587,11 @@ void MainWindow::buildMenus()
     QAction* importMesh = file->addAction(tr("Import &mesh...")); // general mesh import
     importMesh->setObjectName(QStringLiteral("actionImportMesh"));
     importMesh->setToolTip(tr("Import an OBJ, STL, PLY, COLLADA, glTF or FBX mesh as an object on a level"));
-    connect(importMesh, &QAction::triggered, this, &MainWindow::importMeshDialog);
+    connect(importMesh, &QAction::triggered, this, [this] { importMeshDialog(); });
     QAction* importCloud = file->addAction(tr("Import point c&loud...")); // D125
     importCloud->setObjectName(QStringLiteral("actionImportPointCloud"));
     importCloud->setToolTip(tr("Import a scan (XYZ, PTS, CSV or uncompressed LAS) as a visible object on a level"));
-    connect(importCloud, &QAction::triggered, this, &MainWindow::importPointCloudDialog);
+    connect(importCloud, &QAction::triggered, this, [this] { importPointCloudDialog(); });
     QAction* linkModel = file->addAction(tr("Link &model...")); // D117: an external reference
     linkModel->setObjectName(QStringLiteral("actionLinkModel"));
     linkModel->setToolTip(tr("Show another IFC file in this project as a read-only reference"));
@@ -1576,6 +1578,9 @@ void MainWindow::buildDocks()
     m_dock->addPanel(QStringLiteral("drawings"), tr("Drawings"), m_drawingsPanel);
     m_dock->addPanel(QStringLiteral("sheets"), tr("Sheets"), m_sheetsPanel);
     m_dock->addPanel(QStringLiteral("assistant"), tr("Assistant"), m_assistant);
+    m_undoPanel = new UndoHistoryPanel(this);
+    m_dock->addPanel(QStringLiteral("undo"), tr("Undo history"), m_undoPanel);
+    connect(m_undoPanel, &UndoHistoryPanel::jumpRequested, this, &MainWindow::jumpInHistory);
     connect(m_history, &HistoryPanel::compareRequested, this, [this](const QString& a, const QString& b) { compareWith(a, b); });
     connect(m_history, &HistoryPanel::endCompareRequested, this, &MainWindow::endCompare);
     connect(m_history, &HistoryPanel::beforeAfterRequested, this, [this](const QString& guid) {
@@ -2396,6 +2401,9 @@ void MainWindow::openFile(const QString& path)
     m_tree->clear();
     m_properties->clear();
     m_selection.clear();
+    m_seenStepId = 0; // the new model's history starts again
+    if (m_undoPanel)
+        m_undoPanel->setHistory({}, {});
     m_path = path;
     m_loading = true;
     m_loadedElements = 0;
@@ -4202,7 +4210,7 @@ void MainWindow::buildModelingToolbar()
     setTool(Tool::None);
 
     onEachView([this](Viewport* v) { connect(v, &Viewport::workPointMoved, this, [this, v](QPointF p, double tolerance, Qt::KeyboardModifiers mods) {
-        const bool ortho = mods & Qt::ShiftModifier;
+        const bool ortho = bool(mods & Qt::ShiftModifier) != m_orthoLock; // F8 locks ortho; Shift then frees it
         switch (m_tool) {
         case Tool::Wall:
             m_wallTool->setTolerance(tolerance);
@@ -4320,7 +4328,7 @@ void MainWindow::buildModelingToolbar()
             cutPlaneClick(p);
             return;
         }
-        const bool ortho = mods & Qt::ShiftModifier;
+        const bool ortho = bool(mods & Qt::ShiftModifier) != m_orthoLock; // F8 locks ortho; Shift then frees it
         switch (m_tool) {
         case Tool::Wall:
             m_wallTool->setTolerance(tolerance);
@@ -5555,8 +5563,8 @@ void MainWindow::buildPalette()
     m_viewMenu->addSeparator();
     QMenu* panels = m_viewMenu->addMenu(tr("&Panels"));
     panels->setObjectName(QStringLiteral("panelsMenu"));
-    for (const char* key : {"tools", "tree", "properties", "layers", "cutplanes", "history", "drawings", "sheets",
-                            "assistant"})
+    for (const char* key : {"tools", "tree", "properties", "layers", "cutplanes", "history", "undo", "drawings",
+                            "sheets", "assistant"})
         if (ads::CDockWidget* d = m_dock->manager()->findDockWidget(QLatin1String(key))) {
             const QString k = QLatin1String(key);
             const bool pinned = m_prefs.pinnedPanels().contains(k);
@@ -8666,10 +8674,11 @@ void MainWindow::exportImageDialog()
     m_status->showMessage(tr("Image exported: %1").arg(QDir::toNativeSeparators(path)));
 }
 
-void MainWindow::importMeshDialog()
+void MainWindow::importMeshDialog(QString path)
 {
-    const QString path = QFileDialog::getOpenFileName(this, tr("Import mesh"), QString(),
-        tr("Meshes (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;All files (*)"));
+    if (path.isEmpty())
+        path = QFileDialog::getOpenFileName(this, tr("Import mesh"), QString(),
+            tr("Meshes (*.obj *.stl *.ply *.dae *.gltf *.glb *.fbx);;All files (*)"));
     if (path.isEmpty())
         return;
     const QJsonArray storeys = bridge("storeys").value("storeys").toArray();
@@ -8730,10 +8739,11 @@ void MainWindow::importMeshDialog()
     m_status->showMessage(tr("Mesh imported: %n triangle(s)", nullptr, r.value("triangles").toInt()));
 }
 
-void MainWindow::importPointCloudDialog()
+void MainWindow::importPointCloudDialog(QString path)
 {
-    const QString path = QFileDialog::getOpenFileName(this, tr("Import point cloud"), QString(),
-        tr("Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz *.e57);;All files (*)"));
+    if (path.isEmpty())
+        path = QFileDialog::getOpenFileName(this, tr("Import point cloud"), QString(),
+            tr("Point clouds (*.xyz *.pts *.csv *.txt *.las *.laz *.e57);;All files (*)"));
     if (path.isEmpty())
         return;
     const QJsonArray storeys = bridge("storeys").value("storeys").toArray();
@@ -11497,6 +11507,7 @@ void MainWindow::afterEdit(const QJsonObject& result)
         m_schedules->modelChanged();
     if (!m_traceMode.isEmpty() && m_traceTimer) // D98: the traced plan follows the model, after a pause
         m_traceTimer->start();
+    refreshUndoHistory(); // names a new step and lists the steps
 }
 
 // ---------------------------------------------------------------- D102 phase 2: live agents and review

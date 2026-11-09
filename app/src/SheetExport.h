@@ -5,11 +5,17 @@
 #include <QString>
 #include <QStringList>
 
+class QPrinter;
+
 namespace kimbim {
 
 // A sheet's SVG (millimetres) to a one-page PDF of the same paper size, through Qt (doc 05: QPdfWriter
 // with QSvgRenderer). Vector output: lines and text stay sharp at any zoom.
 bool exportSvgToPdf(const QByteArray& svg, double widthMm, double heightMm, const QString& path, QString* error);
+
+// A sheet's SVG to a printer (or a print preview): fitted to the page, centred, aspect kept. A PDF
+// printer gets the sheet's own paper size.
+bool printSvg(const QByteArray& svg, double widthMm, double heightMm, QPrinter* printer, QString* error);
 
 // A sheet number as a safe, deterministic file name (no path separators or Windows-reserved characters).
 QString sheetFileName(const QString& number);

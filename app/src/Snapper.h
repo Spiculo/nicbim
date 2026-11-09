@@ -76,6 +76,9 @@ struct Snap {
 // the wall it lies on (for joins).
 class Snapper {
 public:
+    // The status bar's object-snap toggle (F3), shared by every tool's snapper.
+    static void setObjectSnapsEnabled(bool on) { s_objectSnaps = on; }
+    static bool objectSnapsEnabled() { return s_objectSnaps; }
     static QVector<SnapWall> parse(const QJsonObject& snapData);
     static QVector<SnapLine> parseGrid(const QJsonObject& snapData);
     static QVector<SnapPoint> parsePoints(const QJsonObject& snapData);
@@ -125,6 +128,8 @@ public:
     Snap snap(QPointF p, double tolerance, const QPointF* from = nullptr, bool ortho = false) const;
 
 private:
+    static bool s_objectSnaps;
+    Snap freeSnap(QPointF p, const QPointF* from, bool ortho) const;
     Snap compute(QPointF p, double tolerance, const QPointF* from, bool ortho) const;
     bool guideSnap(QPointF p, double tolerance, const QPointF* from, bool lines, Snap* out) const;
     std::optional<QPointF> wallDirection(const QString& guid) const;

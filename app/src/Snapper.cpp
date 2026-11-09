@@ -303,6 +303,8 @@ Snap Snapper::compute(QPointF p, double tolerance, const QPointF* from, bool ort
             return Snap{*from + d * length, Snap::Tracked, {}};
         }
     }
+    if (!exact && !s_objectSnaps)
+        return freeSnap(p, from, ortho);
     // Object snaps, best kind first; within a kind the closest wins.
     auto best = [&](Snap::Kind kind, auto&& candidate) -> Snap {
         Snap s;
@@ -519,7 +521,14 @@ Snap Snapper::compute(QPointF p, double tolerance, const QPointF* from, bool ort
         return s;
     if (exact)
         return Snap{p, Snap::Typed, {}};
+    return freeSnap(p, from, ortho);
+}
 
+// Object snaps off (F3): only the angle steps, ortho and the grid still guide the cursor.
+bool Snapper::s_objectSnaps = true;
+
+Snap Snapper::freeSnap(QPointF p, const QPointF* from, bool ortho) const
+{
     if (from && (m_snapStep <= 0 || ortho)) { // grid snap replaces the 15 degree steps (ortho stays)
         const QPointF v = p - *from;
         const double length = std::hypot(v.x(), v.y());

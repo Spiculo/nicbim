@@ -2181,6 +2181,12 @@ void Viewport::keyPressEvent(QKeyEvent* e)
             emit lengthKeyTyped(text);
             return;
         }
+    } else if (!(e->modifiers() & (Qt::ControlModifier | Qt::AltModifier))
+        && (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right || e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
+        const int dx = e->key() == Qt::Key_Left ? -1 : e->key() == Qt::Key_Right ? 1 : 0;
+        const int dy = e->key() == Qt::Key_Down ? -1 : e->key() == Qt::Key_Up ? 1 : 0;
+        emit nudgeRequested(dx, dy, e->modifiers() & Qt::ShiftModifier);
+        return;
     } else if (e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) { // D89: Tab cycling
         cycleNext(m_pointer, e->key() == Qt::Key_Backtab || (e->modifiers() & Qt::ShiftModifier));
         return;
@@ -2296,6 +2302,10 @@ void Viewport::mousePressEvent(QMouseEvent* e)
             emit workPointClicked(p, tolerance, e->modifiers());
         return; // drawing clicks never reach selection
     }
+    if (e->button() == Qt::RightButton) { // a context menu on release, unless the mouse moved
+        m_rightPress = true;
+        m_rightPressPos = e->position();
+    }
     // OCCT expects the button that changed (it keeps the set of held buttons itself).
     if (e->button() == Qt::LeftButton && !(e->modifiers() & (Qt::ShiftModifier | Qt::AltModifier))) {
         // Pressing on an element that is already selected may start a drag-move.
@@ -2356,6 +2366,14 @@ void Viewport::mouseReleaseEvent(QMouseEvent* e)
     }
     if (m_drawingMode && (e->button() == Qt::LeftButton || e->button() == Qt::RightButton))
         return;
+    if (e->button() == Qt::RightButton && std::exchange(m_rightPress, false)
+        && (e->position() - m_rightPressPos).manhattanLength() <= 6) {
+        const NCollection_Vec2<int> px = toPixels(e->position());
+        const QString guid = pickAt(px.x(), px.y());
+        ReleaseMouseButton(toPixels(e->position()), toButtons(e->button()), toFlags(e->modifiers()), false);
+        emit contextMenuRequested(e->globalPosition().toPoint(), guid);
+        return;
+    }
     // The released button, not the ones still held: passing the held set kept pan/orbit running
     // after release until a modifier key changed (owner bug report).
     if (ReleaseMouseButton(toPixels(e->position()), toButtons(e->button()), toFlags(e->modifiers()), false))

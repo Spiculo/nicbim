@@ -71,12 +71,13 @@ qt_add_library(kimbim_core STATIC
     src/MaterialsDialog.cpp src/MaterialsDialog.h
     src/TypeManagerDialog.cpp src/TypeManagerDialog.h
     src/ClassificationsDialog.cpp src/ClassificationsDialog.h src/Types.cpp
+    src/QolTools.cpp src/QolTools.h
 )
 target_include_directories(kimbim_core PUBLIC src)
 # Element icons (owner feedback: objects need an icon and a hint on hover).
 file(GLOB KIMBIM_ICONS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} resources/icons/*.svg)
 qt_add_resources(kimbim_core "kimbim_icons" PREFIX "/icons" BASE resources/icons FILES ${KIMBIM_ICONS})
-target_link_libraries(kimbim_core PUBLIC Qt6::Widgets Qt6::Svg Python3::Python
+target_link_libraries(kimbim_core PUBLIC Qt6::Widgets Qt6::Svg Qt6::PrintSupport Python3::Python
     TKernel TKMath TKService TKV3d TKOpenGl TKBRep TKG3d ads::qtadvanceddocking-qt6)
 target_include_directories(kimbim_core PUBLIC ${OpenCASCADE_INCLUDE_DIR})
 if(WIN32)
@@ -105,6 +106,7 @@ kimbim_test(test_element_batch)
 kimbim_test(test_model_tree)
 kimbim_test(test_visibility)
 kimbim_test(test_main_window)
+kimbim_test(test_qol_tools)
 kimbim_test(test_agent_live)
 # The live-host test starts the `kimbim` CLI as a separate process; it must run from the project root
 # (relative test data and the CLI's own discovery paths are resolved against it).

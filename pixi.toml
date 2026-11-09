@@ -106,7 +106,9 @@ app = { cmd = "build/app/kimbim-app", depends-on = ["app-build", "build"], env =
 drawing-bench = "python spikes/s6_drawings/drawing_bench.py Clinic_Architectural.ifc build/s6-clinic"
 # Slices 18-22 timed on Clinic: after-edit hooks, versioning, history, before/after, combining options
 m5-bench = "python spikes/m5_bench/clinic_bench.py Clinic_Architectural.ifc build/m5-clinic"
-check-translations = "python tools/check_translations.py"
+# lupdate first: the check only sees strings already in the .ts files, so a stale file passed.
+update-translations = { cmd = "cmake --build build/app --target update_translations", depends-on = ["app-configure"] }
+check-translations = { cmd = "python tools/check_translations.py", depends-on = ["update-translations"] }
 # Portable desktop build (installer-free): dist/KimBim starts without pixi. Build the app and the
 # sample first in the default environment, then run the pack environment for conda-pack:
 #   pixi run app-build
