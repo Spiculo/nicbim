@@ -162,16 +162,22 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `project_info` | `kimbim project info` | Describe the open project: name, schema, levels, element counts per kind, the current option and whether there are unsaved changes. |  |
 | `project_set_settings` | `kimbim project set-settings` | Change project settings (units, decimals, display options...) as one undo step. | yes |
 | `project_settings` | `kimbim project settings` | Read the project settings (units, decimals, display options...), all or just the named keys. |  |
+| `versions_create_option` | `kimbim versions create-option` | Create a design option from the current version and switch to it. | yes |
 | `versions_diff` | `kimbim versions diff` | Compare two versions: the elements added, modified and removed from one to the other (WORKING is the open model with its unsaved changes); with detail, each modified element's attributes and properties. |  |
 | `versions_element_history` | `kimbim versions element-history` | List the saved versions that changed an element, newest first. |  |
 | `versions_export` | `kimbim versions export` | Write a version of the model as an IFC file (HEAD, the latest saved one, by default). |  |
 | `versions_log` | `kimbim versions log` | List the saved versions of the current option, newest first: id, message, author, time, milestones. |  |
+| `versions_milestone_create` | `kimbim versions milestone-create` | Tag the current version as a milestone. | yes |
+| `versions_milestone_delete` | `kimbim versions milestone-delete` | Delete a milestone tag (the version stays). | yes |
 | `versions_milestones` | `kimbim versions milestones` | List the milestones (named versions such as Concept or Schematic design). |  |
 | `versions_options` | `kimbim versions options` | List the design options of the project and the current one. |  |
+| `versions_save` | `kimbim versions save-version` | Save the open model as a new version in the current option (the pre-commit checks run first). | yes |
+| `versions_switch_option` | `kimbim versions switch-option` | Switch the open model to another design option. |  |
 | `task_abandon` | `kimbim task abandon` | Abandon the task: its changes are thrown away (its design option is deleted). |  |
 | `task_finish` | `kimbim task finish` | Finish the task: save its changes as a version (on its option, ready for review, or in place in direct mode) and return what changed. |  |
 | `task_start` | `kimbim task start` | Start a task: the changes that follow go in a design option agent/<title> for the architect to review (or straight into the model in direct mode). |  |
 | `task_status` | `kimbim task status` | Show the open task (or the named one) with what it changed so far, and every task of the project. |  |
+| `elements_align` | `kimbim elements align` | Align the selected elements on an axis at their min/max/center, to the selection or a reference. | yes |
 | `elements_array` | `kimbim elements array` | Multiply elements: a linear row, a polar turn, or a rectangular grid of copies. | yes |
 | `elements_copy` | `kimbim elements copy` | Copy elements, shifted by dx, dy, dz, optionally onto another level. | yes |
 | `elements_copy_to_level` | `kimbim elements copy-to-level` | Copy elements to another level at the same plan position (walls bring their doors and windows). | yes |
@@ -181,7 +187,9 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `elements_get` | `kimbim elements get` | Describe elements in full: class, type, level, dimensions (metres), property sets, host and openings. |  |
 | `elements_get_slab_outline` | `kimbim elements get-slab-outline` | A slab's outline points in world metres, for moving, adding or deleting corners. |  |
 | `elements_get_slab_slope` | `kimbim elements get-slab-slope` | A slab's slope (rise over run). |  |
+| `elements_group` | `kimbim elements group` | Group elements so moving or deleting one moves or deletes them all. | yes |
 | `elements_join` | `kimbim elements join` | Join two walls (L or T) or merge two collinear walls or beams into the first. | yes |
+| `elements_lock` | `kimbim elements lock` | Pin or unpin elements so they refuse moves, deletes and dimension edits. | yes |
 | `elements_mirror` | `kimbim elements mirror` | Mirror elements across a line on the plan. | yes |
 | `elements_move` | `kimbim elements move` | Move elements by dx, dy, dz. | yes |
 | `elements_offset` | `kimbim elements offset` | Offset walls as a parallel copy and grow or shrink slabs in place (negative shrinks). | yes |
@@ -195,21 +203,37 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `elements_set_slab_outline` | `kimbim elements set-slab-outline` | Give a slab a new outline (moving, adding or deleting corners); its thickness and level stay. | yes |
 | `elements_set_slab_slope` | `kimbim elements set-slab-slope` | Tilt slabs: 0, 0 returns them to horizontal. | yes |
 | `elements_set_status` | `kimbim elements set-status` | Set the renovation status of elements: existing, demolish, new, temporary or auxiliary. | yes |
+| `elements_set_wall_height` | `kimbim elements set-wall-height` | Set the height of one or more walls (one undo step). | yes |
 | `elements_split` | `kimbim elements split` | Split a wall or beam at a point on its axis; doors and windows stay with the piece they are in. | yes |
 | `elements_stretch` | `kimbim elements stretch` | Move one end of a wall to a point, stretching or shortening it; joins at that end are dropped. | yes |
 | `elements_trim` | `kimbim elements trim` | Trim or extend a wall or beam to a boundary wall/beam or line, keeping the side the point is on. | yes |
 | `elements_trim_corner` | `kimbim elements trim-corner` | Trim or extend two walls or beams to their corner, keeping the side each point is on. | yes |
+| `elements_ungroup` | `kimbim elements ungroup` | Break the groups of the selected elements. | yes |
 | `elements_unjoin` | `kimbim elements unjoin` | Break the joins between walls or beams (one element: all its joins), giving them plain ends. | yes |
 | `create_beam` | `kimbim create beam` | Create a beam between two points on a level. | yes |
+| `create_ceiling` | `kimbim create ceiling` | Create an IfcCovering CEILING over an outline at a height above a level. | yes |
+| `create_ceiling_from_selection` | `kimbim create ceiling-from-selection` | Create a ceiling over a selected slab's outline or a closed loop of selected walls. | yes |
 | `create_column` | `kimbim create column` | Create a column standing on a level. | yes |
+| `create_curtain_panel` | `kimbim create curtain-panel` | Change one bay of a curtain wall: make it glass, an opaque solid panel, or open. | yes |
+| `create_curtain_panel_copy` | `kimbim create curtain-panel-copy` | Copy one bay's kind and thickness to other bays. | yes |
+| `create_curtain_panel_move` | `kimbim create curtain-panel-move` | Swap two bays' kind and thickness. | yes |
 | `create_curtain_wall` | `kimbim create curtain-wall` | Create an IfcCurtainWall on a level, with its glazed panel and mullion spacing. | yes |
+| `create_curtain_wall_info` | `kimbim create curtain-wall-info` | Read a curtain wall's settings and its bays (index, span, kind, thickness). |  |
+| `create_grid` | `kimbim create grid` | Create a rectangular grid system from a corner, with both directions' spacings and labels. | yes |
+| `create_grid_axis` | `kimbim create grid-axis` | Add one grid line to a level's grid (letters for the near-vertical, numbers for the others). | yes |
 | `create_opening` | `kimbim create opening` | Put a door or window in a wall. | yes |
+| `create_railing` | `kimbim create railing` | Create a railing along a path on a level. | yes |
+| `create_ramp` | `kimbim create ramp` | Create a ramp rising from start towards end, straight or L, at a slope in percent. | yes |
+| `create_roof` | `kimbim create roof` | Create a roof from an eaves outline: flat, shed, gable or hip, with its pitch and thickness. | yes |
 | `create_room` | `kimbim create room` | Create a room filling the walled-in space around a point. | yes |
 | `create_slab` | `kimbim create slab` | Create a slab on a level from an outline or from a closed loop of walls (the outline follows their outer faces). | yes |
 | `create_slab_edge` | `kimbim create slab-edge` | Add a raised edge around a slab, one IfcMember per side. | yes |
+| `create_slab_opening` | `kimbim create slab-opening` | Cut a hole through a slab with the given outline. | yes |
+| `create_stair` | `kimbim create stair` | Create a stair climbing from start towards end, with landings for L/U or along a walking line. | yes |
 | `create_types` | `kimbim create types` | List the types you can create of a kind: GlobalId, name and size (wall thickness, default door/window sizes). |  |
 | `create_update_curtain_wall` | `kimbim create update-curtain-wall` | Change a curtain wall's height, mullion spacing or panel thickness and rebuild its members. | yes |
 | `create_wall` | `kimbim create wall` | Create a straight wall on a level. | yes |
+| `create_wall_opening` | `kimbim create wall-opening` | Cut a rectangular hole through a wall without a door or window filling it. | yes |
 | `objects_assign_version` | `kimbim objects assign-version` | Move placed library objects to a saved version. | yes |
 | `objects_library` | `kimbim objects library` | List the library objects (furniture, sanitary, kitchen...): id, name, category, IFC class, size (metres) and parameters with their kind, default and limits. |  |
 | `objects_place` | `kimbim objects place` | Place a library object on a level. | yes |
@@ -219,6 +243,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `drawings_create` | `kimbim drawings create` | Create a drawing. | yes |
 | `drawings_export` | `kimbim drawings export` | Export a drawing as SVG or DXF (pdf: put it on a sheet and use sheets.export). |  |
 | `drawings_list` | `kimbim drawings list` | List the project's drawings: floor plans, sections and elevations with GlobalId, name, kind and level. |  |
+| `drawings_set_scale` | `kimbim drawings set-scale` | Set a drawing's scale (1:N); coarser drawings use the project's model view options. | yes |
 | `sheets_create` | `kimbim sheets create` | Create an empty sheet; it gets the next number (A01, A02...). | yes |
 | `sheets_export` | `kimbim sheets export` | Export a sheet as PDF, SVG or DXF. |  |
 | `sheets_list` | `kimbim sheets list` | List the sheets: number, title, paper size and the drawings placed on each. |  |
@@ -236,13 +261,36 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `selection_set` | `kimbim selection set` | Select elements in the app's window. |  |
 | `script_run` | `kimbim script run` | Run a Python script in the project's console (the model is `ifc`, KimBim commands are in `bridge`). | yes |
 | `snapshot_take` | `kimbim snapshot take` | Take a picture of the model to check your work: a 3D view (optionally framed on elements, with what your task changed coloured as the app's Compare shows it), a floor plan, a section or elevation, any drawing, or a sheet. |  |
+| `annotation_add` | `kimbim annotation add` | Add an annotation: text at a point, a dimension chain, a mark or a leader with text. | yes |
+| `annotation_auto_dimension` | `kimbim annotation auto-dimension` | Add a dimension chain along a row of aligned elements. | yes |
+| `annotation_grid_dimension` | `kimbim annotation grid-dimension` | Add one dimension chain between a level's grid axes. | yes |
+| `annotation_overall_dimension` | `kimbim annotation overall-dimension` | Add one overall dimension across the selection's combined plan bounds. | yes |
+| `annotation_symbol` | `kimbim annotation symbol` | Place a tag, north arrow, scale bar, revision cloud, angle/radius/diameter, level or spot symbol. | yes |
+| `annotation_tag` | `kimbim annotation tag` | Tag an element with its Mark/size (or a chosen style and template). | yes |
+| `annotation_tag_all` | `kimbim annotation tag-all` | Tag every untagged door, window and wall on a level (or the given elements). | yes |
+| `areas_plan` | `kimbim areas plan` | Gross and rentable areas of a level (m2), with each room's area. |  |
 | `attributes_catalogue` | `kimbim attributes catalogue` | List the project's attribute groups with their counts, and its layers, materials, surfaces and composites, so an attribute file can be exported or imported with the right groups selected. |  |
 | `attributes_export` | `kimbim attributes export` | Write the project's pens, line types, fill patterns, element styles, visibility and override sets, layer combinations, purposes, renovation styles, layers, materials, surfaces and composites to one self-contained JSON file, to carry the office's standards to another project. |  |
 | `attributes_import` | `kimbim attributes import` | Import an attribute file into the open project: settings tables merge by name, IFC layers, materials, surfaces and composites are created where missing (or updated with replace). | yes |
+| `classifications_add_reference` | `kimbim classifications add-reference` | Add a code (reference) under a classification system. | yes |
+| `classifications_assign` | `kimbim classifications assign` | Assign classification references to elements (one undo step). | yes |
+| `classifications_create_system` | `kimbim classifications create-system` | Create a classification system (or use a shipped one by name). | yes |
+| `classifications_list` | `kimbim classifications list` | List the classification systems and their references. |  |
+| `classifications_of_element` | `kimbim classifications of-element` | List the classifications assigned to the given elements. |  |
+| `classifications_unassign` | `kimbim classifications unassign` | Remove classification references from elements. | yes |
+| `draft_add` | `kimbim draft add` | Draw a line, polyline, arc, circle, rectangle or fill on a level. | yes |
+| `draft_fill_from_shape` | `kimbim draft fill-from-shape` | Fill a closed shape (a polyline, circle or fill) with a pattern, on the same level. | yes |
+| `draft_patterns` | `kimbim draft patterns` | List the fill patterns available to draft fills. |  |
 | `export_ifc` | `kimbim export ifc` | Export the model as an IFC file. |  |
 | `export_options` | `kimbim export options` | List what an IFC export can include: scopes, product classes with counts, levels and defaults. |  |
-| `import_formats` | `kimbim import formats` | List the mesh file formats the importer reads (OBJ, STL and PLY). |  |
-| `import_mesh` | `kimbim import mesh` | Import an OBJ, STL or PLY mesh as a proxy on a level, scaled, rotated about Z and moved. | yes |
+| `graphics_purpose` | `kimbim graphics purpose` | Switch the view to a graphic purpose (renovation filter, visibility and overrides). |  |
+| `graphics_set` | `kimbim graphics set` | Change a graphic setting (pen, visibility, override) in the project's graphics state. |  |
+| `graphics_state` | `kimbim graphics state` | The current pen, purpose and graphics state of the model. |  |
+| `graphics_tables` | `kimbim graphics tables` | The project's pens, line types, fills, element styles, overrides, purposes and filters. |  |
+| `import_formats` | `kimbim import formats` | List the mesh file formats the importer reads (OBJ, STL, PLY, COLLADA, glTF/GLB and FBX). |  |
+| `import_mesh` | `kimbim import mesh` | Import a mesh (OBJ, STL, PLY, COLLADA, glTF/GLB or FBX) as a proxy on a level, scaled, rotated about Z and moved. | yes |
+| `import_pointcloud` | `kimbim import pointcloud` | Import a point cloud as a visible proxy on a level, decimated to a marker per point. | yes |
+| `import_pointcloud_formats` | `kimbim import pointcloud-formats` | List the point-cloud file formats the importer reads (XYZ, PTS, CSV/TXT, LAS, LAZ and E57). |  |
 | `issues_comment` | `kimbim issues comment` | Add a comment to an issue. | yes |
 | `issues_create` | `kimbim issues create` | Create a BCF issue with a viewpoint (camera, selected elements) and optional comments. | yes |
 | `issues_export_bcf` | `kimbim issues export-bcf` | Export the project's issues as a BCF 2.1 .bcfzip for another BIM tool. |  |
@@ -254,11 +302,26 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `keynotes_place` | `kimbim keynotes place` | Place a keynote on a plan: its text at [x, y], optionally with a leader to another point. | yes |
 | `keynotes_refresh` | `kimbim keynotes refresh` | Rewrite every placed keynote's text from the table (one undo step); returns how many changed. | yes |
 | `keynotes_save` | `kimbim keynotes save` | Add or change a keynote in the table; run keynotes.refresh to rewrite the keynotes already placed. | yes |
+| `layers_assign` | `kimbim layers assign` | Put elements on a layer (one undo step). | yes |
+| `layers_create` | `kimbim layers create` | Create a layer. | yes |
+| `layers_delete` | `kimbim layers delete` | Delete an empty layer; refuse when it still has elements. | yes |
+| `layers_list` | `kimbim layers list` | List the project's layers, their visibility and lock state. |  |
+| `layers_rename` | `kimbim layers rename` | Rename a layer (the elements on it follow). | yes |
 | `links_add` | `kimbim links add` | Link an IFC file as a read-only reference on a level (default the first), with a placement. | yes |
+| `links_explode` | `kimbim links explode` | Turn a linked model into editable copies: every source product becomes a normal element tagged with its source identity; the read-only proxy is removed. | yes |
 | `links_list` | `kimbim links list` | List the linked models: GlobalId, name, path, source element count, triangles, transform and update time. |  |
+| `links_monitor_status` | `kimbim links monitor-status` | Report changed, removed and newly added source elements for every monitored (exploded) linked model. |  |
+| `links_monitor_sync` | `kimbim links monitor-sync` | Apply changed source attributes/properties to unmodified host copies; report or resolve conflicts. | yes |
+| `links_push_monitored` | `kimbim links push-monitored` | Write host edits of monitored copies back to their linked source IFC files. | yes |
+| `links_refresh` | `kimbim links refresh` | Rebuild every linked model whose source file changed; unchanged links are left alone. | yes |
 | `links_remove` | `kimbim links remove` | Remove a linked model from the project (the linked file itself is left alone). | yes |
 | `links_set_transform` | `kimbim links set-transform` | Move, rotate or scale a linked model and rebuild it. | yes |
+| `links_stale` | `kimbim links stale` | List linked models whose source file changed, is missing or is unreadable since the last update. |  |
 | `links_update` | `kimbim links update` | Re-read a linked model's file and rebuild its geometry (same GlobalId). | yes |
+| `materials_add_standard` | `kimbim materials add-standard` | Add the standard building materials to the project. | yes |
+| `materials_assign` | `kimbim materials assign` | Give elements a building material, or a composite (walls and slabs take its thickness). | yes |
+| `materials_list` | `kimbim materials list` | List the building materials and composites in the project. |  |
+| `materials_purge` | `kimbim materials purge` | Remove unused materials. | yes |
 | `models_create` | `kimbim models create` | Create an empty model container below the building; draw the unit in it, then place it on levels. | yes |
 | `models_explode` | `kimbim models explode` | Unlink an instance: its elements become ordinary elements that no longer follow the model. | yes |
 | `models_list` | `kimbim models list` | List the project's models (units drawn once and placed on levels) with their GlobalId, name, elevation and how many places use them. |  |
@@ -270,6 +333,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `terrain_from_contours` | `kimbim terrain from-contours` | Create a terrain mesh from contour polylines, sampled along each segment before triangulating. | yes |
 | `terrain_list` | `kimbim terrain list` | List the terrains: GlobalId, name, point count, triangle count and world bounds. |  |
 | `terrain_pad` | `kimbim terrain pad` | Flatten the terrain vertices inside a closed outline to one elevation (a building pad). | yes |
+| `terrain_pad_volumes` | `kimbim terrain pad-volumes` | Cut and fill volumes (m3) for each building pad, against the surface before the pads. |  |
 | `terrain_pads` | `kimbim terrain pads` | List a terrain's building pads: outline points and elevation. |  |
 <!-- tools:end -->
 

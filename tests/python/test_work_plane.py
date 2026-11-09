@@ -7,7 +7,8 @@ from kimbim import app_bridge, settings
 
 def test_work_plane_height_is_independent_and_persisted():
     settings.load(dict(settings.DEFAULTS))
-    assert json.loads(app_bridge.work_plane()) == {"ok": True, "enabled": False, "z": 0.0, "angle": 0.0}
+    assert json.loads(app_bridge.work_plane()) == {"ok": True, "enabled": False, "z": 0.0, "angle": 0.0,
+                                                   "tilt": 0.0, "bearing": 0.0}  # D219
 
     enabled = json.loads(app_bridge.set_work_plane("2.75", "true", "0.5"))
     assert enabled["ok"] and enabled["z"] == 2.75 and enabled["angle"] == 0.5
