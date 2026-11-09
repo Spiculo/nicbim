@@ -34,7 +34,7 @@ def _names() -> list[str]:
     return [str(v) for v in value]
 
 
-def phases() -> str:
+def building_phases() -> str:
     """The project's phases in order and the view's phase and filter."""
     view = settings.current().get(VIEW_KEY) or settings.DEFAULTS[VIEW_KEY]
     names = _names()
@@ -61,7 +61,7 @@ def set_phase_view(phase: str, filter: str = "all") -> str:
     return settings.set_project_settings(json.dumps({VIEW_KEY: {"phase": phase, "filter": filter}}))
 
 
-def assign_phase(guids_json: str, created: str, demolished: str = "") -> str:
+def assign_building_phase(guids_json: str, created: str, demolished: str = "") -> str:
     """Set the phase the elements are created in and (optionally) demolished in; one undo step."""
     if B._model is None:
         return A._fail("no model open")
@@ -127,7 +127,7 @@ def phase_filter(phase: str = "", filter: str = "") -> str:
     phase are existing). Empty phase/filter: the project's phase view."""
     if B._model is None:
         return A._fail("no model open")
-    current = json.loads(phases())
+    current = json.loads(building_phases())
     phase = phase or current["phase"]
     filter = filter or current["filter"]
     names = _names()

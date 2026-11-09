@@ -27,3 +27,16 @@ def test_every_exported_bridge_function_resolves():
 
     missing = [name for name in app_bridge._EXPORTED if not callable(getattr(app_bridge, name, None))]
     assert missing == []
+
+
+def test_no_two_modules_export_the_same_bridge_name():
+    """A name listed under two modules silently shadows one of them (D234's phases hid D214's)."""
+    from kimbim import app_bridge
+
+    seen, clashes = {}, []
+    for module, names in app_bridge._EXPORTS.items():
+        for name in names:
+            if name in seen:
+                clashes.append(f"{name}: {seen[name]} and {module}")
+            seen[name] = module
+    assert clashes == []

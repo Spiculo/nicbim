@@ -822,7 +822,7 @@ void MainWindow::buildPhaseMenu()
     menu->setObjectName(QStringLiteral("phasesMenu"));
     connect(menu, &QMenu::aboutToShow, this, [this, menu] {
         menu->clear();
-        const QJsonObject p = bridge("phases");
+        const QJsonObject p = bridge("building_phases");
         const QString current = p.value("phase").toString(), filter = p.value("filter").toString();
         auto* phaseGroup = new QActionGroup(menu);
         for (const auto& v : p.value("phases").toArray()) {
@@ -852,7 +852,7 @@ void MainWindow::buildPhaseMenu()
         QAction* edit = menu->addAction(tr("Edit phases..."));
         edit->setObjectName(QStringLiteral("actionEditPhases"));
         connect(edit, &QAction::triggered, this, [this] {
-            const QJsonObject p = bridge("phases");
+            const QJsonObject p = bridge("building_phases");
             QStringList names;
             for (const auto& v : p.value("phases").toArray())
                 names << v.toString();
@@ -894,7 +894,7 @@ void MainWindow::assignPhaseDialog()
         m_status->showMessage(tr("Select elements first"));
         return;
     }
-    const QJsonObject p = bridge("phases");
+    const QJsonObject p = bridge("building_phases");
     QStringList names;
     for (const auto& v : p.value("phases").toArray())
         names << v.toString();
@@ -921,7 +921,7 @@ void MainWindow::assignPhaseDialog()
         created = made->currentText();
         demolished = gone->currentData().toString();
     }
-    const QJsonObject r = bridge("assign_phase",
+    const QJsonObject r = bridge("assign_building_phase",
         {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact)), created,
             demolished});
     if (!r.value("ok").toBool()) {

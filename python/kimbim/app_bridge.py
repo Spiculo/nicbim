@@ -1421,9 +1421,9 @@ _EXPORTS = {
         "save_model_to_library",
     ),
     "phases": (
-        "assign_phase",
+        "assign_building_phase",
+        "building_phases",
         "phase_filter",
-        "phases",
         "set_phase_view",
         "set_phases",
     ),
