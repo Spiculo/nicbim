@@ -6312,6 +6312,7 @@ void MainWindow::refreshLayerState()
             m_instanceOf.insert(g.toString(), it.key());
             m_instanceMembers[it.key()] << g.toString();
         }
+    hidden.unite(phaseHidden()); // D234: the phase filter hides like a layer (Show all keeps it)
     m_viewport->setLayerState(hidden, locked);
     m_layersPanel->setLayers(listing, state.value("active").toString(), m_hiddenLayers, m_lockedLayers);
     m_status->setLayers(members.keys(), state.value("active").toString(), m_hiddenLayers);

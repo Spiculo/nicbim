@@ -32,6 +32,7 @@
 
 #include <QAbstractButton>
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -473,6 +474,7 @@ void MainWindow::buildQolTools()
     connectPickSignals();
     setAcceptDrops(true);
     buildFinishAndMepCommands();
+    buildPhaseMenu();
     groupModelMenu();
 }
 
@@ -527,6 +529,32 @@ void MainWindow::buildFinishAndMepCommands()
                     return;
                 }
                 m_pendingLabel = tr("Kerb");
+                afterEdit(r);
+                m_pendingLabel.clear();
+            });
+    });
+    add(tr("&Road marking..."), "actionRoadMarking", tr("Painted lines along a path: solid, dashed or double"), [this] {
+        QString style = QStringLiteral("dashed");
+        if (!m_quiet) {
+            const QStringList styles{tr("Dashed"), tr("Solid"), tr("Double")};
+            bool ok = false;
+            const QString chosen = QInputDialog::getItem(this, tr("Road marking"), tr("Style:"), styles, 0, false, &ok);
+            if (!ok)
+                return;
+            style = QStringList{QStringLiteral("dashed"), QStringLiteral("solid"), QStringLiteral("double")}.at(int(styles.indexOf(chosen)));
+        }
+        pickPoints(-2, false, {tr("Road marking: click where it starts"), tr("Road marking: click the next point; Enter finishes")},
+            [this, style](const QVector<QPointF>& p, const QString&) {
+                QJsonArray points;
+                for (const QPointF& q : p)
+                    points.append(QJsonArray{q.x(), q.y()});
+                const QJsonObject r = bridge("create_road_marking", {m_levels->activeStorey(),
+                    QString::fromUtf8(QJsonDocument(points).toJson(QJsonDocument::Compact)), style});
+                if (!r.value("ok").toBool()) {
+                    showError(tr("Road marking"), r.value("error").toString());
+                    return;
+                }
+                m_pendingLabel = tr("Road marking");
                 afterEdit(r);
                 m_pendingLabel.clear();
             });
@@ -610,6 +638,19 @@ void MainWindow::buildFinishAndMepCommands()
                 m_pendingLabel.clear();
             });
     });
+    auto openingFinish = [this](const char* fn, const QString& title) {
+        const QJsonObject r = bridge(fn, {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact))});
+        if (!r.value("ok").toBool()) {
+            showError(title, r.value("error").toString());
+            return;
+        }
+        afterEdit(r);
+        m_status->showMessage(tr("%1: %n element(s) added", nullptr, int(r.value("guids").toArray().size())).arg(title));
+    };
+    add(tr("&Sills"), "actionSills", tr("A sill under each selected window, door or wall opening"),
+        [openingFinish, this] { openingFinish("add_sills", tr("Sills")); });
+    add(tr("&Reveals"), "actionReveals", tr("Reveal linings on the jambs and head of each selected opening"),
+        [openingFinish, this] { openingFinish("add_reveals", tr("Reveals")); });
     add(tr("&Beam system..."), "actionBeamSystem", tr("Joists or rafters at a spacing across an area: click two corners"),
         [this] { beamSystemCommand(); });
     add(tr("&Lintels"), "actionLintels", tr("A lintel over each selected door, window or wall opening"), [this] {
@@ -692,6 +733,149 @@ void MainWindow::clipUnderlayCommand(bool clear)
                 return;
             apply(QJsonArray{box.left(), box.top(), box.right(), box.bottom()});
         });
+}
+
+// ---------------------------------------------------------------- D234: Revit-style phases
+
+QSet<QString> MainWindow::phaseHidden()
+{
+    QSet<QString> out;
+    m_phaseDemolished.clear();
+    const QJsonObject r = bridge("phase_filter");
+    if (!r.value("ok").toBool())
+        return out;
+    for (const auto& v : r.value("hidden").toArray())
+        out.insert(v.toString());
+    for (const auto& v : r.value("demolished").toArray())
+        m_phaseDemolished << v.toString();
+    // demolished elements in the phase show in red, as Revit's phase graphic overrides do
+    if (m_viewport) {
+        QHash<QString, QColor> colours;
+        for (const QString& g : std::as_const(m_phaseDemolished))
+            colours.insert(g, QColor(200, 40, 40));
+        if (!colours.isEmpty() || m_phaseColoured)
+            m_viewport->setElementColors(colours);
+        m_phaseColoured = !colours.isEmpty();
+    }
+    return out;
+}
+
+void MainWindow::buildPhaseMenu()
+{
+    if (!m_viewMenu)
+        return;
+    QMenu* menu = m_viewMenu->addMenu(tr("P&hases"));
+    menu->setObjectName(QStringLiteral("phasesMenu"));
+    connect(menu, &QMenu::aboutToShow, this, [this, menu] {
+        menu->clear();
+        const QJsonObject p = bridge("phases");
+        const QString current = p.value("phase").toString(), filter = p.value("filter").toString();
+        auto* phaseGroup = new QActionGroup(menu);
+        for (const auto& v : p.value("phases").toArray()) {
+            const QString name = v.toString();
+            QAction* a = menu->addAction(name);
+            a->setCheckable(true);
+            a->setChecked(name == current);
+            phaseGroup->addAction(a);
+            connect(a, &QAction::triggered, this, [this, name, filter] { setPhaseView(name, filter); });
+        }
+        menu->addSeparator();
+        const QList<QPair<QString, QString>> filters{{QStringLiteral("all"), tr("Show all")},
+            {QStringLiteral("complete"), tr("Show complete")}, {QStringLiteral("new"), tr("Show new")},
+            {QStringLiteral("existing"), tr("Show previous and demolished")}};
+        auto* filterGroup = new QActionGroup(menu);
+        for (const auto& [key, label] : filters) {
+            QAction* a = menu->addAction(label);
+            a->setCheckable(true);
+            a->setChecked(key == filter);
+            filterGroup->addAction(a);
+            connect(a, &QAction::triggered, this, [this, current, key = key] { setPhaseView(current, key); });
+        }
+        menu->addSeparator();
+        QAction* assign = menu->addAction(tr("Assign selection to a phase..."));
+        assign->setObjectName(QStringLiteral("actionAssignPhase"));
+        connect(assign, &QAction::triggered, this, &MainWindow::assignPhaseDialog);
+        QAction* edit = menu->addAction(tr("Edit phases..."));
+        edit->setObjectName(QStringLiteral("actionEditPhases"));
+        connect(edit, &QAction::triggered, this, [this] {
+            const QJsonObject p = bridge("phases");
+            QStringList names;
+            for (const auto& v : p.value("phases").toArray())
+                names << v.toString();
+            bool ok = false;
+            const QString text = QInputDialog::getMultiLineText(this, tr("Edit phases"),
+                tr("One phase per line, oldest first:"), names.join(QLatin1Char('\n')), &ok);
+            if (!ok)
+                return;
+            QStringList edited;
+            for (const QString& line : text.split(QLatin1Char('\n')))
+                if (!line.trimmed().isEmpty())
+                    edited << line.trimmed();
+            const QJsonObject r = bridge("set_phases",
+                {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(edited)).toJson(QJsonDocument::Compact))});
+            if (!r.value("ok").toBool())
+                showError(tr("Edit phases"), r.value("error").toString());
+            reloadProjectSettings();
+            refreshLayers();
+        });
+    });
+}
+
+bool MainWindow::setPhaseView(const QString& phase, const QString& filter)
+{
+    const QJsonObject r = bridge("set_phase_view", {phase, filter});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Phases"), r.value("error").toString());
+        return false;
+    }
+    reloadProjectSettings();
+    refreshLayers();
+    m_status->showMessage(tr("Showing phase %1").arg(phase), 3000);
+    return true;
+}
+
+void MainWindow::assignPhaseDialog()
+{
+    if (m_selection.isEmpty()) {
+        m_status->showMessage(tr("Select elements first"));
+        return;
+    }
+    const QJsonObject p = bridge("phases");
+    QStringList names;
+    for (const auto& v : p.value("phases").toArray())
+        names << v.toString();
+    QString created = p.value("phase").toString(), demolished;
+    if (!m_quiet) {
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("Assign phase"));
+        auto* form = new QFormLayout(&dialog);
+        auto* made = new QComboBox(&dialog);
+        made->addItems(names);
+        made->setCurrentText(created);
+        auto* gone = new QComboBox(&dialog);
+        gone->addItem(tr("None"), QString());
+        for (const QString& n : names)
+            gone->addItem(n, n);
+        form->addRow(tr("Created in:"), made);
+        form->addRow(tr("Demolished in:"), gone);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+        form->addRow(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        if (dialog.exec() != QDialog::Accepted)
+            return;
+        created = made->currentText();
+        demolished = gone->currentData().toString();
+    }
+    const QJsonObject r = bridge("assign_phase",
+        {QString::fromUtf8(QJsonDocument(QJsonArray::fromStringList(m_selection)).toJson(QJsonDocument::Compact)), created,
+            demolished});
+    if (!r.value("ok").toBool()) {
+        showError(tr("Assign phase"), r.value("error").toString());
+        return;
+    }
+    afterEdit(r);
+    refreshLayers();
 }
 
 void MainWindow::terrainHeightsDialog(const QVector<QPointF>& points)
@@ -883,10 +1067,12 @@ void MainWindow::shaftCommand()
 
 void MainWindow::mepCommand(const QString& kind)
 {
+    const QString title = kind == QLatin1String("duct") ? tr("Duct") : kind == QLatin1String("pipe") ? tr("Pipe") : tr("Cable tray");
     double width = kind == QLatin1String("pipe") ? 0.1 : 0.4, height = 0.25, elevation = 2.6;
+    QString system;
     if (!m_quiet) {
         QDialog dialog(this);
-        dialog.setWindowTitle(kind == QLatin1String("duct") ? tr("Duct") : kind == QLatin1String("pipe") ? tr("Pipe") : tr("Cable tray"));
+        dialog.setWindowTitle(title);
         auto* form = new QFormLayout(&dialog);
         auto box = [&](double value) {
             auto* b = new LengthSpinBox(&dialog);
@@ -897,10 +1083,17 @@ void MainWindow::mepCommand(const QString& kind)
         auto* w = box(width);
         auto* h = box(height);
         auto* e = box(elevation);
+        auto* sys = new QComboBox(&dialog);
+        sys->setEditable(true);
+        for (const auto& v : bridge("mep_systems").value("systems").toArray())
+            sys->addItem(v.toObject().value("name").toString());
+        sys->setCurrentText(QString());
+        sys->lineEdit()->setPlaceholderText(tr("%1 system").arg(title));
         form->addRow(kind == QLatin1String("pipe") ? tr("Diameter:") : tr("Width:"), w);
         if (kind != QLatin1String("pipe"))
             form->addRow(tr("Height:"), h);
         form->addRow(tr("Centreline above the level:"), e);
+        form->addRow(tr("System:"), sys);
         auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
         form->addRow(buttons);
         connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -910,33 +1103,29 @@ void MainWindow::mepCommand(const QString& kind)
         width = w->value();
         height = h->value();
         elevation = e->value();
+        system = sys->currentText().trimmed();
     }
-    // One segment per pair of clicks; the next starts where the last ended, until Esc.
-    // The pick holds the continuation while it waits; the continuation only holds itself weakly.
-    auto next = std::make_shared<std::function<void(std::optional<QPointF>)>>();
-    const std::weak_ptr<std::function<void(std::optional<QPointF>)>> weak = next;
-    *next = [this, kind, width, height, elevation, weak](std::optional<QPointF> start) {
-        const auto self = weak.lock();
-        if (!self)
-            return;
-        pickPoints(2, false, {tr("Click where the run starts"), tr("Click where this segment ends (Esc ends the run)")},
-            [this, kind, width, height, elevation, self](const QVector<QPointF>& p, const QString&) {
-                auto num = [](double v) { return QString::number(v, 'g', 17); };
-                const QJsonObject r = bridge("create_mep_segment", {m_levels->activeStorey(), kind, num(p.at(0).x()),
-                    num(p.at(0).y()), num(p.at(1).x()), num(p.at(1).y()), num(elevation), num(width), num(height)});
-                if (!r.value("ok").toBool()) {
-                    showError(tr("MEP run"), r.value("error").toString());
-                    return;
-                }
-                m_pendingLabel = kind == QLatin1String("duct") ? tr("Duct") : kind == QLatin1String("pipe") ? tr("Pipe") : tr("Cable tray");
-                afterEdit(r);
-                m_pendingLabel.clear();
-                (*self)(p.at(1));
-            });
-        if (start && m_pick)
-            m_pick->points = {*start};
-    };
-    (*next)(std::nullopt);
+    // The run's points, then segments with an elbow at each bend, in one system, as one undo step.
+    pickPoints(-2, false, {tr("Click where the run starts"), tr("Click the next point of the run; Enter finishes, Esc cancels")},
+        [this, kind, width, height, elevation, system, title](const QVector<QPointF>& p, const QString&) {
+            QJsonArray points;
+            for (const QPointF& q : p)
+                points.append(QJsonArray{q.x(), q.y()});
+            auto num = [](double v) { return QString::number(v, 'g', 17); };
+            const QJsonObject r = bridge("create_mep_run", {m_levels->activeStorey(), kind,
+                QString::fromUtf8(QJsonDocument(points).toJson(QJsonDocument::Compact)), num(elevation), num(width),
+                num(height), system});
+            if (!r.value("ok").toBool()) {
+                showError(tr("MEP run"), r.value("error").toString());
+                return;
+            }
+            m_pendingLabel = title;
+            afterEdit(r);
+            m_pendingLabel.clear();
+            m_status->showMessage(tr("%1: %2 segment(s), %3 fitting(s) in %4").arg(title)
+                .arg(r.value("segments").toArray().size()).arg(r.value("fittings").toArray().size())
+                .arg(r.value("system").toString()));
+        });
 }
 
 // The Model menu had grown to some sixty commands in one list: group them by what they work on.
@@ -960,11 +1149,11 @@ void MainWindow::groupModelMenu()
             {"actionWallHeight", "actionFlipWalls", "actionSaveWallProfile", "actionTrimToRoof", "actionReleaseFromRoof",
                 "actionSlabFromWalls", "actionAddSlabEdge", "actionSlabSlope", "actionCeiling", "actionWallOpening",
                 "actionOpeningSize", "actionSkylight", "actionCornerWindow", "actionCurtainWallSettings",
-                "actionGridSystem", "actionShaft", "actionBeamSystem", "actionLintels", "actionWallHandrail"}},
+                "actionGridSystem", "actionShaft", "actionBeamSystem", "actionLintels", "actionSills", "actionReveals", "actionWallHandrail"}},
         {tr("&Finishes"), "modelMenuFinishes", {"actionFloorFinish", "actionSkirting", "actionWallFinish"}},
         {tr("&MEP"), "modelMenuMep", {"actionDuct", "actionPipe", "actionCableTray"}},
         {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts"}},
-        {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionPlantingArea"}},
+        {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionRoadMarking", "actionPlantingArea"}},
         {tr("&Annotation and 2D"), "modelMenuAnnotation",
             {"actionTagAll", "actionInteriorElevations", "actionAreaLabel", "actionAutoDimension", "actionOverallDimension", "actionGridDimension", "actionKeynotes",
                 "actionFillFromShape", "actionMake2DBlock", "actionInsert2DBlock"}},

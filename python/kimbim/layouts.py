@@ -431,3 +431,209 @@ def wall_handrail(wall_guid: str, side: str = "left", height=0.9, gap=0.05, diam
     except Exception as ex:
         return A._fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, "guid": made["guid"], "length": round(run, 6)})
+
+
+# ---------------------------------------------------------------- sills and reveals
+
+SILL_PSET = "KIMBIM_Sill"
+REVEAL_PSET = "KIMBIM_Reveal"
+
+
+def _openings_to_finish(guids_json: str, pset_name: str):
+    """(opening, wall) for each selected door/window/opening without a `pset_name` element yet."""
+    have = set()
+    for pset in B._model.by_type("IfcPropertySet"):
+        if pset.Name == pset_name:
+            for p in pset.HasProperties:
+                if p.Name == "Opening":
+                    have.add(getattr(p.NominalValue, "wrappedValue", None))
+    todo = []
+    for e in B._elements(guids_json):
+        opening = _opening_of(e)
+        if opening is None or opening.GlobalId in have or any(o is opening for o, _ in todo):
+            continue
+        walls = [rel.RelatingBuildingElement for rel in getattr(opening, "VoidsElements", ()) or ()]
+        if walls and walls[0].is_a("IfcWall"):
+            todo.append((opening, walls[0]))
+    return todo
+
+
+def _box_in(f, m, corner, size, ifc_class, name, predefined, wall, pset_name, props):
+    """A box `size` (x along the opening, y across the wall, z up) at local `corner` of placement m."""
+    product = ifcopenshell.api.root.create_entity(f, ifc_class=ifc_class, name=name, predefined_type=predefined)
+    representation = ifcopenshell.api.geometry.add_wall_representation(
+        f, context=A._body_context(), length=size[0], height=size[2], thickness=size[1])
+    ifcopenshell.api.geometry.assign_representation(f, product=product, representation=representation)
+    matrix = m.copy()
+    matrix[:3, 3] = (m @ np.array([corner[0], corner[1], corner[2], 1.0]))[:3]
+    ifcopenshell.api.geometry.edit_object_placement(f, product=product, matrix=matrix, is_si=True)
+    storey = ifcopenshell.util.element.get_container(wall)
+    if storey is not None:
+        ifcopenshell.api.spatial.assign_container(f, products=[product], relating_structure=storey)
+    pset = ifcopenshell.api.pset.add_pset(f, product=product, name=pset_name)
+    ifcopenshell.api.pset.edit_pset(f, pset=pset, properties=props)
+    layers.assign_active(product)
+    renovation.stamp_new(product)
+    return product
+
+
+def add_sills(guids_json: str, projection=0.04, thickness=0.03, overhang=0.03) -> str:
+    """A sill under each selected window (or door, or opening): as wide as the opening plus `overhang`
+    each side, through the wall and `projection` beyond one face, `thickness` thick, its top at the
+    opening's bottom. IFC has no sill class: it is an IfcCovering MOLDING with `KIMBIM_Sill`. One step."""
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        projection, thickness, overhang = float(projection), float(thickness), float(overhang)
+        todo = _openings_to_finish(guids_json, SILL_PSET)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    if not 0 <= projection <= 0.5 or not 0.005 <= thickness <= 0.3 or not 0 <= overhang <= 0.5:
+        return A._fail("the sill's size is out of range")
+    if not todo:
+        return A._fail("select windows, doors or wall openings without a sill")
+    made = []
+
+    def action():
+        f = B._model
+        for opening, wall in todo:
+            lo, hi, m = _local_box(opening)
+            size = (float(hi[0] - lo[0]) + 2 * overhang, float(hi[1] - lo[1]) + projection, thickness)
+            made.append(_box_in(f, m, (lo[0] - overhang, lo[1] - projection, lo[2] - thickness), size,
+                                "IfcCovering", "Sill", "MOLDING", wall, SILL_PSET,
+                                {"Opening": opening.GlobalId, "Projection": projection, "Thickness": thickness}).GlobalId)
+        return len(made), made, []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made})
+
+
+def add_reveals(guids_json: str, thickness=0.02) -> str:
+    """Reveal linings in each selected opening: boards `thickness` thick on both jambs and the head,
+    as deep as the wall (IfcCovering CLADDING). One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    try:
+        thickness = float(thickness)
+        todo = _openings_to_finish(guids_json, REVEAL_PSET)
+    except (TypeError, ValueError) as ex:
+        return A._fail(str(ex))
+    if not 0.005 <= thickness <= 0.2:
+        return A._fail("the lining thickness must be between 5 mm and 20 cm")
+    if not todo:
+        return A._fail("select windows, doors or wall openings without reveals")
+    made = []
+
+    def action():
+        f = B._model
+        for opening, wall in todo:
+            lo, hi, m = _local_box(opening)
+            w, d, h = float(hi[0] - lo[0]), float(hi[1] - lo[1]), float(hi[2] - lo[2])
+            if w <= 2 * thickness or h <= thickness:
+                continue
+            props = {"Opening": opening.GlobalId, "Thickness": thickness}
+            for corner, size in (((lo[0], lo[1], lo[2]), (thickness, d, h)),                       # left jamb
+                                 ((hi[0] - thickness, lo[1], lo[2]), (thickness, d, h)),           # right jamb
+                                 ((lo[0] + thickness, lo[1], hi[2] - thickness), (w - 2 * thickness, d, thickness))):  # head
+                made.append(_box_in(f, m, corner, size, "IfcCovering", "Reveal", "CLADDING", wall, REVEAL_PSET,
+                                    props).GlobalId)
+        return len(made), made, []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guids": made})
+
+
+# ---------------------------------------------------------------- road markings
+
+MARKING_STYLES = ("solid", "dashed", "double")
+
+
+def _strips(points, style: str, width: float, dash: float, gap: float):
+    """The painted rectangles of a marking as (centre, direction, length, offset across)."""
+    out = []
+    offsets = (-width, width) if style == "double" else (0.0,)
+    carry = 0.0  # dashes run on across the path's corners
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        length = math.dist((x1, y1), (x2, y2))
+        if length < 1e-6:
+            continue
+        d = ((x2 - x1) / length, (y2 - y1) / length)
+        pieces = [(0.0, length)]
+        if style == "dashed":
+            pieces, t = [], -carry
+            while t < length:
+                a, b = max(t, 0.0), min(t + dash, length)
+                if b - a > 1e-6:
+                    pieces.append((a, b))
+                t += dash + gap
+            carry = (length + carry) % (dash + gap)
+        for a, b in pieces:
+            mid = (x1 + d[0] * (a + b) / 2, y1 + d[1] * (a + b) / 2)
+            for off in offsets:
+                out.append((mid, d, b - a, off))
+    return out
+
+
+def create_road_marking(storey_guid: str, points_json: str, style: str = "dashed", width=0.12, dash=3.0, gap=3.0,
+                        name: str = "Road marking") -> str:
+    """Painted road marking along a path (plan metres): a solid line, dashes (`dash` on, `gap` off,
+    continuing round corners) or a double line, `width` wide and 3 mm thick on the level, as one
+    element (IfcBuildingElementProxy "Road marking"; `KIMBIM_Site` Kind "marking"). One undo step."""
+    if B._model is None:
+        return A._fail("no model open")
+    storey = A._by_guid(storey_guid)
+    if storey is None or not storey.is_a("IfcBuildingStorey"):
+        return A._fail("unknown level")
+    style = str(style or "").strip().lower()
+    if style not in MARKING_STYLES:
+        return A._fail("the marking is solid, dashed or double")
+    try:
+        points = [(float(p[0]), float(p[1])) for p in json.loads(points_json)]
+        width, dash, gap = float(width), float(dash), float(gap)
+    except (TypeError, ValueError, IndexError) as ex:
+        return A._fail(str(ex))
+    if not 0.02 <= width <= 1 or not 0.1 <= dash <= 50 or not 0.1 <= gap <= 50:
+        return A._fail("the marking's width, dash or gap is out of range")
+    strips = _strips(points, style, width, dash, gap)
+    if not strips:
+        return A._fail("draw the marking with two different points")
+    if len(strips) > 5000:
+        return A._fail("that marking is too long for its dashes: use longer dashes")
+    made = {}
+
+    def action():
+        f = B._model
+        s = A._scale()
+        marking = ifcopenshell.api.root.create_entity(f, ifc_class="IfcBuildingElementProxy", name=name)
+        marking.ObjectType = "Road marking"
+        items = []
+        for (cx, cy), d, length, off in strips:
+            cx, cy = cx - d[1] * off, cy + d[0] * off
+            position2d = f.createIfcAxis2Placement2D(f.createIfcCartesianPoint((cx / s, cy / s)), f.createIfcDirection(d))
+            profile = f.createIfcRectangleProfileDef("AREA", None, position2d, length / s, width / s)
+            position = f.createIfcAxis2Placement3D(f.createIfcCartesianPoint((0.0, 0.0, 0.0)), None, None)
+            items.append(f.createIfcExtrudedAreaSolid(profile, position, f.createIfcDirection((0.0, 0.0, 1.0)), 0.003 / s))
+        representation = f.createIfcShapeRepresentation(A._body_context(), "Body", "SweptSolid", items)
+        ifcopenshell.api.geometry.assign_representation(f, product=marking, representation=representation)
+        matrix = np.eye(4)
+        matrix[2][3] = A._elevation(storey)
+        ifcopenshell.api.geometry.edit_object_placement(f, product=marking, matrix=matrix, is_si=True)
+        ifcopenshell.api.spatial.assign_container(f, products=[marking], relating_structure=storey)
+        pset = ifcopenshell.api.pset.add_pset(f, product=marking, name=SITE_PSET)
+        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={"Kind": "marking", "Style": style, "Width": width})
+        layers.assign_active(marking)
+        renovation.stamp_new(marking)
+        made["guid"] = marking.GlobalId
+        return 1, [marking.GlobalId], []
+
+    try:
+        r = B._run(action)
+    except Exception as ex:
+        return A._fail(f"{type(ex).__name__}: {ex}")
+    return B._dump({**r, "guid": made["guid"], "strips": len(strips)})

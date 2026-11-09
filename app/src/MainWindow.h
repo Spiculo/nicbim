@@ -392,6 +392,8 @@ public:
     void beamSystemCommand();                // the type and spacing, then two corners
     void terrainHeightsDialog(const QVector<QPointF>& points); // clicked survey points: their heights
     void clipUnderlayCommand(bool clear); // a DXF/vector underlay clipped to a clicked rectangle (or not)
+    bool setPhaseView(const QString& phase, const QString& filter); // D234: the phase the views show
+    void assignPhaseDialog();             // D234: the selection's created/demolished phases
     QString currentViewKey() const;
     bool currentViewShowsCutSlider() const; // D91: false in plan tabs (no cut slider there)
     // A level's plan tab (D71): opened once, raised after; a view of the same model as the 3D tab.
@@ -913,6 +915,10 @@ private:
     bool m_pushPullPick = false;       // push/pull waiting for a face
     void connectPickSignals();
     void groupModelMenu(); // the Model menu's commands in submenus
+    void buildPhaseMenu(); // D234: View > Phases
+    QSet<QString> phaseHidden(); // D234: elements the phase filter hides (and colours the demolished)
+    QStringList m_phaseDemolished;
+    bool m_phaseColoured = false;
     void buildFinishAndMepCommands();
     QSlider* m_cutSlider = nullptr;
     QLabel* m_cutLabel = nullptr;

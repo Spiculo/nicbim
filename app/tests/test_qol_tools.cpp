@@ -314,22 +314,26 @@ private slots:
         QVERIFY(w.pickingPoints());
         w.pickPointAt(QPointF(0, 0), 0.01);
         w.pickPointAt(QPointF(5, 0), 0.01);
-        QVERIFY(w.pickingPoints()); // the next segment starts at (5, 0)
         w.pickPointAt(QPointF(5, 4), 0.01);
-        QCOMPARE(int(w.viewport()->guids().size()), before + 2);
-        emit w.viewport()->drawingEnded(); // Esc ends the run
+        QVERIFY(w.pickingPoints()); // until Enter
+        emit w.viewport()->drawingConfirmed();
         QVERIFY(!w.pickingPoints());
-        QCOMPARE(rows(w.undoHistoryPanel()->list()).mid(1), (QStringList{"Duct", "Duct"}));
+        QCOMPARE(int(w.viewport()->guids().size()), before + 3); // two segments and the elbow
+        QCOMPARE(rows(w.undoHistoryPanel()->list()).mid(1), (QStringList{"Duct"})); // one step
+        w.runCommand(action(w, "actionDuct"));
+        emit w.viewport()->drawingEnded(); // Esc cancels
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(w.undoHistoryPanel()->current(), 1);
         for (const char* name : {"modelMenuMep", "modelMenuFinishes"})
             QVERIFY2(w.findChild<QMenu*>(QLatin1String(name)), name);
         // finishes need rooms selected; a shaft needs slabs to cut
         w.setSelection({});
         w.runCommand(action(w, "actionFloorFinish"));
-        QCOMPARE(w.undoHistoryPanel()->current(), 2);
+        QCOMPARE(w.undoHistoryPanel()->current(), 1);
         w.runCommand(action(w, "actionShaft"));
         w.pickPointAt(QPointF(1, 1), 0.01);
         w.pickPointAt(QPointF(2, 2), 0.01);
-        QCOMPARE(w.undoHistoryPanel()->current(), 2); // no slab there: nothing cut
+        QCOMPARE(w.undoHistoryPanel()->current(), 1); // no slab there: nothing cut
     }
 
     void openEndedPicksFinishWithEnter()
@@ -369,6 +373,24 @@ private slots:
         w.runCommand(action(w, "actionWallHandrail"));
         QCOMPARE(rows(w.undoHistoryPanel()->list()).last(),
             kimbim::commandText(action(w, "actionWallHandrail")).remove(QStringLiteral("...")).trimmed());
+    }
+
+    void phasesHideWhatIsNotBuiltYet()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        QVERIFY(w.findChild<QMenu*>(QStringLiteral("phasesMenu")));
+        const QString wall = drawWall(w);
+        w.setSelection({wall});
+        w.assignPhaseDialog(); // quiet: created in the current phase, New Construction
+        QVERIFY(!w.viewport()->isElementHidden(wall));
+        QVERIFY(w.setPhaseView(QStringLiteral("Existing"), QStringLiteral("all")));
+        QVERIFY(w.viewport()->isElementHidden(wall)); // not built yet
+        action(w, "actionShowAll")->trigger();
+        QVERIFY(w.viewport()->isElementHidden(wall)); // Show all does not undo the phase filter
+        QVERIFY(w.setPhaseView(QStringLiteral("New Construction"), QStringLiteral("new")));
+        QVERIFY(!w.viewport()->isElementHidden(wall));
+        QVERIFY(!w.setPhaseView(QStringLiteral("Nope"), QStringLiteral("all")));
     }
 
     void typedLengthsTakeSumsUnitsAndFeetInches()

@@ -114,3 +114,47 @@ def test_handrail_on_a_wall_face(box):
     assert abs(m[2][3] * authoring._scale() - 0.9) < 1e-6
     assert not call("wall_handrail", box["walls"][0], "up")["ok"]
     assert not call("wall_handrail", box["room"])["ok"]
+
+
+def test_sills_and_reveals(box):
+    window_type = call("opening_types", "window")["types"][0]["guid"]
+    window = call("insert_opening", "window", box["walls"][0], window_type, 3.0, 1.2, 1.2, 0.9)
+    assert window["ok"], window
+    sill = call("add_sills", json.dumps([window["guid"]]))
+    assert sill["ok"], sill
+    e = b._model.by_guid(sill["guids"][0])
+    assert e.is_a("IfcCovering") and e.PredefinedType == "MOLDING"
+    from kimbim import authoring
+
+    m = ifcopenshell.util.placement.get_local_placement(e.ObjectPlacement)
+    assert abs(m[2][3] * authoring._scale() - (0.9 - 0.03)) < 0.02  # under the window's bottom
+    assert not call("add_sills", json.dumps([window["guid"]]))["ok"]  # it has one
+    reveals = call("add_reveals", json.dumps([window["guid"]]), "0.02")
+    assert reveals["ok"] and len(reveals["guids"]) == 3  # two jambs and the head
+    assert call("undo")["ok"]
+    assert not [g for g in reveals["guids"] if _exists(g)]
+
+
+def _exists(guid):
+    try:
+        b._model.by_guid(guid)
+        return True
+    except RuntimeError:
+        return False
+
+
+def test_road_markings():
+    from kimbim import layouts as L
+
+    dashed = L._strips([(0, 0), (10, 0)], "dashed", 0.12, 3.0, 3.0)
+    assert [round(l, 6) for _c, _d, l, _o in dashed] == [3.0, 3.0]  # 0-3 and 6-9
+    double = L._strips([(0, 0), (10, 0)], "double", 0.12, 3.0, 3.0)
+    assert len(double) == 2 and {o for *_x, o in double} == {-0.12, 0.12}
+    corner = L._strips([(0, 0), (4, 0), (4, 4)], "dashed", 0.1, 3.0, 3.0)  # 0-3, then 6-8 round the corner
+    assert [round(l, 6) for _c, _d, l, _o in corner] == [3.0, 2.0]
+    assert call("new_project", "Road")["ok"]
+    l1 = call("storeys")["storeys"][0]["guid"]
+    r = call("create_road_marking", l1, json.dumps([[0, 0], [30, 0]]), "dashed")
+    assert r["ok"] and r["strips"] == 5, r
+    assert b._model.by_guid(r["guid"]).ObjectType == "Road marking"
+    assert not call("create_road_marking", l1, json.dumps([[0, 0], [1, 0]]), "zigzag")["ok"]

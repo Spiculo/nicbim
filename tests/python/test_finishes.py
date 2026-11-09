@@ -110,3 +110,19 @@ def test_mep_runs(kind, ifc_class):
     assert not call("create_mep_segment", l1, kind, 1, 1, 1, 1)["ok"]
     assert not call("create_mep_segment", l1, "sprinkler", 0, 0, 1, 0)["ok"]
 
+
+
+def test_mep_run_has_elbows_and_a_system():
+    assert call("new_project", "MEP run")["ok"]
+    l1 = call("storeys")["storeys"][0]["guid"]
+    r = call("create_mep_run", l1, "duct", json.dumps([[0, 0], [5, 0], [5, 4], [9, 4]]), 2.7, 0.4, 0.25, "Supply air")
+    assert r["ok"], r
+    assert len(r["segments"]) == 3 and len(r["fittings"]) == 2
+    assert all(b._model.by_guid(g).is_a("IfcDuctFitting") for g in r["fittings"])
+    systems = {s["name"]: s for s in call("mep_systems")["systems"]}
+    assert systems["Supply air"]["count"] == 5
+    assert json.loads(b.undo_history())["undo"][-1] == "Create mep run"  # one step
+    assert call("undo")["ok"]
+    assert not call("mep_systems")["systems"] or call("mep_systems")["systems"][0]["count"] == 0
+    again = call("create_mep_run", l1, "pipe", json.dumps([[0, 0], [3, 0]]), 1.0, 0.05, 0.05)
+    assert again["ok"] and again["system"] == "Pipe system" and again["fittings"] == []
