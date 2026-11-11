@@ -31,6 +31,7 @@ class Session:
         self.live = False  # attached to the project the app already has open (D102 phase 2)
         self._selection_get = None  # live: () -> [GlobalId]; the app pushes its selection
         self._selection_set = None  # live: ([GlobalId]) -> None; the app selects them on its next poll
+        self._view = None  # live: (command dict) -> None; the app applies it to its view after the call
         self.store = None  # the stored-session Store (agent.sessions.Store), when this session is stored
         self.stored = None  # its StoredSession record (D111); None for an ad-hoc CLI/MCP session
         self.stored_id = ""

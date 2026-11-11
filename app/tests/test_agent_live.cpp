@@ -179,6 +179,36 @@ private slots:
                         .object().value("name").toString() == QLatin1String("Live wall"), 30000);
     }
 
+    void viewToolsChangeTheWindowNotTheModel()
+    {
+        // D240: view.isolate / view.show_all from the CLI reach the live app's viewport after the call.
+        // Its own project: the test before leaves an accepted proposal (and its window's state) in m_kim.
+        const QString kim = m_tmp.filePath(QStringLiteral("view.kim"));
+        QString error;
+        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, kim}, &error)
+                                         .object();
+        QVERIFY2(imported.value("ok").toBool(), qPrintable(imported.value("error").toString() + error));
+        kimbim::PythonEngine::instance().callJson("close_document", {});
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        w.resize(1280, 800);
+        w.show();
+        QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
+        QVERIFY(w.openPath(kim));
+        QVERIFY(loaded.wait(120000));
+        QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>(QStringLiteral("agentStatus"))->isVisible(), 30000);
+        const int all = w.viewport()->visibleElementCount();
+        QVERIFY(all > 8);
+
+        const QJsonObject isolated = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("isolate"),
+                                                       QStringLiteral("--elements"), QStringLiteral("{\"kind\":\"wall\"}")});
+        QVERIFY2(isolated.value("ok").toBool(), qPrintable(QJsonDocument(isolated).toJson()));
+        QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), 8, 30000); // the house's 8 walls
+
+        const QJsonObject shown = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("show-all")});
+        QVERIFY2(shown.value("ok").toBool(), qPrintable(QJsonDocument(shown).toJson()));
+        QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), all, 30000);
+    }
+
     void proposalDialogShowsTheDiffAndResolvesConflicts()
     {
         const QJsonObject proposal{{QStringLiteral("title"), QStringLiteral("Widen windows")},

@@ -8,7 +8,9 @@ import json
 from ... import drawings as DR
 from ... import schedules as SC
 from ... import sheets as SH
+from ... import worksheets as WS
 from ..catalogue import AgentError, bridge, tool
+from .common import point
 from .outputs import _DRAWING, _SHEET, _drawing_guid, _scheme, _sheet_number
 
 _MM = {"type": "number", "description": "Millimetres on the sheet."}
@@ -73,6 +75,27 @@ def drawings_set_view(session, drawing, depth=None, tilt=None, base=None, crop=N
     return {"guid": guid}
 
 
+@tool("drawings.set_path", {"required": ["drawing", "points"], "properties": {
+    "drawing": {**_DRAWING, "description": "A section or elevation (name or GlobalId)."},
+    "points": {"type": "array", "items": {"type": "array"},
+               "description": "The marker path [[x, y], ...] in project units: two points for a straight "
+                              "marker, more for a bent one."},
+    "bulges": {"type": "array", "items": {"type": "number"},
+               "description": "One per segment: tan(sweep/4) makes it an arc, 0 keeps it straight "
+                              "(default all straight)."}}}, writes=True)
+def drawings_set_path(session, drawing, points, bulges=None):
+    """Replace a section or elevation marker's path: bend it with more points or curve a segment with a bulge."""
+    guid = _drawing_guid(drawing)
+    path = [list(point(session, p, "points")) for p in points]
+    if len(path) < 2:
+        raise AgentError("bad_input", hint="a path needs at least two points")
+    bulges = [float(b) for b in (bulges if bulges is not None else [0.0] * (len(path) - 1))]
+    if len(bulges) != len(path) - 1:
+        raise AgentError("bad_input", hint="give one bulge per segment (points - 1)")
+    r = bridge(DR.set_drawing_path, guid, json.dumps(path), json.dumps(bulges))
+    return {"guid": r.get("guid", guid)}
+
+
 # ---------------------------------------------------------------- sheets
 
 @tool("sheets.get", {"required": ["sheet"], "properties": {"sheet": _SHEET}})
@@ -90,15 +113,17 @@ def sheets_get(session, sheet):
     "sheet": _SHEET,
     "title": {"type": "string"},
     "number": {"type": "string", "description": "A new sheet number; it must be free."},
-    "paper": {"type": "string", "description": "Paper size, e.g. A1, A3, ARCH D (sheets.papers lists them)."}}},
+    "paper": {"type": "string", "description": "Paper size, e.g. A1, A3, ARCH D (sheets.papers lists them)."},
+    "background": {"type": "string", "description": "Paper colour as #rrggbb."}}},
     writes=True)
-def sheets_update(session, sheet, title=None, number=None, paper=None):
-    """Change a sheet's title, number or paper size."""
+def sheets_update(session, sheet, title=None, number=None, paper=None, background=None):
+    """Change a sheet's title, number, paper size or background colour."""
     current = _sheet_number(sheet)
-    changes = {k: v for k, v in (("title", title), ("number", number), ("paper", paper)) if v is not None}
+    changes = {k: v for k, v in (("title", title), ("number", number), ("paper", paper),
+                                 ("background", background)) if v is not None}
     if not changes:
-        raise AgentError("bad_input", hint="give at least one of title, number, paper")
-    bridge(SH.edit_sheet, current, json.dumps(changes))
+        raise AgentError("bad_input", hint="give at least one of title, number, paper, background")
+    bridge(SH.update_sheet, current, json.dumps(changes))
     return {"sheet": changes.get("number", current)}
 
 
@@ -206,6 +231,76 @@ def sheets_remove_item(session, sheet, item, id="", index=None):
     return {"sheet": number}
 
 
+@tool("sheets.set_drawing", {"required": ["sheet", "drawing"], "properties": {
+    "sheet": _SHEET, "drawing": _DRAWING,
+    "at": {"type": "array", "items": {"type": "number"}, "description": "[x, y] new top-left in mm."},
+    "scale": {"type": "integer", "minimum": 1, "maximum": 1000, "description": "1:N on this sheet."},
+    "title": {"type": "string", "description": "A new title; it renames the drawing itself."}}}, writes=True)
+def sheets_set_drawing(session, sheet, drawing, at=None, scale=None, title=None):
+    """Move a drawing already on a sheet, change its scale there, or retitle it."""
+    number, guid = _sheet_number(sheet), _drawing_guid(drawing)
+    changes: dict = {}
+    if at is not None:
+        changes["x"], changes["y"] = _at(at)
+    if scale is not None:
+        changes["scale"] = int(scale)
+    if title is not None:
+        changes["title"] = title
+    if not changes:
+        raise AgentError("bad_input", hint="give at, scale or title")
+    bridge(SH.update_placed, number, guid, json.dumps(changes))
+    return {"sheet": number, "drawing": guid}
+
+
+@tool("sheets.remove_drawing", {"required": ["sheet", "drawing"], "properties": {
+    "sheet": _SHEET, "drawing": _DRAWING}}, writes=True)
+def sheets_remove_drawing(session, sheet, drawing):
+    """Take a drawing off a sheet; the drawing itself is kept."""
+    number, guid = _sheet_number(sheet), _drawing_guid(drawing)
+    bridge(SH.remove_placed, number, guid)
+    return {"sheet": number, "drawing": guid}
+
+
+@tool("sheets.set_symbol", {"required": ["sheet", "id"], "properties": {
+    "sheet": _SHEET,
+    "id": {"type": "string", "description": "The symbol id sheets.get lists."},
+    "at": {"type": "array", "items": {"type": "number"}, "description": "[x, y] new top-left in mm."},
+    "text": {"type": "string"}, "width": _MM, "height": _MM,
+    "drawing": {**_DRAWING, "description": "scalebar: the drawing whose scale it shows."}}}, writes=True)
+def sheets_set_symbol(session, sheet, id, at=None, text=None, width=None, height=None, drawing=None):
+    """Move a sheet symbol or picture, or change its text, size or the drawing a scale bar follows."""
+    number = _sheet_number(sheet)
+    changes: dict = {}
+    if at is not None:
+        changes["x"], changes["y"] = _at(at)
+    for key, value in (("text", text), ("w", width), ("h", height)):
+        if value is not None:
+            changes[key] = value
+    if drawing:
+        changes["drawing"] = _drawing_guid(drawing)
+    if not changes:
+        raise AgentError("bad_input", hint="give at least one change")
+    bridge(SH.set_sheet_symbol, number, id, json.dumps(changes))
+    return {"sheet": number, "id": id}
+
+
+@tool("sheets.place_picture", {"required": ["sheet", "path"], "properties": {
+    "sheet": _SHEET,
+    "path": {"type": "string", "description": "A PNG or JPEG file; it is copied into the project."},
+    "at": _AT,
+    "width": {"type": "number", "minimum": 5, "description": "Width in mm (default 80; the height keeps the "
+                                                            "picture's proportions)."}}}, writes=True)
+def sheets_place_picture(session, sheet, path, at=None, width=None):
+    """Place a picture (PNG or JPEG) on a sheet, such as a logo, a render or a site photo."""
+    number = _sheet_number(sheet)
+    options: dict = {}
+    if at is not None:
+        options["x"], options["y"] = _at(at)
+    if width is not None:
+        options["w"] = float(width)
+    return {"sheet": number, "id": bridge(SH.place_sheet_image, number, path, json.dumps(options))["id"]}
+
+
 @tool("sheets.place_schedule", {"required": ["sheet", "schedule"], "properties": {
     "sheet": _SHEET,
     "schedule": {"type": "string", "description": "Schedule id or name (schedules.list lists them)."},
@@ -265,3 +360,46 @@ def schedules_delete(session, schedule):
     sid = _scheme(schedule)["id"]
     bridge(SC.delete_schedule_scheme, sid)
     return {"id": sid}
+
+
+# ---------------------------------------------------------------- worksheets
+
+_WORKSHEET = {"type": "string", "description": "Worksheet name or GlobalId (worksheets.list lists them)."}
+
+
+def _worksheet_guid(ref) -> str:
+    want = str(ref).strip().lower()
+    for w in bridge(WS.worksheets)["worksheets"]:
+        if w["guid"] == ref or w["name"].strip().lower() == want:
+            return w["guid"]
+    raise AgentError("not_found", what=ref)
+
+
+@tool("worksheets.list", {})
+def worksheets_list(session):
+    """List the worksheets (2D-only drawing areas for details and sketches) with their drawings."""
+    return {"worksheets": bridge(WS.worksheets)["worksheets"]}
+
+
+@tool("worksheets.create", {"required": ["name"], "properties": {"name": {"type": "string"}}}, writes=True)
+def worksheets_create(session, name):
+    """Create a worksheet: a level of its own for 2D work, with its drawing. Draft on it with draft.add."""
+    r = bridge(WS.create_worksheet, name)
+    return {"guid": r["guid"], "drawing": r["drawing"]}
+
+
+@tool("worksheets.rename", {"required": ["worksheet", "name"], "properties": {
+    "worksheet": _WORKSHEET, "name": {"type": "string"}}}, writes=True)
+def worksheets_rename(session, worksheet, name):
+    """Rename a worksheet and its drawing."""
+    guid = _worksheet_guid(worksheet)
+    bridge(WS.rename_worksheet, guid, name)
+    return {"guid": guid, "name": name.strip()}
+
+
+@tool("worksheets.delete", {"required": ["worksheet"], "properties": {"worksheet": _WORKSHEET}}, writes=True)
+def worksheets_delete(session, worksheet):
+    """Delete a worksheet, its 2D elements and its drawing."""
+    guid = _worksheet_guid(worksheet)
+    bridge(WS.delete_worksheet, guid)
+    return {"guid": guid}

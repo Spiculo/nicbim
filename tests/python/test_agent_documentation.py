@@ -196,6 +196,19 @@ def test_underlay_add_update_convert_remove(s, tmp_path):
     assert run(s, "underlays.remove", id=u["id"])["error"]["code"] == "bridge_error"
 
 
+def test_views_save_offline_and_view_needs_app(s):
+    ok(s, "views.save", name="Cutaway", level="Level 1", plan=False, hidden_layers=["Furniture"], white_model=True,
+       cut_planes=[{"point": [0, 0, 1.5], "normal": [0, 0, 1], "name": "Roof off"}])
+    view = next(v for v in ok(s, "views.list")["views"] if v["name"] == "Cutaway")
+    plane = view["data"]["planes"][0]
+    assert plane["name"] == "Roof off" and plane["point"] == [0, 0, 1.5] and view["data"]["whiteModel"] is True
+    assert run(s, "views.save", name="Bad", cut_planes=[{"point": [0, 0, 0], "normal": [0, 0, 0]}]
+               )["error"]["code"] == "bad_input"
+    for name, args in (("views.apply", {"name": "Cutaway"}), ("view.show_all", {}), ("view.zoom", {}),
+                       ("views.save", {"name": "Now", "capture": True})):
+        assert run(s, name, **args)["error"]["code"] == "needs_app", name
+
+
 def test_saved_views_list_and_delete(s):
     assert json.loads(LY.save_view("North corner", json.dumps({"camera": {"eye": [1, 2, 3]}})))["ok"]
     views = ok(s, "views.list")["views"]
@@ -231,3 +244,90 @@ def test_dwg_export_with_a_converter(s, tmp_path):
     sheet = tmp_path / "sheet.dwg"
     ok(s, "sheets.export", sheet=number, format="dwg", out=str(sheet))
     assert sheet.read_bytes()[:4] == b"AC10"
+
+
+# ---------------------------------------------------------------- placed drawings, pictures, paths, worksheets
+
+def _png(path):
+    import struct
+    import zlib
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    raw = b"".join(b"\x00" + b"\xff\x00\x00" * 4 for _ in range(2))
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 4, 2, 8, 2, 0, 0, 0))
+                     + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
+    return path
+
+
+def test_placed_drawing_symbol_picture_and_background(s, tmp_path):
+    plan = ok(s, "drawings.create", kind="plan", level="Level 1")["guid"]
+    number = ok(s, "sheets.create", title="Plan")["number"]
+    ok(s, "sheets.place_drawing", sheet=number, drawing=plan, scale=100)
+    ok(s, "sheets.set_drawing", sheet=number, drawing=plan, at=[40, 30], scale=50)
+    view = ok(s, "sheets.get", sheet=number)["views"][0]
+    assert (view["x"], view["y"], view["scale"]) == (40, 30, 50)
+    assert run(s, "sheets.set_drawing", sheet=number, drawing=plan)["error"]["code"] == "bad_input"
+    cloud = ok(s, "sheets.place_symbol", sheet=number, kind="cloud", text="Rev A")["id"]
+    ok(s, "sheets.set_symbol", sheet=number, id=cloud, at=[100, 100], text="Rev B", width=80)
+    sym = next(x for x in ok(s, "sheets.get", sheet=number)["symbols"] if x["id"] == cloud)
+    assert (sym["x"], sym["y"], sym["text"], sym["w"]) == (100, 100, "Rev B", 80)
+    pic = ok(s, "sheets.place_picture", sheet=number, path=str(_png(tmp_path / "logo.png")), width=40)["id"]
+    assert any(x["id"] == pic and x["kind"] == "image" for x in ok(s, "sheets.get", sheet=number)["symbols"])
+    ok(s, "sheets.update", sheet=number, background="#fffbe6")
+    assert run(s, "sheets.update", sheet=number, background="yellow")["error"]["code"] == "bridge_error"
+    ok(s, "sheets.remove_drawing", sheet=number, drawing=plan)
+    assert not ok(s, "sheets.get", sheet=number)["views"]
+    assert any(d["guid"] == plan for d in ok(s, "drawings.list")["drawings"])  # the drawing stays
+
+
+def test_section_path_bend_and_curve(s):
+    section = ok(s, "drawings.create", kind="section", line=[[0, 0], [6, 0]])["guid"]
+    guid = ok(s, "drawings.set_path", drawing=section, points=[[0, 0], [3, 0], [3, 4]])["guid"]
+    guid = ok(s, "drawings.set_path", drawing=guid, points=[[0, 0], [6, 0]], bulges=[0.3])["guid"]
+    assert any(d["guid"] == guid for d in ok(s, "drawings.list")["drawings"])
+    assert run(s, "drawings.set_path", drawing=guid, points=[[0, 0], [6, 0]],
+               bulges=[0, 1])["error"]["code"] == "bad_input"
+    assert run(s, "drawings.set_path", drawing=guid, points=[[0, 0]])["error"]["code"] == "bad_input"
+
+
+def test_worksheets_and_splines(s):
+    w = ok(s, "worksheets.create", name="Details")
+    assert [x["name"] for x in ok(s, "worksheets.list")["worksheets"]] == ["Details"]
+    spline = ok(s, "draft.add", level="Details", kind="spline", points=[[0, 0], [1, 1], [2, 0], [3, 1]])
+    assert spline["guids"]
+    ok(s, "worksheets.rename", worksheet=w["guid"], name="Wall details")
+    assert run(s, "worksheets.create", name="Wall details")["error"]["code"] == "bridge_error"
+    ok(s, "worksheets.delete", worksheet="Wall details")
+    assert not ok(s, "worksheets.list")["worksheets"]
+
+
+# ---------------------------------------------------------------- objects: gravity and drafts
+
+def test_object_draft_check_save_and_place(s):
+    draft = json.loads((ROOT / "python" / "kimbim" / "bundled_objects" / "base_cabinets.kimobj").read_text(
+        encoding="utf-8"))
+    draft["id"], draft["name"] = "agent_cabinet", "Agent cabinet"
+    assert ok(s, "objects.check_draft", draft=draft) == {"ok": True, "errors": []}
+    bad = {**draft, "parameters": "nope"}
+    checked = ok(s, "objects.check_draft", draft=bad)
+    assert not checked["ok"] and checked["errors"]
+    assert run(s, "objects.save_draft", draft=bad)["error"]["code"] == "bad_input"
+    ref = ok(s, "objects.save_draft", draft=draft)["ref"]
+    assert run(s, "objects.save_draft", draft=draft)["error"]["code"] == "bad_input"  # exists
+    assert ok(s, "objects.save_draft", draft=draft, replace=True)["ref"] == ref
+    library = json.dumps(ok(s, "objects.library"))
+    assert "agent_cabinet" in library or ref in library
+    placed = ok(s, "objects.place", object=ref, level="Level 1", at=[2, 2], gravity=True)
+    assert placed["guids"]
+
+
+def test_measure_points(s):
+    r = ok(s, "measure.points", points=[[0, 0], [3, 0], [3, 4]])
+    assert r["segments"] == [3, 4] and r["length"] == 7 and r["distance"] == 5
+    sq = ok(s, "measure.points", points=[[0, 0], [2, 0], [2, 2], [0, 2]], closed=True)
+    assert sq["area"] == 4 and sq["perimeter"] == 8
+    assert ok(s, "measure.points", points=[[0, 0, 0], ["300cm", 0, "4m"]])["distance"] == 5
+    assert run(s, "measure.points", points=[[0, 0]])["error"]["code"] == "bad_input"
+    assert run(s, "measure.points", points=[[0, 0], [1, 1]], closed=True)["error"]["code"] == "bad_input"

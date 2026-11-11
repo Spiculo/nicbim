@@ -92,6 +92,26 @@ def test_live_project_info_and_selection(app_house):
     assert chosen["envelope"]["ok"] and chosen["ui"]["select"] == [guid]
 
 
+
+def test_live_view_commands(app_house):
+    """views.apply and view.* change only the app's view: the reply's ui.view lists what the window applies."""
+    walls = call_live(app_house, "elements.find", {"elements": {"kind": "wall"}})["envelope"]["result"]["items"]
+    guids = [w["guid"] for w in walls[:2]]
+    hidden = call_live(app_house, "view.hide", {"elements": guids})
+    assert hidden["envelope"]["ok"] and hidden["ui"]["view"] == [{"action": "hide", "elements": guids}]
+    assert call_live(app_house, "view.isolate", {"elements": {"kind": "wall"}})["ui"]["view"][0]["action"] == "isolate"
+    assert call_live(app_house, "view.show_all", {})["ui"]["view"] == [{"action": "show_all"}]
+    assert call_live(app_house, "view.zoom", {})["ui"]["view"] == [{"action": "fit", "elements": []}]
+    saved = call_live(app_house, "views.save", {"name": "Here", "capture": True})
+    assert saved["ui"]["view"] == [{"action": "save", "name": "Here"}]
+    made = call_live(app_house, "views.save", {"name": "Cutaway", "plan": False,
+                                               "cut_planes": [{"point": [0, 0, 1.5], "normal": [0, 0, 1]}]})
+    assert made["envelope"]["ok"] and "view" not in made["ui"]
+    applied = call_live(app_house, "views.apply", {"name": "Cutaway"})
+    assert applied["ui"]["view"] == [{"action": "apply", "name": "Cutaway"}]
+    missing = call_live(app_house, "views.apply", {"name": "Nowhere"})
+    assert missing["envelope"]["error"]["code"] == "not_found" and "view" not in missing["ui"]
+
 def test_live_task_and_proposal_accept(app_house):
     started = call_live(app_house, "task.start", {"title": "Rename walls"})
     assert started["envelope"]["ok"], started

@@ -7,7 +7,7 @@ add for full *user -> agent* parity, and how sessions should be stored. The day-
 
 ## 1. What the agent has today
 
-205 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
+223 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
 over the `kimbim` CLI and MCP. Every write is one undo step; every change goes through a task and (by default) a
 reviewable design option. `dry_run` reports without changing. The count is the exposed set (`_owner_save` is
 internal): 159 registered, 158 listed by `kimbim help --markdown` and `list_tools`.
@@ -59,32 +59,32 @@ tool; *gap* is missing; *gated* is deliberate.
 | Slab outline, slab opening, slab edge | `elements.set_slab_outline`, `create.slab_opening`, `create.slab_edge` | — |
 | Roofs, stairs, railings, ramps, slab openings | `create.roof/stair/ramp/railing/slab_opening` (D129) | — |
 | Grid lines, grid systems | `create.grid`, `create.grid_axis` (D129) | — |
-| 2D drafting: line, polyline, spline, arc/circle, rectangle, fill, hatch | `draft.add` (line, polyline, arc, circle, rectangle, fill), `draft.fill_from_shape`, `draft.patterns` | splines |
+| 2D drafting: line, polyline, spline, arc/circle, rectangle, fill, hatch | `draft.add` (line, polyline, spline, arc, circle, rectangle, fill), `draft.fill_from_shape`, `draft.patterns` | — |
 | Text, dimensions, marks, leaders, tags, angle/radial/level dimensions, keynotes | `annotation.*`, `keynotes.*` (D129) | — |
 | Revision clouds, north arrows, scale bars | `annotation.symbol` on plans, `sheets.place_symbol` on sheets | — |
-| Object placements and parameters | yes | Placement settings (gravity, fit to walls) and object editor drafts |
+| Object placements and parameters | `objects.place` (with `gravity`), `objects.set_parameters` | fit to walls (the app computes it at the cursor) |
 | Rooms: name, number, area, boundary | partial (`create.room`, `set_properties`) | `rooms.set_boundary`, room tag tools |
 | Materials, surfaces, composites | `materials.*` (D130), `elements.set_surface` | — |
 | Classifications, types, type manager | `classifications.*`, `create.types` (read) | types write (gated) |
 | Layers: create, rename, delete, visibility, lock, active | `layers.*` (D130) | — |
 | Visibility sets, overrides, pen sets, purposes, office standards | `graphics.*`, `attributes.*` (D130) | some visibility/override switches (gated) |
 | Renovation status and filters | `elements.set_status` | renovation filters (gated) |
-| Groups, zones, spaces | `elements.group/ungroup`, `create.room` | `zones.*` |
-| Library object editor, object drafts | library/place/parameters | `objects.create_draft`, `objects.save_version` |
-| Place model, worksheets | models (`create`, `place`, `update`, `explode`, `list`) | `worksheets.*` |
+| Groups, zones, spaces | `elements.group/ungroup`, `create.room` (rooms are the app's zones; it has no IfcZone grouping) | — |
+| Library object editor, object drafts | `objects.check_draft`, `objects.save_draft` (project library) | office-library saves (owner) |
+| Place model, worksheets | `models.*`, `worksheets.list/create/rename/delete` | — |
 | Underlays, pictures in 3D | `underlays.list/add/update/remove/convert` (incl. `show_3d`) | pictures placed in 3D |
-| Measure, snaps, trace reference | gap (no measurement tool) | `measure.distance/area` (read-only), `view.trace_reference` |
+| Measure, snaps, trace reference | `measure.points` (segments, length, distance, plan area, perimeter) | `view.trace_reference` |
 
 ### Documents and output
 
 | User action | Agent today | Needed |
 |---|---|---|
-| Drawing settings: path, bend/curve, tilt, base, depth, hidden-line mode | `drawings.set_view` (depth, tilt, base, crop), `drawings.set_scale` | marker path/bend/curve, hidden-line mode |
+| Drawing settings: path, bend/curve, tilt, base, depth, hidden-line mode | `drawings.set_view` (depth, tilt, base, crop), `drawings.set_path` (bends, curves), `drawings.set_scale` | — (hidden-line mode is an app preference) |
 | Rename/delete drawings | `drawings.rename`, `drawings.delete` (also takes it off its sheets) | — |
-| Sheet data: title, number, paper, background | `sheets.get`, `sheets.update`, `sheets.papers`, `sheets.delete` | background |
-| Place/remove/move/scale drawings on a sheet | `place_drawing` only | `sheets.move_placement`, `sheets.set_placement_scale`, `sheets.remove_placement` |
+| Sheet data: title, number, paper, background | `sheets.get`, `sheets.update` (incl. background), `sheets.papers`, `sheets.delete` | — |
+| Place/remove/move/scale drawings on a sheet | `sheets.place_drawing`, `sheets.set_drawing` (move, scale, title), `sheets.remove_drawing` | — |
 | Title block: move and edit its fields | `sheets.set_title_block` | — |
-| Legends, north arrows, scale bars, revision clouds, sheet text, pictures | `sheets.place_legend`, `sheets.place_symbol`, `sheets.remove_item` | pictures on sheets, moving a placed symbol |
+| Legends, north arrows, scale bars, revision clouds, sheet text, pictures | `sheets.place_legend`, `sheets.place_symbol`, `sheets.set_symbol`, `sheets.place_picture`, `sheets.remove_item` | — |
 | Sheet purpose | `sheets.set_purpose` | — |
 | Export PDF/SVG/DXF/DWG | `drawings.export` (SVG/DXF/DWG), `sheets.export` (PDF/SVG/DXF/DWG) | — |
 | Schedules: create/edit schemes, place on sheets | `schedules.fields/save/delete`, `sheets.place_schedule` | — |
@@ -101,8 +101,8 @@ tool; *gap* is missing; *gated* is deliberate.
 | Remotes: fetch/push/clone | gap | `remotes.*` (gated, owner only) |
 | Project settings | read; two reserved | `settings.set` for safe keys only |
 | Undo/redo, selection sets, clipboard | gap | `history.undo/redo` (probably owner-only), `selection.sets`, `clipboard.*` |
-| Saved views (camera, cut planes, section box, style) | `views.list`, `views.delete` | saving/applying a view and cut planes (the camera is the app's state) |
-| Hide/isolate/show all, zoom, view modes | selection only | `view.hide/isolate/show_all/zoom`, `view.style` |
+| Saved views (camera, cut planes, section box, style) | `views.list`, `views.save` (level, plan cut, 3D cut planes, layers, style; or `capture` in the app), `views.apply` (app), `views.delete` | section box |
+| Hide/isolate/show all, zoom, view modes | `view.hide`, `view.isolate`, `view.show_all`, `view.zoom` (app; display only) | view modes outside a saved view |
 | Panels, dialogs, menus, drag and drop | out of scope | none: agents never drive the GUI |
 | Preferences, API keys, scripts switch | out of scope | owner-only settings |
 | Accept/reject proposals | out of scope | owner-only by design |
@@ -114,13 +114,12 @@ If the goal is the smallest set that lets an agent do almost anything an archite
 1. **Editing operations**: ✅ built (split, trim/extend, join, array, offset, fillet/chamfer, resize, stretch and
    slab outline).
 2. **Construction**: ✅ built (D129; wall settings and profiles 2026-11-11).
-3. **Drafting and annotations**: ✅ built (D129), except splines.
-4. **Documentation**: ✅ built 2026-11-11, except moving/scaling/removing a placed drawing, sheet backgrounds and
-   pictures, and a drawing's marker path and hidden-line mode.
+3. **Drafting and annotations**: ✅ built (D129; splines 2026-11-11).
+4. **Documentation**: ✅ built (D239, D240).
 5. **Attributes and graphics**: ✅ built (D130); types write, renovation filters and some visibility switches are
    gated.
-6. **Project control**: save version/milestone and option create are built (D130), and saved views can be listed
-   and deleted; saving/applying views, cut planes and hide/isolate stay with the app (the camera is its state).
+6. **Project control**: ✅ built: save version/milestone and option create (D130); saved views with cut planes,
+   and hide/isolate/show all/zoom in the running app (D240).
 7. **Context and sessions**: ✅ built 2026-10-30 (D111): the state delta below, stored sessions with
    branches/worktrees, and the Assistant's session picker. Still pending: remote sync and worktree isolation for
    `.kim`/IFC sessions (§6).
@@ -250,7 +249,7 @@ around them.
 
 ### Wired today
 
-- One catalogue (`kimbim.agent.catalogue`, **205 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
+- One catalogue (`kimbim.agent.catalogue`, **223 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
 - The **Assistant is the primary consumer**: *View › Panels › Assistant* gets the whole catalogue with no setup.
 - Two execution modes: **live** (the app hosts the session; each write is an undo step) and **offline** (a background
   worker keeps the project open), plus the `kimbim group verb` CLI for scripts and batch work.
@@ -268,21 +267,20 @@ The Assistant needs none of this. These are the external-agent paths and what is
 | MCP clients | `kimbim setup` writes Claude Desktop, Claude Code and opencode | Verified configs for other MCP clients (Cursor, VS Code, Windsurf, Zed, Continue…); they can start `kimbim mcp` by hand, but setup does not write their files |
 | Transport | stdio only (`kimbim mcp`) | HTTP/SSE or streamable HTTP for a remote agent, and authentication for it (local stdio needs none) |
 | Config writer | Merges JSON, keeps other servers and settings; refuses a commented `opencode.jsonc` and prints a paste-ready snippet | In-place JSONC editing |
-| MCP surface | 205 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
+| MCP surface | 223 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
 
 ### Tool surface still to integrate
 
-The construction, drafting, attribute and project-control rounds (D129, D130) and the documentation, wall-setting
-and underlay round (2026-11-11) leave these operations without a tool:
+After D129, D130, D239 and D240 these operations still have no tool:
 
-1. **Documentation**: moving, rescaling or removing a drawing already on a sheet; sheet backgrounds and pictures;
-   moving a placed sheet symbol; a drawing's marker path (bend/curve) and hidden-line mode.
-2. **Construction and drafting**: splines; zones; placement settings (gravity, fit to walls); object editor drafts;
-   worksheets.
-3. **View state** (owned by the app): saving or applying a view, cut planes, hide/isolate, measure and trace
-   reference. A live-mode bridge to the app's camera would be the way in.
+1. **Trace reference** (a view aid of the app).
+2. **Fit to walls** when placing objects: the app computes it from the cursor position.
+3. **The section box** in a saved view, and view modes set outside a saved view.
 4. **Pictures in 3D**.
-5. **Gated by design**: types write, renovation filters, some visibility/override switches.
+5. **Gated by design**: types write, renovation filters, some visibility/override switches, office-library saves.
+
+The view tools (`views.apply`, `view.*`, `views.save` with `capture`) need the app running (live mode): they
+answer `needs_app` offline. They change only what the window shows, after the call, and never the model.
 
 ### Sessions and remote
 

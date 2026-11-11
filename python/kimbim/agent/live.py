@@ -46,6 +46,8 @@ class LiveHost:
         self.session = Session.attach(source, kind, client="live")
         self.session._selection_get = lambda: list(self.selection)
         self.session._selection_set = self.select
+        self._view_commands: list[dict] = []
+        self.session._view = self._view_commands.append
         self.selection: list[str] = []
         self._wanted_selection: list[str] | None = None
         self._requests: queue.Queue = queue.Queue()
@@ -201,6 +203,9 @@ class LiveHost:
             wanted = self.take_selection()
             if wanted is not None:
                 ui["select"] = wanted
+            view, self._view_commands[:] = list(self._view_commands), []
+            if view and envelope.get("ok"):
+                ui["view"] = view  # applied after the geometry and the selection
             if envelope.get("ok") and str(request.get("tool") or "").split(".")[0] in ("task", "versions"):
                 ui["refresh"] = True
         finally:

@@ -7,6 +7,7 @@ import math
 
 from ... import app_bridge as B
 from ... import library as Lib
+from ... import objedit as OE
 from ... import objversions as OV
 from .. import messages, units
 from ..catalogue import SELECTOR, AgentError, bridge, tool
@@ -55,10 +56,12 @@ def versions(session, object):
     "at": {"type": "array", "items": {"type": ["number", "string"]}, "description": "[x, y] of the object's origin."},
     "angle": {"type": ["number", "string"], "description": "Degrees (90, \"90deg\") or \"1.57rad\"."},
     "version": {"type": "string", "description": "A saved version's id (objects.versions); parameters are then ignored."},
-    "parameters": {"type": "object", "description": "{parameter: value}; lengths accept units (\"45cm\")."}}},
+    "parameters": {"type": "object", "description": "{parameter: value}; lengths accept units (\"45cm\")."},
+    "gravity": {"type": "boolean", "description": "Stand it on the top of the slab under it, if any (default "
+                                                  "false: on the level)."}}},
     writes=True)
-def place(session, object, level, at, angle=0, version="", parameters=None):
-    """Place a library object on a level."""
+def place(session, object, level, at, angle=0, version="", parameters=None, gravity=False):
+    """Place a library object on a level, optionally standing on the slab under it."""
     obj = _definition(object)
     storey = level_guid(level)
     x, y = point(session, at, "at")
@@ -66,7 +69,8 @@ def place(session, object, level, at, angle=0, version="", parameters=None):
         turn = math.radians(units.parse_angle(angle))
     except ValueError:
         raise AgentError("bad_input", hint=messages.text("hint_bad_angle", value=angle)) from None
-    r = bridge(Lib.place_object, storey, object, json.dumps(_values(session, obj, parameters)), x, y, turn, "", version)
+    r = bridge(Lib.place_object, storey, object, json.dumps(_values(session, obj, parameters)), x, y, turn,
+               "1" if gravity else "", version)
     return {"guids": [r["guid"]], "type": r["type"]}
 
 
@@ -111,3 +115,34 @@ def update_from_library(session, elements=None):
         return {"updated": 0}  # already current: the bridge calls that a failure, an agent just wants the state
     bridge(Lib.update_from_library, given)
     return {"updated": len(guids) or "all"}
+
+
+# ---------------------------------------------------------------- object drafts (D101)
+
+_DRAFT = {"type": "object", "description": "A .kimobj object definition (doc 16): id, name, parameters, parts. "
+                                           "objects.library and an object's definition show the format."}
+
+
+@tool("objects.check_draft", {"required": ["draft"], "properties": {"draft": _DRAFT}})
+def check_draft(session, draft):
+    """Check a parametric object definition without saving it: every error with the field it is in."""
+    r = json.loads(OE.check_draft(json.dumps(draft)))
+    return {"ok": bool(r.get("ok")), "errors": r.get("errors", [])}
+
+
+@tool("objects.save_draft", {"required": ["draft"], "properties": {
+    "draft": _DRAFT,
+    "replace": {"type": "boolean", "description": "Replace the project object with the same id, and rebuild "
+                                                 "every placed copy (default false: refuse)."}}}, writes=True)
+def save_draft(session, draft, replace=False):
+    """Save a parametric object definition into the project's library; place it with objects.place.
+    Office-library saves stay with the owner."""
+    text = json.dumps(draft)
+    key = str(draft.get("id") or "") if isinstance(draft, dict) else ""
+    r = json.loads(OE.save_draft(text, "project", key if replace else ""))
+    if r.get("exists"):
+        raise AgentError("bad_input", hint=f"the project already has an object {r['exists']}: pass replace=true")
+    if not r.get("ok"):
+        errors = r.get("errors") or []
+        raise AgentError("bad_input", hint="; ".join(str(e) for e in errors) or str(r.get("error") or ""))
+    return {"ref": r.get("ref", ""), "types": r.get("types", 1)}

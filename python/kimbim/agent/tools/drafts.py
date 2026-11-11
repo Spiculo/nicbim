@@ -23,16 +23,17 @@ _PATTERN = {"type": "string", "description": "Fill pattern name (default Solid).
 
 @tool("draft.add", {"required": ["level", "kind", "points"], "properties": {
     "level": _LEVEL,
-    "kind": {"type": "string", "enum": ["line", "polyline", "arc", "circle", "rectangle", "fill"]},
+    "kind": {"type": "string", "enum": ["line", "polyline", "arc", "circle", "rectangle", "fill", "spline"],
+             "description": "spline: a smooth curve through the points."},
     "points": _POINTS,
-    "closed": {"type": "boolean", "description": "Polyline: close it (default false)."},
+    "closed": {"type": "boolean", "description": "Polyline or spline: close it (default false)."},
     "pen": _PEN, "line_type": _LINE_TYPE,
     "pattern": {**_PATTERN, "description": "Fill: pattern name (default Solid)."},
     "background_pen": {"type": "integer", "description": "Fill: background pen, 0 for none."},
     "show_area": {"type": "boolean", "description": "Fill: show the area as text."}}}, writes=True)
 def add(session, level, kind, points, closed=False, pen=None, line_type="", pattern="",
         background_pen=None, show_area=False):
-    """Draw a line, polyline, arc, circle, rectangle or fill on a level."""
+    """Draw a line, polyline, arc, circle, rectangle, fill or spline on a level."""
     path = [list(point(session, p, "points")) for p in points]
     options = {}
     if closed:

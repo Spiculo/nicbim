@@ -11373,6 +11373,31 @@ void MainWindow::applyAgentResult(const QJsonObject& result)
     }
     if (ui.value("refresh").toBool())
         refreshProject();
+    // D240: view commands from agent tools (views.apply/save, view.hide/isolate/show_all/zoom). They change
+    // what the window shows, never the model, and run after the edit and the selection above.
+    for (const QJsonValue& value : ui.value("view").toArray()) {
+        const QJsonObject command = value.toObject();
+        const QString action = command.value("action").toString();
+        QStringList guids;
+        for (const QJsonValue& g : command.value("elements").toArray())
+            guids << g.toString();
+        if (action == QLatin1String("apply"))
+            applyView(command.value("name").toString());
+        else if (action == QLatin1String("save"))
+            saveView(command.value("name").toString());
+        else if (action == QLatin1String("hide"))
+            m_viewport->setHidden(guids, true);
+        else if (action == QLatin1String("isolate"))
+            m_viewport->isolate(guids);
+        else if (action == QLatin1String("show_all"))
+            m_viewport->showAll();
+        else if (action == QLatin1String("fit")) {
+            if (guids.isEmpty())
+                m_viewport->fitAll();
+            else
+                m_viewport->fitTo(guids);
+        }
+    }
 }
 
 void MainWindow::reviewProposal(const QString& task)
