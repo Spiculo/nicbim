@@ -70,7 +70,7 @@ tools/check_translations.py         # fail on unfinished/empty Spanish translati
 
 **Interfaces:**
 - `bool kimbim::installTranslator(QCoreApplication&, const QString& lang)` loads the embedded `:/i18n/kimbim_<lang>.qm`. It returns false for unknown languages, and English is the source language.
-- `kimbim-app --version` prints `KimBim 0.1.0` and exits 0. `--lang es|en` overrides the system locale.
+- `kimbim-app --version` prints `NicBim 0.1.0` and exits 0. `--lang es|en` overrides the system locale.
 - pixi tasks:
   - `app-configure`: `cmake -S . -B build/app -G Ninja -DCMAKE_BUILD_TYPE=Release`
   - `app-build`: `cmake --build build/app`, depends on `app-configure`
@@ -106,9 +106,9 @@ Also `tools/check_translations.py` (pytest-free script): parse `app/translations
 - [ ] **Step 2:** `pixi run app-test` fails (no CMake project).
 - [ ] **Step 3: Implement.**
   - CMake: `qt_standard_project_setup()`, `qt_add_executable(kimbim-app ...)`, a static library `kimbim_core` for everything except `main.cpp`, and `qt_add_translations(kimbim_core TS_FILES ... RESOURCE_PREFIX /i18n)`.
-  - `MainWindow` has the File menu (`&Open IFC...`, `&Quit`), the View menu (`&Fit all`), and Help (`&About KimBim`). Status bar text: `tr("Ready")`.
+  - `MainWindow` has the File menu (`&Open IFC...`, `&Quit`), the View menu (`&Fit all`), and Help (`&About NicBim`). Status bar text: `tr("Ready")`.
   - Run `lupdate` to produce the `.ts` files, then fill in the Spanish translations.
-- [ ] **Step 4:** `pixi run app-test` passes (2/2). `pixi run app -- --version` prints `KimBim 0.1.0`. `pixi run check-translations` passes.
+- [ ] **Step 4:** `pixi run app-test` passes (2/2). `pixi run app -- --version` prints `NicBim 0.1.0`. `pixi run check-translations` passes.
 - [ ] **Step 5:** commit `feat(app): Qt 6 application skeleton with English/Spanish translations`.
 
 ### Task 2: Embedded Python engine and app bridge (open, tree, properties)

@@ -2,7 +2,7 @@
 
 ## One sentence
 
-**KimBim is a native, open-source BIM authoring application for architects. It treats a building model like a source-code repository: you can edit locally, commit, branch, compare and merge, all at the level of BIM objects instead of files.**
+**NicBim is a native, open-source BIM authoring application for architects. It treats a building model like a source-code repository: you can edit locally, commit, branch, compare and merge, all at the level of BIM objects instead of files.**
 
 ## Audience
 
@@ -12,7 +12,7 @@
 
 Architects are not software engineers. Git concepts must show up in architect language:
 
-| Git concept | KimBim UI term |
+| Git concept | NicBim UI term |
 |-------------|----------------|
 | commit | **Save version** |
 | branch | **Design option** / **Variant** |
@@ -69,10 +69,10 @@ Summarized in [08-future.md](08-future.md).
 - macOS in the first releases. It is not excluded, just not targeted.
 - Rewriting IFC parsing, geometry kernels or drawing generation that already exist.
 - A CDE replacement.
-- Reproducing Revit/ArchiCAD feature-for-feature. KimBim covers the core architectural workflow well.
+- Reproducing Revit/ArchiCAD feature-for-feature. NicBim covers the core architectural workflow well.
 
 ## Project identity
 
-- **Name:** KimBim
+- **Name:** NicBim
 - **Model:** community open-source project, no fixed timeline
 - **License:** strong copyleft, GPL-3.0-or-later (Decided, see [06](06-reuse-and-licensing.md#kimbim-license))

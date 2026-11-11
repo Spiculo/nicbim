@@ -1,6 +1,6 @@
 # Slice 21 (R4) — Merge engine
 
-**Goal:** combining two design options is a deterministic three-way merge of KimBim records with a conflict model the app can show (Slice 22), checked against ifcmerge's test cases.
+**Goal:** combining two design options is a deterministic three-way merge of NicBim records with a conflict model the app can show (Slice 22), checked against ifcmerge's test cases.
 
 ## Rules (D68, docs/03)
 
@@ -27,7 +27,7 @@ Conflict ids are stable strings (`o/<GlobalId>`, `o/<GlobalId>#Name`, `dangling:
 
 Fixtures copied from ifcmerge (GPL-3.0-or-later, attribution in `tests/fixtures/ifcmerge/README.md`). Results, with ifcmerge's numbering from `t/003.ifc.t`:
 
-| Case | ifcmerge | KimBim |
+| Case | ifcmerge | NicBim |
 |---|---|---|
 | 1, 2, 3, 7, 10, 11, 14, 15, 17, 18, 19, 20 (additions, deletions, modifications of different elements) | merges | merges, no new IFC schema problems |
 | 8 floor deleted + wall added | merges | merges (a shared direction the wall reuses is restored) |

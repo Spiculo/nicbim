@@ -181,7 +181,7 @@ version.
 
 ## Constraints
 
-- KimBim: C++/Qt app over the Python `kimbim` package; library logic lives in
+- NicBim: C++/Qt app over the Python `kimbim` package; library logic lives in
   `python/kimbim/library.py` and the bridge in `app_bridge.py`. UI strings in English and Spanish
   (`app/translations/kimbim_es.ts`).
 - Types and placements follow D86/D99 storage: one IFC type per value set, `KIMBIM_LibraryObject`
@@ -197,7 +197,7 @@ version.
   or similar), as long as it matches the model's rendering.
 - The exact pset fields for the saved-version name and marker, and where the per-project "last
   used" lives in the project settings.
-- The office file format for shared versions (e.g. a KimBim-managed IFC file of types in the office
+- The office file format for shared versions (e.g. a NicBim-managed IFC file of types in the office
   folder, read like the office IFC types but kept parametric), provided it carries the definition
   and stays readable by `load_office`.
 - Dialog sizing, keyboard focus and shortcuts, and how the summary in Properties picks its values.

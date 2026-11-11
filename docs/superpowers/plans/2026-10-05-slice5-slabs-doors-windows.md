@@ -23,7 +23,7 @@ Previews reuse the unselectable preview batch.
 
 - IFC4, project units (new projects mm); bridge APIs in metres (D51). One action = one undo step with a geometry delta (D49/D51).
 - Standard IFC relations: `IfcRelVoidsElement` (wall → opening), `IfcRelFillsElement` (opening → door/window), `IfcRelDefinesByType`; slabs `IfcSlab` + layered `IfcSlabType` (`IfcMaterialLayerSet`, layer usage on the slab); doors/windows `IfcDoor`/`IfcWindow` + `IfcDoorType`/`IfcWindowType`.
-- Opening sizes live on the occurrence (`OverallWidth`/`OverallHeight`, standard attributes); the type carries KimBim defaults in a custom pset `KIMBIM_OpeningDefaults` (Width, Height, SillHeight), since IFC types have no size attributes.
+- Opening sizes live on the occurrence (`OverallWidth`/`OverallHeight`, standard attributes); the type carries NicBim defaults in a custom pset `KIMBIM_OpeningDefaults` (Width, Height, SillHeight), since IFC types have no size attributes.
 - EN/ES UI, SPDX, DCO; headless CI (pure logic unit-tested; rendering via GUI self-tests).
 
 ## Review Focus

@@ -126,7 +126,7 @@ def test_ifc2x3_uses_kimbim_renovation():
 def test_writing_clears_the_other_place():
     f = _model()
     w = _el(f, "IfcWall", KIMBIM_Renovation={"Status": "DEMOLISH"})
-    r.write_status(w, "existing")  # goes to Pset_WallCommon; the KimBim one must not contradict it
+    r.write_status(w, "existing")  # goes to Pset_WallCommon; the NicBim one must not contradict it
     assert "Status" not in (ifcopenshell.util.element.get_pset(w, "KIMBIM_Renovation") or {})
     assert r.status_of(w) == "existing"
 

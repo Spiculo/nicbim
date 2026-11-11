@@ -118,17 +118,17 @@ All modeling goes through commands, with undo/redo ([01](01-architecture.md#engi
 | Paste between projects (brings types/materials along) | P1 | `ifcopenshell.api.project.append_asset` |
 | Groups / assemblies (copy as one) | P1 | `IfcElementAssembly`, `IfcGroup` |
 
-Clones get **new KimBim IDs and GlobalIds**. They never share identity with the source.
+Clones get **new NicBim IDs and GlobalIds**. They never share identity with the source.
 
 ## 7. Libraries
 
 | Feature | Pri | Notes / reuse |
 |---------|-----|---------------|
-| Library = an IFC file (or versioned KimBim repo) containing types, materials, profiles and their psets | P0 | Same approach as Bonsai asset libraries |
+| Library = an IFC file (or versioned NicBim repo) containing types, materials, profiles and their psets | P0 | Same approach as Bonsai asset libraries |
 | Library browser panel: thumbnails, search, categories | P0 | |
 | Drag a type from the library into the project | P0 | `ifcopenshell.api.project.append_asset` |
 | Bundled default library (walls, slabs, doors, windows, furniture, profiles) | P0 | Seed from IfcOpenShell/Bonsai demo libraries where licenses allow |
-| Office libraries: shared folder or Git repo of libraries | P1 | Versioned libraries are just KimBim repos |
+| Office libraries: shared folder or Git repo of libraries | P1 | Versioned libraries are just NicBim repos |
 | Update project types from a newer library version | P2 | Diff/merge of type records |
 
 ## 8. Drawings (2D documentation)

@@ -51,7 +51,7 @@ built and what is deliberately left open.
 - Trim that would drop an opening: refuse (default), delete or keep inside.
 - Split/trim pieces joined unless the preference is off (Ctrl inverts).
 - Merge keeps the first element's properties (default) or refuses when they differ.
-- Imported walls: rebuild with KimBim's shape (default) or keep the imported body and cut it.
+- Imported walls: rebuild with NicBim's shape (default) or keep the imported body and cut it.
 
 ### 8. Checks — done (`0cc19df`, `47169bf`)
 - Check tolerance (2 mm) and clearance (50 mm) in project settings; ignore joined walls (on).

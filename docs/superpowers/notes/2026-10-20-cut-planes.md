@@ -62,7 +62,7 @@ in this code. `maxUserPlanes()` is the single place to change the policy.
   additionally filtered. This matches the task's "as they do for the plan cut today" but is worth
   revisiting if OCCT's selector ignores view clip planes.
 - **From a face** uses the triangle nearest the picked point in the front-most picked element rather
-  than OCCT's exact face entity. It is exact for flat meshes (the only kind KimBim stores) but a very
+  than OCCT's exact face entity. It is exact for flat meshes (the only kind NicBim stores) but a very
   thin/overlapping triangle at the same depth could be chosen.
 - **Oblique "typed angle"** is typed in a modal dialog after the third click, not in the options strip;
   the panel's Angle column edits it afterwards. The tool has no live tilted-plane preview while the

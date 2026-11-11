@@ -843,7 +843,7 @@ void Viewport::rebindWindow()
         ensureWindow(); // attaches to the new native window
         update();
     } catch (const Standard_Failure& e) {
-        qWarning("KimBim: cannot move the 3D view to its new window: %s", e.what());
+        qWarning("NicBim: cannot move the 3D view to its new window: %s", e.what());
     }
 }
 ```
@@ -988,7 +988,7 @@ void ViewHost::adoptChrome(QWidget* optionsStrip, QWidget* cutColumn)
   - The loops `for (int i = m_tabs->count() - 1; i > 0; --i)` in `refreshDrawings` and `refreshSheets` become `for (const QString& key : m_dock->viewKeys())`, with `auto* view = qobject_cast<DrawingView*>(m_dock->view(key))` and `continue` when null. `closeDrawingTab(i)` → `closeView(key)`.
   - `showModelTab()` → `m_dock->raise(QStringLiteral("3d"))`.
   - `currentViewKey()` returns `m_dock->current()`.
-  - Layout memory. At the end of the constructor, `m_dock->captureDefault()`; then, unless `m_quiet`, `m_dock->restoreLayout(QSettings().value("layout/state").toByteArray())`. In `closeEvent`, after the save check passes, `QSettings().setValue("layout/state", m_dock->saveLayout())`. In `main.cpp`, before creating the window, `QCoreApplication::setOrganizationName("KimBim"); QCoreApplication::setApplicationName("KimBim");` if not already set.
+  - Layout memory. At the end of the constructor, `m_dock->captureDefault()`; then, unless `m_quiet`, `m_dock->restoreLayout(QSettings().value("layout/state").toByteArray())`. In `closeEvent`, after the save check passes, `QSettings().setValue("layout/state", m_dock->saveLayout())`. In `main.cpp`, before creating the window, `QCoreApplication::setOrganizationName("NicBim"); QCoreApplication::setApplicationName("NicBim");` if not already set.
   - Add `src/ViewHost.cpp src/ViewHost.h` to `kimbim_core`.
 
 - [ ] **Step 5: Run the tests.** Build, then run `test_main_window.exe`. Expected: the new tests PASS and the existing ones too. Fix any that reached into `QDockWidget`s or `mainTabs`; today only `planCutSliderBesideTheView` uses `findChild` (`planCutSlider`), and it still works. Then all ctest.

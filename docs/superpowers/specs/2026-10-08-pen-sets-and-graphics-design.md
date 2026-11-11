@@ -35,7 +35,7 @@ purpose}`, the purpose a sheet prints with; missing means the current purpose).
 Each key starts empty in the settings, which means **the built-ins**. The first edit writes the whole
 table (built-ins included) into the settings, so a project or a template carries its own complete
 standard from then on. `graphics.effective(key)` returns the stored table, or the built-ins when it is
-empty. Unknown fields inside entries are kept (an older KimBim never drops a newer one's data).
+empty. Unknown fields inside entries are kept (an older NicBim never drops a newer one's data).
 
 The settings stay JSON (`settings.json`, D72). The current purpose, current pen and the sets travel with
 each version like the other settings, and Combine merges them key by key (D72).

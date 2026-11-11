@@ -1,10 +1,10 @@
 # 03 — Versioning
 
-## Key decision: the KimBim repository *is* a Git repository
+## Key decision: the NicBim repository *is* a Git repository
 
-**Decided.** The owner said: "reduce all work as much as possible" and "the git style is for storing". So KimBim does not build its own object store, pack format, refs and transfer protocol. It stores its canonical records **as Git objects**:
+**Decided.** The owner said: "reduce all work as much as possible" and "the git style is for storing". So NicBim does not build its own object store, pack format, refs and transfer protocol. It stores its canonical records **as Git objects**:
 
-| KimBim concept | Git object |
+| NicBim concept | Git object |
 |----------------|-----------|
 | Canonical record (object / shared value / geometry) | blob |
 | Model state (all records) | tree, sharded by ID prefix |
@@ -15,13 +15,13 @@
 What this gives us for free:
 
 - Content addressing, a Merkle structure, deterministic state hashes (the root tree hash), packfiles, delta compression and garbage collection.
-- **Remotes and sync today**: push/pull to any Git host (Gitea, GitLab, GitHub, a bare repo on a NAS) with no KimBim server. That covers most of "future sync" with zero code. See [08](08-future.md).
+- **Remotes and sync today**: push/pull to any Git host (Gitea, GitLab, GitHub, a bare repo on a NAS) with no NicBim server. That covers most of "future sync" with zero code. See [08](08-future.md).
 - **Push-time checks**: server-side hooks on a Git host can enforce permissions and validation (owner answer 5).
 - Inspectability: `git log` works, and records can be read as JSON.
 
 What it costs:
 
-- Git uses SHA-1 (or SHA-256) for storage. KimBim still uses BLAKE3 for its own content keys (loose and geometry records, and the initial IDs of shared nodes), so the two hash spaces are independent.
+- Git uses SHA-1 (or SHA-256) for storage. NicBim still uses BLAKE3 for its own content keys (loose and geometry records, and the initial IDs of shared nodes), so the two hash spaces are independent.
 - We must use a custom **merge** (Git's text merge is never used on records) and keep Git from checking out 1M files (see below).
 
 **Library:** `gitoxide` (`gix`, pure Rust, MIT/Apache-2.0) for object and ref access. For network operations where `gix` is still incomplete, call the `git` CLI as a fallback. Bonsai's IfcGit does exactly this.
@@ -36,7 +36,7 @@ my-project/
 │   ├── cache/                # model snapshot per tree hash, meshes, spatial indexes
 │   ├── oplog/                # crash-recovery log of uncommitted operations
 │   └── index.db              # search index (SQLite)
-└── exports/                  # optional: IFC exports for people without KimBim
+└── exports/                  # optional: IFC exports for people without NicBim
 ```
 
 Tree structure inside each commit:

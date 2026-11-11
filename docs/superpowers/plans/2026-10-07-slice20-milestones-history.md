@@ -4,7 +4,7 @@
 
 ## Decisions (D67)
 
-| Topic | KimBim |
+| Topic | NicBim |
 |---|---|
 | Milestone | An annotated Git tag on the latest saved version of the current option (docs/03: "Milestone = annotated tag"). Name percent-encoded like option names; the note is the tag message; tagger and time recorded. Unsaved changes: the bridge refuses, the app offers *Save version* first. Unique names. A milestone can be used wherever a version id can (Compare, before/after, `kimbim diff Concept HEAD`) |
 | History panel | Versions carrying milestones show `◆ Name — message` in bold |

@@ -15,7 +15,7 @@ title block, exported to PDF; CI checks it automatically (`pixi run m4`).
   name = `IfcProject.LongName`, address = `IfcBuilding.BuildingAddress`, client = an `IfcActor` assigned to
   the project with the CLIENT role. *File › Project info…*.
 - **Title block** (bottom right, 180 × 50 mm): project name, number, client, address, sheet title, sheet
-  number, scale ("As indicated" when drawings differ), date, KimBim. Each placed drawing has a title line
+  number, scale ("As indicated" when drawings differ), date, NicBim. Each placed drawing has a title line
   with its name and scale, as on Archicad layouts.
 - **Composition**: each drawing's SVG is embedded in a `<g>` with translate/scale (QtSvg has no nested
   `<svg>`); drawings are auto-placed left to right, top to bottom, clear of each other and the title block.

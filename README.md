@@ -1,14 +1,14 @@
-# KimBim
+# NicBim
 
 **Open-source native BIM for architects, with version control built in.**
 
-KimBim is a desktop BIM application for Windows and Linux built on open standards (IFC). Model your building, cut through it, manage object data, reuse libraries and produce drawings. Then save versions, explore design options, compare them and combine them, the way software developers use Git, but for buildings.
+NicBim is a desktop BIM application for Windows and Linux built on open standards (IFC). Model your building, cut through it, manage object data, reuse libraries and produce drawings. Then save versions, explore design options, compare them and combine them, the way software developers use Git, but for buildings.
 
 ## Try the desktop app
 
 ```bash
 pixi install
-pixi run app                      # opens KimBim (English or Spanish, following your system)
+pixi run app                      # opens NicBim (English or Spanish, following your system)
 pixi run app -- model.ifc --lang es
 pixi run app -- --self-test model.ifc --screenshot shot.png   # load, measure fps/picking, print JSON
 pixi run app -- --self-test model.ifc --create-drawings --open-drawing "South Elevation"   # time a drawing
@@ -80,11 +80,11 @@ Development: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Status and known limitations
 
-KimBim is pre-1.0. The modeling, drawing, versioning and agent-tool workflows described on this page work and are covered by tests, but these limits matter before using it on a real project:
+NicBim is pre-1.0. The modeling, drawing, versioning and agent-tool workflows described on this page work and are covered by tests, but these limits matter before using it on a real project:
 
 - **Distribution:** `pixi run app-build`, `pixi run house`, then `pixi run -e pack package` builds a portable `dist/KimBim` folder (about 1.7 GB) that starts without pixi; there is no installer, file association or code signing yet. Run from a pixi environment (`pixi run app`) during development.
 - **Platforms:** Windows and Linux. macOS is not targeted for the first releases. The 3D view needs OpenGL 3.3 or newer.
-- **Interchange:** IFC4 is the written format; IFC2X3 files open and edit and are covered by the corpus tests. IFC4X3 is not supported yet. A `.kim` file is KimBim's own project container (model, settings and history); IFC is the way out.
+- **Interchange:** IFC4 is the written format; IFC2X3 files open and edit and are covered by the corpus tests. IFC4X3 is not supported yet. A `.kim` file is NicBim's own project container (model, settings and history); IFC is the way out.
 - **Scale:** a 100k-object model reaches its first frame in about 11 s; all geometry takes about 2.5 minutes and a cold working decomposition about 110 s (the Rust decomposer; the Python fallback is slower). The 1M-object target is future work (see [docs/07](docs/07-roadmap.md)). `pixi run bench-100k` is the release gate.
 - **Collaboration:** history and design options are local. Git remotes exist on the CLI but have no app UI yet, and there is no concurrent editing.
 - **Feature gaps that stop some real projects:** solid element operations, free work planes, point clouds, photorealistic rendering/VR, a plugin system, customisable toolbars and workspaces, and batch PDF publishing. Shortcuts can already be rebound in Help > Keyboard shortcuts (saved per user). The full list with priorities is [docs/14](docs/14-tool-inventory.md).

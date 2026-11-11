@@ -2,22 +2,22 @@
 
 ## Principle: IFC-schema native, not IFC-file native
 
-- KimBim's data model **is the IFC schema**: IFC4 entities, attributes and relationships, through IfcOpenShell. We do not invent a parallel BIM schema. That would be an enormous amount of work, and every import and export would lose data.
-- KimBim's **storage format is not the IFC file.** An `.ifc` (STEP) file is a poor unit for versioning:
+- NicBim's data model **is the IFC schema**: IFC4 entities, attributes and relationships, through IfcOpenShell. We do not invent a parallel BIM schema. That would be an enormous amount of work, and every import and export would lose data.
+- NicBim's **storage format is not the IFC file.** An `.ifc` (STEP) file is a poor unit for versioning:
   - Entity `#ids` are local to the file and get renumbered.
   - Ordering is arbitrary.
   - A one-property change can reshuffle the whole file.
 - So the repository stores the IFC graph as **canonical records**. IFC files are produced on export, and step IDs are regenerated deterministically.
 
-Prior art: Bonsai and FreeCAD edit IFC "natively" and use `ifcmerge`, which relies on preserving step IDs. KimBim removes that dependency on step IDs by storing records keyed by stable object identity.
+Prior art: Bonsai and FreeCAD edit IFC "natively" and use `ifcmerge`, which relies on preserving step IDs. NicBim removes that dependency on step IDs by storing records keyed by stable object identity.
 
 ## Decomposing the IFC graph into records
 
 IFC entities fall into two kinds:
 
-| Kind | Examples | Has GlobalId | KimBim treatment |
+| Kind | Examples | Has GlobalId | NicBim treatment |
 |------|----------|--------------|------------------|
-| **Rooted** (`IfcRoot` subtypes) | `IfcWall`, `IfcDoor`, `IfcPropertySet`, `IfcRelContainedInSpatialStructure`, `IfcWallType` | yes | **Identity record.** It has a stable KimBim ID and changes over time. |
+| **Rooted** (`IfcRoot` subtypes) | `IfcWall`, `IfcDoor`, `IfcPropertySet`, `IfcRelContainedInSpatialStructure`, `IfcWallType` | yes | **Identity record.** It has a stable NicBim ID and changes over time. |
 | **Non-rooted** | `IfcCartesianPoint`, `IfcLocalPlacement`, `IfcExtrudedAreaSolid`, `IfcPropertySingleValue`, `IfcMaterialLayerSet`, `IfcOwnerHistory` | no | **Value**, embedded in its owner, or a **shared node** with a stable ID. |
 
 Rules (validated by spike S3, see [11](11-spike-results.md#s3--canonical-records-round-trip)):
@@ -36,7 +36,7 @@ This structure is naturally a Merkle DAG. Measured edit locality (spike S3, Dupl
 ### Import policies (from spike S3)
 
 - **Invalid input.** ifcopenshell reads some schema-invalid files that it then refuses to write (e.g. IFC4 ADD1-era `PnIndex`). Import validates every file (`ifcopenshell.validate`) and reports problems. The user then chooses: repair automatically where a known fix exists, import read-only, or cancel.
-- **Duplicate GlobalIds** occur in real exports. Import gives the second and later occurrences new KimBim IDs, deterministically in file order, and lists them in the import report.
+- **Duplicate GlobalIds** occur in real exports. Import gives the second and later occurrences new NicBim IDs, deterministically in file order, and lists them in the import report.
 
 ## IFC schema version
 
@@ -72,8 +72,8 @@ Plan to make IFC4X3 the default for new projects once the major authoring tools 
 
 **Decided (spec §12, owner answer):** a repository-level identity is kept separately from the IFC GlobalId.
 
-- **KimBim ID** is 128 bits. It is assigned when an object is created or first imported. By default it **equals the decoded IFC GlobalId at that moment**, so in the common case the two match and no lookup is needed.
-- **GlobalId** is an ordinary attribute in the record. If an external tool regenerates GlobalIds on re-export, reconciliation (see [03](03-versioning.md#import-reconciliation)) maps the new GlobalId onto the existing KimBim ID and history is kept.
+- **NicBim ID** is 128 bits. It is assigned when an object is created or first imported. By default it **equals the decoded IFC GlobalId at that moment**, so in the common case the two match and no lookup is needed.
+- **GlobalId** is an ordinary attribute in the record. If an external tool regenerates GlobalIds on re-export, reconciliation (see [03](03-versioning.md#import-reconciliation)) maps the new GlobalId onto the existing NicBim ID and history is kept.
 - If reconciliation cannot match an object, the import treats it as delete plus create. That object's history link is lost (owner answer 1), but the project stays valid.
 
 ## Canonical format
@@ -161,10 +161,10 @@ This rule also applies to future live collaboration: live operations carry resul
 
 ### 4. Quantize at the operation boundary
 
-Values that KimBim **computes** during editing (placements after move/rotate, generated profile points) are snapped to a model resolution before they are written:
+Values that NicBim **computes** during editing (placements after move/rotate, generated profile points) are snapped to a model resolution before they are written:
 
 - Lengths: **0.01 mm (1e-5 m)** by default (Decided, D31). This is configurable per project and stored in `kimbim.toml`. Why this value:
-  - It matches the IFC convention: `IfcGeometricRepresentationContext.Precision` is typically 1e-5 to 1e-8 in metre-based models, and IfcOpenShell defaults to 1e-5. KimBim writes the resolution into that attribute on export.
+  - It matches the IFC convention: `IfcGeometricRepresentationContext.Precision` is typically 1e-5 to 1e-8 in metre-based models, and IfcOpenShell defaults to 1e-5. NicBim writes the resolution into that attribute on export.
   - It is about 100× finer than construction tolerances (millimetres) and much finer than authoring-tool limits. Revit's minimum curve length is about 0.8 mm. So snapping never changes anything an architect can see or build.
   - 0.1 mm would also be safe for buildings. 0.01 mm leaves headroom for detailed elements (fixings, joinery) at no cost.
   - The resolution is always defined **in metres** and converted to the project unit. A literal 1e-5 in a millimetre-unit project would be far too tight.

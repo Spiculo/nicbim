@@ -33,7 +33,7 @@ Out of scope:
 They are stored in IFC as the standard `Status` property, an `IfcPropertyEnumeratedValue` with IFC4's
 `PEnum_ElementStatus`:
 
-| KimBim | IFC `Status` written | Also read as this status |
+| NicBim | IFC `Status` written | Also read as this status |
 |---|---|---|
 | Existing | `EXISTING` | `Existing` (case-insensitive), Archicad's "Existing" |
 | To be demolished | `DEMOLISH` | `DEMOLISHED`, "To Be Demolished" |

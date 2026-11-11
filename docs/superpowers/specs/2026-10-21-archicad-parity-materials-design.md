@@ -33,7 +33,7 @@ The work is three sub-projects, built and merged in this order. Each gets a deci
 
 ### Storage (IFC first, so other tools see it)
 
-| KimBim | IFC | Notes |
+| NicBim | IFC | Notes |
 |--------|-----|-------|
 | Surface | `IfcSurfaceStyle` (Side BOTH) + `IfcSurfaceStyleRendering` | `SurfaceColour`, `Transparency` (0–1), `SpecularHighlight` (`IfcSpecularRoughness`, shine), `ReflectanceMethod` (MATT, PLASTIC, METAL, GLASS…). Named, unique by name |
 | Building material | `IfcMaterial` (Name, Description, Category in IFC4) | Unique by name |

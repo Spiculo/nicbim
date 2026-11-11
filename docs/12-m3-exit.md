@@ -25,14 +25,14 @@ The same things can be drawn by hand in the app with the Wall (W), Door (D), Win
 2. **A second, independent engine:** [web-ifc](https://github.com/ThatOpen/engine_web-ifc) 0.0.78, the parser and geometry kernel behind That Open / IFC.js viewers, which shares no code with IfcOpenShell. It opens the file and must produce geometry for every building element. Result: 24/24 elements meshed, no warnings.
 3. **A third, independent parser:** xBIM (the .NET engine behind Xplorer), via `pixi run interop-xbim`: it opens the house with its own reader and must count 3 storeys and 8 walls. Result: 75 products, 8 walls, 3 storeys, 2 doors, 8 windows.
 
-The first web-ifc run found one real interoperability issue: profiles without an explicit `Position` (optional in IFC4). KimBim now always writes it.
+The first web-ifc run found one real interoperability issue: profiles without an explicit `Position` (optional in IFC4). NicBim now always writes it.
 
 ## Manual check (owner)
 
 The automatic checks cover "valid" and "opens in another engine". The criterion asks for **two other tools** people actually use, so please open `build/house.ifc` in:
 
-- **A commercial viewer: this is the check that counts.** It reads IFC with its own code, independent of KimBim. Examples: BIMvision (free), Solibri Anywhere, Revit's IFC import, or Autodesk Viewer (online, so the file gets uploaded).
-- **Bonsai** (Blender + Bonsai add-on, free): *File › Open IFC Project*. Bonsai reads files with **IfcOpenShell, the same library KimBim writes them with**, so a pass there shows the file works in a real architect's tool, but says little about compatibility.
+- **A commercial viewer: this is the check that counts.** It reads IFC with its own code, independent of NicBim. Examples: BIMvision (free), Solibri Anywhere, Revit's IFC import, or Autodesk Viewer (online, so the file gets uploaded).
+- **Bonsai** (Blender + Bonsai add-on, free): *File › Open IFC Project*. Bonsai reads files with **IfcOpenShell, the same library NicBim writes them with**, so a pass there shows the file works in a real architect's tool, but says little about compatibility.
 - If you can, **a second tool that doesn't use IfcOpenShell**, for example xBIM Xplorer (free, .NET), so two independent engines besides web-ifc have opened the file.
 
 and check:

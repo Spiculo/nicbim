@@ -7,7 +7,7 @@
 
 Before D99 the library (D86) was 21 Python functions in `python/kimbim/library.py`, each with a short, fixed list of
 parameters. The chair had width, depth, height and seat height, and always four square legs at the corners
-(`_legs()`). Offices added objects by writing Python files that called `define()`, which KimBim ran in-process.
+(`_legs()`). Offices added objects by writing Python files that called `define()`, which NicBim ran in-process.
 
 Two problems:
 
@@ -31,12 +31,12 @@ the exported IFC (valid against the schema, opening in Bonsai). Nothing in the o
 
 Archicad's library parts (GDL: parameters, macros, 2D and 3D scripts, hotspots) are the default model; Revit's
 families (type and instance parameters, nested families, formulas) are the fallback where Archicad has nothing
-(D61, D92). GDL is a language of its own with no file access; KimBim goes further and has no language at all,
+(D61, D92). GDL is a language of its own with no file access; NicBim goes further and has no language at all,
 only formulas.
 
 ## 1. The format
 
-One JSON file per object, extension `.kimobj`, format id `kimbim-object/1` (no older format is kept: KimBim is
+One JSON file per object, extension `.kimobj`, format id `kimbim-object/1` (no older format is kept: NicBim is
 unreleased, so formats change outright). JSON because the store diffs and hashes it like settings, and the
 Object Editor writes it, so nobody needs to type it by hand.
 
@@ -94,7 +94,7 @@ Object Editor writes it, so nobody needs to type it by hand.
 ### Formulas
 
 Any number in a part, and a parameter's `default`/`min`/`max`/`show_when`, may be a formula string. The evaluator
-is written for KimBim (a small recursive-descent parser in `kimbim/objexpr.py`); **Python's `eval` is never used**.
+is written for NicBim (a small recursive-descent parser in `kimbim/objexpr.py`); **Python's `eval` is never used**.
 
 - Literals: numbers, `'text'` (for comparing choices), `true`, `false`.
 - Names: parameters; `pi`; inside a repeat, `i` (0-based index) and `n` (the count); anchor fields
@@ -241,7 +241,7 @@ Unchanged from D86 except the geometry:
 - When the library has the same `source:id` with another hash (the hash of the definition plus its Uses),
   Properties shows *Update from library* for the selection, and *Model › Update library objects* updates every
   placed object. It regenerates the selected objects' types from the library's definition, keeping
-  parameter values whose key and kind still exist (one undo step). Archicad reloads library parts on open; KimBim
+  parameter values whose key and kind still exist (one undo step). Archicad reloads library parts on open; NicBim
   asks, because a project is versioned and a silent change would show up as an unexplained diff.
 - Library files that fail to load (bad JSON, unknown kind, formula error at the defaults) are listed in the Library
   panel with the error and left out; the rest load.

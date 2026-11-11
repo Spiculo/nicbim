@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-# 14 — Tool inventory: what architects get elsewhere, and what KimBim still lacks
+# 14 — Tool inventory: what architects get elsewhere, and what NicBim still lacks
 
-A checklist of the tools that mainstream BIM and CAD apps give architects, with KimBim's status for each.
+A checklist of the tools that mainstream BIM and CAD apps give architects, with NicBim's status for each.
 Use it to pick the next slices. [04](04-app-features.md) stays the source of decided priorities; this document is
 wider and lists tools 04 does not mention yet.
 
@@ -20,7 +20,7 @@ wider and lists tools 04 does not mention yet.
 | **AL** | Allplan | Listed only where it adds something |
 | **SU** | SketchUp | Listed only where it adds something |
 
-**KimBim**: ✅ done · 🟡 partly done · ⬜ not started · 🔮 deliberately left for later ([08](08-future.md)).
+**NicBim**: ✅ done · 🟡 partly done · ⬜ not started · 🔮 deliberately left for later ([08](08-future.md)).
 **Pri** is the priority from [04](04-app-features.md) where 04 gives one. `new` means 04 does not list the tool yet, so it needs a priority.
 
 The **Has** column comes from general knowledge of each product. It was not checked against each vendor's current
@@ -30,7 +30,7 @@ release notes, so check before relying on a single cell.
 
 ## 1. Project and files
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Open / save IFC | AC RV VW BB | ✅ | P0 | IFC4; IFC2X3 opens, edits and saves (Duplex and Clinic corpus files; `test_e2e`, `test_levels`, `test_dxf`) |
 | Installer / portable build | AC RV VW | 🟡 | P0 | `pixi run -e pack package` writes a relocatable `dist/KimBim` (app, Python, runtime); `pixi run check-package` launches it with pixi removed and exports the sample sheet. D139: `kimbim setup associations [--exe PATH] [--print|--remove]` adds per-user `.kim`/`.ifc` associations (HKCU registry on Windows, a `kimbim.desktop` + MIME package + `xdg-mime` on Linux). D144: `kimbim install [--source dist/KimBim] [--dest PATH] [--force] [--dry-run]` copies the portable build to the user's application folder, writes an install marker and wires the associations; `kimbim uninstall` removes only a marked installation and its associations. D145: `kimbim sign --certificate owner.pfx [--password|KIMBIM_SIGN_PASSWORD] [--verify] [--dry-run]` wraps signtool/osslsigncode; the certificate is the owner's, nothing is bundled and nothing is signed automatically |
@@ -47,7 +47,7 @@ release notes, so check before relying on a single cell.
 
 ## 2. Viewing and navigation
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Orbit, pan, zoom, fit all | all | ✅ | P0 | D48 preset |
 | Plan view and 3D view | all | ✅ | P0 | P / 3 |
@@ -75,7 +75,7 @@ release notes, so check before relying on a single cell.
 
 ## 3. Selection
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Click, Ctrl/Shift add and toggle | all | ✅ | P0 | |
 | Box selection (visible only; Alt goes through) | all | ✅ | P0 | D52 |
@@ -89,7 +89,7 @@ release notes, so check before relying on a single cell.
 
 ## 4. Editing tools (general)
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Undo / redo | all | ✅ | P0 | |
 | Undo history (named steps, jump back several) | AC RV VW SU | ✅ | new | D227: the Undo history panel lists each step by the command or tool that made it; a click undoes or redoes to just after that step (`undo_history`, `undo_steps`, `redo_steps`) |
@@ -116,7 +116,7 @@ release notes, so check before relying on a single cell.
 
 ## 5. Input aids
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Snapping (endpoint, midpoint, on element, grid) | all | ✅ | P0 | |
 | Ortho / angle steps | all | ✅ | P0 | 15° steps, Shift = ortho |
@@ -133,7 +133,7 @@ release notes, so check before relying on a single cell.
 
 ## 6. Building elements
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Walls: straight, layered, L/T joins | all | ✅ | P0 | |
 | Walls: curved | all | ✅ | new | D97: Wall tool › Curved (3 points), layered, doors/windows, stretch, split, fillet, mitred joins with straight and curved walls |
@@ -175,7 +175,7 @@ release notes, so check before relying on a single cell.
 
 ## 7. Site
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Terrain from survey points or contours | AC RV VW BB | ✅ | new | D114: Model > Terrain... (points or contour polylines, spacing; IFC4 `IfcGeographicElement`/`IfcTriangulatedFaceSet`, IFC2X3 shell model); D116: Model > *Building pad...* flattens a polygon and restores the base mesh; agent tools. D233: *Terrain from clicked points...* |
 | Kerbs and planting areas | VW RV | ✅ | new | D233: Model > *Site > Kerb...* (along a clicked path, IfcCivilElement) and *Planting area...* (a clicked outline, IfcGeographicElement with its planting); D234: *Road marking...* paints solid, dashed or double lines |
@@ -186,7 +186,7 @@ release notes, so check before relying on a single cell.
 
 ## 8. Objects and libraries
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Library browser (thumbnails, search, categories) | all | ✅ | P0 | D86: Library panel |
 | Bundled library: furniture, sanitary, kitchen, lighting, people, trees, cars | all | ✅ | P0 | D86/D99: 23 objects as `.kimobj`, a material per part (D97); the chair fully customisable; D167 adds a *Lighting* category with floor and table lamps (IfcLightFixtureType) |
@@ -200,7 +200,7 @@ release notes, so check before relying on a single cell.
 
 ## 9. Organising the model
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Layers (shown, locked, active) | AC VW | ✅ | — | D57 |
 | Layer combinations / view templates | AC RV VW | ✅ | new | D73: layer combinations in purposes; saved views store layer states. D186 adds *Save view template...* and a *View templates* menu: a named snapshot of the layer state, drawing scale and purpose, applied back to the project (every view follows); templates can be deleted |
@@ -211,11 +211,11 @@ release notes, so check before relying on a single cell.
 | Dimensions group (length, height… edits the shape) | AC RV | ✅ | — | |
 | Expression / calculated properties | AC RV VW | ✅ | new | D181: schedule fields with `source: formula` evaluate a safe expression over the row's earlier fields, e.g. `{quantity:volume} * 2` (numbers, + - * / // % **, min, max, round, abs); the schedule editor's *Formula...* button adds one and its label |
 | Renovation status (existing / demolish / new) and filters | AC RV VW | ✅ | new | D74: Archicad statuses, renovation filters in purposes, legends; D234: Revit-style phases and phase filters (View > *Phases*) |
-| Design options | AC RV VW | ✅ | P0 | KimBim uses branches (D56); Archicad and Revit store options inside one file |
+| Design options | AC RV VW | ✅ | P0 | NicBim uses branches (D56); Archicad and Revit store options inside one file |
 
 ## 10. Attributes and graphics standards
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Layered (composite) wall and slab types | all | ✅ | P0 | |
 | Material editor (cut fill, surface, physical data) | all | ✅ | P0 | D96: Graphics › Building materials / Surfaces / Composites; IFC materials, styles and psets |
@@ -227,7 +227,7 @@ release notes, so check before relying on a single cell.
 
 ## 11. Drawings (views made from the model)
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Floor plan drawings (one per story, cut plane, symbols) | all | ✅ | P1 | Slice 15: cut at 1.10 m (Archicad), door swings, window glass, annotations and markers drawn on |
 | Section views (marker in plan, linked view) | all | ✅ | P1 | Slice 14: Section tool (V), Archicad's three clicks; D110: Line, Polyline (bent) and Curve markers, unfolded strip by strip, and oblique tilt; D138 scale and detail level; D190 the scale in generation and a hand crop (View > *Crop drawing...*). SVG from IfcOpenShell's serializer, in a tab (D60, D61) |
@@ -242,7 +242,7 @@ release notes, so check before relying on a single cell.
 
 ## 12. 2D drafting
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Lines, polylines, arcs, circles, splines | all | ✅ | new | D84: line, polyline, arc/circle, rectangle; D98: splines; snaps, typed lengths, grips; in plans, drawings, sheets, DXF |
 | Fills / hatches (regions) | all | ✅ | new | D84: IfcAnnotationFillArea + IfcFillAreaStyleHatching; pattern table in project settings; pens fg/bg; area label; magic wand (Alt+click) |
@@ -252,7 +252,7 @@ release notes, so check before relying on a single cell.
 
 ## 13. Annotation
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Text labels | all | ✅ | P1 | Screen-sized; paper-unit size is open (doc 13) |
 | Linear dimension (two points) | all | ✅ | P1 | |
@@ -272,7 +272,7 @@ release notes, so check before relying on a single cell.
 
 ## 14. Sheets and output
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Sheets / layouts with drawings placed at scale | all | ✅ | P1 | Slice 16 (M4 exit): A1/A3, numbered, drag to place (D62) |
 | ISO and US paper sizes | all | ✅ | new | D233: A0–A4 and ANSI B/D, ARCH D/E1/E for sheets (Sheets panel > New > Other paper, sheet settings, project settings) |
@@ -283,11 +283,11 @@ release notes, so check before relying on a single cell.
 | Print to a printer, with preview | all | ✅ | new | D227: File > *Print sheet...* (Ctrl+P): the open or selected sheet through Qt's print preview, fitted to the paper |
 | Revision schedule on a sheet | AC RV VW | ✅ | new | D232: Sheets panel > *Place revision schedule*: each project revision (code, date, description) and the sheets that carry it, live |
 | Batch publishing (sets of sheets to PDF/DWG) | AC RV VW | ✅ | new | File › *Export all sheets as PDF...* publishes every sheet to a folder (one PDF per sheet, collision-safe names); `kimbim-app --export-sheets OUT_DIR model.ifc [--sheets A01,A02]` does it headless. File › *Export DXF...* with the DWG format, or `app_bridge.export_dwg`, batch-converts every ticked drawing/sheet through LibreDWG (`dxf2dwg`); covered by `tests/python/test_batch_dwg.py`. LibreDWG is a separate pixi environment and is not bundled in the portable build, so DWG needs it installed (DXF always works). D172 adds *Publish sheet set...*: pick sheets (or a saved named set), optionally save the choice as a set, and publish only those PDFs (`sheet_sets`/`save_sheet_set`/`delete_sheet_set`) |
-| DWG/DXF export | AC RV VW BB | ✅ | P1 | D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by KimBim layer or kind. D180: DWG export writes DXF and converts it through LibreDWG when installed, tested by `tests/python/test_batch_dwg.py` (DWG headers for two sheets); DXF needs nothing extra |
+| DWG/DXF export | AC RV VW BB | ✅ | P1 | D83: DXF (ezdxf): drawings in model space at real size, sheets as paper-space layouts; lineweights, colours, linetypes from pens; poché hatches; real dimensions; layers by NicBim layer or kind. D180: DWG export writes DXF and converts it through LibreDWG when installed, tested by `tests/python/test_batch_dwg.py` (DWG headers for two sheets); DXF needs nothing extra |
 
 ## 15. Schedules and quantities
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Element schedules (doors, windows, walls), editable | all | ✅ | P1 | D77: built-in and custom schemes, rows select elements, Name/Mark/property cells edit the model (one undo step) |
 | Room / area schedules | all | ✅ | P1 | D77: the Rooms schedule (every IfcSpace) |
@@ -299,7 +299,7 @@ release notes, so check before relying on a single cell.
 
 ## 16. Visualisation
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Real-time textured 3D | all | ✅ | new | D96: surface pictures box-mapped; drawn defaults for brick, timber, tiles, stone, roof tiles |
 | Photorealistic rendering | AC RV VW | ✅ | new | Archicad CineRender, Revit cloud render, Twinmotion link. D146: File > *Export image...* renders the active view to PNG/JPEG at a chosen size. D147: *Photorealistic (ray tracing)* uses OCCT's ray tracer (materials, sun/shadows, reflections, adaptive AA) with a shaded fallback; the agent `snapshot.take` style `render` uses the same path. D149: *Global illumination (path tracing)* and `snapshot.take` style `pathtrace` use OCCT's path tracer with filmic tone mapping. VR is deferred (see [20](20-vr-feasibility.md)) |
@@ -309,13 +309,13 @@ release notes, so check before relying on a single cell.
 
 ## 17. Collaboration and versions
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
-| Save version, History, Compare (colours and list) | — | ✅ | P0 | KimBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |
+| Save version, History, Compare (colours and list) | — | ✅ | P0 | NicBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |
 | Milestones, object history, before/after | — | ✅ | P0 | Slice 20 (M5) |
 | Combine options with conflict UI | — | ✅ | P1 | Slice 22 (D69), M5 exit |
 | Several people on one project (Teamwork, Worksharing, Project Sharing) | AC RV VW | ✅ | P2 | D211: Git-based collaboration (D107 remotes, D128 merge-aware pull, versioned history, per-session worktrees); several people work through branches and remotes, without live co-editing |
-| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. D140: linked files are watched; *Open source* opens the linked IFC in a second KimBim window, and saving it refreshes the host automatically. D151: *Push edits to source...* writes host edits of monitored copies back to the linked IFC (attributes, properties, geometry and placement, inverse link transform) with conflict strategies. The read-only proxy itself stays read-only; editing happens through monitored copies |
+| External references (link another IFC/project, hotlinks, xrefs) | all | ✅ | new | D117: File > *Link model...* adds another IFC as one read-only triangulated `IfcBuildingElementProxy` (`KIMBIM_Link`); Model > *Links...* updates, transforms or unlinks it; D127 adds stale detection (source changed, missing or unreadable) and *Update changed* / agent `links.refresh`, so an externally edited link is pulled in without relinking. D140: linked files are watched; *Open source* opens the linked IFC in a second NicBim window, and saving it refreshes the host automatically. D151: *Push edits to source...* writes host edits of monitored copies back to the linked IFC (attributes, properties, geometry and placement, inverse link transform) with conflict strategies. The read-only proxy itself stays read-only; editing happens through monitored copies |
 | Copy / monitor linked elements | RV | ✅ | new | D141: *Make editable...* explodes a linked IFC into normal editable elements tagged `KIMBIM_LinkMonitor` (Source, SourceGuid, signatures); *Monitor changes...* reports source elements that changed, disappeared or were added. D142: *Sync monitored...* applies changed source attributes/properties to unmodified host copies, leaves or resolves conflicts (`links.monitor_sync`, safe/source/host), and optionally deletes orphan copies. D143: sync also copies changed **local geometry and placement** (representations deep-copied, link transform applied). D151: *Push edits to source...* writes host edits of monitored copies back to the source IFC, with safe/host/source conflict strategies and a dry run |
 | BCF issues (import, export, viewpoints) | AC RV VW BB | ✅ | new | D113: Model > Issues... (topics, status, priority, assignee, comments, viewpoint from the selection; BCF 2.1 import/export, merged by topic GUID); D119: *Show viewpoint* restores the camera and selects the components |
 | Markups and comments in the model | AC RV VW | ✅ | new | D113: BCF 2.1 issues with viewpoints (camera and selected components), threaded comments and import/export, in the Issues dialog; D87 adds in-model revision clouds and text markups on plans. `tests/python/test_bcf.py` checks every export with bcf-client |
@@ -323,7 +323,7 @@ release notes, so check before relying on a single cell.
 
 ## 18. Interoperability
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | IFC export, valid against the schema | all | ✅ | P0 | Checked in CI: IfcOpenShell validator (schema + EXPRESS rules), web-ifc geometry and the independent xBIM .NET parser (`pixi run interop`, `pixi run interop-xbim`) |
 | IFC export settings (what to export, property mapping) | AC RV VW | ✅ | new | D117: File > *Export IFC...* (all, selection, levels or classes; annotations/spaces/openings; property renames) through `ifcexport.export_ifc` |
@@ -336,7 +336,7 @@ release notes, so check before relying on a single cell.
 
 ## 19. Analysis and checking
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Measure distance, angle, area | all | ✅ | P1 | D79: Shift+M, snaps, 3D surfaces, copy to clipboard |
 | IFC schema validation in the app | BB | ✅ | P1 | Checks panel, EXPRESS rules included (D81) |
@@ -348,7 +348,7 @@ release notes, so check before relying on a single cell.
 
 ## 20. Automation and customisation
 
-| Tool | Has | KimBim | Pri | Notes |
+| Tool | Has | NicBim | Pri | Notes |
 |------|-----|--------|-----|-------|
 | Python console with the model API | RV(pyRevit) BB | ✅ | P1 | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | Visual programming | AC RV VW | ✅ | new | D223: linear visual scripts saved in the project (`visual_scripts`): whitelisted engine ops (massing, room, push/pull, move_vertices) run top to bottom as one undo step, with `"$n"` wiring an earlier step's element; Model > *Visual scripts...* lists/edits/runs/deletes them. D238: *Visual script graph...* edits it as wired nodes |

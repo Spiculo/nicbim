@@ -1,6 +1,6 @@
 # `.kim` file, preferences and templates — design (step 2 of 3)
 
-Owner request, 2026-10-07: save and load user and project preferences, and a KimBim file format for
+Owner request, 2026-10-07: save and load user and project preferences, and a NicBim file format for
 what a plain IFC can't hold. Step 1 (main window rework, D71) is merged. Step 3 (pen sets) comes next
 and stores its sets in the project settings defined here.
 
@@ -57,7 +57,7 @@ The window title shows the file name, `[read-only]` when someone else has it ope
 
 A readable `preferences.json` in the user's settings folder (`QStandardPaths::AppConfigLocation`).
 A missing, unreadable or garbled file means defaults (and the bad file is kept as
-`preferences.json.bad` for inspection); unknown keys are kept on save, so an older KimBim doesn't drop
+`preferences.json.bad` for inspection); unknown keys are kept on save, so an older NicBim doesn't drop
 a newer one's settings.
 
 | Key | Default | Meaning |
@@ -65,7 +65,7 @@ a newer one's settings.
 | `language` | `auto` | `auto`, `en` or `es`; `--lang` still overrides |
 | `layout` | — | the window layout (moved from `QSettings`; the old value is read once) |
 | `recent` | `[]` | up to 10 recent `.kim`, `.ifc` and project folders |
-| `templates_folder` | `Documents/KimBim Templates` | may point to an office drive |
+| `templates_folder` | `Documents/NicBim Templates` | may point to an office drive |
 | `author_name`, `author_email` | Git's `user.name`/`user.email`, else empty | the name on versions |
 | `new_views` | `tab` | `tab` (docked next to the current tab, raised) or `window` (a free window) |
 | `open_ifc` | `make_kim` | `make_kim` or `edit_ifc` |
@@ -114,7 +114,7 @@ House.kim
 
 - Git pack files are stored, not compressed again (they already are); everything else is deflated.
 - Local caches (`.kimbim/cache`, `index.db`) are left out; they rebuild.
-- A `version` higher than this KimBim knows is refused with "made by a newer KimBim".
+- A `version` higher than this NicBim knows is refused with "made by a newer NicBim".
 - A `.kim` that isn't a valid zip or lacks `kimbim-file.json` is refused with a clear message; the file
   is never modified.
 
@@ -156,7 +156,7 @@ folder deleted.
 Every `recovery_minutes` while there is unsaved work, the model and settings are written to
 `AppLocalDataLocation/recovery/<hash>/` with the source path (`.kim`, `.ifc` or untitled). This works
 in every mode. On the next start, a recovery copy newer than its source's last save is offered:
-"KimBim closed unexpectedly. Recover your work on House.kim from 10:58?" → **Recover** / Discard. A
+"NicBim closed unexpectedly. Recover your work on House.kim from 10:58?" → **Recover** / Discard. A
 clean close or a save deletes the copy.
 
 ### Folder mode
@@ -183,7 +183,7 @@ With `open_ifc = edit_ifc`: today's plain mode — Save writes the `.ifc`, no hi
 ## Templates
 
 A template is a `.kim` with `"kind": "template"`, no `.git`, the model content (levels, grids, sheets
-with title block, elevation markers…) and project settings. They live in `templates_folder`; KimBim's
+with title block, elevation markers…) and project settings. They live in `templates_folder`; NicBim's
 own default template is built in (what "New project" makes today) and always listed first.
 
 - **File › New project…** lists the built-in template and every `.kim` template in the folder (name and

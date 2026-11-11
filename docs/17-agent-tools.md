@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 17 — Agent tools: the in-app Assistant, the `kimbim` command line and MCP server
 
-An AI agent (Claude, opencode, or any program that speaks MCP) can read, picture and change a KimBim project for
+An AI agent (Claude, opencode, or any program that speaks MCP) can read, picture and change a NicBim project for
 you. You ask *"make every window on the first floor 50 cm wider"*, the agent does it in seconds, and you review the
-result in KimBim before anything reaches your model (decision D102,
+result in NicBim before anything reaches your model (decision D102,
 [spec](superpowers/specs/2026-10-25-agent-tools-design.md)).
 
 The same set of tools is available three ways. The **Assistant panel** inside the app is the main one; the other two
@@ -16,7 +16,7 @@ are optional transports for the same catalogue.
 - **`kimbim mcp`**, an optional MCP server. Claude Desktop, Claude Code and opencode connect to it and see the
   tools; not required to add tooling or to use the Assistant.
 
-Agents work **live**, while the project is open in KimBim, or **offline**, with the app closed. In live mode the
+Agents work **live**, while the project is open in NicBim, or **offline**, with the app closed. In live mode the
 app hosts a local session: each write is one undo step, the views redraw, and a review bar lists finished agent
 proposals. In offline mode a background worker keeps the project open between commands.
 
@@ -25,7 +25,7 @@ proposals. In offline mode a background worker keeps the project open between co
 - **Read** the project: levels, element counts, settings, any element's type, dimensions, properties, host and
   openings, the drawings, sheets and schedules, the saved versions and design options.
 - **Look** at it: a picture of the model in 3D, a floor plan, a section or elevation, any drawing or a sheet, drawn
-  by KimBim itself, so it looks like what you see in the app. The picture can colour what the agent changed.
+  by NicBim itself, so it looks like what you see in the app. The picture can colour what the agent changed.
 - **Change** it: resize doors and windows, move, rotate, copy, mirror, array, offset, fillet, scale, stretch, split,
   trim, join, rename and delete elements, edit slab outlines, set properties, layers and renovation status, add walls,
   slabs, columns, beams, doors, windows and rooms, place and adjust library objects, add levels, drawings and sheets.
@@ -42,8 +42,8 @@ other servers and settings. In development, run it as `pixi run kimbim ...`.
 | Agent | Command | What it writes |
 |-------|---------|----------------|
 | Claude Desktop | `kimbim setup claude-desktop` | `claude_desktop_config.json` (in `%APPDATA%\Claude` on Windows) |
-| Claude Code | `kimbim setup claude-code --project house.kim` | `.mcp.json` and a short KimBim section in `CLAUDE.md`, in the project's folder |
-| opencode | `kimbim setup opencode --project house.kim` | `opencode.json` and a short KimBim section in `AGENTS.md`, in the project's folder |
+| Claude Code | `kimbim setup claude-code --project house.kim` | `.mcp.json` and a short NicBim section in `CLAUDE.md`, in the project's folder |
+| opencode | `kimbim setup opencode --project house.kim` | `opencode.json` and a short NicBim section in `AGENTS.md`, in the project's folder |
 
 - With `--project`, the server always works on that project. Without it, the agent names the project in every call.
 - `--print` shows the configuration instead of writing it. For Claude Code it prints the `claude mcp add` line.
@@ -61,8 +61,8 @@ not started for the windowless snapshot helper.
 
 Every change an agent makes belongs to a **task**, such as *"Widen first-floor windows"*.
 
-1. The agent starts the task (`task_start` with a title). KimBim creates a **design option** named
-   `agent/widen-first-floor-windows` from your latest version. If your project has unsaved changes, KimBim first
+1. The agent starts the task (`task_start` with a title). NicBim creates a **design option** named
+   `agent/widen-first-floor-windows` from your latest version. If your project has unsaved changes, NicBim first
    saves them as a version called *Before agent: Widen first-floor windows*, so the agent starts from what you see.
 2. The agent makes its changes. They go into the option, never into your option.
 3. The agent finishes the task (`task_finish` with a summary). The option gets one new version, authored by
@@ -352,7 +352,7 @@ These commands are on the command line only. Agents don't get them.
 
 | Command | What it does |
 |---------|--------------|
-| `kimbim project init [DIR]` | Makes a folder a KimBim project |
+| `kimbim project init [DIR]` | Makes a folder a NicBim project |
 | `kimbim versions save [FILE.ifc] -m MESSAGE` | Saves a version: of an IFC file, or of the project's working model |
 | `kimbim versions status FILE.ifc` | What saving that IFC file would change |
 | `kimbim versions branch [NAME]`, `switch NAME` | Lists or creates design options, switches to one |
@@ -371,14 +371,14 @@ folder when it is a project or holds exactly one `.kim`.
 
 ## How it runs
 
-When the project is open in KimBim, the app hosts the **live** session: it writes its discovery file next to the
+When the project is open in NicBim, the app hosts the **live** session: it writes its discovery file next to the
 project (`.kim` files get `<name>.kim.agent-live.json`; folders get `.kimbim/agent-live.json`) and runs each call
 on its own thread. The CLI and MCP server find it there first, so the same commands work with no worker. The
 status bar shows *Agent: live* and a *Disconnect* button.
 
 When no app has the project open, the first command starts a **background worker** (`kimbim serve`). It opens the
 project once and keeps it open, so later commands are fast even on large models. While it runs it holds the
-project's lock as *KimBim agent*, so the app opens the project read-only. The worker saves and lets go of the
+project's lock as *NicBim agent*, so the app opens the project read-only. The worker saves and lets go of the
 project 10 minutes after the last command (`KIMBIM_AGENT_IDLE` sets other seconds), and it saves when a task
 finishes.
 
@@ -401,7 +401,7 @@ limits below).
 What these show:
 
 - **Writes are fast** on both models. The Clinic's windows can't be resized: all 58 of its Revit windows answer
-  *"the opening doesn't fit in the wall"*, even for 1 cm. KimBim measures where a window sits in its wall from the
+  *"the opening doesn't fit in the wall"*, even for 1 cm. NicBim measures where a window sits in its wall from the
   opening's placement, as its own windows are built, and Revit's openings are placed differently. The write was
   timed as a rename instead.
 - **Pictures** are within a few seconds once the renderer has the model; its first load of a large model takes
@@ -424,7 +424,7 @@ What these show:
 - **Long calls on large models.** The command line and the MCP server wait 120 s for an answer. On the Clinic,
   `task_finish` and a snapshot with `changes` take longer (above), so the agent is told `worker_failed`. The
   worker still completes the call, so the task does finish.
-- **Resizing imported doors and windows** works for openings placed the way KimBim places them. Revit's (the
+- **Resizing imported doors and windows** works for openings placed the way NicBim places them. Revit's (the
   Clinic's) are refused.
 - **Option mode needs versions.** On a plain IFC file or a project without versions, `task_start` says to enable
   versioning or to use direct mode.

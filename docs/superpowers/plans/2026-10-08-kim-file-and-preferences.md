@@ -25,7 +25,7 @@ C++17 / Qt 6 (`QJsonDocument`, `QStandardPaths`); Qt Advanced Docking System 4.5
 - Working folder: `<data dir>/open/<16-hex hash of the .kim's full path>/`; recovery: `<data dir>/recovery/<hash>/`.
 - Lock: `<file>.kim.lock` beside the file (folder mode: `.kimbim/lock`), `{"user", "machine", "pid", "since"}`.
 - Project settings defaults: `plan_cut_height` 1.2, `hidden_layers` [], `locked_layers` [], `drawing_scale` 100, `sheet_paper` "A1", `length_unit` "m", `length_decimals` 2, `pen_sets` {}. Unknown keys kept.
-- Preferences defaults: `language` "auto", `templates_folder` Documents/KimBim Templates, `new_views` "tab", `open_ifc` "make_kim", `auto_version` "off", `auto_version_every` 10, `recovery_minutes` 5, `recent` [] (max 10). Unknown keys kept; a garbled file is kept as `preferences.json.bad`.
+- Preferences defaults: `language` "auto", `templates_folder` Documents/NicBim Templates, `new_views` "tab", `open_ifc` "make_kim", `auto_version` "off", `auto_version_every` 10, `recovery_minutes` 5, `recent` [] (max 10). Unknown keys kept; a garbled file is kept as `preferences.json.bad`.
 - Ctrl+S saves the file; Save version… stays Ctrl+Alt+S; Save As… Ctrl+Shift+S.
 - Every new UI string in English and Spanish (`app/translations/kimbim_es.ts`); SPDX header on every new file.
 - C++17; Python files written with LF line endings.
@@ -34,7 +34,7 @@ C++17 / Qt 6 (`QJsonDocument`, `QStandardPaths`); Qt Advanced Docking System 4.5
 
 1. **OneDrive holds the `.kim` for a moment during sync** (`os.replace` gets PermissionError) → the save retries a few times, then fails with a clear message and the old file intact. Test in Task 3.
 2. **A zip entry that escapes the folder** (`../x`, absolute path) in a hand-made or malicious `.kim` → refused, nothing written outside the working folder. Test in Task 3.
-3. **Two KimBim windows on one machine open the same `.kim`** (same user, live pid) → the second opens read-only, it does not take the lock over. Test in Task 4.
+3. **Two NicBim windows on one machine open the same `.kim`** (same user, live pid) → the second opens read-only, it does not take the lock over. Test in Task 4.
 4. **Unsaved-but-not-versioned work and design options**: after Ctrl+S (file saved, no version), switching options must still ask to save a version, and reopening the `.kim` must keep that work and still know it isn't versioned. Test in Task 5.
 5. **Template GlobalIds referenced as text** (a sheet's placed drawing, saved views) → after regenerating ids, the new project's sheets still show their drawings. Test in Task 6.
 
@@ -141,7 +141,7 @@ Expected: FAIL — `ImportError: cannot import name 'settings'` (and `project_se
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Project settings (step 2, D72): values that belong to the project, not the computer. They live in
 the `.kim` / project folder and in every version's tree (settings.json), so going back to a version
-brings back its settings. Unknown keys are kept, so an older KimBim never drops a newer one's settings.
+brings back its settings. Unknown keys are kept, so an older NicBim never drops a newer one's settings.
 
 Same protocol as app_bridge for the bridge functions (strings in, JSON out, never raise).
 """
@@ -658,17 +658,17 @@ def test_entries_outside_the_folder_are_refused(tmp_path, name):
 def test_damaged_unknown_and_newer_files_are_refused_untouched(tmp_path):
     junk = tmp_path / "junk.kim"
     junk.write_bytes(b"not a zip")
-    with pytest.raises(K.KimError, match="not a KimBim file"):
+    with pytest.raises(K.KimError, match="not a NicBim file"):
         K.read_manifest(junk)
     nomani = tmp_path / "nomani.kim"
     with zipfile.ZipFile(nomani, "w") as z:
         z.writestr("x", "y")
-    with pytest.raises(K.KimError, match="not a KimBim file"):
+    with pytest.raises(K.KimError, match="not a NicBim file"):
         K.read_manifest(nomani)
     newer = tmp_path / "newer.kim"
     with zipfile.ZipFile(newer, "w") as z:
         z.writestr(K.MANIFEST, json.dumps({"format": "kim", "version": 99, "kind": "project"}))
-    with pytest.raises(K.KimError, match="newer KimBim"):
+    with pytest.raises(K.KimError, match="newer NicBim"):
         K.unpack(newer, tmp_path / "o")
     assert junk.read_bytes() == b"not a zip"
 
@@ -774,11 +774,11 @@ def read_manifest(kim) -> dict:
         with zipfile.ZipFile(kim) as z:
             manifest = json.loads(z.read(MANIFEST))
     except (zipfile.BadZipFile, KeyError, ValueError, OSError):
-        raise KimError(f"{kim.name} is not a KimBim file, or it is damaged") from None
+        raise KimError(f"{kim.name} is not a NicBim file, or it is damaged") from None
     if not isinstance(manifest, dict) or manifest.get("format") != "kim":
-        raise KimError(f"{kim.name} is not a KimBim file, or it is damaged")
+        raise KimError(f"{kim.name} is not a NicBim file, or it is damaged")
     if int(manifest.get("version", 0)) > VERSION:
-        raise KimError(f"{kim.name} was made by a newer KimBim; update KimBim to open it")
+        raise KimError(f"{kim.name} was made by a newer NicBim; update NicBim to open it")
     return manifest
 
 
@@ -1163,7 +1163,7 @@ def test_existing_project_folders_open_with_default_settings(tmp_path):
     plain = tmp_path / "old.ifc"
     assert call("save", str(plain))["ok"]
     project = Project.init(tmp_path / "old")
-    project.commit(plain, "Made by an older KimBim")  # no settings.json in its tree
+    project.commit(plain, "Made by an older NicBim")  # no settings.json in its tree
     r = call("open_folder", str(tmp_path / "old"), "")
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
@@ -1206,7 +1206,7 @@ _AUTHOR: tuple[str, str] | None = None  # set by the app from its preferences (d
 def _author() -> tuple[str, str]:
     if _AUTHOR is not None:
         return _AUTHOR
-    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "KimBim User"
+    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "NicBim User"
     email = os.environ.get("KIMBIM_AUTHOR_EMAIL") or _git_config("user.email") or "user@localhost"
     return name, email
 ```
@@ -1262,8 +1262,8 @@ def data_dir() -> pathlib.Path:
     if os.environ.get("KIMBIM_DATA_DIR"):
         return pathlib.Path(os.environ["KIMBIM_DATA_DIR"])
     if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        return pathlib.Path(os.environ["LOCALAPPDATA"]) / "KimBim"
-    return pathlib.Path.home() / ".local" / "share" / "KimBim"
+        return pathlib.Path(os.environ["LOCALAPPDATA"]) / "NicBim"
+    return pathlib.Path.home() / ".local" / "share" / "NicBim"
 
 
 def _same(a, b) -> bool:
@@ -1420,7 +1420,7 @@ def open_folder(folder: str, read_only: str = "") -> str:
     try:
         project = Project.open(path)
     except (NotAProject, KimbimError) as ex:
-        return _fail(f"not a KimBim project: {ex}")
+        return _fail(f"not a NicBim project: {ex}")
     if project.repo.head() is None:
         return _fail("the project has no versions yet")
     ro = bool(read_only)
@@ -1686,7 +1686,7 @@ git commit -m "feat(documents): open, save and close .kim files, project folders
 **Interfaces:**
 - Consumes: Task 5 `data_dir`, `_doc`, `_pending`, `open_kim`, `open_folder`, `on_model_opened`, `_read`, `_plain`, `_same`; Task 3 `K.pack/K.unpack/K.read_manifest`.
 - Produces (bridge): `write_recovery() -> {"ok", "written": bool}`, `recoveries() -> {"items": [{"id", "source", "name", "mode", "time"}]}`, `recover(id) -> {"ok", "path"}`, `discard_recovery(id) -> {"ok"}`, `templates(folder) -> {"templates": [{"name", "path", "builtin", "modified"}], "folder_ok": bool}`, `new_from_template(path) -> {"ok", "path"}` (`path` "" for the built-in: the model is already open), `save_template(folder, name, replace="") -> {"ok", "path"} | {"ok": False, "exists": True}`.
-- Produces (Python): `documents.BUILTIN = "builtin"`, `documents.BUILTIN_NAME = "KimBim default"`, `documents.regenerate_ids(f) -> dict[str, str]`.
+- Produces (Python): `documents.BUILTIN = "builtin"`, `documents.BUILTIN_NAME = "NicBim default"`, `documents.regenerate_ids(f) -> dict[str, str]`.
 
 Rulings carried by this task:
 - The recovery copy is written on the GUI thread (a full IFC write: about 1 s on the Clinic, every 5
@@ -1741,7 +1741,7 @@ def test_nothing_is_written_without_unsaved_work(tmp_path):
 def test_templates_list_save_and_make_new_projects(tmp_path):
     folder = tmp_path / "Plantillas"
     assert call("templates", str(folder)) == {"templates": [
-        {"name": "KimBim default", "path": "builtin", "builtin": True, "modified": ""}], "folder_ok": False}
+        {"name": "NicBim default", "path": "builtin", "builtin": True, "modified": ""}], "folder_ok": False}
     house()
     assert call("set_project_info", json.dumps({"number": "2026-001", "name": "Casa"}))["ok"]
     sheet = call("add_sheet", "A1", "Plantas")["number"]
@@ -1756,7 +1756,7 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
     assert call("save_template", str(folder), "Oficina", "1")["ok"]
     assert not call("save_template", str(folder), "a/b")["ok"]
     listed = call("templates", str(folder))
-    assert listed["folder_ok"] and [t["name"] for t in listed["templates"]] == ["KimBim default", "Oficina"]
+    assert listed["folder_ok"] and [t["name"] for t in listed["templates"]] == ["NicBim default", "Oficina"]
 
     r = call("new_from_template", str(folder / "Oficina.kim"))
     assert r["ok"], r
@@ -1775,7 +1775,7 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
 def test_the_built_in_template_is_a_new_project():
     r = call("new_from_template", "builtin")
     assert r["ok"] and r["path"] == ""
-    assert call("storeys")["storeys"] and call("document_state")["template"] == "KimBim default"
+    assert call("storeys")["storeys"] and call("document_state")["template"] == "NicBim default"
 
 
 def test_an_opened_template_saves_back_as_a_template(tmp_path):
@@ -1880,7 +1880,7 @@ def recover(id: str) -> str:
 
 ```python
 BUILTIN = "builtin"
-BUILTIN_NAME = "KimBim default"
+BUILTIN_NAME = "NicBim default"
 _GUID = re.compile(r"[0-9A-Za-z_$]{22}")
 _BAD_NAME = re.compile(r'[\\/:*?"<>|]')
 
@@ -2069,7 +2069,7 @@ private slots:
         QCOMPARE(p.autoVersion(), QString("off"));
         QCOMPARE(p.autoVersionEvery(), 10);
         QCOMPARE(p.recoveryMinutes(), 5);
-        QVERIFY(p.templatesFolder().endsWith(QStringLiteral("KimBim Templates")));
+        QVERIFY(p.templatesFolder().endsWith(QStringLiteral("NicBim Templates")));
         QVERIFY(p.recent().isEmpty());
     }
 
@@ -2188,7 +2188,7 @@ QJsonObject Preferences::defaults()
     const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     return {
         {"language", "auto"},
-        {"templates_folder", QDir(docs).filePath(QStringLiteral("KimBim Templates"))},
+        {"templates_folder", QDir(docs).filePath(QStringLiteral("NicBim Templates"))},
         {"author_name", ""},
         {"author_email", ""},
         {"new_views", "tab"},
@@ -2810,8 +2810,8 @@ void MainWindow::fillRecentMenu()
 }
 ```
 
-`openDialog`: `QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("KimBim and IFC files (*.kim *.ifc);;KimBim projects (*.kim);;IFC files (*.ifc)"))` then `openPath(path)`.
-`openProjectDialog`: `getExistingDirectory(this, tr("Open a KimBim project folder"))` then `openProject(folder)`.
+`openDialog`: `QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("NicBim and IFC files (*.kim *.ifc);;NicBim projects (*.kim);;IFC files (*.ifc)"))` then `openPath(path)`.
+`openProjectDialog`: `getExistingDirectory(this, tr("Open a NicBim project folder"))` then `openProject(folder)`.
 `main.cpp`: `window.openPath(parser.positionalArguments().first());`.
 
 Saving:
@@ -2885,7 +2885,7 @@ void MainWindow::saveAsDialog()
 {
     QString selected;
     const QString path = QFileDialog::getSaveFileName(this, tr("Save As"), m_document.value("path").toString(),
-        tr("KimBim project (*.kim);;IFC file (*.ifc)"), &selected);
+        tr("NicBim project (*.kim);;IFC file (*.ifc)"), &selected);
     if (!path.isEmpty())
         saveAs(path);
 }
@@ -2942,7 +2942,7 @@ then, when `documentState()` mode is `kim`, `bridge("save_document")` so the fil
         name += QStringLiteral(" (%1)").arg(option);
     if (doc.value("read_only").toBool())
         name += QStringLiteral(" [%1]").arg(tr("read-only"));
-    setWindowTitle(QStringLiteral("KimBim — %1[*]").arg(name));
+    setWindowTitle(QStringLiteral("NicBim — %1[*]").arg(name));
     setWindowModified(isDirty());
 ```
 
@@ -3233,7 +3233,7 @@ Run: `pixi run app-build` → FAIL (`PreferencesDialog`, `writeRecovery` unknown
 
 `PreferencesDialog`: a `QFormLayout`:
 - Language: combo "Automatic (system)", "English", "Español" (data auto/en/es); `restartNote` label
-  "The language changes the next time KimBim starts." visible when the choice differs from the stored one.
+  "The language changes the next time NicBim starts." visible when the choice differs from the stored one.
 - Templates folder: `QLineEdit` + "Browse..." (`QFileDialog::getExistingDirectory`).
 - Your name / email (for versions): two `QLineEdit`s.
 - New views open as: "Tabs" / "Free windows" (tab/window).
@@ -3292,7 +3292,7 @@ void MainWindow::offerRecovery()
         const QString what = item.value("name").toString().isEmpty() ? tr("an untitled project") : item.value("name").toString();
         const QString when = QLocale().toString(QDateTime::fromSecsSinceEpoch(qint64(item.value("time").toDouble())), QLocale::ShortFormat);
         const auto answer = QMessageBox::question(this, tr("Recover unsaved work"),
-            tr("KimBim closed unexpectedly. Recover your work on %1 from %2?").arg(what, when),
+            tr("NicBim closed unexpectedly. Recover your work on %1 from %2?").arg(what, when),
             QMessageBox::Yes | QMessageBox::Discard, QMessageBox::Yes);
         if (answer == QMessageBox::Yes)
             return void(recoverFrom(item.value("id").toString()));
@@ -3427,7 +3427,7 @@ void MainWindow::newProjectDialog()
     choices->setObjectName(QStringLiteral("templateList"));
     for (const auto& v : list) {
         const QJsonObject t = v.toObject();
-        auto* item = new QListWidgetItem(t.value("builtin").toBool() ? tr("KimBim default")
+        auto* item = new QListWidgetItem(t.value("builtin").toBool() ? tr("NicBim default")
             : QStringLiteral("%1  (%2)").arg(t.value("name").toString(), t.value("modified").toString()), choices);
         item->setData(Qt::UserRole, t.value("path").toString());
     }

@@ -10,7 +10,7 @@ do it in the UI, but asking an agent is quicker: the change happens in seconds, 
 ship it.
 
 This work makes that possible. Architects and the AI agents working for them get one set of **project commands**
-to read, look at and change a KimBim project (.kim, a project folder, or IFC). The same commands are available:
+to read, look at and change a NicBim project (.kim, a project folder, or IFC). The same commands are available:
 
 - as a **command-line tool**, `kimbim`, installed with the app, for people and for agents that run shell commands
   (opencode, Claude Code);
@@ -57,7 +57,7 @@ step is configurable, because some changes are too small to be worth it.
 
 ## 3. Owner's decisions
 
-- Audience: architects and agents working on **projects**, not on KimBim's source code.
+- Audience: architects and agents working on **projects**, not on NicBim's source code.
 - Live and offline both supported.
 - Review by design option is the default and is configurable. The option is approved by the architect before it is
   combined.
@@ -75,7 +75,7 @@ step is configurable, because some changes are too small to be worth it.
 ```
  opencode / Claude Code ──shell──▶ kimbim <group> <verb>  ─┐
  Claude Desktop / any MCP ──stdio─▶ kimbim mcp             ├─▶ tool catalogue (kimbim.agent)
- KimBim Assistant panel ──in process────────────────────────┘          │
+ NicBim Assistant panel ──in process────────────────────────┘          │
                                                                         ▼
                                         a session for the project: live (inside the app) or offline (worker)
                                                                         │
@@ -106,7 +106,7 @@ A command always runs in a **session** that has the project open. `kimbim` finds
    (the `edit()` machinery), the views redraw the touched elements, and the unsaved-changes mark appears.
    Commands queue behind whatever the architect is doing, the same way console runs do.
 2. **Offline.** If no app has the project open, `kimbim` starts a **headless worker** (`kimbim serve`, a
-   background process) that opens the project, takes the existing lock (holder "KimBim agent"), and stays alive so
+   background process) that opens the project, takes the existing lock (holder "NicBim agent"), and stays alive so
    later commands are fast on big models (opening Clinic takes seconds; per command would be too slow). It exits
    after an idle timeout (default 10 minutes, preference) and saves on `project.save` or when a task finishes.
    If the architect opens the project in the app while a worker holds it, the app asks the worker to save and hand

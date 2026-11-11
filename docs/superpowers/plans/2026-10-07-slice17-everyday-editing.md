@@ -4,7 +4,7 @@
 
 ## Decisions (D64)
 
-| Command | Archicad behaviour followed | KimBim |
+| Command | Archicad behaviour followed | NicBim |
 |---|---|---|
 | Copy / Paste | Ctrl+C, Ctrl+V; paste keeps the original position | Pastes onto the **active level** at the same plan position (copy to another level when another level is active); the copies are selected so you drag them into place |
 | Duplicate | Ctrl+D, an offset copy | Copy offset (1 m, 1 m) |

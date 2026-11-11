@@ -3,7 +3,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Library objects become `.kimobj` data files (parameters, formulas, parts, anchors, repeats, variants) built by KimBim's own evaluator; the 21 bundled objects are ported and proven identical; Python object definitions are removed; the chair becomes the customisable showcase.
+**Goal:** Library objects become `.kimobj` data files (parameters, formulas, parts, anchors, repeats, variants) built by NicBim's own evaluator; the 21 bundled objects are ported and proven identical; Python object definitions are removed; the chair becomes the customisable showcase.
 
 **Architecture:** Three new pure-Python modules — `objexpr.py` (formulas), `objects.py` (the file format, parameters, definitions), `objbuild.py` (geometry: frames, shapes, anchors, repeats, `use`, plan symbol, metrics) — feed the existing `library.py`, which keeps the IFC side (types, placement, parameter edits) and now writes each type's definition into the model. Nothing in an object file can execute.
 
@@ -293,7 +293,7 @@ Expected: FAIL, `ModuleNotFoundError: No module named 'kimbim.objexpr'`
 ```python
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Formulas in object definitions (D99, doc 16 §1): numbers, parameter names, + - * / ^ %, comparisons,
-and/or/not, if(), a few functions (trig in degrees). A recursive-descent parser written for KimBim:
+and/or/not, if(), a few functions (trig in degrees). A recursive-descent parser written for NicBim:
 nothing here calls Python's eval, and nothing a formula says can reach Python objects."""
 from __future__ import annotations
 

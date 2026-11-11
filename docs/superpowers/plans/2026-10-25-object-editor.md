@@ -20,7 +20,7 @@
 - Bundled objects open as a copy. Office and project objects open for editing (doc 16 §6).
 - Projects stay self-contained. A project object builds only from what its types store (D99 §4/§5).
 - UI strings are in English and Spanish (`app/translations/kimbim_es.ts`, `pixi run check-translations`). Every new file has an SPDX header (`pixi run check-spdx`).
-- No backward compatibility shims. KimBim is unreleased.
+- No backward compatibility shims. NicBim is unreleased.
 - Bridge functions follow the app_bridge protocol: strings in, JSON out, never raise. Register them in `app_bridge._EXPORTS`.
 - Run Python only through `pixi run`. The bare `.pixi` python.exe crashes in numpy.
 - Golden hashes must not change (`pixi run golden`: 76 pass, same hashes).

@@ -12,7 +12,7 @@ This code is not production code. It exists to measure and to fail fast.
 | S3 | `s3_records/` | Does IFC → canonical records → IFC round-trip losslessly and deterministically? Do edits stay local? |
 | S4 | `s3_records/` (run on 2 OSs) | Do Windows and Linux produce identical record hashes? |
 | S5 | `s5_git_store/` | Can a Git object database (gitoxide) hold a 1M-record model? |
-| S6 | `s6_drawings/` | Can IfcOpenShell's SVG serializer make plans, sections and elevations of KimBim files, and how fast? |
+| S6 | `s6_drawings/` | Can IfcOpenShell's SVG serializer make plans, sections and elevations of NicBim files, and how fast? |
 
 ## Setup
 

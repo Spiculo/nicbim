@@ -13,10 +13,10 @@ dimensioned, labelled, with the section and elevation markers.
   what is missing (one undo step). Model storeys (D58) get none.
 - **Cut plane 1.10 m** above the story (Archicad's default floor plan cut plane); the view reaches to
   0.3 m below the floor. Only the story's elements are drawn.
-- **What the serializer does not draw, KimBim draws on top** (`kimbim-overlay` group, paper mm), mapped
+- **What the serializer does not draw, NicBim draws on top** (`kimbim-overlay` group, paper mm), mapped
   from world to paper with the serializer's own drawing plane (`ifc:plane`) and paper transform
   (`ifc:matrix3`): door swings (leaf at 90° and arc, from the operation type; doors open into the side
-  their local +Y points to, which KimBim places away from the wall's outer face), window glass lines,
+  their local +Y points to, which NicBim places away from the wall's outer face), window glass lines,
   the story's annotations, and section/elevation markers. IfcOpenShell 0.9 ignores Plan-context
   door swings, which is why they are drawn here.
 - **Text size is in millimetres on paper** (`KIMBIM_Annotation.Size`, default 2.5 mm). Drawings

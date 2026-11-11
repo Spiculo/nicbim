@@ -174,7 +174,7 @@ docs/17-agent-tools.md         user doc; docs/03 CLI section, docs/15 "Not yet",
   `documents.on_model_opened`), `documents.save_document()`, `documents.close_document()`, `kimfile.me()`.
 - Produces: `class Session` with `Session.open(path: str, client: str = "cli") -> Session` (`.kim` →
   `open_kim`, folder with `.kimbim` → `open_folder`, `.ifc` → `B.open_model`; lock holder shown as
-  `"KimBim agent"`: set `kimfile.display_user = "KimBim agent"` before acquiring); `kind: "kim"|"folder"|"ifc"`;
+  `"NicBim agent"`: set `kimfile.display_user = "NicBim agent"` before acquiring); `kind: "kim"|"folder"|"ifc"`;
   `source: str`; `work: str` (documents `_doc["work"]`, "" for plain IFC); `save() -> None`; `close() -> None`;
   `unit: str` (project `length_unit`); `resolve(selector) -> list[str]` (Task 4 fills the query part);
   `label(guid) -> str` (`"Window W-12, Level 1"`: class short name, Name, storey name); `tasks` (Task 5).

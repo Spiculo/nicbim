@@ -28,7 +28,7 @@ M4 Libraries + cloning + drawings          R4 Merge + reconciliation
 | S3 | Does the record decomposition round-trip the test corpus losslessly? | ✅ Yes: 77/77 valid files lossless, fixed point, deterministic export (D34–D36) |
 | S4 | Do Windows and Linux produce identical record hashes? | ✅ Yes: 77/77 identical state hashes and IFC exports |
 | S5 | How do `gix` writes perform at 1M blobs: commit time, repo size, checkout-to-model time? | ✅ Viable with packs only and no deltas (D39) |
-| S6 | Is IfcOpenShell's SVG serializer good and fast enough for KimBim's drawings (Slice 14 risk check)? | ✅ Quality yes; speed needs visible elements only, polygon HLR and a child process (D60, proposed) |
+| S6 | Is IfcOpenShell's SVG serializer good and fast enough for NicBim's drawings (Slice 14 risk check)? | ✅ Quality yes; speed needs visible elements only, polygon HLR and a child process (D60, proposed) |
 
 The spike code lives in [`spikes/`](../spikes/README.md).
 
@@ -121,7 +121,7 @@ Enable/disable versioning, Save version, history timeline, Compare (viewport col
 **Exit:** two design options of the house are created, edited separately, compared and combined with one conflict resolved in the UI.
 
 ## Archicad parity track ✅ (D74–D98, 2026-10-09 to 2026-10-22)
-After M5 the owner asked for Archicad feature parity before checking. Done: renovation status (D74), one-row window chrome and the Versions menu (D75), view cube, preset views and perspective (D76), schedules (D77), selection tools (D78), measure and the levels table (D79), split/trim/join (D80), checks (D81), the Python console (D82), DXF export (D83), 2D drafting (D84), underlays (D85), the object library (D86), tags and more dimensions (D87), stairs, ramps and railings (D88), input aids and touchpad (D89), the compact palette (D90), the owner's answers and configurable behaviour (D91–D93), the rename to KimBim (D94), 3D cut planes (D95), materials (D96), wall and object configuration, curved walls (D97) and tooling (D98). Status per tool: [14](14-tool-inventory.md).
+After M5 the owner asked for Archicad feature parity before checking. Done: renovation status (D74), one-row window chrome and the Versions menu (D75), view cube, preset views and perspective (D76), schedules (D77), selection tools (D78), measure and the levels table (D79), split/trim/join (D80), checks (D81), the Python console (D82), DXF export (D83), 2D drafting (D84), underlays (D85), the object library (D86), tags and more dimensions (D87), stairs, ramps and railings (D88), input aids and touchpad (D89), the compact palette (D90), the owner's answers and configurable behaviour (D91–D93), the rename to NicBim (D94), 3D cut planes (D95), materials (D96), wall and object configuration, curved walls (D97) and tooling (D98). Status per tool: [14](14-tool-inventory.md).
 
 ## M6 — Checking ✅ (D81 in-app checks; D103 pre-commit checks)
 Schema validation, IDS checks with IfcTester, clash between selections, configurable local pre-commit checks.

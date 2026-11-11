@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A `kimbim` CLI that turns IFC files into versions in a Git-backed KimBim repository. You can commit an IFC, see status, log and diff at the record level, and export any version back to IFC, with results byte-identical to the spike golden hashes.
+**Goal:** A `kimbim` CLI that turns IFC files into versions in a Git-backed NicBim repository. You can commit an IFC, see status, log and diff at the record level, and export any version back to IFC, with results byte-identical to the spike golden hashes.
 
 **Architecture:**
 - **Python package `kimbim`.** It ports the validated spike decomposer (`spikes/s3_records/records.py`), owns all IFC work through ifcopenshell, and drives the CLI.
@@ -179,7 +179,7 @@ The member crates are created in Tasks 2–3. Until then, Step 8 runs only `chec
 
 ```python
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""KimBim: open-source native BIM for architects, with version control built in."""
+"""NicBim: open-source native BIM for architects, with version control built in."""
 
 __version__ = "0.1.0"
 ```
@@ -401,7 +401,7 @@ Expected: compile errors (`Repo` not found).
 
 ```rust
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Git-backed record store for KimBim (docs/03-versioning.md, D39).
+//! Git-backed record store for NicBim (docs/03-versioning.md, D39).
 //!
 //! Writes go through `git fast-import` (one pack per commit, never loose objects).
 //! Reads use gitoxide. The repository lives at `<project>/.git` with `core.bare = true`;
@@ -415,7 +415,7 @@ use rayon::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("not a KimBim project (no .git found): {0}")]
+    #[error("not a NicBim project (no .git found): {0}")]
     NotARepo(PathBuf),
     #[error("a repository already exists at {0}")]
     AlreadyExists(PathBuf),
@@ -713,7 +713,7 @@ def test_roundtrip_through_rust(tmp_path):
 
 
 def test_errors_are_repo_errors(tmp_path):
-    with pytest.raises(_core.RepoError, match="not a KimBim project"):
+    with pytest.raises(_core.RepoError, match="not a NicBim project"):
         _core.Repo.open(str(tmp_path))
     repo = _core.Repo.init(str(tmp_path))
     with pytest.raises(_core.RepoError, match="unknown revision"):
@@ -1222,7 +1222,7 @@ Expected: `ModuleNotFoundError: kimbim.layout`.
 
 ```python
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Where records live inside a KimBim Git tree (docs/03-versioning.md)."""
+"""Where records live inside a NicBim Git tree (docs/03-versioning.md)."""
 import hashlib
 
 import blake3
@@ -1476,7 +1476,7 @@ Expected: `ModuleNotFoundError: kimbim.project`.
 
 ```python
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A KimBim project: IFC versions stored as canonical records in Git (docs/03-versioning.md)."""
+"""A NicBim project: IFC versions stored as canonical records in Git (docs/03-versioning.md)."""
 from __future__ import annotations
 
 import json
@@ -1572,7 +1572,7 @@ def _describe(key: str, blob: bytes) -> tuple[str, str | None]:
 
 
 def _author() -> tuple[str, str]:
-    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "KimBim User"
+    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "NicBim User"
     email = os.environ.get("KIMBIM_AUTHOR_EMAIL") or _git_config("user.email") or "user@localhost"
     return name, email
 
@@ -1662,7 +1662,7 @@ class Project:
         if current and f.schema_identifier != current:
             raise SchemaMismatch(
                 f"{ifc_path} is {f.schema_identifier} but this project is {current}; "
-                "KimBim never converts schemas silently (docs/02, D30)"
+                "NicBim never converts schemas silently (docs/02, D30)"
             )
         head = self.repo.head()
         entries = self.repo.tree_entries(head) if head else {}
@@ -1835,7 +1835,7 @@ def test_empty_project_messages(tmp_path, capsys):
 
 def test_not_a_project(tmp_path, capsys):
     code, _, err = run(capsys, "-C", str(tmp_path), "log")
-    assert code == 1 and "not a KimBim project" in err
+    assert code == 1 and "not a NicBim project" in err
 ```
 
 - [ ] **Step 2: Run to see it fail**
@@ -1910,7 +1910,7 @@ def run(args) -> int:
     if args.cmd == "init":
         target = pathlib.Path(args.dir or args.project)
         Project.init(target)
-        print(f"Initialized KimBim project in {target.resolve()}")
+        print(f"Initialized NicBim project in {target.resolve()}")
         return 0
     proj = Project.open(args.project)
     if args.cmd == "commit":
@@ -1973,7 +1973,7 @@ from .cli import main
 sys.exit(main())
 ```
 
-`test_empty_project_messages` expects "no versions" from `log`, which `run` prints, and from diff/export through `NoVersions`. `test_not_a_project` relies on the `NotAProject` message from Rust ("not a KimBim project").
+`test_empty_project_messages` expects "no versions" from `log`, which `run` prints, and from diff/export through `NoVersions`. `test_not_a_project` relies on the `NotAProject` message from Rust ("not a NicBim project").
 
 - [ ] **Step 4: Run the tests until they pass**
 
@@ -2033,7 +2033,7 @@ def test_duplex_property_edit_roundtrip(tmp_path):
     f = ifcopenshell.open(str(DUPLEX))
     wall = f.by_type("IfcWall")[len(f.by_type("IfcWall")) // 2]
     pset = ifcopenshell.util.element.get_pset(wall, "Pset_WallCommon")
-    ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(pset["id"]), properties={"FireRating": "EI60-KimBim"})
+    ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(pset["id"]), properties={"FireRating": "EI60-NicBim"})
     edited = tmp_path / "edited.ifc"
     f.write(str(edited))
     _, changes = proj.commit(edited, "FireRating EI60", author=("T", "t@e.org"), time=2)
@@ -2042,7 +2042,7 @@ def test_duplex_property_edit_roundtrip(tmp_path):
     assert not changes.removed
 
     v2 = proj.export(tmp_path / "v2.ifc")
-    assert "EI60-KimBim" in body_text(v2)
+    assert "EI60-NicBim" in body_text(v2)
     assert not proj.status(v2)
 ```
 

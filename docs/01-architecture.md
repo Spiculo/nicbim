@@ -37,7 +37,7 @@ So the split follows **where mature code already exists**:
 | Concern | Owner | Language | Reused from |
 |---------|-------|----------|-------------|
 | IFC schema, parsing, writing | Model engine | C++ | IfcOpenShell |
-| Authoring operations | Model engine | Python, then C++ for hot paths | `ifcopenshell.api` (LGPL), Bonsai logic (GPL, porting allowed because KimBim is GPL) |
+| Authoring operations | Model engine | Python, then C++ for hot paths | `ifcopenshell.api` (LGPL), Bonsai logic (GPL, porting allowed because NicBim is GPL) |
 | Geometry / tessellation | Model engine | C++ | IfcOpenShell geometry iterator + OpenCASCADE |
 | Spatial index / clash | Model engine | C++ | IfcOpenShell `IfcGeom::tree`, `ifcclash` |
 | 2D drawings | Model engine | C++ | IfcOpenShell SVG serializer (used by Bonsai) |
