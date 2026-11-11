@@ -203,6 +203,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `elements_set_slab_outline` | `kimbim elements set-slab-outline` | Give a slab a new outline (moving, adding or deleting corners); its thickness and level stay. | yes |
 | `elements_set_slab_slope` | `kimbim elements set-slab-slope` | Tilt slabs: 0, 0 returns them to horizontal. | yes |
 | `elements_set_status` | `kimbim elements set-status` | Set the renovation status of elements: existing, demolish, new, temporary or auxiliary. | yes |
+| `elements_set_surface` | `kimbim elements set-surface` | Override the surface (3D colour and texture) of one side of the elements. | yes |
 | `elements_set_wall_height` | `kimbim elements set-wall-height` | Set the height of one or more walls (one undo step). | yes |
 | `elements_split` | `kimbim elements split` | Split a wall or beam at a point on its axis; doors and windows stay with the piece they are in. | yes |
 | `elements_stretch` | `kimbim elements stretch` | Move one end of a wall to a point, stretching or shortening it; joins at that end are dropped. | yes |
@@ -241,16 +242,32 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `objects_update_from_library` | `kimbim objects update-from-library` | Regenerate placed objects from the library's current definition (all of them when no elements are given). | yes |
 | `objects_versions` | `kimbim objects versions` | List the saved versions of a library object (the project's and the office's) and its default values. |  |
 | `drawings_create` | `kimbim drawings create` | Create a drawing. | yes |
-| `drawings_export` | `kimbim drawings export` | Export a drawing as SVG or DXF (pdf: put it on a sheet and use sheets.export). |  |
+| `drawings_delete` | `kimbim drawings delete` | Delete a drawing and its marker; it is also taken off every sheet it was placed on. | yes |
+| `drawings_export` | `kimbim drawings export` | Export a drawing as SVG, DXF or DWG (pdf: put it on a sheet and use sheets.export). |  |
 | `drawings_list` | `kimbim drawings list` | List the project's drawings: floor plans, sections and elevations with GlobalId, name, kind and level. |  |
+| `drawings_rename` | `kimbim drawings rename` | Rename a drawing; its markers and the sheets it is placed on show the new name. | yes |
 | `drawings_set_scale` | `kimbim drawings set-scale` | Set a drawing's scale (1:N); coarser drawings use the project's model view options. | yes |
+| `drawings_set_view` | `kimbim drawings set-view` | Change a drawing's view: its depth, a section's tilt and base height, or its crop rectangle. | yes |
 | `sheets_create` | `kimbim sheets create` | Create an empty sheet; it gets the next number (A01, A02...). | yes |
-| `sheets_export` | `kimbim sheets export` | Export a sheet as PDF, SVG or DXF. |  |
+| `sheets_delete` | `kimbim sheets delete` | Delete a sheet; the drawings placed on it are kept. | yes |
+| `sheets_export` | `kimbim sheets export` | Export a sheet as PDF, SVG, DXF or DWG. |  |
+| `sheets_get` | `kimbim sheets get` | Describe one sheet: its drawings, legends, symbols, title block fields and placed tables. |  |
 | `sheets_list` | `kimbim sheets list` | List the sheets: number, title, paper size and the drawings placed on each. |  |
+| `sheets_papers` | `kimbim sheets papers` | List the paper sizes a sheet can use, with their width and height in mm. |  |
 | `sheets_place_drawing` | `kimbim sheets place-drawing` | Put a drawing on a sheet at a scale (1:100 by default). | yes |
+| `sheets_place_legend` | `kimbim sheets place-legend` | Place the legend of the sheet's purpose (renovation statuses, fills) at a free spot. | yes |
+| `sheets_place_schedule` | `kimbim sheets place-schedule` | Place a schedule table on a sheet; it prints with the sheet and updates with the model. | yes |
+| `sheets_place_symbol` | `kimbim sheets place-symbol` | Place a north arrow, scale bar, revision cloud or a text on a sheet. | yes |
+| `sheets_remove_item` | `kimbim sheets remove-item` | Take a legend, symbol or schedule table off a sheet. | yes |
+| `sheets_set_purpose` | `kimbim sheets set-purpose` | Set the purpose (pen set, styles, renovation filter) a sheet prints with. | yes |
+| `sheets_set_title_block` | `kimbim sheets set-title-block` | Edit a sheet's title block fields or move the title block. | yes |
+| `sheets_update` | `kimbim sheets update` | Change a sheet's title, number or paper size. | yes |
+| `schedules_delete` | `kimbim schedules delete` | Delete a custom schedule, or reset a built-in one to its default definition. | yes |
 | `schedules_export` | `kimbim schedules export` | Export a schedule as a CSV file. |  |
+| `schedules_fields` | `kimbim schedules fields` | List the fields a schedule of these IFC classes can show: attributes, info, quantities and properties. |  |
 | `schedules_get` | `kimbim schedules get` | Compute a schedule: its columns, rows (with the GlobalIds each row stands for), totals and count. |  |
 | `schedules_list` | `kimbim schedules list` | List the schedules (door, window, wall... tables) with the classes and fields of each. |  |
+| `schedules_save` | `kimbim schedules save` | Create or change a schedule definition (stored in the project settings). | yes |
 | `checks_ids_report` | `kimbim checks ids-report` | Write the report of the last IDS check as a file. |  |
 | `checks_run` | `kimbim checks run` | Run model checks: schema (IFC validation), ids (information requirements), clash (collisions) and model (duplicates, rooms, zero-length walls...). |  |
 | `levels_add` | `kimbim levels add` | Add a level at an elevation. | yes |
@@ -335,9 +352,21 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `terrain_pad` | `kimbim terrain pad` | Flatten the terrain vertices inside a closed outline to one elevation (a building pad). | yes |
 | `terrain_pad_volumes` | `kimbim terrain pad-volumes` | Cut and fill volumes (m3) for each building pad, against the surface before the pads. |  |
 | `terrain_pads` | `kimbim terrain pads` | List a terrain's building pads: outline points and elevation. |  |
+| `underlays_add` | `kimbim underlays add` | Place a DXF, DWG, PDF or image file as an underlay on a level, to trace over or convert. | yes |
+| `underlays_convert` | `kimbim underlays convert` | Turn a DXF, DWG or vector-PDF underlay's linework (and PDF text) into editable 2D elements on its level. | yes |
+| `underlays_list` | `kimbim underlays list` | List the project's underlays: id, file, level, placement and display settings. |  |
+| `underlays_remove` | `kimbim underlays remove` | Remove an underlay from the project (and its copied file once nothing uses it). | yes |
+| `underlays_update` | `kimbim underlays update` | Move an underlay or change how it is shown (opacity, tint, clip, 3D, visibility...). | yes |
+| `views_delete` | `kimbim views delete` | Delete a saved view. | yes |
+| `views_list` | `kimbim views list` | List the project's saved views by name, with what each stores (camera, cuts, section box, style). |  |
+| `walls_configure` | `kimbim walls configure` | Change wall settings: reference line, slant, top link and offset, or a complex profile. | yes |
+| `walls_flip` | `kimbim walls flip` | Mirror layered walls' layers about their reference lines (inside becomes outside). | yes |
+| `walls_options` | `kimbim walls options` | List the choices the wall settings take: reference lines (and the project default), top links, wall profiles and the surface sides of walls and slabs. |  |
+| `walls_save_profile` | `kimbim walls save-profile` | Save a closed 2D shape as a named wall profile (a project setting). | yes |
+| `walls_set_junctions` | `kimbim walls set-junctions` | Override how walls meet at their joins: run through, butt, or by material priority. | yes |
 <!-- tools:end -->
 
-The list is generated from the catalogue (158 exposed tools today). What is still missing on the agent side — in the
+The list is generated from the catalogue (205 exposed tools today). What is still missing on the agent side — in the
 tool surface, the client/transport setup and remote sessions — is listed in
 [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
 

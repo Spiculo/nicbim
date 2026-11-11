@@ -115,14 +115,17 @@ def drawings_set_scale(session, drawing, scale):
 
 
 @tool("drawings.export", {"required": ["drawing", "format", "out"], "properties": {
-    "drawing": _DRAWING, "format": {"type": "string", "enum": ["svg", "dxf", "pdf"]}, "out": _OUT}})
+    "drawing": _DRAWING, "format": {"type": "string", "enum": ["svg", "dxf", "dwg", "pdf"]}, "out": _OUT}})
 def drawings_export(session, drawing, format, out):
-    """Export a drawing as SVG or DXF (pdf: put it on a sheet and use sheets.export)."""
+    """Export a drawing as SVG, DXF or DWG (pdf: put it on a sheet and use sheets.export). DWG needs a DWG
+    converter (LibreDWG, or the ODA File Converter set in preferences)."""
     guid = _drawing_guid(drawing)
     if format == "svg":
         _write_text(out, bridge(DR.generate_drawing, guid)["svg"])
     elif format == "dxf":
         bridge(B.export_drawing_dxf, guid, out)
+    elif format == "dwg":
+        bridge(B.export_drawing_dwg, guid, out)
     else:
         raise AgentError("bad_input", hint="a drawing has no PDF of its own: place it on a sheet, then sheets.export")
     return {"path": out}
@@ -178,14 +181,17 @@ def _pdf(number: str, out: str) -> None:
 
 
 @tool("sheets.export", {"required": ["sheet", "format", "out"], "properties": {
-    "sheet": _SHEET, "format": {"type": "string", "enum": ["pdf", "svg", "dxf"]}, "out": _OUT}})
+    "sheet": _SHEET, "format": {"type": "string", "enum": ["pdf", "svg", "dxf", "dwg"]}, "out": _OUT}})
 def sheets_export(session, sheet, format, out):
-    """Export a sheet as PDF, SVG or DXF. PDF needs the KimBim app binary (render_failed when it is missing)."""
+    """Export a sheet as PDF, SVG, DXF or DWG. PDF needs the KimBim app binary (render_failed when it is missing);
+    DWG needs a DWG converter."""
     number = _sheet_number(sheet)
     if format == "svg":
         bridge(SH.export_sheet_svg, number, out)
     elif format == "dxf":
         bridge(B.export_sheet_dxf, number, out)
+    elif format == "dwg":
+        bridge(B.export_sheet_dwg, number, out)
     else:
         _pdf(number, out)
     return {"path": out}
