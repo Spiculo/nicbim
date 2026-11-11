@@ -17,7 +17,7 @@ pixi run m4                       # M4 exit test: the sample house's sheet expor
 
 After the first build, the app can also be started without `pixi run`: `build/app/kimbim-app.cmd` on Windows or `build/app/kimbim-app.sh` on Linux. The generated launcher carries the pixi environment with it (and accepts `KIMBIM_ENV` to point at another one), so the 3D view, embedded Python and the CLI-backed tools all start as they do under pixi.
 
-To build the portable package instead — the app, its Python sources and a relocatable runtime in one folder — run `pixi run app-build`, then `pixi run house`, then `pixi run -e pack package`. It writes `dist/KimBim` and `pixi run check-package` starts it with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet. An installer with file associations and code signing is still future work.
+To build the portable package instead — the app, its Python sources and a relocatable runtime in one folder — run `pixi run app-build`, then `pixi run house`, then `pixi run -e pack package`. It writes `dist/KimBim` and `pixi run check-package` starts it with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet. `kimbim install` copies that folder to your per-user programs folder without administrator rights and associates `.kim` and `.ifc` files with it (`kimbim uninstall` removes both); `kimbim sign` code-signs the build with your own certificate.
 
 | Action | How |
 |---|---|
@@ -82,12 +82,12 @@ Development: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 NicBim is pre-1.0. The modeling, drawing, versioning and agent-tool workflows described on this page work and are covered by tests, but these limits matter before using it on a real project:
 
-- **Distribution:** `pixi run app-build`, `pixi run house`, then `pixi run -e pack package` builds a portable `dist/KimBim` folder (about 1.7 GB) that starts without pixi; there is no installer, file association or code signing yet. Run from a pixi environment (`pixi run app`) during development.
+- **Distribution:** `pixi run app-build`, `pixi run house`, then `pixi run -e pack package` builds a portable `dist/KimBim` folder (about 1.7 GB) that starts without pixi, and `kimbim install` installs it per user with file associations. Released builds are not signed yet: `kimbim sign` works, but it needs a certificate. Run from a pixi environment (`pixi run app`) during development.
 - **Platforms:** Windows and Linux. macOS is not targeted for the first releases. The 3D view needs OpenGL 3.3 or newer.
 - **Interchange:** IFC4 is the written format; IFC2X3 files open and edit and are covered by the corpus tests. IFC4X3 is not supported yet. A `.kim` file is NicBim's own project container (model, settings and history); IFC is the way out.
 - **Scale:** a 100k-object model reaches its first frame in about 11 s; all geometry takes about 2.5 minutes and a cold working decomposition about 110 s (the Rust decomposer; the Python fallback is slower). The 1M-object target is future work (see [docs/07](docs/07-roadmap.md)). `pixi run bench-100k` is the release gate.
-- **Collaboration:** history and design options are local. Git remotes exist on the CLI but have no app UI yet, and there is no concurrent editing.
-- **Feature gaps that stop some real projects:** solid element operations, free work planes, point clouds, photorealistic rendering/VR, a plugin system, customisable toolbars and workspaces, and batch PDF publishing. Shortcuts can already be rebound in Help > Keyboard shortcuts (saved per user). The full list with priorities is [docs/14](docs/14-tool-inventory.md).
+- **Collaboration:** teamwork goes through Git: *Versions › Push to remote… / Pull from remote…* (a divergent pull merges object by object). There is no live concurrent editing of one model.
+- **Feature gaps:** every row of the tool inventory is built ([docs/21](docs/21-gap-checklist.md)) except three that need something only the owner can provide: a signing certificate, the SketchUp SDK for `.skp` import, and a headset for VR. Some rows are narrower than their name. The structural analytical model has no loads or results, and visualisation stops at still renders and sun animation (no walkthrough video).
 - **Large-model cap:** above 20,000 visible elements the plan cut still clips the model but omits the filled cut outlines (poché), which keeps the first plan paint responsive. This is a performance guard, not a modelling rule.
 - **AI:** the Assistant and agent tools write through reviewable design options, but they are optional and use your own provider and key.
 

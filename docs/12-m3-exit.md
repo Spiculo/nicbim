@@ -39,7 +39,7 @@ and check:
 
 1. The file opens without errors or warnings about the file itself.
 2. Three storeys are listed: Level 1, Level 2, Roof.
-3. The element counts match: 8 walls, 3 slabs, 2 doors, 8 windows, 1 stair, 1 column, 1 beam.
+3. The element counts match `pixi run house` output: 8 walls, 4 slabs, 2 doors, 8 windows, 1 stair, 1 ramp, 3 railings, 1 roof, 1 column, 1 beam, 2 rooms (spaces).
 4. Doors and windows sit in holes in the walls, and the stair hole shows in the Level 2 floor.
 5. Wall corners are closed (mitred), with no overlaps or gaps.
 6. Selecting a wall shows its type (Exterior 300) and layered material (Brick / Insulation / Block).

@@ -17,7 +17,7 @@ after D123–D238 plus explicit overrides for the final items.
 
 ## Future scope (deferred, not blocked)
 
-- Deeper visualisation beyond the current ray/path-traced exports: offline render farm, animation, walkthrough video.
+- Deeper visualisation beyond the current ray/path-traced exports and sun-animation frames (D198): an offline render farm, camera-path animation and walkthrough video.
 
 ## Every item
 
