@@ -10,7 +10,7 @@ from ... import schedules as SC
 from ... import sheets as SH
 from ... import worksheets as WS
 from ..catalogue import AgentError, bridge, tool
-from .common import point
+from .common import lengths, point
 from .outputs import _DRAWING, _SHEET, _drawing_guid, _scheme, _sheet_number
 
 _MM = {"type": "number", "description": "Millimetres on the sheet."}
@@ -47,13 +47,15 @@ def drawings_delete(session, drawing):
 
 @tool("drawings.set_view", {"required": ["drawing"], "properties": {
     "drawing": _DRAWING,
-    "depth": {"type": "number", "description": "How far the view looks past the cut, in metres: < 0 for "
-                                               "infinite, 0 for the cut only."},
+    "depth": {"type": ["number", "string"], "description": "How far the view looks past the cut (project "
+                                                          "units or \"3m\"): < 0 for infinite, 0 for the cut "
+                                                          "only. On a plan: the view depth below its level "
+                                                          "(at most 20 m; < 0 back to the project's)."},
     "tilt": {"type": "number", "minimum": -88.9, "maximum": 88.9,
              "description": "Section/elevation: the cut plane's angle about the marker line in degrees "
                             "(0 = vertical)."},
-    "base": {"type": "number", "description": "Section/elevation: the height of the marker line in metres "
-                                              "(the pivot of a tilted cut)."},
+    "base": {"type": ["number", "string"], "description": "Section/elevation: the height of the marker line "
+                                                         "(project units; the pivot of a tilted cut)."},
     "crop": {"type": "array", "items": {"type": "number"},
              "description": "[x0, y0, x1, y1] in paper mm crops the view; [0, 0, 0, 0] clears the crop."}}},
     writes=True)
@@ -65,11 +67,16 @@ def drawings_set_view(session, drawing, depth=None, tilt=None, base=None, crop=N
     if crop is not None and len(crop) != 4:
         raise AgentError("bad_input", hint="crop must be [x0, y0, x1, y1] in mm")
     if depth is not None:
-        guid = bridge(DR.set_drawing_depth, guid, float(depth)).get("guid", guid)
+        metres = lengths(session, depth)[0]
+        kind = next((d["kind"] for d in bridge(DR.drawings)["drawings"] if d["guid"] == guid), "")
+        if kind == "plan":  # a plan looks down to its view depth (D91), not along a section's range
+            guid = bridge(DR.set_view_depth, guid, metres).get("guid", guid)
+        else:
+            guid = bridge(DR.set_drawing_depth, guid, metres).get("guid", guid)
     if tilt is not None:
         guid = bridge(DR.set_drawing_tilt, guid, float(tilt)).get("guid", guid)
     if base is not None:
-        guid = bridge(DR.set_drawing_base, guid, float(base)).get("guid", guid)
+        guid = bridge(DR.set_drawing_base, guid, lengths(session, base)[0]).get("guid", guid)
     if crop is not None:
         guid = bridge(DR.set_drawing_crop, guid, *[float(v) for v in crop]).get("guid", guid)
     return {"guid": guid}
@@ -266,14 +273,15 @@ def sheets_remove_drawing(session, sheet, drawing):
     "id": {"type": "string", "description": "The symbol id sheets.get lists."},
     "at": {"type": "array", "items": {"type": "number"}, "description": "[x, y] new top-left in mm."},
     "text": {"type": "string"}, "width": _MM, "height": _MM,
+    "size": {"type": "number", "minimum": 0.5, "description": "text: height in mm."},
     "drawing": {**_DRAWING, "description": "scalebar: the drawing whose scale it shows."}}}, writes=True)
-def sheets_set_symbol(session, sheet, id, at=None, text=None, width=None, height=None, drawing=None):
+def sheets_set_symbol(session, sheet, id, at=None, text=None, width=None, height=None, size=None, drawing=None):
     """Move a sheet symbol or picture, or change its text, size or the drawing a scale bar follows."""
     number = _sheet_number(sheet)
     changes: dict = {}
     if at is not None:
         changes["x"], changes["y"] = _at(at)
-    for key, value in (("text", text), ("w", width), ("h", height)):
+    for key, value in (("text", text), ("w", width), ("h", height), ("size", size)):
         if value is not None:
             changes[key] = value
     if drawing:

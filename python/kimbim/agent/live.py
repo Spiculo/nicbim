@@ -204,7 +204,7 @@ class LiveHost:
             if wanted is not None:
                 ui["select"] = wanted
             view, self._view_commands[:] = list(self._view_commands), []
-            if view and envelope.get("ok"):
+            if view and envelope.get("ok") and not (envelope.get("changes") or {}).get("dry_run"):
                 ui["view"] = view  # applied after the geometry and the selection
             if envelope.get("ok") and str(request.get("tool") or "").split(".")[0] in ("task", "versions"):
                 ui["refresh"] = True

@@ -99,7 +99,11 @@ def test_live_view_commands(app_house):
     guids = [w["guid"] for w in walls[:2]]
     hidden = call_live(app_house, "view.hide", {"elements": guids})
     assert hidden["envelope"]["ok"] and hidden["ui"]["view"] == [{"action": "hide", "elements": guids}]
-    assert call_live(app_house, "view.isolate", {"elements": {"kind": "wall"}})["ui"]["view"][0]["action"] == "isolate"
+    isolated = call_live(app_house, "view.isolate", {"elements": {"kind": "wall"}})
+    assert isolated["envelope"]["ok"] and isolated["envelope"]["result"]["shown"] == len(walls)
+    assert isolated["ui"]["view"] == [{"action": "isolate", "elements": [w["guid"] for w in walls]}]
+    dry = call_live(app_house, "views.save", {"name": "Dry", "capture": True, "dry_run": True})
+    assert dry["envelope"]["ok"] and "view" not in dry["ui"]  # a dry run saves nothing in the app
     assert call_live(app_house, "view.show_all", {})["ui"]["view"] == [{"action": "show_all"}]
     assert call_live(app_house, "view.zoom", {})["ui"]["view"] == [{"action": "fit", "elements": []}]
     saved = call_live(app_house, "views.save", {"name": "Here", "capture": True})

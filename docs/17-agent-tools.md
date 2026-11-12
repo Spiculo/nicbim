@@ -369,7 +369,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `view_isolate` | `kimbim view isolate` | Show only these elements in the app's view (display only). |  |
 | `view_show_all` | `kimbim view show-all` | Show every element again in the app's view. |  |
 | `view_zoom` | `kimbim view zoom` | Zoom the app's view to these elements, or to the whole model when none are given. |  |
-| `views_apply` | `kimbim views apply` | Show a saved view in the app (its level, cuts, layers and style). |  |
+| `views_apply` | `kimbim views apply` | Show a saved view in the app (its level, cuts, layers and style). | yes |
 | `views_delete` | `kimbim views delete` | Delete a saved view. | yes |
 | `views_list` | `kimbim views list` | List the project's saved views by name, with what each stores (level, plan or 3D, cuts, layers, style). |  |
 | `views_save` | `kimbim views save` | Save a named view: the level, plan or 3D, the plan cut, 3D cut planes, hidden layers and style. | yes |

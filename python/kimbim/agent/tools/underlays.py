@@ -12,6 +12,7 @@ from ... import underlays as U
 from ..catalogue import SELECTOR, AgentError, bridge, tool
 from .common import lengths, level_guid, point
 
+_AFTER_ADD = ("visible", "locked", "clip")
 _METRES = {"mm": 0.001, "cm": 0.01, "m": 1.0, "in": 0.0254, "ft": 0.3048}
 _ID = {"type": "string", "description": "The underlay id (underlays.list lists them)."}
 _DISPLAY = {
@@ -23,8 +24,12 @@ _DISPLAY = {
     "locked": {"type": "boolean"},
     "show_3d": {"type": "boolean", "description": "Also draw it in the 3D view, at its level."},
     "rotation": {"type": "number", "description": "Degrees, anticlockwise."},
-    "scale": {"type": "number", "minimum": 0.000001},
+    "scale": {"type": "number", "minimum": 0.000001,
+              "description": "Metres per drawing unit (0.001 for a DXF in mm); the file's units set it, so "
+                             "leave it out unless they are wrong. Not a drawing scale like 1:100."},
     "page": {"type": "integer", "minimum": 0, "description": "PDF: which page (0 = first)."},
+    "vector": {"type": "boolean", "description": "PDF: read its linework (needed for underlays.convert) "
+                                                "instead of a picture of the page."},
     "clip": {"type": "array", "items": {"type": "number"},
              "description": "[x1, y1, x2, y2] in drawing units: linework outside is not shown or snapped; [] clears."}}
 
@@ -58,7 +63,11 @@ def add(session, path, level, at=None, units=None, **display):
     options = _changes(session, {**display, "at": at, "level": level})
     if units:
         options["units"] = _METRES[units]
-    return {"underlay": bridge(U.add_underlay, path, json.dumps(options))["underlay"]}
+    later = {k: options.pop(k) for k in _AFTER_ADD if k in options}  # add_underlay does not take these
+    underlay = bridge(U.add_underlay, path, json.dumps(options))["underlay"]
+    if later:
+        underlay = bridge(U.set_underlay, underlay["id"], json.dumps(later))["underlay"]
+    return {"underlay": underlay}
 
 
 @tool("underlays.update", {"required": ["id"], "properties": {
@@ -99,8 +108,28 @@ _PLANE = {"type": "object", "required": ["point", "normal"], "properties": {
     "normal": {"type": "array", "items": {"type": "number"},
                "description": "[x, y, z]: the side it points to is cut away."},
     "name": {"type": "string"},
-    "kind": {"type": "string", "enum": ["horizontal", "vertical", "oblique"]},
     "enabled": {"type": "boolean"}}, "additionalProperties": False}
+
+
+def _plane_frame(normal) -> dict:
+    """normal, direction, kind and angle of a cut plane as the app's faceCutPlane makes them (CutPlanes.cpp)."""
+    import math
+
+    length = math.sqrt(sum(float(v) ** 2 for v in normal))
+    nx, ny, nz = (float(v) / length for v in normal)
+    if abs(nz) > 0.9999:
+        direction = [1.0, 0.0, 0.0]
+    else:  # Z x n: a level line in the plane
+        d = (-ny, nx, 0.0)
+        dl = math.hypot(d[0], d[1])
+        direction = [d[0] / dl, d[1] / dl, 0.0]
+    if abs(nz) < 1e-9:
+        kind, angle = "vertical", 0.0
+    elif abs(nz) > 1 - 1e-9:
+        kind, angle = "horizontal", 0.0
+    else:
+        kind, angle = "oblique", math.degrees(math.asin(max(-1.0, min(1.0, nz))))
+    return {"normal": [nx, ny, nz], "direction": direction, "kind": kind, "angle": angle}
 
 
 def _app_view(session, command: dict) -> None:
@@ -146,15 +175,13 @@ def views_save(session, name, capture=False, level="", plan=None, cut=None, cut_
         data["level"] = level_guid(level)
     if plan is not None:
         data["plan"] = bool(plan)
-    if cut is not None:
-        data["cut"] = lengths(session, cut)[0]
+    data["cut"] = lengths(session, cut)[0] if cut is not None else None  # None: the plan cut is off
     planes = []
     for i, p in enumerate(cut_planes or []):
         if len(p["point"]) != 3 or len(p["normal"]) != 3 or not any(p["normal"]):
             raise AgentError("bad_input", hint=f"cut_planes[{i}]: point and normal must be [x, y, z], normal not zero")
         planes.append({"name": p.get("name") or f"Cut {i + 1}", "enabled": p.get("enabled", True), "visible": True,
-                       "kind": p.get("kind") or "oblique", "point": lengths(session, *p["point"]),
-                       "normal": [float(v) for v in p["normal"]], "direction": [1.0, 0.0, 0.0], "angle": 0.0})
+                       "point": lengths(session, *p["point"]), **_plane_frame(p["normal"])})
     data["planes"] = planes
     for key, value in (("linesOnly", lines_only), ("whiteModel", white_model), ("shadows", shadows)):
         if value is not None:
@@ -165,9 +192,11 @@ def views_save(session, name, capture=False, level="", plan=None, cut=None, cut_
     return {"name": name.strip(), "captured": False}
 
 
-@tool("views.apply", {"required": ["name"], "properties": {"name": {"type": "string"}}})
+@tool("views.apply", {"required": ["name"], "properties": {"name": {"type": "string"}}}, writes=True,
+      needs_task=False)
 def views_apply(session, name):
-    """Show a saved view in the app (its level, cuts, layers and style). Needs the app."""
+    """Show a saved view in the app (its level, cuts, layers and style). It also makes the view's purpose and
+    layer states the project's current ones, as the app's own Views menu does. Needs the app."""
     if not any(v["name"] == name for v in bridge(LY.views)["views"]):
         raise AgentError("not_found", what=name)
     _app_view(session, {"action": "apply", "name": name})

@@ -27,6 +27,7 @@ def main() -> int:
         # QtTest's report and the app's own output go to files, printed afterwards: the exe writing to an
         # inherited stdout pipe that nothing drains blocked it (the first test then hit QtTest's 300 s limit).
         report, log = data / f"report-{attempt}.txt", data / f"output-{attempt}.txt"
+        report.unlink(missing_ok=True)  # never print an earlier run's report as this one's
         with open(log, "wb") as out:
             code = subprocess.run([str(exe), "-o", f"{report},txt"], env=env, stdin=subprocess.DEVNULL,
                                   stdout=out, stderr=subprocess.STDOUT).returncode

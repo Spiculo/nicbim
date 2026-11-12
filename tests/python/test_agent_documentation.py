@@ -81,12 +81,11 @@ def test_sheet_data_title_block_and_purpose(s):
     block = ok(s, "sheets.get", sheet="P01")["title_block"]
     assert "For permit" in json.dumps(block)
     assert run(s, "sheets.set_title_block", sheet="P01", fields={"Drawn by": "FL"})["error"]["code"] == "bad_input"
-    purposes = ok(s, "graphics.state")
-    name = next(iter(purposes.get("purposes") or []), None)
-    if isinstance(name, dict):
-        name = name.get("name")
-    if name:
-        assert ok(s, "sheets.set_purpose", sheet="P01", purpose=name)["purpose"] == name
+    from kimbim import graphics
+
+    names = list(graphics.effective("purposes"))
+    assert names, "a project comes with purposes"
+    assert ok(s, "sheets.set_purpose", sheet="P01", purpose=names[0])["purpose"] == names[0]
     assert run(s, "sheets.set_purpose", sheet="P01", purpose="No such purpose")["error"]["code"] == "bridge_error"
     ok(s, "sheets.delete", sheet="P01")
     assert all(x["number"] != "P01" for x in ok(s, "sheets.list")["sheets"])
@@ -117,7 +116,7 @@ def test_sheet_symbols_legend_and_schedule(s):
 
 def test_schedule_definition_save_and_delete(s):
     fields = ok(s, "schedules.fields", classes=["IfcDoor"])
-    assert fields  # attributes, quantities and properties for doors
+    assert "width" in json.dumps(fields) and "Name" in json.dumps(fields)  # quantities and attributes
     sid = ok(s, "schedules.save", name="Door sizes", classes=["IfcDoor"], unit="mm",
              fields=[{"source": "info", "name": "type"}, {"source": "quantity", "name": "width"},
                      {"source": "quantity", "name": "height", "label": "H"}],
@@ -319,8 +318,19 @@ def test_object_draft_check_save_and_place(s):
     assert ok(s, "objects.save_draft", draft=draft, replace=True)["ref"] == ref
     library = json.dumps(ok(s, "objects.library"))
     assert "agent_cabinet" in library or ref in library
-    placed = ok(s, "objects.place", object=ref, level="Level 1", at=[2, 2], gravity=True)
-    assert placed["guids"]
+    import ifcopenshell.util.placement
+
+    def z(guid):
+        import ifcopenshell.util.unit
+
+        scale = ifcopenshell.util.unit.calculate_unit_scale(B._model)  # model units (mm) to metres
+        return float(ifcopenshell.util.placement.get_local_placement(B._model.by_guid(guid).ObjectPlacement)[2][3]) * scale
+
+    # a podium 0.5 m above Level 1, away from the house (whose ground slab is flush with the level)
+    ok(s, "create.slab", level="Level 1", points=[[20, 20], [23, 20], [23, 23], [20, 23]], offset=0.5)
+    floor = ok(s, "objects.place", object=ref, level="Level 1", at=[21, 21])["guids"][0]
+    on_slab = ok(s, "objects.place", object=ref, level="Level 1", at=[21, 21], gravity=True)["guids"][0]
+    assert abs(z(on_slab) - z(floor) - 0.5) < 0.01  # it stands on the podium's top, not on the level
 
 
 def test_measure_points(s):

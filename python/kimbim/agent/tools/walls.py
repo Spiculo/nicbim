@@ -8,6 +8,7 @@ import json
 
 from ... import configure as CF
 from ..catalogue import SELECTOR, AgentError, bridge, tool
+from .common import lengths
 
 
 def _setting(session, elements, group: str, name: str, value) -> dict:
@@ -42,7 +43,8 @@ def options(session):
                        "description": "The other face's angle; differing from slant makes the wall double slanted."},
     "top_link": {"type": "string", "enum": list(CF.TOP_LINKS),
                  "description": "What the wall's top follows."},
-    "top_offset": {"type": "number", "description": "Metres above (or below) the linked top."},
+    "top_offset": {"type": ["number", "string"], "description": "Above (or below, negative) the linked top, "
+                                                               "in project units or with a unit (\"30cm\")."},
     "profile": {"type": "string", "description": "A wall profile name (walls.options), or \"(none)\" for a "
                                                 "plain wall again."}}}, writes=True)
 def configure(session, elements, reference_line=None, slant=None, opposite_slant=None, top_link=None,
@@ -50,7 +52,7 @@ def configure(session, elements, reference_line=None, slant=None, opposite_slant
     """Change wall settings: reference line, slant, top link and offset, or a complex profile."""
     steps = [("Reference line", reference_line), ("Slant angle", slant), ("Opposite slant angle", opposite_slant),
              ("Top link", top_link), ("Top offset", top_offset), ("Profile", profile)]
-    steps = [(n, v) for n, v in steps if v is not None]
+    steps = [(n, lengths(session, v)[0] if n == "Top offset" else v) for n, v in steps if v is not None]
     if not steps:
         raise AgentError("bad_input", hint="give at least one setting")
     out: dict = {"changed": 0, "guids": []}

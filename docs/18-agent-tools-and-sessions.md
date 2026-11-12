@@ -280,7 +280,9 @@ After D129, D130, D239 and D240 these operations still have no tool:
 5. **Gated by design**: types write, renovation filters, some visibility/override switches, office-library saves.
 
 The view tools (`views.apply`, `view.*`, `views.save` with `capture`) need the app running (live mode): they
-answer `needs_app` offline. They change only what the window shows, after the call, and never the model.
+answer `needs_app` offline. They change only what the window shows, after the call (after the reload when the
+call switched option), and never the model; a dry run sends nothing. `views.apply` is a write tool that starts
+no task: like the app's Views menu it makes the view's purpose and layer states the project's current ones.
 
 ### Sessions and remote
 
