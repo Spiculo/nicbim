@@ -162,6 +162,9 @@ public:
     bool confirmDeletePlacedDrawings(const QStringList& guids); // asks when a sheet holds one of them
     // Slice 4: new project, levels, plan view.
     bool newProject(); // from KimBim's built-in template
+    // D241: convert the open model to IFC4 or IFC4X3 (a project: as its own version; a plain IFC: into `path`).
+    // A conversion that would drop or change data asks first (lists it); `acceptLoss` converts anyway.
+    bool changeSchema(const QString& target, const QString& path = QString(), bool acceptLoss = false);
     // D72: office templates. "builtin" is KimBim's default; a template opens as an untitled project.
     bool newFromTemplate(const QString& path);
     bool saveAsTemplate(const QString& name, bool replace = false); // false if it exists and wasn't replaced
@@ -746,6 +749,7 @@ private:
     void exportIfcDialog();
     void newProjectDialog();
     void saveAsTemplateDialog();
+    void changeSchemaDialog();
     void projectSettingsDialog();
     void loadProjectSettings();
     void resetForNewModel();
@@ -856,6 +860,7 @@ private:
     void stopAgentLive();
     void pollAgentLive();
     void applyAgentResult(const QJsonObject& result);
+    void applyViewCommands(const QJsonArray& commands); // D240
     void reviewProposal(const QString& task);
     void acceptProposal(const QString& task, const QJsonObject& resolutions = {});
     void rejectProposal(const QString& task);

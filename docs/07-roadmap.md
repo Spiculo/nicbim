@@ -130,18 +130,23 @@ Done in D81: the Checks panel runs schema validation (EXPRESS rules included), I
 Done in D103 (M6 exit): *Before saving a version* in the Checks panel picks each check as Off, **Warn and save** or **Block the save** (project setting `precommit_checks`). A blocking check with any issue stops the save and lists the elements (in the app's dialog and in the bridge reply); a warning check saves and its result is recorded as `checks.json` in the version's tree and shown from History › Checks...
 **Exit:** met by `tests/python/test_precommit.py` and the app test `test_checks`'s `precommitChecksBlockAndRecord`.
 
-## After the MVP: full IFC4X3
-New IFC4X3 projects, schema upgrade command, IFC4X3 test suites become release-blocking ([02](02-data-model-and-format.md#ifc-schema-version)).
+## After the MVP: full IFC4X3 ✅ (D241, 2026-11-12)
+New IFC4X3 projects (*Preferences › New projects use*), the explicit schema change (*File › Change IFC schema…*,
+a version of its own in a project) and IFC4X3 tests: the 10 buildingSMART IFC 4.3 ADD2 samples open, mesh, edit
+and version (`test_ifc4x3_corpus`, in `pixi run golden`), `test_schemas` runs in `pixi run test`, and
+`pixi run test-ifc4x3` runs the suite with every new project in IFC4X3 (part of the release checks, not of
+`pixi run test`) ([02](02-data-model-and-format.md#ifc-schema-version)). Infrastructure entities
+(alignment, road, rail, bridge) are kept on save but have no authoring tools.
 
 ## Next (2026-11-11)
 Every row of the tool inventory is now built or blocked on the owner ([21](21-gap-checklist.md)); the decisions
-from D100 to D238 are listed in [decisions.md](decisions.md). What is left:
+from D100 to D241 are listed in [decisions.md](decisions.md). What is left:
 
 1. **Owner checks and assets.** The M3 manual check in a commercial viewer and Bonsai ([12](12-m3-exit.md)), a
    signing certificate, the SketchUp SDK and a VR headset ([open questions](open-questions.md)).
 2. **Agent tool surface.** The operations that still have no agent tool, plus the MCP clients, transport and remote
    sessions listed in [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
-3. **IFC4X3**, below.
+3. **IFC4X3**: ✅ built (D241, the section above); infrastructure authoring is not planned.
 4. **Scale to 1M objects** ([08](08-future.md#scale-1m-objects)); `pixi run bench-100k` stays the release gate.
 
 ## Then

@@ -25,6 +25,7 @@ public:
     QString authorEmail() const;
     QString newViews() const;           // "tab" or "window"
     QString openIfc() const;            // "make_kim" or "edit_ifc"
+    QString newProjectSchema() const;   // D241: "IFC4" (default) or "IFC4X3", the built-in template's schema
     QString autoVersion() const;        // "off", "saves" or "minutes"
     int autoVersionEvery() const;
     int recoveryMinutes() const;

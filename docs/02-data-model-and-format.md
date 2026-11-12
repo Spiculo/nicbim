@@ -40,7 +40,9 @@ This structure is naturally a Merkle DAG. Measured edit locality (spike S3, Dupl
 
 ## IFC schema version
 
-**Decided (D30): the architecture is compatible with both IFC4 and IFC4X3. The MVP ships IFC4.**
+**Decided (D30): the architecture is compatible with both IFC4 and IFC4X3. The MVP ships IFC4.** Since D241
+(2026-11-12) the "after MVP" column is built: the schema is chosen per project, and the schema change command
+exists.
 
 | | MVP | After MVP |
 |---|---|---|
@@ -67,6 +69,19 @@ Compatibility rules, which apply from day one so that IFC4X3 support later is a 
 For an architecture-focused tool, IFC4 has the widest **compatibility** today. IFC4X3's advantages are being the current standard and supporting infrastructure, which matters only for site, civil and infrastructure work.
 
 Plan to make IFC4X3 the default for new projects once the major authoring tools import it reliably.
+
+**How it works (D241).** *Preferences › New projects use* picks IFC4 (default) or IFC4X3 for the built-in
+template; an office template keeps its schema. *File › Change IFC schema…* converts the open model with
+IfcOpenShell's `ifcopenshell.util.schema.Migrator` (the code behind ifcpatch's Migrate recipe), element by
+element. Nothing is lost silently: the model is compared before and after (objects, classes, attributes, properties
+with their measure types, materials, and every attribute the converter could not place), and a conversion that
+loses anything lists it and asks; an entity with no equivalent in the target (an IfcRoad going to IFC4) is
+refused. In a versioned project the converted model is committed at once as its own version ("Change IFC schema
+to IFC4X3"), refused while there is work no version holds; `Project.commit(..., schema_change=...)` is the only way a
+version may change the project's schema, so every other mismatch is still refused. A plain IFC is written to a
+new file, never over the one opened. Two design options of different schemas are not combined: change one of
+them first. `KIMBIM_TEST_SCHEMA=IFC4X3 pytest` (`pixi run test-ifc4x3`) runs the suite with every project made by
+New project and the sample house in IFC4X3; the corpus's IFC4X3 samples run in `pixi run golden`.
 
 ## Object identity
 

@@ -91,6 +91,8 @@ check-spdx = "python tools/check_spdx.py"
 test-rust = "cargo test --workspace"
 test-py = { cmd = "pytest", depends-on = ["build", "e57dump-build"] }
 test = { depends-on = ["check-spdx", "test-rust", "test-py"] }
+# D241: the whole Python suite with every new project and the sample house in IFC4X3 (docs/02).
+test-ifc4x3 = { cmd = "pytest", depends-on = ["build", "e57dump-build"], env = { KIMBIM_TEST_SCHEMA = "IFC4X3" } }
 fetch-corpus = "python tests/corpus/fetch.py"
 golden = { cmd = "pytest -m \"golden and not slow\"", depends-on = ["build"] }
 golden-all = { cmd = "pytest -m golden", depends-on = ["build"] }

@@ -1997,6 +1997,40 @@ ES = {
     "Format:": "Formato:",
     "DXF": "DXF",
     "DWG": "DWG",
+    # D241: IFC schema of new projects and the schema change
+    "Change IFC &schema...": "Cambiar el &esquema IFC...",
+    "Convert the model to IFC4 or IFC4X3 (in a project, as a version of its own)":
+        "Convertir el modelo a IFC4 o IFC4X3 (en un proyecto, como una versión propia)",
+    "Converting the model to %1...": "Convirtiendo el modelo a %1...",
+    "Change IFC schema": "Cambiar el esquema IFC",
+    "Converted from %1 to %2: %3 products, %4 types": "Convertido de %1 a %2: %3 productos, %4 tipos",
+    "This model is %1.": "Este modelo es %1.",
+    "Convert to:": "Convertir a:",
+    "The converted model is saved as a new version; later versions use the new schema. "
+    "Save a version of your changes first.":
+        "El modelo convertido se guarda como una versión nueva; las versiones siguientes usan el esquema nuevo. "
+        "Guarde antes una versión de sus cambios.",
+    "The converted model is written to a new file, which then opens. This file keeps its schema.":
+        "El modelo convertido se escribe en un archivo nuevo, que luego se abre. Este archivo conserva su esquema.",
+    "Save the %1 model as": "Guardar el modelo %1 como",
+    "IFC4 (widest support)": "IFC4 (el más compatible)",
+    "IFC4X3 (current ISO standard)": "IFC4X3 (norma ISO vigente)",
+    "The IFC schema of new projects. An office template keeps its own schema; "
+    "File › Change IFC schema converts an open model.":
+        "El esquema IFC de los proyectos nuevos. Una plantilla de oficina conserva su propio esquema; "
+        "Archivo › Cambiar el esquema IFC convierte un modelo abierto.",
+    "New projects use:": "Los proyectos nuevos usan:",
+    "Dropped: %1": "Se pierde: %1",
+    "Becomes %1: %2": "Pasa a %1: %2",
+    "%1: %2 %3 → %4": "%1: %2 %3 → %4",
+    "Materials change: %1": "Cambian los materiales: %1",
+    "No place for %1 of %2 #%3: %4": "Sin lugar para %1 de %2 #%3: %4",
+    "%1 has no place for some of this model's data: %n item(s) would be dropped or changed.":
+        ("%1 no tiene lugar para algunos datos de este modelo: %n elemento se perdería o cambiaría.",
+         "%1 no tiene lugar para algunos datos de este modelo: %n elementos se perderían o cambiarían."),
+    "Open Details for the list. In a project the current version keeps everything.":
+        "Abra Detalles para ver la lista. En un proyecto, la versión actual lo conserva todo.",
+    "Convert anyway": "Convertir de todos modos",
 }
 
 # Words that mean something else in another context ("Back" is the view cube's "Posterior"): by

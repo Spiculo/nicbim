@@ -8,7 +8,7 @@ A curated, license-clean set of IFC files, each with a manifest entry (source, l
 |----------|--------------------|
 | Small / feature-specific | buildingSMART sample files and test cases; IfcOpenShell test files |
 | Real-world exports | Files exported from Revit, ArchiCAD, Vectorworks, Allplan, Bonsai, FreeCAD; only openly licensed ones |
-| Schemas | IFC2X3, IFC4 (ADD2 TC1), IFC4X3 ADD2 (non-blocking until after MVP) |
+| Schemas | IFC2X3, IFC4 (ADD2 TC1), IFC4X3 ADD2: the IFC4X3 corpus samples run the open/edit/version workflow (`test_ifc4x3_corpus`, golden) and `pixi run test-ifc4x3` runs the suite with every new project in IFC4X3 (D241) |
 | Scale | ~10k, ~100k, ~500k objects; generated if needed |
 | Edge cases | Mapped items, booleans/openings, complex BReps, large tessellations, non-ASCII strings, imperial units |
 | Reconciliation pairs | The same model exported twice from one tool, with GlobalIds changed between the exports |

@@ -583,6 +583,10 @@ void MainWindow::buildMenus()
     exportIfc->setObjectName(QStringLiteral("actionExportIfc"));
     exportIfc->setToolTip(tr("Export the model, a selection, a level or some classes to an IFC file"));
     connect(exportIfc, &QAction::triggered, this, &MainWindow::exportIfcDialog);
+    QAction* changeSchema = file->addAction(tr("Change IFC &schema...")); // D241: IFC2X3 / IFC4 / IFC4X3
+    changeSchema->setObjectName(QStringLiteral("actionChangeSchema"));
+    changeSchema->setToolTip(tr("Convert the model to IFC4 or IFC4X3 (in a project, as a version of its own)"));
+    connect(changeSchema, &QAction::triggered, this, [this] { changeSchemaDialog(); });
     QAction* exportImage = file->addAction(tr("Export &image...")); // D146: a high-resolution render
     exportImage->setObjectName(QStringLiteral("actionExportImage"));
     exportImage->setToolTip(tr("Render the active view to a PNG or JPEG at the size you choose"));
@@ -607,9 +611,6 @@ void MainWindow::buildMenus()
     saveVersionFile->setObjectName(QStringLiteral("actionSaveVersionFile"));
     saveVersionFile->setToolTip(tr("Save the current state as a new version (same as the Versions menu)"));
     connect(saveVersionFile, &QAction::triggered, this, &MainWindow::saveVersionDialog);
-    QAction* exportIfcAction = file->addAction(tr("&Export IFC..."));
-    exportIfcAction->setObjectName(QStringLiteral("actionExportIfc"));
-    connect(exportIfcAction, &QAction::triggered, this, &MainWindow::exportIfcDialog);
     file->addSeparator();
     QAction* settingsAction = file->addAction(tr("Project se&ttings..."));
     settingsAction->setObjectName(QStringLiteral("actionProjectSettings"));
@@ -2734,7 +2735,7 @@ bool MainWindow::newFromTemplate(const QString& path)
 {
     if (!prepareToOpen())
         return false;
-    const QJsonObject r = bridge("new_from_template", {path});
+    const QJsonObject r = bridge("new_from_template", {path, m_prefs.newProjectSchema()});
     if (!r.value("ok").toBool()) {
         showError(tr("Could not create the project"), r.value("error").toString());
         return false;
@@ -11357,6 +11358,15 @@ void MainWindow::applyAgentResult(const QJsonObject& result)
 {
     const QJsonObject ui = result.value("ui").toObject();
     if (ui.contains("reload") && !ui.value("reload").toString().isEmpty()) {
+        const QJsonArray view = ui.value("view").toArray();
+        if (!view.isEmpty()) { // D240: the call's view commands apply to the model it switched to
+            auto connection = std::make_shared<QMetaObject::Connection>();
+            *connection = connect(this, &MainWindow::loadFinished, this, [this, view, connection](int, bool stopped) {
+                disconnect(*connection);
+                if (!stopped)
+                    applyViewCommands(view);
+            });
+        }
         openFile(ui.value("reload").toString()); // a task switched option: load the model it now shows
         return;
     }
@@ -11373,9 +11383,14 @@ void MainWindow::applyAgentResult(const QJsonObject& result)
     }
     if (ui.value("refresh").toBool())
         refreshProject();
+    applyViewCommands(ui.value("view").toArray());
+}
+
+void MainWindow::applyViewCommands(const QJsonArray& commands)
+{
     // D240: view commands from agent tools (views.apply/save, view.hide/isolate/show_all/zoom). They change
-    // what the window shows, never the model, and run after the edit and the selection above.
-    for (const QJsonValue& value : ui.value("view").toArray()) {
+    // what the window shows, never the model, and run after the edit and the selection.
+    for (const QJsonValue& value : commands) {
         const QJsonObject command = value.toObject();
         const QString action = command.value("action").toString();
         QStringList guids;
@@ -11696,6 +11711,147 @@ bool MainWindow::exportIfc(const QString& path)
     }
     m_status->showMessage(tr("Exported %1").arg(QFileInfo(path).fileName()));
     return true;
+}
+
+namespace {
+
+QString lossText(const QJsonObject& loss)
+{
+    QStringList lines;
+    const auto describe = [](const QJsonObject& o) {
+        const QString name = o.value("name").toString();
+        return QStringLiteral("%1%2 [%3]").arg(o.value("class").toString(),
+            name.isEmpty() ? QString() : QStringLiteral(" \"%1\"").arg(name), o.value("guid").toString());
+    };
+    const auto value = [](const QJsonValue& v) {
+        return v.isNull() || v.isUndefined() ? QStringLiteral("(none)")
+                                             : QString::fromUtf8(QJsonDocument(QJsonArray{v}).toJson(QJsonDocument::Compact).mid(1).chopped(1));
+    };
+    for (const auto& v : loss.value("dropped").toArray())
+        lines << MainWindow::tr("Dropped: %1").arg(describe(v.toObject()));
+    for (const auto& v : loss.value("reclassed").toArray())
+        lines << MainWindow::tr("Becomes %1: %2").arg(v.toObject().value("to").toString(), describe(v.toObject()));
+    for (const auto& v : loss.value("attributes").toArray()) {
+        const QJsonObject o = v.toObject();
+        lines << MainWindow::tr("%1: %2 %3 → %4").arg(describe(o), o.value("attribute").toString(),
+            value(o.value("before")), value(o.value("after")));
+    }
+    for (const auto& v : loss.value("properties").toArray()) {
+        const QJsonObject o = v.toObject();
+        lines << MainWindow::tr("%1: %2 %3 → %4").arg(describe(o), o.value("property").toString(),
+            value(o.value("before")), value(o.value("after")));
+    }
+    for (const auto& v : loss.value("materials").toArray())
+        lines << MainWindow::tr("Materials change: %1").arg(describe(v.toObject()));
+    for (const auto& v : loss.value("unmapped").toArray()) {
+        const QJsonObject o = v.toObject();
+        lines << MainWindow::tr("No place for %1 of %2 #%3: %4").arg(o.value("attribute").toString(),
+            o.value("class").toString(), QString::number(o.value("id").toInt()), value(o.value("before")));
+    }
+    return lines.join(QLatin1Char('\n'));
+}
+
+} // namespace
+
+bool MainWindow::changeSchema(const QString& target, const QString& path, bool acceptLoss)
+{
+    // D241: never silent. A project commits the change as a version of its own and reloads; a plain IFC is
+    // written to a new file, which is then opened (the file opened first keeps its schema).
+    const QJsonObject r = bridgeInBackground("change_schema",
+        {target, path, QString(), acceptLoss ? QStringLiteral("1") : QString()},
+        tr("Converting the model to %1...").arg(target));
+    if (!r.value("ok").toBool() && r.value("needs_confirm").toBool()) {
+        if (m_quiet)
+            return false; // tests and the self-test never convert with losses unasked
+        const QJsonObject loss = r.value("loss").toObject();
+        int total = 0;
+        for (const auto& v : loss.value("totals").toObject())
+            total += v.toInt();
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Warning);
+        box.setWindowTitle(tr("Change IFC schema"));
+        box.setText(tr("%1 has no place for some of this model's data: %n item(s) would be dropped or changed.",
+                        nullptr, total).arg(target));
+        box.setInformativeText(tr("Open Details for the list. In a project the current version keeps everything."));
+        box.setDetailedText(lossText(loss));
+        QPushButton* convert = box.addButton(tr("Convert anyway"), QMessageBox::DestructiveRole);
+        box.addButton(QMessageBox::Cancel);
+        box.exec();
+        if (box.clickedButton() != convert)
+            return false;
+        return changeSchema(target, path, true);
+    }
+    if (!r.value("ok").toBool()) {
+        showError(tr("Change IFC schema"), r.value("error").toString());
+        return false;
+    }
+    const QString open = r.value("open").toString();
+    const QString reload = r.value("reload").toString();
+    if (!open.isEmpty())
+        openPath(open);
+    else if (!reload.isEmpty()) {
+        endCompare();
+        openFile(reload);
+        refreshProject();
+    }
+    m_status->showMessage(tr("Converted from %1 to %2: %3 products, %4 types")
+                              .arg(r.value("from").toString(), r.value("to").toString())
+                              .arg(r.value("after").toObject().value("products").toInt())
+                              .arg(r.value("after").toObject().value("types").toInt()));
+    return true;
+}
+
+void MainWindow::changeSchemaDialog()
+{
+    const QJsonObject info = bridge("schema_info");
+    if (!info.value("ok").toBool()) {
+        showError(tr("Change IFC schema"), info.value("error").toString());
+        return;
+    }
+    QStringList targets;
+    for (const auto& t : info.value("targets").toArray())
+        targets << t.toString();
+    const bool versioned = bridge("project_state").value("versioned").toBool();
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Change IFC schema"));
+    auto* layout = new QVBoxLayout(&dialog);
+    layout->addWidget(new QLabel(tr("This model is %1.").arg(info.value("schema").toString()), &dialog));
+    auto* choice = new QComboBox(&dialog);
+    choice->setObjectName(QStringLiteral("schemaTarget"));
+    choice->addItems(targets);
+    auto* form = new QFormLayout;
+    form->addRow(tr("Convert to:"), choice);
+    layout->addLayout(form);
+    auto* note = new QLabel(versioned
+            ? tr("The converted model is saved as a new version; later versions use the new schema. "
+                 "Save a version of your changes first.")
+            : tr("The converted model is written to a new file, which then opens. This file keeps its schema."),
+        &dialog);
+    note->setWordWrap(true);
+    layout->addWidget(note);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    const QString target = choice->currentText();
+    QString path;
+    if (!versioned) {
+        // An untitled model (or an office template's internal copy) suggests the Documents folder.
+        const QJsonObject doc = bridge("document_state");
+        const QFileInfo current(doc.value("path").toString());
+        const bool untitled = doc.value("untitled").toBool() || doc.value("path").toString().isEmpty();
+        const QString folder = untitled ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+                                        : current.absolutePath();
+        const QString base = untitled ? tr("Untitled") : current.completeBaseName();
+        const QString suggested = folder + QLatin1Char('/') + base + QLatin1Char('-') + target + QStringLiteral(".ifc");
+        path = QFileDialog::getSaveFileName(this, tr("Save the %1 model as").arg(target), suggested,
+            tr("IFC files (*.ifc)"));
+        if (path.isEmpty())
+            return;
+    }
+    changeSchema(target, path);
 }
 
 void MainWindow::saveAsFolderDialog()

@@ -21,7 +21,7 @@ These are not decisions the agent can make or verify:
 | Canonical JSON instead of XML | Yes | D11 |
 | Embedded Python runtime | Yes | D22 |
 | UI vocabulary | Yes; may change from user feedback. UI in English + Spanish | D28, D29 |
-| IFC schema | Compatible with IFC4 and IFC4X3; MVP ships IFC4 | D30 |
+| IFC schema | Compatible with IFC4 and IFC4X3; MVP ships IFC4; IFC4X3 per project since D241 | D30, D241 |
 | Model resolution | 0.01 mm | D31 |
 
 ## Resolved (2026-10-20)

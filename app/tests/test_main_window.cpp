@@ -9,6 +9,8 @@
 #include <QScreen>
 #include <QSignalSpy>
 #include <QSlider>
+#include <QFileInfo>
+#include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QToolButton>
@@ -126,6 +128,34 @@ private slots:
         QCOMPARE(w.currentViewKey(), QString("3d"));
         emit dock->closeRequested("3d"); // never closes
         QVERIFY(dock->view("3d"));
+    }
+
+    // D241: new projects follow the schema preference; File > Change IFC schema writes a plain model to a new
+    // file in the other schema and opens it, leaving the first file as it was.
+    void ifc4x3ProjectsAndSchemaChange()
+    {
+        QTemporaryDir tmp;
+        QVERIFY(tmp.isValid());
+        kimbim::MainWindow w(nullptr, true);
+        const auto reset = qScopeGuard([&w] {
+            w.preferences().setValue(QStringLiteral("new_project_schema"), QStringLiteral("IFC4"));
+        });
+        QVERIFY(w.findChild<QAction*>(QStringLiteral("actionChangeSchema")));
+        QCOMPARE(w.findChildren<QAction*>(QStringLiteral("actionExportIfc")).size(), 1); // was listed twice
+        w.preferences().setValue(QStringLiteral("new_project_schema"), QStringLiteral("IFC4X3"));
+        QVERIFY(w.newProject());
+        auto info = kimbim::PythonEngine::instance().callJson("schema_info", {}).object();
+        QCOMPARE(info.value("schema").toString(), QStringLiteral("IFC4X3"));
+        const QString first = tmp.filePath(QStringLiteral("site.ifc"));
+        QVERIFY(w.saveAs(first));
+        const QString second = tmp.filePath(QStringLiteral("site-IFC4.ifc"));
+        QVERIFY(w.changeSchema(QStringLiteral("IFC4"), second));
+        QTRY_COMPARE_WITH_TIMEOUT(kimbim::PythonEngine::instance().callJson("schema_info", {}).object()
+                                      .value("schema").toString(), QStringLiteral("IFC4"), 60000);
+        QVERIFY(QFileInfo::exists(second));
+        QFile original(first);
+        QVERIFY(original.open(QIODevice::ReadOnly));
+        QVERIFY(original.read(4096).contains("IFC4X3"));
     }
 
     // D76: View > Views turns the active view; View > Perspective toggles it; their shortcuts are

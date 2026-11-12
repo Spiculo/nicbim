@@ -31,6 +31,7 @@ private:
     QLineEdit* m_authorEmail;
     QComboBox* m_newViews;
     QComboBox* m_openIfc;
+    QComboBox* m_newSchema;
     QComboBox* m_autoVersion;
     QSpinBox* m_autoEvery;
     QSpinBox* m_recovery;

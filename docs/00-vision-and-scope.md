@@ -39,7 +39,7 @@ The CLI and docs keep the Git terms.
 
 Detailed in [04-app-features.md](04-app-features.md).
 
-- Open, create, edit and save IFC models (IFC4 first; IFC2X3 import; IFC4X3 when the libraries support it).
+- Open, create, edit and save IFC models (IFC4 by default, IFC4X3 per project since D241; IFC2X3 opens and edits).
 - 3D viewport with navigation, selection, filtering, section boxes and clipping planes ("cuts").
 - Object data: properties, quantities, classifications, materials, types, relationships.
 - Modeling of core architectural elements: walls, slabs, roofs, openings, doors, windows, columns, beams, spaces, stairs (basic).

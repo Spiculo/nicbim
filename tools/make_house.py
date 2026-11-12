@@ -12,6 +12,7 @@ Usage: python tools/make_house.py OUT.ifc   (prints a JSON summary)
 from __future__ import annotations
 
 import json
+import os
 import math
 import sys
 from pathlib import Path
@@ -31,8 +32,9 @@ def named(listing, name):
     return next(t for t in listing["types"] if t["name"] == name)
 
 
-def build(out: str) -> dict:
-    call("new_project", "KimBim two-storey house")
+def build(out: str, schema: str = "") -> dict:
+    schema = schema or os.environ.get("KIMBIM_HOUSE_SCHEMA", "IFC4")  # D241: the IFC4X3 test run
+    call("new_project", "KimBim two-storey house", schema)
     l1 = call("storeys")["storeys"][0]["guid"]
     ext = named(call("wall_types"), "Exterior 300")["guid"]
     corners = [(0, 0), (10, 0), (10, 8), (0, 8)]

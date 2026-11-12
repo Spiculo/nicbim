@@ -14,6 +14,7 @@ namespace kimbim {
 namespace {
 const QStringList kViews{QStringLiteral("tab"), QStringLiteral("window")};
 const QStringList kOpenIfc{QStringLiteral("make_kim"), QStringLiteral("edit_ifc")};
+const QStringList kNewSchema{QStringLiteral("IFC4"), QStringLiteral("IFC4X3")};
 const QStringList kAutoVersion{QStringLiteral("off"), QStringLiteral("saves"), QStringLiteral("minutes")};
 const QStringList kLanguages{QStringLiteral("auto"), QStringLiteral("en"), QStringLiteral("es")};
 
@@ -44,6 +45,7 @@ QJsonObject Preferences::defaults()
         {"author_email", ""},
         {"new_views", "tab"},
         {"open_ifc", "make_kim"},
+        {"new_project_schema", "IFC4"},
         {"auto_version", "off"},
         {"auto_version_every", 10},
         {"recovery_minutes", 5},
@@ -128,6 +130,7 @@ void Preferences::setValue(const QString& key, const QJsonValue& value)
 QString Preferences::language() const { return oneOf(value("language"), kLanguages); }
 QString Preferences::newViews() const { return oneOf(value("new_views"), kViews); }
 QString Preferences::openIfc() const { return oneOf(value("open_ifc"), kOpenIfc); }
+QString Preferences::newProjectSchema() const { return oneOf(value("new_project_schema"), kNewSchema); }
 QString Preferences::autoVersion() const { return oneOf(value("auto_version"), kAutoVersion); }
 QString Preferences::authorName() const { return value("author_name").toString().trimmed(); }
 QString Preferences::authorEmail() const { return value("author_email").toString().trimmed(); }

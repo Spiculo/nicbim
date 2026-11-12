@@ -573,7 +573,7 @@ def _new_versions_file(model):
     import ifcopenshell.api.project
     import ifcopenshell.guid
 
-    f = ifcopenshell.api.project.create_file(version=model.schema)
+    f = ifcopenshell.api.project.create_file(version=model.schema_identifier)
     project = f.create_entity("IfcProject", GlobalId=ifcopenshell.guid.new(), Name="KimBim versions")
     units = next(iter(model.by_type("IfcProject")), None)
     if units is not None and units.UnitsInContext is not None:
@@ -606,8 +606,8 @@ def move_version_to_library(version_id: str, replace: str = "") -> str:
         return A._fail("no office library folder: set one in Preferences › Office library")
     if not os.path.isdir(folder):
         return A._fail(f"the office library folder {folder} is missing")
-    if B._model.schema not in ("IFC4", "IFC2X3"):
-        return A._fail("the office library shares versions of IFC4 and IFC2X3 projects")
+    if B._model.schema not in ("IFC4", "IFC2X3", "IFC4X3"):
+        return A._fail("the office library shares versions of IFC2X3, IFC4 and IFC4X3 projects")
     path = os.path.join(folder, VERSIONS_FILE)
     try:
         office = ifcopenshell.open(path) if os.path.isfile(path) else _new_versions_file(B._model)

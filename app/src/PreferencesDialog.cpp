@@ -98,6 +98,11 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
     m_openIfc = choice(this, "openIfc", {{tr("Make a .kim beside it"), "make_kim"}, {tr("Edit the IFC directly"), "edit_ifc"}},
         prefs.openIfc());
     form->addRow(tr("Opening an IFC file:"), m_openIfc);
+    m_newSchema = choice(this, "newProjectSchema", {{tr("IFC4 (widest support)"), "IFC4"},
+        {tr("IFC4X3 (current ISO standard)"), "IFC4X3"}}, prefs.newProjectSchema());
+    m_newSchema->setToolTip(tr("The IFC schema of new projects. An office template keeps its own schema; "
+                               "File › Change IFC schema converts an open model."));
+    form->addRow(tr("New projects use:"), m_newSchema);
     m_largeIfc = new QSpinBox(this);
     m_largeIfc->setObjectName(QStringLiteral("largeIfcMb"));
     m_largeIfc->setRange(0, 10000);
@@ -298,6 +303,7 @@ void PreferencesDialog::apply()
     m_prefs.setValue(QStringLiteral("author_email"), m_authorEmail->text().trimmed());
     m_prefs.setValue(QStringLiteral("new_views"), m_newViews->currentData().toString());
     m_prefs.setValue(QStringLiteral("open_ifc"), m_openIfc->currentData().toString());
+    m_prefs.setValue(QStringLiteral("new_project_schema"), m_newSchema->currentData().toString());
     m_prefs.setValue(QStringLiteral("large_ifc_mb"), m_largeIfc->value());
     m_prefs.setValue(QStringLiteral("auto_version"), m_autoVersion->currentData().toString());
     m_prefs.setValue(QStringLiteral("auto_version_every"), m_autoEvery->value());

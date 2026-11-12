@@ -716,12 +716,14 @@ def regenerate_ids(f) -> dict:
     return mapping
 
 
-def new_from_template(path: str) -> str:
+def new_from_template(path: str, schema: str = "") -> str:
+    """`schema` (D241): the built-in template's IFC schema, "IFC4" (default) or "IFC4X3"; an office template
+    keeps the schema it was saved in."""
     global _doc, _pending
     if path == BUILTIN:
         from .authoring import new_project
 
-        r = json.loads(new_project(""))
+        r = json.loads(new_project("", schema))
         if not r.get("ok"):
             return B._dump(r)
         _doc = {**_plain(), "template": BUILTIN_NAME}

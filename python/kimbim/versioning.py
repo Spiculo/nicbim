@@ -189,7 +189,7 @@ def _ancestors(ifc_type: str) -> set[str]:
     import ifcopenshell.ifcopenshell_wrapper as W
 
     try:
-        d = W.schema_by_name(B._model.schema if B._model is not None else "IFC4").declaration_by_name(ifc_type)
+        d = W.schema_by_name(B._model.schema_identifier if B._model is not None else "IFC4").declaration_by_name(ifc_type)
     except Exception:
         return set()
     out = set()
@@ -268,8 +268,10 @@ def _checks_summary(report: dict | None) -> list[dict]:
              "failed": r["failed"], "total": r["total"]} for r in (report or {}).get("checks", [])]
 
 
-def save_version(message: str, author_json: str = "") -> str:
-    """`author_json`: {"name", "email"} for a version someone else makes (an agent, D102); default: the user."""
+def save_version(message: str, author_json: str = "", schema_change: str = "") -> str:
+    """`author_json`: {"name", "email"} for a version someone else makes (an agent, D102); default: the user.
+    `schema_change`: the new schema identifier when this version is an explicit schema change (D241,
+    schemas.change_schema); the working model is then decomposed afresh in that schema."""
     if _project is None:
         return _fail("this model isn't versioned: enable versioning first")
     if not (message or "").strip():
@@ -291,12 +293,18 @@ def save_version(message: str, author_json: str = "") -> str:
         text = ", ".join(f"{r.get('title', r['check'])} ({r['total']})" for r in failed)
         return B._dump({"ok": False, "blocked": True, "error": f"a blocking check did not pass: {text}",
                         "checks": report["checks"]})
-    records = _working_records()
-    working = _working()
+    if schema_change:
+        _forget_working()
+        records = None
+        working = _write_working()
+    else:
+        records = _working_records()
+        working = _working()
     try:
         merged = [_combining["theirs"]] if _combining else None
         cid, changes = _project.commit(working, message.strip(), author=author, merged=merged, settings=S.to_bytes(),
-                                       checks=_checks_record(report) if report else None, records=records)
+                                       checks=_checks_record(report) if report else None, records=records,
+                                       schema_change=schema_change)
         _end_combining()
     except NothingToCommit:
         _mark_saved(working)

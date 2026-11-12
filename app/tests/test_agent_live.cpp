@@ -203,6 +203,8 @@ private slots:
                                                        QStringLiteral("--elements"), QStringLiteral("{\"kind\":\"wall\"}")});
         QVERIFY2(isolated.value("ok").toBool(), qPrintable(QJsonDocument(isolated).toJson()));
         QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), 8, 30000); // the house's 8 walls
+        const QJsonObject afterIsolate = kimbim::PythonEngine::instance().callJson("state", {}).object();
+        QVERIFY(!afterIsolate.value("dirty").toBool()); // display only: the model and its history are unchanged
 
         const QJsonObject shown = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("show-all")});
         QVERIFY2(shown.value("ok").toBool(), qPrintable(QJsonDocument(shown).toJson()));

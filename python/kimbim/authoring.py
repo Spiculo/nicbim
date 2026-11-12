@@ -201,10 +201,16 @@ def ungroup_elements(guids_json: str) -> str:
 
 # ---------------------------------------------------------------- project and levels
 
-def new_project(name: str = "") -> str:
-    """Start an empty IFC4 project in millimetres with one level, not yet saved anywhere."""
+def new_project(name: str = "", schema: str = "") -> str:
+    """Start an empty project in millimetres with one level, not yet saved anywhere. `schema`: "IFC4" (the
+    default) or "IFC4X3" (D241, docs/02: chosen per project)."""
+    from . import schemas
+
+    schema = (schema or "IFC4").strip().upper()
+    if schema not in schemas.TARGETS:
+        return _fail("the schema must be IFC4 or IFC4X3")
     try:
-        f = ifcopenshell.api.project.create_file(version="IFC4")
+        f = ifcopenshell.api.project.create_file(version=schemas.TARGETS[schema])
         project = ifcopenshell.api.root.create_entity(f, ifc_class="IfcProject", name=name or "Project")
         ifcopenshell.api.unit.assign_unit(f)  # millimetres, square/cubic metres, radians
         model = ifcopenshell.api.context.add_context(f, context_type="Model")

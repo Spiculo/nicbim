@@ -1168,6 +1168,7 @@ from . import costing as _costing  # noqa: E402
 from . import sequencing as _sequencing  # noqa: E402
 from . import webshare as _webshare  # noqa: E402
 _EXPORTS = {
+    "schemas": ("change_schema", "schema_info"),  # D241
     "authoring": (
         "add_grid_axis",
         "add_grid_system",

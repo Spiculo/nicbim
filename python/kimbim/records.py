@@ -405,7 +405,7 @@ def unshare(f: ifcopenshell.file) -> int:
     one layer set, a shape representation in one product shape...). Records hash-cons identical
     values, so composing can share them; decomposing the copies hash-conses them again, so records
     (and every stored hash) are unchanged. Deterministic (entity id order). Returns the copies made."""
-    schema = W.schema_by_name(f.schema)
+    schema = W.schema_by_name(f.schema_identifier)
     exclusive: dict[str, list] = {}
 
     def single_owner(type_name):

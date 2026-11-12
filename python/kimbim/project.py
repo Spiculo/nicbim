@@ -275,8 +275,8 @@ class Project:
         head = self.repo.head()
         return self.repo.tree_entries(head) if head else {}
 
-    def schema(self) -> str | None:
-        entries = self._head_entries()
+    def schema(self, rev: str = "HEAD") -> str | None:
+        entries = self._head_entries() if rev == "HEAD" else self._entries(rev)
         if META_PATH not in entries:
             return None
         return json.loads(self.repo.read_blobs([entries[META_PATH]])[0])["schema"]
@@ -342,13 +342,15 @@ class Project:
     def _decompose_cache_dir(self) -> pathlib.Path:
         return self.work / ".kimbim" / "cache" / "decompose"
 
-    def _decompose_file(self, ifc_path) -> dict[str, bytes]:
+    def _decompose_file(self, ifc_path, schema_change: str = "") -> dict[str, bytes]:
+        """`schema_change`: the schema identifier an explicit schema change commits (D241); any other
+        schema than the project's is refused."""
         path = pathlib.Path(ifc_path)
         try:
             payload = path.read_bytes()
         except OSError:
             payload = b""
-        current = self.schema()
+        current = schema_change or self.schema()
         head = self.repo.head() or ""
         cache_path = None
         if payload:
@@ -434,14 +436,18 @@ class Project:
 
     def commit(self, ifc_path, message: str, *, author: tuple[str, str] | None = None, time: int | None = None,
                merged: list[str] | None = None, settings: bytes | None = None, checks: bytes | None = None,
-               records: dict[str, bytes] | None = None):
+               records: dict[str, bytes] | None = None, schema_change: str = ""):
         """A new version from an IFC file; `merged`: other versions it combines (a merge commit, which
         is recorded even when the result equals the current version). `checks`: the pre-commit check
         results to record with the version (M6); None leaves no checks.json in the tree. `records`: an
-        already decomposed working model (the app caches it between Compare and Save version)."""
+        already decomposed working model (the app caches it between Compare and Save version).
+        `schema_change`: the new schema identifier of an explicit schema change (D241, docs/02); without it a
+        file of another schema than the project's is refused (SchemaMismatch)."""
         head = self._head_entries()
         if records is None:
-            records = self._decompose_file(ifc_path)
+            records = self._decompose_file(ifc_path, schema_change)
+        if schema_change and json.loads(records["meta"])["schema"] != schema_change:
+            raise SchemaMismatch(f"the model is not {schema_change}")
         changes, writes = self._changes(head, records, settings)
         if not changes and not merged and not any(is_record_path(p) for p in writes):
             raise NothingToCommit("nothing to commit: the file matches the current version")
@@ -791,6 +797,10 @@ class Project:
             return MergePreview("up_to_date", base, ours, theirs)
         if base == ours:
             return MergePreview("fast_forward", base, ours, theirs)
+        mine, other_schema = self.schema(ours), self.schema(theirs)
+        if mine and other_schema and mine != other_schema:  # D241: records of two schemas never mix
+            raise SchemaMismatch(f"this option is {mine} and {other} is {other_schema}: change one of them with "
+                                 "File > Change IFC schema first, then combine")
         base_records = self._records(base) if base else {}
         result = merge_records(base_records, self._records(ours), self._records(theirs), resolutions)
         from . import settings as S

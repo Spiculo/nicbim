@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Modeling in the app bridge (M3, Slice 4): new project, levels, layered walls, joins, live geometry deltas."""
 import json
+import os
 
 import ifcopenshell
 import ifcopenshell.geom
@@ -44,7 +45,7 @@ def wall(p, x1, y1, x2, y2, start="", end="", level=None, wtype=None, height=3.0
 
 def test_new_project_is_ifc4_in_millimetres_with_one_level():
     assert call("new_project", "Casa")["ok"]
-    assert b._model.schema == "IFC4"
+    assert b._model.schema == os.environ.get("KIMBIM_TEST_SCHEMA", "IFC4")  # D241: the IFC4X3 pass
     assert ifcopenshell.util.unit.calculate_unit_scale(b._model) == pytest.approx(0.001)
     assert [s["name"] for s in call("storeys")["storeys"]] == ["Level 1"]
     assert call("state") == {**call("state"), "dirty": False, "can_undo": False, "path": ""}
