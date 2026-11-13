@@ -44,7 +44,10 @@ DEFAULTS: dict[str, dict] = {
         "air_viscosity": 1.5e-5,  # kinematic, m2/s
     },
     "plumbing_settings": {
-        "method": "en806",  # en806 | hunter
+        "method": "en806",  # en806: fixture design flows summed, peak flow Q = a (sum Q)^b - c (DIN 1988-300)
+        "simultaneity_a": 1.48,  # DIN 1988-300 table 2, residential (office 0.91 / 0.31 / 0.38)
+        "simultaneity_b": 0.19,
+        "simultaneity_c": 0.94,
         "velocity_main": 2.0,  # m/s
         "velocity_branch": 1.5,
         "roughness_mm": 0.0015,  # copper / plastic
@@ -68,10 +71,18 @@ DEFAULTS: dict[str, dict] = {
         "rain_intensity": 0.03,  # L/s per m2
         "runoff_coefficient": 1.0,
         "vent_du_limit": 10.0,  # DU on a stack without a vent before a warning
-        "pipe_series": {"40": 0.036, "50": 0.046, "75": 0.069, "90": 0.083, "110": 0.101,
-                        "125": 0.115, "160": 0.147, "200": 0.184, "250": 0.230},  # DN -> inner m
+        "pipe_series": {"40": 0.036, "50": 0.046, "70": 0.066, "80": 0.075, "90": 0.083, "100": 0.096,
+                        "125": 0.115, "150": 0.141, "200": 0.184, "250": 0.230},  # DN -> inner m (PVC)
+        "stack_capacity": {"70": 1.5, "80": 2.0, "90": 2.7, "100": 4.0, "125": 5.8, "150": 9.5,
+                           "200": 16.0},  # L/s, EN 12056-2 table 11 (primary ventilation, square entries)
     },
     "electrical_settings": {
+        "cable_rating": {"1.5": 19.5, "2.5": 27.0, "4": 36.0, "6": 46.0, "10": 63.0, "16": 85.0, "25": 112.0,
+                         "35": 138.0, "50": 168.0, "70": 213.0, "95": 258.0, "120": 299.0},  # A, IEC 60364-5-52
+        # B.52.4 method C, PVC copper, two loaded conductors; three-phase circuits use x 0.87 (three loaded)
+        "breakers": "6 10 13 16 20 25 32 40 50 63 80 100 125",
+        "min_cable_lighting": 1.5,
+        "min_cable_power": 2.5,
         "voltage_single": 230.0,
         "voltage_three": 400.0,
         "power_factor": 0.95,
@@ -115,7 +126,8 @@ RANGES: dict[str, dict[str, tuple[float, float]]] = {
                       "air_viscosity": (1e-6, 1e-4)},
     "plumbing_settings": {"velocity_main": (0.2, 6), "velocity_branch": (0.2, 6), "roughness_mm": (0, 5),
                           "fittings_allowance": (0, 2), "supply_pressure_kpa": (10, 2000),
-                          "min_flow_pressure_kpa": (0, 1000), "water_viscosity": (1e-7, 1e-4)},
+                          "min_flow_pressure_kpa": (0, 1000), "water_viscosity": (1e-7, 1e-4),
+                          "simultaneity_a": (0, 10), "simultaneity_b": (0, 2), "simultaneity_c": (0, 10)},
     "drainage_settings": {"k_factor": (0.1, 2), "default_slope": (0.001, 0.5), "min_slope_large": (0.001, 0.5),
                           "min_slope_small": (0.001, 0.5), "max_slope": (0.01, 1), "fill_ratio": (0.1, 1),
                           "fill_ratio_large": (0.1, 1), "manning_n": (0.005, 0.05), "rain_intensity": (0, 1),
@@ -129,14 +141,16 @@ RANGES: dict[str, dict[str, tuple[float, float]]] = {
 }
 CHOICES = {
     ("hvac_settings", "method"): ("en16798", "ach", "per_area"),
-    ("plumbing_settings", "method"): ("en806", "hunter"),
-    ("drainage_settings", "method"): ("en12056", "ipc"),
+    ("plumbing_settings", "method"): ("en806",),
+    ("drainage_settings", "method"): ("en12056",),
     ("structure_settings", "base_support"): ("fixed", "pinned"),
     ("structure_settings", "bearing_walls"): ("unless_marked", "marked_only", "none"),
 }
 # Tables that take new entries (shaped like an existing entry, or numbers for flat tables)
 OPEN = {("mep_settings", "catalogue"), ("plumbing_settings", "pipe_series"), ("drainage_settings", "pipe_series"),
-        ("electrical_settings", "demand"), ("structure_settings", "use_loads"), ("structure_settings", "materials")}
+        ("drainage_settings", "stack_capacity"),
+        ("electrical_settings", "demand"), ("electrical_settings", "cable_rating"), ("structure_settings", "use_loads"),
+        ("structure_settings", "materials")}
 KEYS = tuple(DEFAULTS)
 
 
