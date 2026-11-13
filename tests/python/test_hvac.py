@@ -94,3 +94,16 @@ def test_round_ducts_and_settings():
     assert not call(H.size_air_system, "nope")["ok"]
     assert call(M.create_mep_system, "CW", "cold_water")["ok"]
     assert not call(H.size_air_system, "CW")["ok"]
+
+
+def test_the_duct_schedule_shows_the_sizing():
+    two_rooms()
+    assert call(H.size_air_system, "SA", True)["applied"]
+    from kimbim import schedules
+
+    r = json.loads(schedules.schedule("ducts"))
+    assert r["ok"], r
+    text = json.dumps(r)
+    assert "Flow (L/s)" in text and "Velocity (m/s)" in text
+    fixtures = json.loads(schedules.schedule("fixtures"))
+    assert fixtures["ok"] and "Design flow (L/s)" in json.dumps(fixtures)

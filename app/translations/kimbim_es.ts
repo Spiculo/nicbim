@@ -17639,108 +17639,108 @@ Los modelos grandes pueden tardar unos minutos.</translation>
   <context>
     <name>kimbim::ScheduleSchemeDialog</name>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="433" />
+      <location filename="../src/SchedulesDialog.cpp" line="447" />
       <source>Schedule scheme</source>
       <translation>Esquema de planilla</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="469" />
+      <location filename="../src/SchedulesDialog.cpp" line="483" />
       <source>Fields in column order. Ticked fields are what identical items share when merging; double-click a field to rename its column</source>
       <translation>Campos en el orden de las columnas. Los campos marcados son los que comparten los elementos idénticos al combinarlos; doble clic en un campo para renombrar su columna</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="471" />
+      <location filename="../src/SchedulesDialog.cpp" line="485" />
       <source>Double-click a field to add it</source>
       <translation>Doble clic en un campo para agregarlo</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="473" />
+      <location filename="../src/SchedulesDialog.cpp" line="487" />
       <source>Add →</source>
       <translation>Agregar →</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="474" />
+      <location filename="../src/SchedulesDialog.cpp" line="488" />
       <source>Remove</source>
       <translation>Quitar</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="475" />
+      <location filename="../src/SchedulesDialog.cpp" line="489" />
       <source>Up</source>
       <translation>Subir</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="476" />
+      <location filename="../src/SchedulesDialog.cpp" line="490" />
       <source>Down</source>
       <translation>Bajar</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="484" />
+      <location filename="../src/SchedulesDialog.cpp" line="498" />
       <source>Classes:</source>
       <translation>Clases:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="487" />
+      <location filename="../src/SchedulesDialog.cpp" line="501" />
       <source>Available fields:</source>
       <translation>Campos disponibles:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="490" />
+      <location filename="../src/SchedulesDialog.cpp" line="504" />
       <source>Schedule fields:</source>
       <translation>Campos de la planilla:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="520" />
+      <location filename="../src/SchedulesDialog.cpp" line="534" />
       <source>Name:</source>
       <translation>Nombre:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="533" />
+      <location filename="../src/SchedulesDialog.cpp" line="547" />
       <source> m²</source>
       <translation> m²</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="535" />
+      <location filename="../src/SchedulesDialog.cpp" line="549" />
       <source>Openings smaller than this are not taken out of the host's areas (0: deduct all)</source>
       <translation>Las aberturas menores que esto no se descuentan de las áreas del anfitrión (0: descontar todas)</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="536" />
+      <location filename="../src/SchedulesDialog.cpp" line="550" />
       <source>Units:</source>
       <translation>Unidades:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="537" />
+      <location filename="../src/SchedulesDialog.cpp" line="551" />
       <source>Smallest opening to deduct:</source>
       <translation>Abertura mínima a descontar:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="492" />
+      <location filename="../src/SchedulesDialog.cpp" line="506" />
       <source>Formula...</source>
       <translation>Fórmula...</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="493" />
+      <location filename="../src/SchedulesDialog.cpp" line="507" />
       <source>A calculated column: reference other fields in braces, e.g. {quantity:volume} * 2</source>
       <translation>Una columna calculada: referencia otros campos entre llaves, p. ej. {quantity:volume} * 2</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="497" />
-      <location filename="../src/SchedulesDialog.cpp" line="502" />
+      <location filename="../src/SchedulesDialog.cpp" line="511" />
+      <location filename="../src/SchedulesDialog.cpp" line="516" />
       <source>Calculated field</source>
       <translation>Campo calculado</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="498" />
+      <location filename="../src/SchedulesDialog.cpp" line="512" />
       <source>Expression (field references in braces, e.g. {quantity:volume} * 2):</source>
       <translation>Expresión (referencias de campo entre llaves, p. ej. {quantity:volume} * 2):</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="502" />
+      <location filename="../src/SchedulesDialog.cpp" line="516" />
       <source>Column label:</source>
       <translation>Etiqueta de columna:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="503" />
+      <location filename="../src/SchedulesDialog.cpp" line="517" />
       <source>Calculated</source>
       <translation>Calculado</translation>
     </message>
@@ -17874,7 +17874,7 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
       <location filename="../src/SchedulesDialog.cpp" line="84" />
-      <location filename="../src/SchedulesDialog.cpp" line="273" />
+      <location filename="../src/SchedulesDialog.cpp" line="287" />
       <source>Count</source>
       <translation>Cantidad</translation>
     </message>
@@ -17884,138 +17884,243 @@ Los modelos grandes pueden tardar unos minutos.</translation>
       <translation>Número</translation>
     </message>
     <message>
+      <location filename="../src/SchedulesDialog.cpp" line="87" />
+      <source>Flow (L/s)</source>
+      <translation>Caudal (L/s)</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="87" />
+      <source>Velocity (m/s)</source>
+      <translation>Velocidad (m/s)</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="88" />
+      <source>Pressure drop (Pa)</source>
+      <translation>Pérdida de carga (Pa)</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="89" />
+      <source>Nominal size</source>
+      <translation>Tamaño nominal</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="89" />
+      <source>Diameter</source>
+      <translation>Diámetro</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="90" />
+      <source>Slope</source>
+      <translation>Pendiente</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="90" />
+      <source>Loading units</source>
+      <translation>Unidades de carga</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="91" />
+      <source>Discharge units</source>
+      <translation>Unidades de descarga</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="92" />
+      <source>Design flow (L/s)</source>
+      <translation>Caudal de diseño (L/s)</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="92" />
+      <source>Power (VA)</source>
+      <translation>Potencia (VA)</translation>
+    </message>
+    <message>
       <location filename="../src/SchedulesDialog.cpp" line="93" />
+      <source>Load class</source>
+      <translation>Tipo de carga</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="93" />
+      <source>Utilisation</source>
+      <translation>Aprovechamiento</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="94" />
+      <source>Status</source>
+      <translation>Estado</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="94" />
+      <source>Governing</source>
+      <translation>Determinante</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="95" />
+      <source>Deflection</source>
+      <translation>Flecha</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="95" />
+      <source>Deflection limit</source>
+      <translation>Flecha límite</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="103" />
       <source>Doors</source>
       <translation>Puertas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="93" />
+      <location filename="../src/SchedulesDialog.cpp" line="103" />
       <source>Windows</source>
       <translation>Ventanas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="94" />
+      <location filename="../src/SchedulesDialog.cpp" line="104" />
       <source>Walls</source>
       <translation>Muros</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="94" />
+      <location filename="../src/SchedulesDialog.cpp" line="104" />
       <source>Slabs</source>
       <translation>Losas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="95" />
+      <location filename="../src/SchedulesDialog.cpp" line="105" />
       <source>Columns</source>
       <translation>Pilares</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="95" />
+      <location filename="../src/SchedulesDialog.cpp" line="105" />
       <source>Beams</source>
       <translation>Vigas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="96" />
+      <location filename="../src/SchedulesDialog.cpp" line="106" />
       <source>Rooms</source>
       <translation>Zonas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="97" />
+      <location filename="../src/SchedulesDialog.cpp" line="107" />
       <source>Building materials</source>
       <translation>Materiales de construcción</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="98" />
+      <location filename="../src/SchedulesDialog.cpp" line="108" />
       <source>Building material</source>
       <translation>Material de construcción</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="106" />
+      <location filename="../src/SchedulesDialog.cpp" line="109" />
+      <source>Ducts</source>
+      <translation>Conductos</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="109" />
+      <source>Pipes</source>
+      <translation>Tuberías</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="110" />
+      <source>Fixtures and terminals</source>
+      <translation>Aparatos y terminales</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="111" />
+      <source>Electrical devices</source>
+      <translation>Dispositivos eléctricos</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="112" />
+      <source>Structural results</source>
+      <translation>Resultados de estructura</translation>
+    </message>
+    <message>
+      <location filename="../src/SchedulesDialog.cpp" line="120" />
       <source>&amp;Merge identical items</source>
       <translation>&amp;Combinar elementos idénticos</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="109" />
-      <location filename="../src/SchedulesDialog.cpp" line="223" />
+      <location filename="../src/SchedulesDialog.cpp" line="123" />
+      <location filename="../src/SchedulesDialog.cpp" line="237" />
       <source>&amp;Delete</source>
       <translation>&amp;Eliminar</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="112" />
+      <location filename="../src/SchedulesDialog.cpp" line="126" />
       <source>Schedules</source>
       <translation>Planillas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="117" />
+      <location filename="../src/SchedulesDialog.cpp" line="131" />
       <source>One row per group of elements that share the scheme's group fields, with their quantities summed</source>
       <translation>Una fila por grupo de elementos que comparten los campos de agrupación del esquema, con sus cantidades sumadas</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="124" />
+      <location filename="../src/SchedulesDialog.cpp" line="138" />
       <source>Click rows to select their elements; double-click a name, mark or property to edit it</source>
       <translation>Haga clic en las filas para seleccionar sus elementos; doble clic en un nombre, marca o propiedad para editarlo</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="127" />
+      <location filename="../src/SchedulesDialog.cpp" line="141" />
       <source>&amp;New...</source>
       <translation>&amp;Nueva...</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="128" />
+      <location filename="../src/SchedulesDialog.cpp" line="142" />
       <source>&amp;Edit...</source>
       <translation>&amp;Editar...</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="129" />
+      <location filename="../src/SchedulesDialog.cpp" line="143" />
       <source>&amp;Refresh</source>
       <translation>&amp;Actualizar</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="130" />
+      <location filename="../src/SchedulesDialog.cpp" line="144" />
       <source>E&amp;xport...</source>
       <translation>E&amp;xportar...</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="133" />
+      <location filename="../src/SchedulesDialog.cpp" line="147" />
       <source>Schedule:</source>
       <translation>Planilla:</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="223" />
+      <location filename="../src/SchedulesDialog.cpp" line="237" />
       <source>Re&amp;set</source>
       <translation>Res&amp;tablecer</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="236" />
+      <location filename="../src/SchedulesDialog.cpp" line="250" />
       <source>The model changed: Refresh to update the schedule</source>
       <translation>El modelo cambió: Actualizar para refrescar la planilla</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="256" />
+      <location filename="../src/SchedulesDialog.cpp" line="270" />
       <source>Could not make the schedule: %1</source>
       <translation>No se pudo hacer la planilla: %1</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="286" />
+      <location filename="../src/SchedulesDialog.cpp" line="300" />
       <source>Yes</source>
       <translation>Sí</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="286" />
+      <location filename="../src/SchedulesDialog.cpp" line="300" />
       <source>No</source>
       <translation>No</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="306" />
+      <location filename="../src/SchedulesDialog.cpp" line="320" />
       <source>(varies)</source>
       <translation>(varía)</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="330" />
+      <location filename="../src/SchedulesDialog.cpp" line="344" />
       <source>Total</source>
       <translation>Total</translation>
     </message>
     <message numerus="yes">
-      <location filename="../src/SchedulesDialog.cpp" line="339" />
+      <location filename="../src/SchedulesDialog.cpp" line="353" />
       <source>%n element(s)</source>
       <translation>
         <numerusform>%n elemento</numerusform>
@@ -18023,7 +18128,7 @@ Los modelos grandes pueden tardar unos minutos.</translation>
       </translation>
     </message>
     <message numerus="yes">
-      <location filename="../src/SchedulesDialog.cpp" line="340" />
+      <location filename="../src/SchedulesDialog.cpp" line="354" />
       <source>%n row(s)</source>
       <translation>
         <numerusform>%n fila</numerusform>
@@ -18031,42 +18136,42 @@ Los modelos grandes pueden tardar unos minutos.</translation>
       </translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="355" />
+      <location filename="../src/SchedulesDialog.cpp" line="369" />
       <source>Could not change it</source>
       <translation>No se pudo cambiar</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="372" />
+      <location filename="../src/SchedulesDialog.cpp" line="386" />
       <source>New schedule</source>
       <translation>Nueva planilla</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="392" />
+      <location filename="../src/SchedulesDialog.cpp" line="406" />
       <source>Could not save the schedule</source>
       <translation>No se pudo guardar la planilla</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="412" />
+      <location filename="../src/SchedulesDialog.cpp" line="426" />
       <source>Export schedule</source>
       <translation>Exportar planilla</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="413" />
+      <location filename="../src/SchedulesDialog.cpp" line="427" />
       <source>Excel workbooks (*.xlsx)</source>
       <translation>Libros de Excel (*.xlsx)</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="413" />
+      <location filename="../src/SchedulesDialog.cpp" line="427" />
       <source>CSV files (*.csv)</source>
       <translation>Archivos CSV (*.csv)</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="418" />
+      <location filename="../src/SchedulesDialog.cpp" line="432" />
       <source>Schedule saved to %1</source>
       <translation>Planilla guardada en %1</translation>
     </message>
     <message>
-      <location filename="../src/SchedulesDialog.cpp" line="419" />
+      <location filename="../src/SchedulesDialog.cpp" line="433" />
       <source>Could not export it: %1</source>
       <translation>No se pudo exportar: %1</translation>
     </message>

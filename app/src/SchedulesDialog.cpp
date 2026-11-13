@@ -83,6 +83,16 @@ QString SchedulesDialog::translatedLabel(const QString& english)
         {QStringLiteral("Opening area"), tr("Opening area")}, {QStringLiteral("Volume"), tr("Volume")},
         {QStringLiteral("Gross volume"), tr("Gross volume")}, {QStringLiteral("Count"), tr("Count")},
         {QStringLiteral("Number"), tr("Number")},
+        // D248: the MEP and structural schedules
+        {QStringLiteral("Flow (L/s)"), tr("Flow (L/s)")}, {QStringLiteral("Velocity (m/s)"), tr("Velocity (m/s)")},
+        {QStringLiteral("Pressure drop (Pa)"), tr("Pressure drop (Pa)")},
+        {QStringLiteral("Nominal size"), tr("Nominal size")}, {QStringLiteral("Diameter"), tr("Diameter")},
+        {QStringLiteral("Slope"), tr("Slope")}, {QStringLiteral("Loading units"), tr("Loading units")},
+        {QStringLiteral("Discharge units"), tr("Discharge units")},
+        {QStringLiteral("Design flow (L/s)"), tr("Design flow (L/s)")}, {QStringLiteral("Power (VA)"), tr("Power (VA)")},
+        {QStringLiteral("Load class"), tr("Load class")}, {QStringLiteral("Utilisation"), tr("Utilisation")},
+        {QStringLiteral("Status"), tr("Status")}, {QStringLiteral("Governing"), tr("Governing")},
+        {QStringLiteral("Deflection"), tr("Deflection")}, {QStringLiteral("Deflection limit"), tr("Deflection limit")},
     };
     return labels.value(english, english);
 }
@@ -96,6 +106,10 @@ QString SchedulesDialog::translatedSchemeName(const QString& english)
         {QStringLiteral("Rooms"), tr("Rooms")},
         {QStringLiteral("Building materials"), tr("Building materials")}, // D96: the material take-off
         {QStringLiteral("Building material"), tr("Building material")},
+        {QStringLiteral("Ducts"), tr("Ducts")}, {QStringLiteral("Pipes"), tr("Pipes")}, // D248
+        {QStringLiteral("Fixtures and terminals"), tr("Fixtures and terminals")},
+        {QStringLiteral("Electrical devices"), tr("Electrical devices")},
+        {QStringLiteral("Structural results"), tr("Structural results")},
     };
     return names.value(english, english);
 }
