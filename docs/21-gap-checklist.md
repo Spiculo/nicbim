@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D238 plus explicit overrides for the final items.
+after D123–D248 plus explicit overrides for the final items.
 
-**Summary: 226 done, 1 deferred, 3 blocked.**
+**Summary: 232 done, 1 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -128,6 +128,8 @@ after D123–D238 plus explicit overrides for the final items.
 | 6. Building elements | Ceilings | **Done** | D156: Model > *Ceiling...* makes an `IfcCovering` (CEILING) over a selected slab or a closed loop of walls, or a drawn outline; underside at level + offset (default 2.7 m), thickness default 20 cm, `KIMBIM_Ceiling`, one undo step. |
 | 6. Building elements | Handrails fixed to walls | **Done** | D233: Model > *Handrail on wall...*: a round IfcRailing HANDRAIL on the chosen face of each selected wall |
 | 6. Building elements | MEP runs (ducts, pipes, cable trays) | **Done** | D231: Model > *MEP*: duct, pipe and cable-tray runs; D234: elbow fittings at the bends and a named distribution system per run (coordination level: no sizing) |
+| 6. Building elements | MEP terminals and equipment (diffusers, AHU, fixtures, drains, boards, sockets, lights) | **Done** | D242: a 24-kind catalogue with ports and design values; Engineering > MEP > *Place terminal or equipment* |
+| 6. Building elements | Connected MEP systems (ports, tees, risers, sloped drains) | **Done** | D242: ports on every MEP element, runs connect and tee into segments, 3D segments, system kinds, network walk and checks; ports inferred for files from other tools |
 | 6. Building elements | Lintels, sills and reveals | **Done** | D232: *Lintels*; D234: *Sills* and *Reveals* on each selected opening |
 | 6. Building elements | Beam systems (joists, rafters) | **Done** | D232: Model > *Beam system...*: a beam type at a spacing and direction across two clicked corners, one undo step |
 | 6. Building elements | Shafts through several levels | **Done** | D231: Model > *Shaft...*: two corners, then up to which level; the rectangle is cut through every slab between, one undo step |
@@ -246,6 +248,10 @@ after D123–D238 plus explicit overrides for the final items.
 | 19. Analysis and checking | Model checks (duplicates, overlaps, rooms without a number) | **Done** | Duplicates, rooms, zero-length walls, not on a level, hostless openings (D81) |
 | 19. Analysis and checking | Energy evaluation, daylight | **Done** | D222: `energy.energy_report` gives a steady-state heating/lighting estimate and average daylight factor per level from the envelope and rooms, with `energy_settings` U-values/use figures; Model > *Energy and daylight...* shows the table, total and inputs. Early-stage comparison, not a compliance calculation. |
 | 19. Analysis and checking | Structural analytical model | **Done** | D224: `structural.create_analysis_model` derives an `IfcStructuralAnalysisModel` (LOADING_3D) with curve members from columns/beams and surface members from slabs/roofs, tagged with their source; re-derive replaces in place and removal leaves the physical model. Geometry-only idealisation, no loads or results. |
+| 19. Analysis and checking | Structural analysis and member checks | **Done** | D247: loads (self-weight, use, snow), supports, a 3D frame solve, EN 1993/1995-style utilisation and deflection checks, results in IFC and as colours; design aid |
+| 19. Analysis and checking | HVAC airflow and duct sizing | **Done** | D243: room airflows (EN 16798-1), equal-friction duct sizing with velocity limits, pressure drop and fan duty |
+| 19. Analysis and checking | Water supply and drainage sizing | **Done** | D244/D245: peak flows and pipe sizes with fixture pressure; sanitary/storm flows, Manning pipe and stack sizes, slope checks |
+| 19. Analysis and checking | Electrical circuits and panel schedules | **Done** | D246: circuits from boards, breaker and cable sizing, voltage drop, phase balance, main breaker |
 | 20. Automation and customisation | Python console with the model API | **Done** | D82: Console panel, `edit()` as one undo step, Stop; [15](15-scripting.md) |
 | 20. Automation and customisation | Visual programming | **Done** | D223: linear visual scripts in the `visual_scripts` project setting; `run_pipeline` runs whitelisted ops (massing, room, push/pull, move_vertices) as one undo step with `"$n"` wiring, and Model > *Visual scripts...* lists/edits/runs/deletes them. A linear program rather than a wired node graph. |
 | 20. Automation and customisation | Plugins / add-ons | **Done** | D212: `.py` add-ons in the app's `plugins` folder run at startup and on *Reload*; they may define `register(api)` with the `kimbim.app_bridge` module; Help > *Plugins...* lists loaded/failed files (errors on hover), reloads them and opens the folder |

@@ -1,7 +1,17 @@
 # Engineering disciplines: structure, HVAC, water, drainage, electrical (design)
 
-Status: design, 2026-11-13. Decisions D242–D248 (agent calls under D92: Archicad/Revit-style
-default, behaviour configurable, owner not asked).
+Status: **built** 2026-11-13 on branch `engineering` (decisions D242–D248; agent calls under D92:
+Archicad/Revit-style default, behaviour configurable, owner not asked). Where the build differs from
+this design, the decision rows are the record; in short:
+
+* Water supply peak flow uses DIN 1988-300's published formula over EN 806-3 design flows (EN 806-3
+  gives its curve only as a chart); the Hunter alternative was dropped rather than ship unverified
+  tables. Drainage has only the EN 12056-2 method for the same reason.
+* Beams are not subdivided: slab loads are partial uniform loads on joint-to-joint elements (560
+  members analyse in 3.8 s). Pinned supports restrain spin about their members' axes only.
+* Files from other tools are handled: tessellated members, walls, slabs and pipes are estimated from
+  their meshes (with warnings), missing ports are inferred, unsupported parts and mechanisms are
+  left out per connected part with a warning.
 
 ## Intent
 
