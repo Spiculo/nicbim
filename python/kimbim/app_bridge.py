@@ -1734,6 +1734,8 @@ _EXPORTS = {
     ),
     "curved_walls": ("create_curved_wall",),
     "sun": ("sun_state", "sun_frames"),
+    "walkthrough": ("walkthroughs", "save_walkthrough", "delete_walkthrough", "walkthrough_frames",
+                    "encode_walkthrough_video", "ffmpeg_state"),  # D249
     "configure": (
         "flip_walls",
         "inject",

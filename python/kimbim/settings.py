@@ -97,6 +97,7 @@ DEFAULTS = {
                         "glazing_transmittance": 0.70, "air_changes": 0.50,
                         "heating_degree_days": 2200.0, "lighting_power_density": 8.0,
                         "occupancy_hours": 2500.0},  # D222: early-stage energy/daylight inputs
+    "walkthroughs": {},  # D249: camera paths by name {cameras: [{eye, target, fov}], seconds, fps, smooth, closed, size}
     "visual_scripts": {},  # D223: linear visual scripts by name {steps: [{op, args}]}
     "mep_settings": {}, "hvac_settings": {}, "plumbing_settings": {},  # D242-D247: engineering overrides
     "drainage_settings": {}, "electrical_settings": {}, "structure_settings": {},  # (engsettings.get merges)
@@ -347,6 +348,10 @@ def _error(key: str, value) -> str | None:
                     return f"the visual script {name!r} has a step without an op"
                 if step.get("args") is not None and not isinstance(step.get("args"), dict):
                     return f"the visual script {name!r} has a step whose args is not a table"
+    if key == "walkthroughs":  # D249
+        from . import walkthrough
+
+        return walkthrough.settings_error(value)
     if key == "sun":
         from . import sun
 
