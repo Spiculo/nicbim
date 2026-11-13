@@ -341,3 +341,69 @@ def test_measure_points(s):
     assert ok(s, "measure.points", points=[[0, 0, 0], ["300cm", 0, "4m"]])["distance"] == 5
     assert run(s, "measure.points", points=[[0, 0]])["error"]["code"] == "bad_input"
     assert run(s, "measure.points", points=[[0, 0], [1, 1]], closed=True)["error"]["code"] == "bad_input"
+
+
+# ---------------------------------------------------------------- D250: the rest of doc 18 §6
+
+def test_views_save_keeps_a_section_box(s):
+    ok(s, "views.save", name="Boxed", plan=False, section_box={"min": [0, 0, 0], "max": [4, 3, 2.5]})
+    planes = next(v for v in ok(s, "views.list")["views"] if v["name"] == "Boxed")["data"]["planes"]
+    assert [p["name"] for p in planes] == [f"Section box: {a} {e}" for a in "XYZ" for e in ("min", "max")]
+    x_max = planes[1]
+    assert x_max["point"] == [4, 0, 0] and x_max["normal"] == [-1, 0, 0] and x_max["kind"] == "vertical"
+    assert planes[4]["normal"] == [0, 0, 1] and planes[5]["point"] == [0, 0, 2.5]
+    bad = run(s, "views.save", name="Flat", section_box={"min": [0, 0, 0], "max": [4, 0, 2]})
+    assert bad["error"]["code"] == "bad_input"
+
+
+def test_live_only_view_tools_need_the_app(s):
+    for name, args in (("view.style", {"white_model": True}), ("view.camera", {"eye": [0, -10, 2], "target": [0, 0, 1]}),
+                       ("view.trace", {"mode": "below"}), ("view.section_box", {"off": True})):
+        assert run(s, name, **args)["error"]["code"] == "needs_app", name
+    assert run(s, "view.style")["error"]["code"] == "bad_input"
+    assert run(s, "view.section_box", off=True, box={"min": [0, 0, 0], "max": [1, 1, 1]})["error"]["code"] == "bad_input"
+    assert run(s, "view.camera", eye=[1, 1, 1], target=[1, 1, 1])["error"]["code"] == "bad_input"
+
+
+def _a_wall_face(s):
+    import math
+
+    level = next(lv for lv in ok(s, "levels.list")["levels"] if lv["name"] == "Level 1")
+    walls = json.loads(B.snap_data(level["guid"]))["walls"]
+    w = max(walls, key=lambda w: math.hypot(w["x2"] - w["x1"], w["y2"] - w["y1"]))
+    length = math.hypot(w["x2"] - w["x1"], w["y2"] - w["y1"])
+    along = ((w["x2"] - w["x1"]) / length, (w["y2"] - w["y1"]) / length)
+    left = (-along[1], along[0])
+    off = w["centre"] + w["thickness"] / 2
+    mid = ((w["x1"] + w["x2"]) / 2 + left[0] * off, (w["y1"] + w["y2"]) / 2 + left[1] * off)
+    return level, w, along, left, mid
+
+
+def test_place_fitted_to_a_wall(s):
+    import math
+
+    level, wall, along, left, mid = _a_wall_face(s)
+    obj = next(o for o in ok(s, "objects.library")["objects"] if o["category"] and o["width_m"] and o["depth_m"])
+    at = [mid[0] + left[0] * 0.3, mid[1] + left[1] * 0.3]  # 30 cm in front of the face
+    r = ok(s, "objects.place", object=obj["id"], level=level["guid"], at=at, fit_to_walls=True)
+    fit = r["fitted"]
+    assert fit and fit["wall"] == wall["guid"]
+    width, depth = obj["width_m"], obj["depth_m"]
+    ux, uy = (-along[0], -along[1]), (-left[0], -left[1])  # the back towards the wall
+    expect = [mid[0] - ux[0] * width / 2 - uy[0] * depth, mid[1] - ux[1] * width / 2 - uy[1] * depth]
+    assert fit["origin_m"] == pytest.approx(expect, abs=1e-6)
+    assert math.radians(fit["angle_deg"]) == pytest.approx(math.atan2(ux[1], ux[0]), abs=1e-9)
+    far = ok(s, "objects.place", object=obj["id"], level=level["guid"], at=[mid[0] + left[0] * 5, mid[1] + left[1] * 5],
+             fit_to_walls=True)
+    assert far["fitted"] is None  # nothing in reach: placed where asked
+
+
+def test_place_a_picture_in_3d(s, tmp_path):
+    level = ok(s, "levels.list")["levels"][0]
+    picture = _png(tmp_path / "person.png")  # 4 x 2 pixels
+    r = ok(s, "objects.place_picture", path=str(picture), level=level["guid"], at=[1, 2], width=1.2, angle=90,
+           elevation=0.1)
+    e = B._model.by_guid(r["guids"][0])
+    assert e.is_a("IfcBuildingElementProxy") and e.Name.startswith("Picture: person")
+    assert run(s, "objects.place_picture", path=str(tmp_path / "nope.txt"), level=level["guid"], at=[0, 0],
+               width=1)["error"]["code"] == "bridge_error"

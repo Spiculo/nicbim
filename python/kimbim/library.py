@@ -810,6 +810,44 @@ def _scale() -> float:
     return ifcopenshell.util.unit.calculate_unit_scale(B._model)
 
 
+def fit_to_wall(storey_guid: str, x: float, y: float, width: float, depth: float) -> dict | None:
+    """D97/D250: the app's *Fit to walls* (MainWindow::fitObjectToWall) for a point on a level: the
+    nearest straight wall face that (x, y) is in front of, within max(0.6 m, depth), gives the object's
+    origin (left front corner) and angle in degrees, its back against the face and its middle at the
+    point along the wall. None when no face is in reach."""
+    from . import authoring as A
+
+    walls = json.loads(A.snap_data(storey_guid)).get("walls", [])
+    reach = max(0.6, float(depth))
+    best, best_distance = None, reach
+    for w in walls:
+        if w.get("arc"):
+            continue  # a curved wall's face is no line to stand against
+        ax, ay, bx, by = w["x1"], w["y1"], w["x2"], w["y2"]
+        length = math.hypot(bx - ax, by - ay)
+        if length < 1e-9:
+            continue
+        along = ((bx - ax) / length, (by - ay) / length)
+        left = (-along[1], along[0])
+        for side in (1.0, -1.0):  # the face on the axis' left, then on its right
+            out = (left[0] * side, left[1] * side)  # away from the wall body
+            offset = w.get("centre", 0.0) + side * w.get("thickness", 0.0) / 2
+            face = (ax + left[0] * offset, ay + left[1] * offset)
+            vx, vy = x - face[0], y - face[1]
+            t = vx * along[0] + vy * along[1]
+            dist = vx * out[0] + vy * out[1]
+            if t < 0 or t > length or dist < -0.02 or dist > best_distance:
+                continue
+            best_distance = dist
+            uy = (-out[0], -out[1])  # the back faces the wall
+            ux = (uy[1], -uy[0])
+            on_face = (face[0] + along[0] * t, face[1] + along[1] * t)
+            origin = (on_face[0] - ux[0] * width / 2 - uy[0] * depth, on_face[1] - ux[1] * width / 2 - uy[1] * depth)
+            best = {"origin": [origin[0], origin[1]], "angle": math.degrees(math.atan2(ux[1], ux[0])),
+                    "wall": w["guid"], "distance": dist}
+    return best
+
+
 def place_object(storey_guid: str, key: str, params_json: str, x, y, angle=0.0, gravity="", version="") -> str:
     """Place a library object on a level: its origin (left front corner) at (x, y) metres, turned
     `angle` radians. The type with these parameters is reused, or made. One undo step. `gravity`

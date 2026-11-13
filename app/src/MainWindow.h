@@ -277,6 +277,7 @@ public:
     void sunAnimationDialog(); // D198: render frames as the sun moves over a time range
     void walkthroughDialog(); // D249: camera path through the model, previewed and rendered to a video (Walkthrough.cpp)
     void showWalkthroughCamera(const QJsonObject& camera); // {eye, target, up, fov} in metres
+    void setSectionBox(const Bnd_Box& bounds); // D217/D250: six cut planes around `bounds`; void removes the box
     bool pickUpSettings(); // D97: Archicad's eyedropper, from the one selected element
     bool injectSettings(); // and syringe, into the selection
     // D98: Archicad's Grid System on the active level (one undo step).

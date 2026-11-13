@@ -7,7 +7,7 @@ add for full *user -> agent* parity, and how sessions should be stored. The day-
 
 ## 1. What the agent has today
 
-252 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
+257 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
 over the `kimbim` CLI and MCP. Every write is one undo step; every change goes through a task and (by default) a
 reviewable design option. `dry_run` reports without changing. The count is the exposed set (`_owner_save` is
 internal): 159 registered, 158 listed by `kimbim help --markdown` and `list_tools`.
@@ -249,7 +249,7 @@ around them.
 
 ### Wired today
 
-- One catalogue (`kimbim.agent.catalogue`, **252 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
+- One catalogue (`kimbim.agent.catalogue`, **257 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
 - The **Assistant is the primary consumer**: *View › Panels › Assistant* gets the whole catalogue with no setup.
 - Two execution modes: **live** (the app hosts the session; each write is an undo step) and **offline** (a background
   worker keeps the project open), plus the `kimbim group verb` CLI for scripts and batch work.
@@ -267,17 +267,18 @@ The Assistant needs none of this. These are the external-agent paths and what is
 | MCP clients | `kimbim setup` writes Claude Desktop, Claude Code and opencode | Verified configs for other MCP clients (Cursor, VS Code, Windsurf, Zed, Continue…); they can start `kimbim mcp` by hand, but setup does not write their files |
 | Transport | stdio only (`kimbim mcp`) | HTTP/SSE or streamable HTTP for a remote agent, and authentication for it (local stdio needs none) |
 | Config writer | Merges JSON, keeps other servers and settings; refuses a commented `opencode.jsonc` and prints a paste-ready snippet | In-place JSONC editing |
-| MCP surface | 252 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
+| MCP surface | 257 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
 
 ### Tool surface still to integrate
 
-After D129, D130, D239 and D240 these operations still have no tool:
+After D129, D130, D239, D240 and D250 only the operations **gated by design** have no tool: types write,
+renovation filters, some visibility/override switches and office-library saves stay with the owner.
 
-1. **Trace reference** (a view aid of the app).
-2. **Fit to walls** when placing objects: the app computes it from the cursor position.
-3. **The section box** in a saved view, and view modes set outside a saved view.
-4. **Pictures in 3D**.
-5. **Gated by design**: types write, renovation filters, some visibility/override switches, office-library saves.
+D250 closed the rest: **trace reference** (`view.trace` below/above/off), **fit to walls** (`objects.place` with
+`fit_to_walls`, the app's `fitObjectToWall` in Python as `library.fit_to_wall`), **the section box** (`view.section_box`
+around elements or a box, and `views.save` with `section_box`), **view modes outside a saved view** (`view.style`:
+lines only, white model, sketch, x-ray, shadows, perspective; `view.camera`) and **pictures in 3D**
+(`objects.place_picture`). D249 added the walkthrough tools (`walkthrough.*`).
 
 The view tools (`views.apply`, `view.*`, `views.save` with `capture`) need the app running (live mode): they
 answer `needs_app` offline. They change only what the window shows, after the call (after the reload when the

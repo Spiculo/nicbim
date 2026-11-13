@@ -58,10 +58,15 @@ def versions(session, object):
     "version": {"type": "string", "description": "A saved version's id (objects.versions); parameters are then ignored."},
     "parameters": {"type": "object", "description": "{parameter: value}; lengths accept units (\"45cm\")."},
     "gravity": {"type": "boolean", "description": "Stand it on the top of the slab under it, if any (default "
-                                                  "false: on the level)."}}},
+                                                  "false: on the level)."},
+    "fit_to_walls": {"type": "boolean", "description": "The app's Fit to walls: `at` is a point in front of a wall "
+                                                       "face (within the object's depth, at least 0.6 m); the object "
+                                                       "turns its back to that face and stands against it, centred at "
+                                                       "the point, and `angle` is ignored. With no face in reach it is "
+                                                       "placed at `at` as given (default false)."}}},
     writes=True)
-def place(session, object, level, at, angle=0, version="", parameters=None, gravity=False):
-    """Place a library object on a level, optionally standing on the slab under it."""
+def place(session, object, level, at, angle=0, version="", parameters=None, gravity=False, fit_to_walls=False):
+    """Place a library object on a level, optionally standing on the slab under it or fitted against a wall."""
     obj = _definition(object)
     storey = level_guid(level)
     x, y = point(session, at, "at")
@@ -69,9 +74,51 @@ def place(session, object, level, at, angle=0, version="", parameters=None, grav
         turn = math.radians(units.parse_angle(angle))
     except ValueError:
         raise AgentError("bad_input", hint=messages.text("hint_bad_angle", value=angle)) from None
-    r = bridge(Lib.place_object, storey, object, json.dumps(_values(session, obj, parameters)), x, y, turn,
-               "1" if gravity else "", version)
-    return {"guids": [r["guid"]], "type": r["type"]}
+    values = _values(session, obj, parameters)
+    fit = None
+    if fit_to_walls:
+        width, depth = _size(object, values)
+        fit = Lib.fit_to_wall(storey, x, y, width, depth)
+        if fit is not None:
+            (x, y), turn = fit["origin"], math.radians(fit["angle"])
+    r = bridge(Lib.place_object, storey, object, json.dumps(values), x, y, turn, "1" if gravity else "", version)
+    out = {"guids": [r["guid"]], "type": r["type"]}
+    if fit_to_walls:
+        out["fitted"] = None if fit is None else {"wall": fit["wall"], "origin_m": [round(v, 6) for v in fit["origin"]],
+                                                  "angle_deg": round(fit["angle"], 6)}
+    return out
+
+
+def _size(key: str, values: dict) -> tuple[float, float]:
+    """The object's plan width and depth in metres with these parameter values (LibraryPanel::currentInfo)."""
+    info = next((o for o in bridge(Lib.library_objects)["objects"] if o["id"] == key), {})
+    width = float(values.get("width", info.get("width") or 1.0))
+    depth = float(values.get("depth", width if "width" in values else info.get("depth") or width))
+    return width, depth
+
+
+@tool("objects.place_picture", {"required": ["path", "level", "at", "width"], "properties": {
+    "path": {"type": "string", "description": "A PNG or JPEG file; it is kept with the project."},
+    "level": {"type": "string", "description": "Level name or GlobalId."},
+    "at": {"type": "array", "items": {"type": ["number", "string"]},
+           "description": "[x, y] of the picture's bottom middle."},
+    "width": {"type": ["number", "string"], "description": "Width; the height follows the picture's proportions."},
+    "angle": {"type": ["number", "string"], "description": "Which way it faces: 0 is seen from the south (-Y), "
+                                                           "degrees counter-clockwise."},
+    "elevation": {"type": ["number", "string"], "description": "Height of its bottom above the level (default 0)."}}},
+    writes=True)
+def place_picture(session, path, level, at, width, angle=0, elevation=0):
+    """Place a picture standing in the 3D model (Archicad's Picture object): a thin panel showing a PNG or JPEG,
+    e.g. a person, a tree or a backdrop."""
+    storey = level_guid(level)
+    x, y = point(session, at, "at")
+    (w, z) = lengths(session, width, elevation)
+    try:
+        turn = units.parse_angle(angle)
+    except ValueError:
+        raise AgentError("bad_input", hint=messages.text("hint_bad_angle", value=angle)) from None
+    r = bridge("place_picture_3d", storey, path, w, x, y, turn, z)
+    return {"guids": [r["guid"]]}
 
 
 @tool("objects.set_parameters", {"required": ["elements", "parameters"], "properties": {

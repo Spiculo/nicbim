@@ -1298,52 +1298,18 @@ void MainWindow::buildMenus()
     m_sectionBox->setCheckable(true);
     m_sectionBox->setShortcut(Qt::Key_B);
     connect(m_sectionBox, &QAction::toggled, this, [this](bool on) {
-        CutSettings& settings = m_cuts[m_viewport];
-        for (int i = int(settings.planes.size()) - 1; i >= 0; --i)
-            if (isSectionBoxPlane(settings.planes[i]))
-                settings.planes.removeAt(i);
-        if (settings.selectedPlane >= settings.planes.size())
-            settings.selectedPlane = -1;
-        if (on) { // D217: the box is six cut planes, each with the standard drag handle
-            Bnd_Box box = m_viewport->boundsOf(m_viewport->selectedGuids());
-            if (box.IsVoid()) {
-                m_status->showMessage(tr("Select something first: the section box is drawn around it"));
-                const QSignalBlocker block(m_sectionBox);
-                m_sectionBox->setChecked(false);
-            } else {
-                box.Enlarge(0.1);
-                double x0, y0, z0, x1, y1, z1;
-                box.Get(x0, y0, z0, x1, y1, z1);
-                auto add = [&](const QString& name, const gp_Pnt& point, const gp_Dir& normal,
-                               const gp_Dir& direction, CutPlane::Kind kind) {
-                    CutPlane plane;
-                    plane.name = name.toStdString();
-                    plane.point = point;
-                    plane.normal = normal;
-                    plane.direction = direction;
-                    plane.kind = kind;
-                    settings.planes.append(plane);
-                };
-                add(QStringLiteral("Section box: ") + tr("X min"), gp_Pnt(x0, 0, 0), gp_Dir(1, 0, 0),
-                    gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
-                add(QStringLiteral("Section box: ") + tr("X max"), gp_Pnt(x1, 0, 0), gp_Dir(-1, 0, 0),
-                    gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
-                add(QStringLiteral("Section box: ") + tr("Y min"), gp_Pnt(0, y0, 0), gp_Dir(0, 1, 0),
-                    gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
-                add(QStringLiteral("Section box: ") + tr("Y max"), gp_Pnt(0, y1, 0), gp_Dir(0, -1, 0),
-                    gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
-                add(QStringLiteral("Section box: ") + tr("Z min"), gp_Pnt(0, 0, z0), gp_Dir(0, 0, 1),
-                    gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
-                add(QStringLiteral("Section box: ") + tr("Z max"), gp_Pnt(0, 0, z1), gp_Dir(0, 0, -1),
-                    gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
-                settings.selectedPlane = int(settings.planes.size()) - 1; // the top face, its handle shown
-                m_status->showMessage(tr("Section box: drag the selected face's handle; the other faces are in the Cut planes panel"));
-            }
+        if (!on) {
+            setSectionBox(Bnd_Box());
+            return;
         }
-        settings.box = false;
-        settings.bounds = Bnd_Box();
-        applyCutsTo(m_viewport, settings);
-        pushCutPlanesToPanel();
+        Bnd_Box box = m_viewport->boundsOf(m_viewport->selectedGuids());
+        if (box.IsVoid()) {
+            m_status->showMessage(tr("Select something first: the section box is drawn around it"));
+            setSectionBox(Bnd_Box());
+            return;
+        }
+        box.Enlarge(0.1);
+        setSectionBox(box);
     });
     // D134: crop the active view to a rectangle (a plan's crop region).
     QAction* cropRegion = view->addAction(tr("Crop &region..."));
@@ -11415,8 +11381,88 @@ void MainWindow::applyViewCommands(const QJsonArray& commands)
                 m_viewport->fitAll();
             else
                 m_viewport->fitTo(guids);
+        } else if (action == QLatin1String("style")) { // D250: the View menu's modes, through their actions
+            static const std::pair<const char*, const char*> modes[] = {{"lines_only", "actionLinesOnly"},
+                {"white_model", "actionWhiteModel"}, {"sketch", "actionSketchStyle"}, {"xray", "actionXray"},
+                {"shadows", "actionShadows"}};
+            for (const auto& [key, name] : modes)
+                if (command.contains(QLatin1String(key)))
+                    if (auto* a = findChild<QAction*>(QLatin1String(name)))
+                        a->setChecked(command.value(QLatin1String(key)).toBool());
+            if (command.contains(QLatin1String("perspective")) && m_viewport && !m_viewport->isPlanView()
+                && m_viewport->isPerspective() != command.value(QLatin1String("perspective")).toBool())
+                if (auto* a = findChild<QAction*>(QStringLiteral("actionPerspective")))
+                    a->trigger();
+        } else if (action == QLatin1String("camera")) {
+            showWalkthroughCamera(command);
+        } else if (action == QLatin1String("trace")) {
+            setTraceMode(command.value("mode").toString());
+        } else if (action == QLatin1String("section_box")) {
+            Bnd_Box box;
+            if (!guids.isEmpty()) {
+                box = m_viewport->boundsOf(guids);
+                if (!box.IsVoid())
+                    box.Enlarge(0.1);
+            } else if (!command.value("off").toBool()) {
+                const QJsonArray lo = command.value("min").toArray(), hi = command.value("max").toArray();
+                if (lo.size() == 3 && hi.size() == 3) {
+                    box.Update(lo[0].toDouble(), lo[1].toDouble(), lo[2].toDouble());
+                    box.Update(hi[0].toDouble(), hi[1].toDouble(), hi[2].toDouble());
+                }
+            }
+            setSectionBox(box);
         }
     }
+}
+
+void MainWindow::setSectionBox(const Bnd_Box& bounds)
+{
+    // D217: the box is six cut planes, each with the standard drag handle; a void box removes it.
+    // D250: also the agent's view.section_box.
+    if (!m_viewport)
+        return;
+    CutSettings& settings = m_cuts[m_viewport];
+    for (int i = int(settings.planes.size()) - 1; i >= 0; --i)
+        if (isSectionBoxPlane(settings.planes[i]))
+            settings.planes.removeAt(i);
+    if (settings.selectedPlane >= settings.planes.size())
+        settings.selectedPlane = -1;
+    if (!bounds.IsVoid()) {
+        double x0, y0, z0, x1, y1, z1;
+        bounds.Get(x0, y0, z0, x1, y1, z1);
+        auto add = [&](const QString& name, const gp_Pnt& point, const gp_Dir& normal,
+                       const gp_Dir& direction, CutPlane::Kind kind) {
+            CutPlane plane;
+            plane.name = name.toStdString();
+            plane.point = point;
+            plane.normal = normal;
+            plane.direction = direction;
+            plane.kind = kind;
+            settings.planes.append(plane);
+        };
+        add(QStringLiteral("Section box: ") + tr("X min"), gp_Pnt(x0, 0, 0), gp_Dir(1, 0, 0),
+            gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
+        add(QStringLiteral("Section box: ") + tr("X max"), gp_Pnt(x1, 0, 0), gp_Dir(-1, 0, 0),
+            gp_Dir(0, 1, 0), CutPlane::Kind::Vertical);
+        add(QStringLiteral("Section box: ") + tr("Y min"), gp_Pnt(0, y0, 0), gp_Dir(0, 1, 0),
+            gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
+        add(QStringLiteral("Section box: ") + tr("Y max"), gp_Pnt(0, y1, 0), gp_Dir(0, -1, 0),
+            gp_Dir(1, 0, 0), CutPlane::Kind::Vertical);
+        add(QStringLiteral("Section box: ") + tr("Z min"), gp_Pnt(0, 0, z0), gp_Dir(0, 0, 1),
+            gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
+        add(QStringLiteral("Section box: ") + tr("Z max"), gp_Pnt(0, 0, z1), gp_Dir(0, 0, -1),
+            gp_Dir(1, 0, 0), CutPlane::Kind::Horizontal);
+        settings.selectedPlane = int(settings.planes.size()) - 1; // the top face, its handle shown
+        m_status->showMessage(tr("Section box: drag the selected face's handle; the other faces are in the Cut planes panel"));
+    }
+    if (m_sectionBox) {
+        const QSignalBlocker block(m_sectionBox);
+        m_sectionBox->setChecked(!bounds.IsVoid());
+    }
+    settings.box = false;
+    settings.bounds = Bnd_Box();
+    applyCutsTo(m_viewport, settings);
+    pushCutPlanesToPanel();
 }
 
 void MainWindow::reviewProposal(const QString& task)

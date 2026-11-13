@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // D102 phase 2: the app hosts a live agent session; the CLI finds it, a task becomes a proposal, and the
 // Review / Accept path combines it into the base option.
+#include <QAction>
 #include <QApplication>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -28,6 +29,9 @@
 #include "AssistantPanel.h"
 #include "MainWindow.h"
 #include "ProposalBar.h"
+#include <Graphic3d_Camera.hxx>
+#include <V3d_View.hxx>
+#include <cmath>
 #include "ProposalDialog.h"
 #include "PythonEngine.h"
 #include "Viewport.h"
@@ -209,6 +213,31 @@ private slots:
         const QJsonObject shown = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("show-all")});
         QVERIFY2(shown.value("ok").toBool(), qPrintable(QJsonDocument(shown).toJson()));
         QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), all, 30000);
+
+        // D250: view modes, the camera, trace reference and the section box, all display only.
+        QAction* white = w.findChild<QAction*>(QStringLiteral("actionWhiteModel"));
+        QAction* box = w.findChild<QAction*>(QStringLiteral("actionSectionBox"));
+        QVERIFY(white && box && !white->isChecked() && !box->isChecked());
+        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("style"), QStringLiteral("--white-model")})
+                    .value("ok").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(white->isChecked() && w.viewport()->whiteModel(), 30000);
+        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("camera"), QStringLiteral("--eye"),
+                                   QStringLiteral("[3,-12,1.7]"), QStringLiteral("--target"), QStringLiteral("[3,0,1.5]")})
+                    .value("ok").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(std::abs(w.viewport()->view()->Camera()->Eye().Y() + 12.0) < 1e-6, 30000);
+        QVERIFY(w.viewport()->isPerspective());
+        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--box"),
+                                   QStringLiteral("{\"min\":[0,0,0],\"max\":[5,4,3]}")})
+                    .value("ok").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(box->isChecked(), 30000);
+        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--off")})
+                    .value("ok").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(!box->isChecked(), 30000);
+        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("trace"), QStringLiteral("--mode"),
+                                   QStringLiteral("below")})
+                    .value("ok").toBool());
+        QTRY_COMPARE_WITH_TIMEOUT(w.traceMode(), QStringLiteral("below"), 30000);
+        QVERIFY(!kimbim::PythonEngine::instance().callJson("state", {}).object().value("dirty").toBool());
     }
 
     void proposalDialogShowsTheDiffAndResolvesConflicts()

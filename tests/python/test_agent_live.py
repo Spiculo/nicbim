@@ -116,6 +116,21 @@ def test_live_view_commands(app_house):
     missing = call_live(app_house, "views.apply", {"name": "Nowhere"})
     assert missing["envelope"]["error"]["code"] == "not_found" and "view" not in missing["ui"]
 
+
+def test_live_view_modes_camera_trace_and_section_box(app_house):
+    """D250: view.style, view.camera, view.trace and view.section_box become ui.view commands for the window."""
+    style = call_live(app_house, "view.style", {"white_model": True, "perspective": False})
+    assert style["ui"]["view"] == [{"action": "style", "white_model": True, "perspective": False}]
+    camera = call_live(app_house, "view.camera", {"eye": [0, -10, 1.7], "target": [0, 0, 1.5], "fov": 50})
+    assert camera["ui"]["view"] == [{"action": "camera", "eye": [0, -10, 1.7], "target": [0, 0, 1.5],
+                                     "up": [0.0, 0.0, 1.0], "fov": 50.0}]
+    assert call_live(app_house, "view.trace", {"mode": "off"})["ui"]["view"] == [{"action": "trace", "mode": ""}]
+    boxed = call_live(app_house, "view.section_box", {"box": {"min": [0, 0, 0], "max": [5, 4, 3]}})
+    assert boxed["ui"]["view"] == [{"action": "section_box", "min": [0, 0, 0], "max": [5, 4, 3]}]
+    walls = call_live(app_house, "view.section_box", {"elements": {"kind": "wall"}})
+    assert walls["ui"]["view"][0]["action"] == "section_box" and walls["ui"]["view"][0]["elements"]
+    assert call_live(app_house, "view.section_box", {"off": True})["ui"]["view"] == [{"action": "section_box", "off": True}]
+
 def test_live_task_and_proposal_accept(app_house):
     started = call_live(app_house, "task.start", {"title": "Rename walls"})
     assert started["envelope"]["ok"], started

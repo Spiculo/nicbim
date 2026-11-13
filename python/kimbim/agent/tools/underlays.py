@@ -145,6 +145,40 @@ def _guids(session, elements) -> list[str]:
     return guids
 
 
+_BOX = {"type": "object", "required": ["min", "max"], "additionalProperties": False, "properties": {
+    "min": {"type": "array", "items": {"type": ["number", "string"]}, "description": "[x, y, z], project units."},
+    "max": {"type": "array", "items": {"type": ["number", "string"]}, "description": "[x, y, z], project units."}},
+    "description": "A section box (the app's View > Section box, D217): six cut planes around min..max."}
+
+# D217's six faces, as MainWindow's Section box makes them: name, axis, which end, the face's direction.
+_BOX_FACES = (("X min", 0, 0, [0.0, 1.0, 0.0]), ("X max", 0, 1, [0.0, 1.0, 0.0]),
+              ("Y min", 1, 0, [1.0, 0.0, 0.0]), ("Y max", 1, 1, [1.0, 0.0, 0.0]),
+              ("Z min", 2, 0, [1.0, 0.0, 0.0]), ("Z max", 2, 1, [1.0, 0.0, 0.0]))
+
+
+def _box(session, box) -> tuple[list[float], list[float]]:
+    low, high = lengths(session, *box["min"]), lengths(session, *box["max"])
+    if len(low) != 3 or len(high) != 3:
+        raise AgentError("bad_input", hint="section_box min and max are [x, y, z]")
+    if any(h <= lo for lo, h in zip(low, high)):
+        raise AgentError("bad_input", hint="section_box max must be above min on every axis")
+    return low, high
+
+
+def section_box_planes(low, high) -> list[dict]:
+    """The six cut planes (in the app's cutPlaneToJson form) of a section box, normals pointing inwards."""
+    out = []
+    for name, axis, end, direction in _BOX_FACES:
+        point = [0.0, 0.0, 0.0]
+        point[axis] = (high if end else low)[axis]
+        normal = [0.0, 0.0, 0.0]
+        normal[axis] = -1.0 if end else 1.0
+        out.append({"name": f"Section box: {name}", "enabled": True, "visible": True,
+                    "kind": "horizontal" if axis == 2 else "vertical", "point": point, "normal": normal,
+                    "direction": direction, "angle": 0.0})
+    return out
+
+
 @tool("views.list", {})
 def views_list(session):
     """List the project's saved views by name, with what each stores (level, plan or 3D, cuts, layers, style)."""
@@ -159,11 +193,12 @@ def views_list(session):
     "plan": {"type": "boolean", "description": "A plan view (true) or the 3D view (false)."},
     "cut": {"type": "number", "description": "Plan cut height above the level, in project units; omit for no cut."},
     "cut_planes": {"type": "array", "items": _PLANE, "description": "3D cut planes (Archicad's 3D Cutaway)."},
+    "section_box": _BOX,
     "hidden_layers": {"type": "array", "items": {"type": "string"}},
     "lines_only": {"type": "boolean"}, "white_model": {"type": "boolean"}, "shadows": {"type": "boolean"},
     "purpose": {"type": "string", "description": "A purpose (graphics.state lists them)."}}}, writes=True)
-def views_save(session, name, capture=False, level="", plan=None, cut=None, cut_planes=None, hidden_layers=None,
-               lines_only=None, white_model=None, shadows=None, purpose=""):
+def views_save(session, name, capture=False, level="", plan=None, cut=None, cut_planes=None, section_box=None,
+               hidden_layers=None, lines_only=None, white_model=None, shadows=None, purpose=""):
     """Save a named view: the level, plan or 3D, the plan cut, 3D cut planes, hidden layers and style."""
     if not name.strip():
         raise AgentError("bad_input", hint="a view needs a name")
@@ -182,6 +217,8 @@ def views_save(session, name, capture=False, level="", plan=None, cut=None, cut_
             raise AgentError("bad_input", hint=f"cut_planes[{i}]: point and normal must be [x, y, z], normal not zero")
         planes.append({"name": p.get("name") or f"Cut {i + 1}", "enabled": p.get("enabled", True), "visible": True,
                        "point": lengths(session, *p["point"]), **_plane_frame(p["normal"])})
+    if section_box is not None:
+        planes += section_box_planes(*_box(session, section_box))
     data["planes"] = planes
     for key, value in (("linesOnly", lines_only), ("whiteModel", white_model), ("shadows", shadows)):
         if value is not None:
@@ -238,6 +275,65 @@ def view_zoom(session, elements=None):
     """Zoom the app's view to these elements, or to the whole model when none are given. Needs the app."""
     guids = _guids(session, elements) if elements is not None else []
     _app_view(session, {"action": "fit", "elements": guids})
+    return {"elements": len(guids)}
+
+
+@tool("view.style", {"properties": {
+    "lines_only": {"type": "boolean"}, "white_model": {"type": "boolean"}, "sketch": {"type": "boolean"},
+    "xray": {"type": "boolean"}, "shadows": {"type": "boolean"},
+    "perspective": {"type": "boolean", "description": "3D views only (plans stay parallel)."}}})
+def view_style(session, lines_only=None, white_model=None, sketch=None, xray=None, shadows=None, perspective=None):
+    """Switch the app's view modes as the View menu does: lines only, white model, sketch style, x-ray, sun shadows
+    and perspective. Only the modes given change (display only). Needs the app."""
+    modes = {k: bool(v) for k, v in (("lines_only", lines_only), ("white_model", white_model), ("sketch", sketch),
+                                     ("xray", xray), ("shadows", shadows), ("perspective", perspective))
+             if v is not None}
+    if not modes:
+        raise AgentError("bad_input", hint="give at least one mode")
+    _app_view(session, {"action": "style", **modes})
+    return modes
+
+
+@tool("view.camera", {"required": ["eye", "target"], "properties": {
+    "eye": {"type": "array", "items": {"type": ["number", "string"]}, "description": "[x, y, z], project units."},
+    "target": {"type": "array", "items": {"type": ["number", "string"]}, "description": "[x, y, z] it looks at."},
+    "fov": {"type": "number", "minimum": 1, "maximum": 170, "description": "Degrees (default 60)."}}})
+def view_camera(session, eye, target, fov=60):
+    """Put the app's 3D view camera at `eye` looking at `target`, in perspective (display only). Needs the app."""
+    e, t = lengths(session, *eye), lengths(session, *target)
+    if len(e) != 3 or len(t) != 3 or e == t:
+        raise AgentError("bad_input", hint="eye and target are different [x, y, z] points")
+    _app_view(session, {"action": "camera", "eye": e, "target": t, "up": [0.0, 0.0, 1.0], "fov": float(fov)})
+    return {"eye_m": e, "target_m": t, "fov": float(fov)}
+
+
+@tool("view.trace", {"required": ["mode"], "properties": {
+    "mode": {"type": "string", "enum": ["off", "below", "above"]}}})
+def view_trace(session, mode):
+    """Trace reference in the app's plan view (Archicad's Trace & Reference): show the plan of the level below or
+    above faintly under the active one, or turn it off (display only). Needs the app."""
+    _app_view(session, {"action": "trace", "mode": "" if mode == "off" else mode})
+    return {"mode": mode}
+
+
+@tool("view.section_box", {"properties": {
+    "elements": {**SELECTOR, "description": "Draw the box around these elements (10 cm margin)."},
+    "box": {**_BOX, "description": "Or an explicit box."},
+    "off": {"type": "boolean", "description": "Remove the section box."}}})
+def view_section_box(session, elements=None, box=None, off=False):
+    """Cut the app's 3D view to a section box (D217: six cut planes with drag handles) around elements or an
+    explicit box, or remove it (display only; views.save keeps a box with `section_box`). Needs the app."""
+    if sum(x is not None and x is not False for x in (elements, box, off or None)) != 1:
+        raise AgentError("bad_input", hint="give one of elements, box or off")
+    if off:
+        _app_view(session, {"action": "section_box", "off": True})
+        return {"off": True}
+    if box is not None:
+        low, high = _box(session, box)
+        _app_view(session, {"action": "section_box", "min": low, "max": high})
+        return {"min_m": low, "max_m": high}
+    guids = _guids(session, elements)
+    _app_view(session, {"action": "section_box", "elements": guids})
     return {"elements": len(guids)}
 
 

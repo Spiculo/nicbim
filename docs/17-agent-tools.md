@@ -238,7 +238,8 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `objects_assign_version` | `kimbim objects assign-version` | Move placed library objects to a saved version. | yes |
 | `objects_check_draft` | `kimbim objects check-draft` | Check a parametric object definition without saving it: every error with the field it is in. |  |
 | `objects_library` | `kimbim objects library` | List the library objects (furniture, sanitary, kitchen...): id, name, category, IFC class, size (metres) and parameters with their kind, default and limits. |  |
-| `objects_place` | `kimbim objects place` | Place a library object on a level, optionally standing on the slab under it. | yes |
+| `objects_place` | `kimbim objects place` | Place a library object on a level, optionally standing on the slab under it or fitted against a wall. | yes |
+| `objects_place_picture` | `kimbim objects place-picture` | Place a picture standing in the 3D model (Archicad's Picture object): a thin panel showing a PNG or JPEG, e.g. | yes |
 | `objects_save_draft` | `kimbim objects save-draft` | Save a parametric object definition into the project's library; place it with objects.place. | yes |
 | `objects_set_parameters` | `kimbim objects set-parameters` | Change parameters of placed library objects. | yes |
 | `objects_update_from_library` | `kimbim objects update-from-library` | Regenerate placed objects from the library's current definition (all of them when no elements are given). | yes |
@@ -390,9 +391,13 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `underlays_list` | `kimbim underlays list` | List the project's underlays: id, file, level, placement and display settings. |  |
 | `underlays_remove` | `kimbim underlays remove` | Remove an underlay from the project (and its copied file once nothing uses it). | yes |
 | `underlays_update` | `kimbim underlays update` | Move an underlay or change how it is shown (opacity, tint, clip, 3D, visibility...). | yes |
+| `view_camera` | `kimbim view camera` | Put the app's 3D view camera at `eye` looking at `target`, in perspective (display only). |  |
 | `view_hide` | `kimbim view hide` | Hide elements in the app's view (display only: the model does not change). |  |
 | `view_isolate` | `kimbim view isolate` | Show only these elements in the app's view (display only). |  |
+| `view_section_box` | `kimbim view section-box` | Cut the app's 3D view to a section box (D217: six cut planes with drag handles) around elements or an explicit box, or remove it (display only; views.save keeps a box with `section_box`). |  |
 | `view_show_all` | `kimbim view show-all` | Show every element again in the app's view. |  |
+| `view_style` | `kimbim view style` | Switch the app's view modes as the View menu does: lines only, white model, sketch style, x-ray, sun shadows and perspective. |  |
+| `view_trace` | `kimbim view trace` | Trace reference in the app's plan view (Archicad's Trace & Reference): show the plan of the level below or above faintly under the active one, or turn it off (display only). |  |
 | `view_zoom` | `kimbim view zoom` | Zoom the app's view to these elements, or to the whole model when none are given. |  |
 | `views_apply` | `kimbim views apply` | Show a saved view in the app (its level, cuts, layers and style). | yes |
 | `views_delete` | `kimbim views delete` | Delete a saved view. | yes |
@@ -413,7 +418,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `worksheets_rename` | `kimbim worksheets rename` | Rename a worksheet and its drawing. | yes |
 <!-- tools:end -->
 
-The list is generated from the catalogue (252 exposed tools today). What is still missing on the agent side — in the
+The list is generated from the catalogue (257 exposed tools today). What is still missing on the agent side — in the
 tool surface, the client/transport setup and remote sessions — is listed in
 [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
 
