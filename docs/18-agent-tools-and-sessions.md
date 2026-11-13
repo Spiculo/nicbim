@@ -7,7 +7,7 @@ add for full *user -> agent* parity, and how sessions should be stored. The day-
 
 ## 1. What the agent has today
 
-223 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
+252 tools, all from one catalogue (`kimbim.agent.catalogue`), available first in the in-app **Assistant**, and also
 over the `kimbim` CLI and MCP. Every write is one undo step; every change goes through a task and (by default) a
 reviewable design option. `dry_run` reports without changing. The count is the exposed set (`_owner_save` is
 internal): 159 registered, 158 listed by `kimbim help --markdown` and `list_tools`.
@@ -249,7 +249,7 @@ around them.
 
 ### Wired today
 
-- One catalogue (`kimbim.agent.catalogue`, **223 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
+- One catalogue (`kimbim.agent.catalogue`, **252 exposed tools**) shared by the in-app Assistant, the CLI and MCP.
 - The **Assistant is the primary consumer**: *View › Panels › Assistant* gets the whole catalogue with no setup.
 - Two execution modes: **live** (the app hosts the session; each write is an undo step) and **offline** (a background
   worker keeps the project open), plus the `kimbim group verb` CLI for scripts and batch work.
@@ -267,7 +267,7 @@ The Assistant needs none of this. These are the external-agent paths and what is
 | MCP clients | `kimbim setup` writes Claude Desktop, Claude Code and opencode | Verified configs for other MCP clients (Cursor, VS Code, Windsurf, Zed, Continue…); they can start `kimbim mcp` by hand, but setup does not write their files |
 | Transport | stdio only (`kimbim mcp`) | HTTP/SSE or streamable HTTP for a remote agent, and authentication for it (local stdio needs none) |
 | Config writer | Merges JSON, keeps other servers and settings; refuses a commented `opencode.jsonc` and prints a paste-ready snippet | In-place JSONC editing |
-| MCP surface | 223 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
+| MCP surface | 252 tools and the `kimbim://project/info` resource | More resources or prompts (current selection, current view, task state) to save round trips |
 
 ### Tool surface still to integrate
 

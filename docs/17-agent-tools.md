@@ -398,6 +398,10 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `views_delete` | `kimbim views delete` | Delete a saved view. | yes |
 | `views_list` | `kimbim views list` | List the project's saved views by name, with what each stores (level, plan or 3D, cuts, layers, style). |  |
 | `views_save` | `kimbim views save` | Save a named view: the level, plan or 3D, the plan cut, 3D cut planes, hidden layers and style. | yes |
+| `walkthrough_delete` | `kimbim walkthrough delete` | Delete a saved walkthrough. | yes |
+| `walkthrough_list` | `kimbim walkthrough list` | List the project's walkthroughs (camera paths for a video): cameras in metres, duration, frame rate, size and frame count. |  |
+| `walkthrough_render` | `kimbim walkthrough render` | Render a saved walkthrough into a video: one picture per frame with the windowless renderer, joined by ffmpeg. |  |
+| `walkthrough_save` | `kimbim walkthrough save` | Add or replace a walkthrough: the camera moves along the cameras at an even speed for the duration. | yes |
 | `walls_configure` | `kimbim walls configure` | Change wall settings: reference line, slant, top link and offset, or a complex profile. | yes |
 | `walls_flip` | `kimbim walls flip` | Mirror layered walls' layers about their reference lines (inside becomes outside). | yes |
 | `walls_options` | `kimbim walls options` | List the choices the wall settings take: reference lines (and the project default), top links, wall profiles and the surface sides of walls and slabs. |  |
@@ -409,7 +413,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `worksheets_rename` | `kimbim worksheets rename` | Rename a worksheet and its drawing. | yes |
 <!-- tools:end -->
 
-The list is generated from the catalogue (248 exposed tools today). What is still missing on the agent side — in the
+The list is generated from the catalogue (252 exposed tools today). What is still missing on the agent side — in the
 tool surface, the client/transport setup and remote sessions — is listed in
 [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
 
