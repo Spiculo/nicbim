@@ -94,3 +94,13 @@ def test_a_drain_run_falls_at_its_slope():
     assert r["ok"], r
     ends = [M.segment_ends(B._model.by_guid(g)) for g in r["segments"]]
     assert ends[-1][1][2] == pytest.approx(-0.2 - 0.02 * 10)
+
+
+def test_the_model_check_reports_bad_slopes_and_small_pipes():
+    bathroom(slope=-0.02)
+    from kimbim import checks
+
+    out = checks.check_model(B._model, {"model_checks": ["mep_sizing"]})
+    messages = [i["message"] for i in out["issues"]]
+    assert any("wrong way" in m for m in messages)
+    assert any("calculation asks for" in m for m in messages)  # the 50 mm WC branch needs DN 90

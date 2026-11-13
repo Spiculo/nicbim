@@ -1451,6 +1451,16 @@ _EXPORTS = {
         "remove_mep_system",
         "set_design_values",
     ),
+    "hvac": ("size_air_system",),  # D243
+    "plumbing": ("size_water_system",),  # D244
+    "drainage": ("create_drain_run", "size_drainage_system"),  # D245
+    "electrical": (  # D246
+        "circuits",
+        "create_circuit",
+        "edit_circuit",
+        "panel_schedule",
+        "remove_circuit",
+    ),
     "engsettings": (  # D242-D247
         "engineering_settings",
         "reset_engineering_settings",

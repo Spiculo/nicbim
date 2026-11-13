@@ -996,6 +996,21 @@ def mep_systems() -> str:
     return B._dump({"ok": True, "systems": out})
 
 
+def delete_group(group) -> None:
+    """Inside an action: delete a system or circuit and its property sets (its members stay)."""
+    f = B._model
+    for rel in list(getattr(group, "IsGroupedBy", ()) or ()):
+        f.remove(rel)
+    for rel in list(getattr(group, "IsDefinedBy", ()) or ()):
+        if rel.is_a("IfcRelDefinesByProperties"):
+            pset = rel.RelatingPropertyDefinition
+            for prop in list(getattr(pset, "HasProperties", ()) or ()):
+                f.remove(prop)
+            f.remove(rel)
+            f.remove(pset)
+    f.remove(group)
+
+
 def remove_mep_system(system: str) -> str:
     """Delete a system (its elements stay)."""
     if B._model is None:
@@ -1005,17 +1020,7 @@ def remove_mep_system(system: str) -> str:
         return _fail(f"unknown system {system}")
 
     def action():
-        f = B._model
-        for rel in list(getattr(group, "IsGroupedBy", ()) or ()):
-            f.remove(rel)
-        for rel in list(getattr(group, "IsDefinedBy", ()) or ()):
-            if rel.is_a("IfcRelDefinesByProperties"):
-                pset = rel.RelatingPropertyDefinition
-                for prop in list(getattr(pset, "HasProperties", ()) or ()):
-                    f.remove(prop)
-                f.remove(rel)
-                f.remove(pset)
-        f.remove(group)
+        delete_group(group)
         return 1
 
     try:
@@ -1198,4 +1203,39 @@ def mep_issues(model) -> dict:
                 no_source.append(("warning", f"The system {s.Name or ''} has no source", members[:50]))
     finally:
         B._model = previous
-    return {"mep_open_ports": open_ports, "mep_no_system": no_system, "mep_no_source": no_source}
+    return {"mep_open_ports": open_ports, "mep_no_system": no_system, "mep_no_source": no_source,
+            "mep_sizing": _sizing_issues(model)}
+
+
+def _sizing_issues(model) -> list:
+    """Parts drawn smaller than the calculation proposes, and drainage slope problems (D243-D245)."""
+    from . import drainage, hvac, plumbing
+
+    out = []
+    previous = B._model
+    B._model = model
+    try:
+        for s in all_systems():
+            domain = SYSTEM_KINDS.get(system_kind(s), {}).get("domain")
+            sizer = {"air": hvac.size_air_system, "water": plumbing.size_water_system,
+                     "drainage": drainage.size_drainage_system}.get(domain)
+            if sizer is None or not system_members(s) or system_kind(s) == "vent":
+                continue
+            r = json.loads(sizer(s.GlobalId))
+            if not r.get("ok"):
+                continue
+            for row in r.get("segments", []):
+                e = model.by_guid(row["guid"])
+                w, h, _shape = segment_size(e)
+                want_w = row.get("width") or row.get("diameter") or 0
+                want_h = row.get("height") or row.get("diameter") or 0
+                if want_w and (w < want_w - 1e-4 or h < want_h - 1e-4):
+                    out.append(("warning", f"{e.Name or 'Segment'} in {s.Name} is {round(w * 1000)} mm, the "
+                                           f"calculation asks for {round(want_w * 1000)} mm", [e]))
+                status = row.get("status", "ok")
+                if domain == "drainage" and status not in ("ok", "no flow"):
+                    out.append(("error" if "wrong way" in status else "warning",
+                                f"{e.Name or 'Pipe'} in {s.Name}: {status}", [e]))
+    finally:
+        B._model = previous
+    return out

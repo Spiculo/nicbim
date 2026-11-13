@@ -39,7 +39,7 @@ from . import app_bridge as B
 
 CHECKS = ("schema", "ids", "clash", "model")
 MODEL_CHECKS = ("duplicates", "rooms", "zero_walls", "not_on_level", "no_host",
-                "mep_open_ports", "mep_no_system", "mep_no_source")  # D242: MEP network checks
+                "mep_open_ports", "mep_no_system", "mep_no_source", "mep_sizing")  # D242-D245: MEP checks
 CLASH_MODES = ("hard", "clearance")
 PRECOMMIT_MODES = ("warn", "block")
 PRECOMMIT_RECORDED_ISSUES = 200  # per check in checks.json: enough to list, small enough for every version
@@ -783,6 +783,7 @@ def check_model(model, options: dict) -> dict:
         ("mep_open_ports", "MEP parts with open ports", lambda: _mep(model, "mep_open_ports", mep_found)),
         ("mep_no_system", "MEP elements in no system", lambda: _mep(model, "mep_no_system", mep_found)),
         ("mep_no_source", "MEP systems without a source", lambda: _mep(model, "mep_no_source", mep_found)),
+        ("mep_sizing", "MEP parts undersized or badly sloped", lambda: _mep(model, "mep_sizing", mep_found)),
     ):
         if name not in which:
             continue
