@@ -987,6 +987,10 @@ void MainWindow::buildMenus()
     sunAnimation->setObjectName(QStringLiteral("actionSunAnimation"));
     sunAnimation->setToolTip(tr("Render the active view frame by frame as the sun moves over a time range"));
     connect(sunAnimation, &QAction::triggered, this, &MainWindow::sunAnimationDialog);
+    QAction* walkthrough = view->addAction(tr("&Walkthrough...")); // D249
+    walkthrough->setObjectName(QStringLiteral("actionWalkthrough"));
+    walkthrough->setToolTip(tr("Place cameras along a path through the model, preview it and render a video"));
+    connect(walkthrough, &QAction::triggered, this, &MainWindow::walkthroughDialog);
     QAction* trueWeights = view->addAction(tr("&True line weights"));
     trueWeights->setObjectName(QStringLiteral("actionTrueLineWeights"));
     trueWeights->setCheckable(true);

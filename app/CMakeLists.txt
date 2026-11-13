@@ -73,6 +73,7 @@ qt_add_library(kimbim_core STATIC
     src/ClassificationsDialog.cpp src/ClassificationsDialog.h src/Types.cpp
     src/QolTools.cpp src/QolTools.h
     src/Engineering.cpp
+    src/Walkthrough.cpp
     src/Units.cpp src/Units.h
     src/NodeGraph.cpp src/NodeGraph.h
 )

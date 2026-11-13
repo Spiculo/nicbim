@@ -3,9 +3,9 @@
 
 Every tool row in [14](14-tool-inventory.md), classified as **Done**, **Deferred** (future or partial)
 or **Blocked** (needs an owner-provided asset or hardware). The status is the row's inventory status
-after D123–D248 plus explicit overrides for the final items.
+after D123–D249 plus explicit overrides for the final items.
 
-**Summary: 232 done, 1 deferred, 3 blocked.**
+**Summary: 233 done, 0 deferred, 3 blocked.**
 
 ## Owner-provided blockers
 
@@ -17,7 +17,7 @@ after D123–D248 plus explicit overrides for the final items.
 
 ## Future scope (deferred, not blocked)
 
-- Deeper visualisation beyond the current ray/path-traced exports and sun-animation frames (D198): an offline render farm, camera-path animation and walkthrough video.
+- An offline render farm for long ray-traced videos (walkthrough video itself is done, D249).
 
 ## Every item
 
@@ -222,7 +222,7 @@ after D123–D248 plus explicit overrides for the final items.
 | 16. Visualisation | Photorealistic rendering | **Done** | D146 image export, D147 ray tracing, D149 path tracing. Offline CPU render farm is future. |
 | 16. Visualisation | AI visualiser (sketch to image) | **Done** | D225: `visualiser.render_sketch` sends a sketch and prompt to a configured OpenAI-compatible image endpoint (`KIMBIM_IMAGE_ENDPOINT` / `KIMBIM_IMAGE_API_KEY` / `KIMBIM_IMAGE_MODEL`) and saves the result; Model > *AI visualiser...* picks the sketch, prompt, output and size. The model itself is an external service, like the online catalogues (D216); without a key the command reports it. |
 | 16. Visualisation | Sun / shadow studies, animations | **Done** | D96: sun shadows for a place, date and time; D198: View > *Sun animation...* renders PNG frames as the sun moves over a time range, at the chosen size and folder |
-| 16. Visualisation | Walkthrough video | **Deferred** | Future scope: camera-path animation and video export are not built (sun animation frames are, D198). Needs nothing from the owner. |
+| 16. Visualisation | Walkthrough video | **Done** | D249: View > *Walkthrough...* (cameras from the 3D view, even-speed smooth or straight path, preview, MP4/MOV/WebM through ffmpeg) and agent `walkthrough.*`; `test_walkthrough.py`, `test_agent_walkthrough.py`, app `walkthroughDialogSavesCameras` |
 | 16. Visualisation | VR | **Blocked** | OpenXR SDK is available, but there is no runtime/headset in the environment ([20](20-vr-feasibility.md)). |
 | 17. Collaboration and versions | Save version, History, Compare (colours and list) | **Done** | NicBim's own feature (Slice 8). Competitors have backups and Revit compare add-ins at most. D105: property-level attributes and properties, categories and the level tree in `versions diff --detail` (JSON or text) |
 | 17. Collaboration and versions | Milestones, object history, before/after | **Done** | Slice 20 (M5) |

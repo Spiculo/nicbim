@@ -31,6 +31,8 @@
 #include "ToolPalette.h"
 #include "TitleBar.h"
 #include <QComboBox>
+#include <QDialog>
+#include <QLineEdit>
 #include <QLocale>
 #include <QSpinBox>
 #include <QLabel>
@@ -3313,7 +3315,8 @@ private slots:
                  "actionAddGuideLine", "actionClearGuideLines", "actionSketchStyle", "actionXray",
                  "actionSkylight", "actionCornerWindow", "actionPlugins", "actionCostEstimate",
                  "actionConstructionSequence", "actionShareWebPage", "actionPushPull", "actionMeshLink",
-                 "actionEnergyReport", "actionVisualScripts", "actionAnalyticalModel", "actionAIVisualiser"})
+                 "actionEnergyReport", "actionVisualScripts", "actionAnalyticalModel", "actionAIVisualiser",
+                 "actionWalkthrough"})
             QVERIFY2(action(w, name), name);
     }
 
@@ -3324,6 +3327,68 @@ private slots:
         QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuWorkspaces")));
         QVERIFY(w.findChild<QMenu*>(QStringLiteral("menuToolbars")));
         QVERIFY(w.findChild<QFileSystemWatcher*>(QStringLiteral("linkWatcher"))); // D140
+    }
+
+    // D249: the Walkthrough dialog adds the 3D view's cameras, saves them with the project, previews
+    // the path in the view and deletes it again.
+    void walkthroughDialogSavesCameras()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        kimbim::Viewport* v = w.viewport();
+        QAction* open = w.findChild<QAction*>(QStringLiteral("actionWalkthrough"));
+        QVERIFY(open);
+        open->trigger();
+        auto* dialog = w.findChild<QDialog*>(QStringLiteral("walkthroughDialog"));
+        QVERIFY(dialog && dialog->isVisible() && !dialog->isModal());
+        open->trigger(); // a second trigger raises the same dialog
+        QCOMPARE(w.findChildren<QDialog*>(QStringLiteral("walkthroughDialog")).size(), 1);
+        auto* add = dialog->findChild<QPushButton*>(QStringLiteral("walkthroughAdd"));
+        auto* table = dialog->findChild<QTableWidget*>(QStringLiteral("walkthroughCameras"));
+        QVERIFY(add && table);
+        v->setCamera(gp_Pnt(0, -10, 1.7), gp_Pnt(0, 0, 1.5), gp_Dir(0, 0, 1), true, 50.0, 1.0);
+        add->click();
+        v->setCamera(gp_Pnt(10, 0, 1.7), gp_Pnt(0, 0, 1.5), gp_Dir(0, 0, 1), true, 50.0, 1.0);
+        add->click();
+        QCOMPARE(table->rowCount(), 2);
+        dialog->findChild<QDoubleSpinBox*>(QStringLiteral("walkthroughSeconds"))->setValue(2.0);
+        dialog->findChild<QSpinBox*>(QStringLiteral("walkthroughFps"))->setValue(10);
+        dialog->findChild<QComboBox*>(QStringLiteral("walkthroughName"))->setCurrentText(QStringLiteral("Approach"));
+        dialog->findChild<QPushButton*>(QStringLiteral("walkthroughSave"))->click();
+        const QJsonArray saved = kimbim::PythonEngine::instance().callJson("walkthroughs", {}).object()
+                                     .value("walkthroughs").toArray();
+        QCOMPARE(saved.size(), 1);
+        const QJsonObject walk = saved[0].toObject();
+        QCOMPARE(walk.value("name").toString(), QStringLiteral("Approach"));
+        QCOMPARE(walk.value("frames").toInt(), 21);
+        QCOMPARE(walk.value("cameras").toArray()[0].toObject().value("eye").toArray()[1].toDouble(), -10.0);
+        auto* preview = dialog->findChild<QPushButton*>(QStringLiteral("walkthroughPreview"));
+        preview->setChecked(true); // plays at 10 frames/s: two seconds to the last camera
+        QTRY_VERIFY_WITH_TIMEOUT(!preview->isChecked(), 10000);
+        QVERIFY(std::abs(v->view()->Camera()->Eye().X() - 10.0) < 1e-6);
+        if (kimbim::PythonEngine::instance().callJson("ffmpeg_state", {}).object().value("found").toBool()) {
+            QTemporaryDir out;
+            dialog->findChild<QSpinBox*>(QStringLiteral("walkthroughWidth"))->setValue(160);
+            dialog->findChild<QSpinBox*>(QStringLiteral("walkthroughHeight"))->setValue(120);
+            dialog->findChild<QCheckBox*>(QStringLiteral("walkthroughKeepFrames"))->setChecked(true);
+            const QString video = QDir(out.path()).filePath(QStringLiteral("walk.mp4"));
+            dialog->findChild<QLineEdit*>(QStringLiteral("walkthroughOutput"))->setText(video);
+            v->setCamera(gp_Pnt(5, 5, 5), gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), true, 45.0, 1.0);
+            dialog->findChild<QPushButton*>(QStringLiteral("walkthroughRender"))->click();
+            QVERIFY(std::abs(v->view()->Camera()->Eye().X() - 5.0) < 1e-6); // the camera is put back
+            if (QGuiApplication::platformName() == QLatin1String("offscreen")) {
+                // no OpenGL window headless (Viewport::ensureWindow): the render stops at the first frame
+                QVERIFY(!QFileInfo::exists(video));
+            } else { // a real platform (QT_QPA_PLATFORM=windows): 21 frames and the video
+                QVERIFY2(QFileInfo(video).size() > 0, qPrintable(w.statusStrip()->message()));
+                QCOMPARE(QDir(QDir(out.path()).filePath(QStringLiteral("walk-frames")))
+                             .entryList({QStringLiteral("frame-*.png")}).size(), 21);
+            }
+        }
+        kimbim::PythonEngine::instance().callJson("delete_walkthrough", {QStringLiteral("Approach")});
+        QCOMPARE(kimbim::PythonEngine::instance().callJson("walkthroughs", {}).object()
+                     .value("walkthroughs").toArray().size(), 0);
+        dialog->close();
     }
 
     // BCF viewpoints restore the camera: eye, target, up and projection.

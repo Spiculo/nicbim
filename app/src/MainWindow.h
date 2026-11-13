@@ -30,6 +30,7 @@
 #include <Bnd_Box.hxx>
 
 class QAction;
+class QDialog;
 class QDragEnterEvent;
 class QDropEvent;
 class QPrinter;
@@ -274,6 +275,8 @@ public:
     void applySun();
     void sunDialog();
     void sunAnimationDialog(); // D198: render frames as the sun moves over a time range
+    void walkthroughDialog(); // D249: camera path through the model, previewed and rendered to a video (Walkthrough.cpp)
+    void showWalkthroughCamera(const QJsonObject& camera); // {eye, target, up, fov} in metres
     bool pickUpSettings(); // D97: Archicad's eyedropper, from the one selected element
     bool injectSettings(); // and syringe, into the selection
     // D98: Archicad's Grid System on the active level (one undo step).
@@ -918,6 +921,7 @@ private:
     QStringList m_selection;
     UndoHistoryPanel* m_undoPanel = nullptr;
     QPointer<QAction> m_lastCommand;
+    QPointer<QDialog> m_walkthroughDialog; // D249: the one modeless Walkthrough dialog
     QAction* m_repeatLast = nullptr;
     QAction* m_objectSnaps = nullptr;
     QAction* m_orthoAction = nullptr;
