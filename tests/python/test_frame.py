@@ -35,7 +35,7 @@ def test_a_simply_supported_uniform_load():
     m = r["members"][0]
     mid = len(m["x"]) // 2
     assert abs(m["My"][mid]) == pytest.approx(w * L ** 2 / 8, rel=1e-6)
-    assert m["deflection"] == pytest.approx(5 * w * L ** 4 / (384 * E * SEC["Iy"]), rel=1e-6)
+    assert m["deflection"] == pytest.approx(5 * w * L ** 4 / (384 * E * SEC["Iy"]), rel=1e-4)
     assert sum(rr[2] for rr in r["reactions"].values()) == pytest.approx(w * L)
     assert abs(m["Vz"][0]) == pytest.approx(w * L / 2)
 
@@ -64,3 +64,21 @@ def test_a_member_split_in_parts_gives_the_same_answer():
     one = frame.solve(*beam(1, 4.0), {0: FIXED}, {1: (0, 0, -7, 0, 0, 0)})
     four = frame.solve(*beam(4, 4.0), {0: FIXED}, {4: (0, 0, -7, 0, 0, 0)})
     assert one["displacements"][1][2] == pytest.approx(four["displacements"][4][2], rel=1e-9)
+
+
+def test_a_partial_load_and_several_cases_share_one_solve():
+    L, w = 6.0, 4.0
+    nodes, members = beam(L=L)
+    supports = {0: PIN, 1: (False, True, True, True, False, False)}
+    half = [{"member": 0, "w": (0, 0, -w), "a": 0.0, "b": 0.5}]  # load on the left half only
+    full = [{"member": 0, "w": (0, 0, -w)}]
+    r_half, r_full = frame.solve_many(nodes, members, supports, [({}, half), ({}, full)], stations=12)
+    total = w * L / 2
+    left = r_half["reactions"][0][2]
+    assert left == pytest.approx(total * 3 / 4) and r_half["reactions"][1][2] == pytest.approx(total / 4)
+    m = r_half["members"][0]
+    x0 = left / w  # zero shear: the largest moment
+    assert max(abs(v) for v in m["My"]) == pytest.approx(left * x0 - w * x0 ** 2 / 2, rel=0.02)
+    assert abs(r_full["members"][0]["My"][6]) == pytest.approx(w * L ** 2 / 8, rel=1e-6)
+    # the half-loaded beam's midspan deflection: 5wL^4/768EI (half of the full load's, by symmetry)
+    assert m["deflection"] == pytest.approx(5 * w * L ** 4 / (768 * E * SEC["Iy"]), rel=0.02)

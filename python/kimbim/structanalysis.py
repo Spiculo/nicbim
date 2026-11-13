@@ -493,35 +493,54 @@ def _physical_members(settings, warnings) -> list[Member]:
 
 def _snap_to_columns(members: list[Member], tol: float) -> None:
     columns = [m for m in members if m.kind == "column"]
+    if not columns:
+        return
+    A0 = np.array([c.a for c in columns])
+    D = np.array([c.b - c.a for c in columns])
+    L = np.linalg.norm(D, axis=1)
+    upright = np.abs(D[:, 2]) > 0.5 * L
+    reach = np.array([max(c.section["b"], c.section["h"]) / 2 for c in columns]) + tol
     for m in members:
         if m.kind == "column":
             continue
         for end in ("a", "b"):
             p = getattr(m, end)
-            for c in columns:
-                d = c.b - c.a
-                L = float(np.linalg.norm(d))
-                t = float(np.dot(p - c.a, d) / (L * L))
-                q = c.a + d * np.clip(t, 0, 1)
-                horizontal = np.linalg.norm((p - (c.a + d * t))[:2]) if abs(d[2]) > 0.5 * L else np.linalg.norm(p - q)
-                reach = max(c.section["b"], c.section["h"]) / 2 + tol
-                above = (t - 1) * L
-                if horizontal <= reach and -tol / L <= t and above <= m.section["h"] + tol:
-                    setattr(m, end, q.copy())
-                    break
+            t = np.einsum("ij,ij->i", p - A0, D) / (L * L)
+            q = A0 + D * np.clip(t, 0, 1)[:, None]
+            on_axis = A0 + D * t[:, None]
+            horizontal = np.where(upright, np.linalg.norm((p - on_axis)[:, :2], axis=1), np.linalg.norm(p - q, axis=1))
+            ok = (horizontal <= reach) & (t >= -tol / L) & ((t - 1) * L <= m.section["h"] + tol)
+            hits = np.nonzero(ok)[0]
+            if len(hits):
+                setattr(m, end, q[hits[0]].copy())
 
 
 def _merge_nodes(points: list[np.ndarray], tol: float) -> tuple[list[np.ndarray], list[int]]:
+    """Points within `tol` share a node (a spatial hash: cells of `tol`, neighbours checked)."""
     nodes: list[np.ndarray] = []
     index = []
+    cells: dict[tuple, list[int]] = {}
     for p in points:
-        for i, q in enumerate(nodes):
-            if np.linalg.norm(p - q) <= tol:
-                index.append(i)
+        key = tuple(int(np.floor(v / tol)) for v in p)
+        found = None
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dz in (-1, 0, 1):
+                    for i in cells.get((key[0] + dx, key[1] + dy, key[2] + dz), ()):
+                        if np.linalg.norm(p - nodes[i]) <= tol:
+                            found = i
+                            break
+                    if found is not None:
+                        break
+                if found is not None:
+                    break
+            if found is not None:
                 break
-        else:
+        if found is None:
             nodes.append(p.copy())
-            index.append(len(nodes) - 1)
+            found = len(nodes) - 1
+            cells.setdefault(key, []).append(found)
+        index.append(found)
     return nodes, index
 
 
@@ -575,21 +594,13 @@ def build(settings: dict | None = None) -> Analysis:
         d = m.b - m.a
         L = m.length
         cuts = list(over_wall.get(k, []))
-        own = {n for _t, n in cuts}
-        for n_i, q in enumerate(nodes):
-            if n_i in (i0, j0) or n_i in own:
-                continue
-            t = float(np.dot(q - m.a, d) / (L * L))
-            if tol / L < t < 1 - tol / L and np.linalg.norm(m.a + d * t - q) <= tol:
-                cuts.append((t, n_i))
-        if m.kind != "column":
-            parts = min(8, max(1, math.ceil(L / 1.0)))
-            known = [t for t, _ in cuts]
-            for p in range(1, parts):
-                t = p / parts
-                if all(abs(t - c) * L > 0.2 for c in known):
-                    nodes.append(m.a + d * t)
-                    cuts.append((t, len(nodes) - 1))
+        own = {n for _t, n in cuts} | {i0, j0}
+        P = np.asarray(nodes)
+        ts = (P - m.a) @ d / (L * L)
+        off = np.linalg.norm(m.a + np.outer(ts, d) - P, axis=1)
+        for n_i in np.nonzero((ts > tol / L) & (ts < 1 - tol / L) & (off <= tol))[0]:
+            if int(n_i) not in own:
+                cuts.append((float(ts[n_i]), int(n_i)))
         cuts.sort()
         chain = [(0.0, i0)] + cuts + [(1.0, j0)]
         for (t0, n0), (t1, n1) in zip(chain, chain[1:]):
@@ -788,10 +799,18 @@ def _slab_loads(an: Analysis, settings: dict, walls: list) -> None:
                     if not sel.any():
                         continue
                     length = (t1 - t0) * m.length
-                    a_sub = float(cell_share[sel].sum())
-                    for c, v in (("G", g), ("Q", q), ("S", sn)):
-                        if v:
-                            an.cases[c]["member"].append({"member": idx, "w": (0.0, 0.0, -v * a_sub / length)})
+                    bins = max(1, min(12, math.ceil(length / 1.0)))  # about a metre each: the load's shape
+                    local = (tt[sel] - t0) / (t1 - t0)
+                    which = np.minimum((local * bins).astype(int), bins - 1)
+                    area = np.bincount(which, weights=cell_share[sel], minlength=bins)
+                    for bi in range(bins):
+                        if area[bi] <= 0:
+                            continue
+                        per_m = area[bi] / (length / bins)
+                        for c, v in (("G", g), ("Q", q), ("S", sn)):
+                            if v:
+                                an.cases[c]["member"].append({"member": idx, "w": (0.0, 0.0, -v * per_m),
+                                                              "a": bi / bins, "b": (bi + 1) / bins})
             else:
                 _kind, node, _xy = points[si - len(lines)]
                 for c, v in (("G", g), ("Q", q), ("S", sn)):
@@ -808,8 +827,15 @@ def _seg_dist_poly(p: np.ndarray, poly: np.ndarray) -> float:
     return best
 
 
+def _loaded_length(an: Analysis, load: dict) -> float:
+    """The loaded length (m) of a member load: its element's length times the loaded fraction."""
+    fm = an.frame_members[load["member"]]
+    L = float(np.linalg.norm(np.asarray(an.nodes[fm["j"]]) - np.asarray(an.nodes[fm["i"]])))
+    return L * (float(load.get("b", 1.0)) - float(load.get("a", 0.0)))
+
+
 def _nearest_node(an: Analysis, p: np.ndarray) -> int:
-    return int(np.argmin([np.linalg.norm(np.asarray(q) - p) for q in an.nodes]))
+    return int(np.argmin(np.linalg.norm(np.asarray(an.nodes) - p, axis=1)))
 
 
 def _components(an: Analysis):
@@ -913,15 +939,20 @@ def _spin_axes(an: Analysis) -> dict:
 
 def _drop_mechanisms(an: Analysis) -> None:
     """Solve each connected part on its own; leave out the parts that are mechanisms, with a warning."""
+    spin = _spin_axes(an)
+    try:
+        frame.check_stable(an.nodes, an.frame_members, an.supports, spin)
+        return
+    except frame.Unstable:
+        pass
     find = _components(an)
     roots = {find(fm["i"]) for fm in an.frame_members}
     unstable = {}
-    spin = _spin_axes(an)
     for root in roots:
         members = [fm for fm in an.frame_members if find(fm["i"]) == root]
         supports = {n: v for n, v in an.supports.items() if find(n) == root}
         try:
-            frame.solve(an.nodes, members, supports, {}, [], 2, {n: spin[n] for n in supports if n in spin})
+            frame.check_stable(an.nodes, members, supports, {n: spin[n] for n in supports if n in spin})
         except frame.Unstable as ex:
             unstable[root] = str(ex)
     if unstable:
@@ -930,15 +961,15 @@ def _drop_mechanisms(an: Analysis) -> None:
 
 
 def _solve_cases(an: Analysis, stations: int) -> dict:
-    out = {}
-    spin = _spin_axes(an)
-    for case in CASES:
-        loads = an.cases[case]
-        if not loads["member"] and not loads["node"]:
-            out[case] = None
-            continue
-        out[case] = frame.solve(an.nodes, an.frame_members, an.supports, loads["node"], loads["member"], stations,
-                                spin)
+    """Every load case in one factorisation."""
+    loaded = [c for c in CASES if an.cases[c]["member"] or an.cases[c]["node"]]
+    out = {c: None for c in CASES}
+    if not loaded:
+        return out
+    results = frame.solve_many(an.nodes, an.frame_members, an.supports,
+                               [(an.cases[c]["node"], an.cases[c]["member"]) for c in loaded], stations,
+                               _spin_axes(an))
+    out.update(zip(loaded, results))
     return out
 
 
@@ -1124,7 +1155,7 @@ def run_analysis(settings: dict | None = None) -> dict:
         loads = an.cases[case]
         for l in loads["member"]:
             fm = an.frame_members[l["member"]]
-            total_applied += factor * -l["w"][2] * float(np.linalg.norm(np.asarray(an.nodes[fm["j"]]) - an.nodes[fm["i"]]))
+            total_applied += factor * -l["w"][2] * _loaded_length(an, l)
         for v in loads["node"].values():
             total_applied += factor * -v[2]
     report["total_uls_kN"] = round(total_applied, 2)
@@ -1219,7 +1250,7 @@ def _write_ifc(report: dict, model_guid: str) -> None:
         for l in an.cases[case]["member"]:
             fm = an.frame_members[l["member"]]
             L = float(np.linalg.norm(np.asarray(an.nodes[fm["j"]]) - an.nodes[fm["i"]]))
-            per_member[fm["phys"]] = per_member.get(fm["phys"], 0.0) + -l["w"][2] * L
+            per_member[fm["phys"]] = per_member.get(fm["phys"], 0.0) + -l["w"][2] * _loaded_length(an, l)
         for k, total in per_member.items():
             m = an.members[k]
             curve = curves.get(m.element.GlobalId)

@@ -44,7 +44,7 @@ def slab_case_total(report, case, kind="beam"):
         if m.kind != kind:
             continue
         L = float(np.linalg.norm(np.asarray(an.nodes[fm["j"]]) - an.nodes[fm["i"]]))
-        out[m.element.GlobalId] = out.get(m.element.GlobalId, 0.0) + -l["w"][2] * L
+        out[m.element.GlobalId] = out.get(m.element.GlobalId, 0.0) + -l["w"][2] * L * (l.get("b", 1.0) - l.get("a", 0.0))
     return out
 
 
