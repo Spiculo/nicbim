@@ -1691,6 +1691,11 @@ _EXPORTS = {
         "run_pipeline",
         "save_pipeline",
     ),
+    "structanalysis": (  # D247
+        "analyse_structure",
+        "structure_results",
+        "utilisation_colours",
+    ),
     "structural": (
         "analysis_model",
         "create_analysis_model",

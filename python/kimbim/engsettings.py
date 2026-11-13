@@ -84,6 +84,8 @@ DEFAULTS: dict[str, dict] = {
     },
     "structure_settings": {
         "base_support": "fixed",  # fixed | pinned
+        "bearing_walls": "unless_marked",  # walls carry slabs unless Pset_WallCommon.LoadBearing is false | marked_only | none
+        "level_use": {},  # storey name -> use category (A, B, C... keys of use_loads); else default_use
         "merge_tolerance": 0.05,  # m: member ends this close share a node
         "superimposed_dead": 1.5,  # kN/m2
         "snow": 0.0,  # kN/m2 on roofs
@@ -130,6 +132,7 @@ CHOICES = {
     ("plumbing_settings", "method"): ("en806", "hunter"),
     ("drainage_settings", "method"): ("en12056", "ipc"),
     ("structure_settings", "base_support"): ("fixed", "pinned"),
+    ("structure_settings", "bearing_walls"): ("unless_marked", "marked_only", "none"),
 }
 # Tables that take new entries (shaped like an existing entry, or numbers for flat tables)
 OPEN = {("mep_settings", "catalogue"), ("plumbing_settings", "pipe_series"), ("drainage_settings", "pipe_series"),

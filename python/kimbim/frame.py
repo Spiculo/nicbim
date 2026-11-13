@@ -85,7 +85,8 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
     """Solve the frame.
 
     nodes: (n, 3) coordinates (m). members: dicts with i, j, E, G, A, Iy, Iz, J and optional zref.
-    supports: {node: six bools (True = restrained)}. node_loads: {node: six values (kN, kN·m)}.
+    supports: {node: six values}: True restrains the DOF, a positive number adds a spring of that
+    stiffness (kN/m or kN·m/rad), False/0 leaves it free. node_loads: {node: six values (kN, kN·m)}.
     member_loads: [{member: index, w: (wx, wy, wz) global kN/m}].
 
     Returns displacements (n, 6), reactions {node: six values}, and per member: x stations, N, Vy, Vz,
@@ -96,7 +97,7 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
     n = len(nodes)
     if not members:
         raise Unstable("there are no members to analyse")
-    if not supports or not any(any(v) for v in supports.values()):
+    if not supports or not any(v is True for r in supports.values() for v in r):
         raise Unstable("the structure has no supports")
     used = {m["i"] for m in members} | {m["j"] for m in members}
     for node in supports:
@@ -124,9 +125,14 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
         d["feq"] = d["feq"] + feq
         F[d["dofs"]] += d["T"].T @ feq
     fixed = np.zeros(ndof, bool)
+    springs = np.zeros(ndof)
     for node, restrained in supports.items():
         for i, r in enumerate(restrained):
-            fixed[6 * node + i] = bool(r)
+            if r is True:
+                fixed[6 * node + i] = True
+            elif r and not isinstance(r, bool):
+                springs[6 * node + i] = float(r)
+    K[np.diag_indices(ndof)] += springs
     unused = [i for i in range(n) if i not in used]
     for node in unused:  # nodes without members carry nothing: take them out of the system
         fixed[6 * node:6 * node + 6] = True
@@ -142,7 +148,7 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
     u = np.zeros(ndof)
     y = np.linalg.solve(Lc, F[free])
     u[free] = np.linalg.solve(Lc.T, y)
-    full = K @ u - F
+    full = K @ u - F  # springs included: their force is part of the support's reaction
     reactions = {node: full[6 * node:6 * node + 6].copy() for node in supports}
     results = []
     for m, d in zip(members, data):
@@ -162,9 +168,11 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
         E, Iy, Iz = m["E"], m["Iy"], m["Iz"]
         v = h1 * ul[1] + h2 * ul[5] + h3 * ul[7] + h4 * ul[11] + wy * xs ** 2 * (L - xs) ** 2 / (24 * E * Iz)
         w = h1 * ul[2] - h2 * ul[4] + h3 * ul[8] - h4 * ul[10] + wz * xs ** 2 * (L - xs) ** 2 / (24 * E * Iy)
+        axial = ul[0] + (ul[6] - ul[0]) * xi
+        disp = (np.vstack([axial, v, w]).T) @ d["R"]  # global displacement at each station
         v_rel = v - (ul[1] + (ul[7] - ul[1]) * xi)
         w_rel = w - (ul[2] + (ul[8] - ul[2]) * xi)
         results.append({"x": xs, "N": N, "Vy": Vy, "Vz": Vz, "T": Tq, "My": My, "Mz": Mz, "end_forces": f,
-                        "deflection": float(np.max(np.hypot(v_rel, w_rel))), "length": L,
+                        "deflection": float(np.max(np.hypot(v_rel, w_rel))), "length": L, "disp": disp,
                         "tip": float(np.hypot(ul[7] - ul[1], ul[8] - ul[2]))})
     return {"displacements": u.reshape(n, 6), "reactions": reactions, "members": results}
