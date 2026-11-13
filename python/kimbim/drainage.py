@@ -27,6 +27,9 @@ from . import authoring as A
 from . import engsettings, mep, mepcalc
 
 
+ESTIMATE_SLACK = 0.02  # slope noise allowed on pipes known only by their mesh
+
+
 def part_full(diameter: float, fill: float) -> tuple[float, float]:
     """(flow area m², hydraulic radius m) of a round pipe filled to `fill` x diameter."""
     theta = 2 * math.acos(1 - 2 * fill)
@@ -135,6 +138,7 @@ def size_drainage_system(system: str, apply=False) -> str:
     stack_cap = sorted((int(k), float(v)) for k, v in cfg["stack_capacity"].items())
     vent_exists = any(mep.system_kind(s) == "vent" for s in mep.all_systems())
     segs = mepcalc.segments(net)
+    estimated = 0
     chosen: dict[str, int] = {}
     rows = {}
     for g in mepcalc.post_order(net):
@@ -181,7 +185,11 @@ def size_drainage_system(system: str, apply=False) -> str:
                 dn, status = series[-1][0], "largest size exceeded"
             fill = cfg["fill_ratio_large"] if dn >= 150 else cfg["fill_ratio"]
             minimum = cfg["min_slope_large"] if dn >= 100 else cfg["min_slope_small"]
-            if slope < -1e-6:
+            if mep.is_estimated(e):  # ends from a mesh: a couple of centimetres either way are noise
+                estimated += 1
+                if slope < -ESTIMATE_SLACK:
+                    status = "falls the wrong way"
+            elif slope < -1e-6:
                 status = "falls the wrong way"
             elif slope < minimum - 1e-9:
                 status = f"below the {minimum * 100:g} % minimum slope"
@@ -195,6 +203,9 @@ def size_drainage_system(system: str, apply=False) -> str:
                    "capacity": round(capacity(inner, max(slope or 0, 1e-9), fill, cfg["manning_n"]), 3)
                    if not vertical else dict(stack_cap).get(dn), "length": round(length, 3), "status": status}
     out_rows = [rows[g] for g in net["order"] if g in rows]
+    if estimated:
+        warnings.append(f"{estimated} pipe(s) have no exact geometry (a mesh): their slopes are estimated and only "
+                        f"checked for falling more than {ESTIMATE_SLACK * 100:g} % the wrong way")
     for r in out_rows:
         if r["status"] != "ok":
             warnings.append(f"{r['name']}: {r['status']}")

@@ -305,12 +305,22 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `draft_add` | `kimbim draft add` | Draw a line, polyline, arc, circle, rectangle, fill or spline on a level. | yes |
 | `draft_fill_from_shape` | `kimbim draft fill-from-shape` | Fill a closed shape (a polyline, circle or fill) with a pattern, on the same level. | yes |
 | `draft_patterns` | `kimbim draft patterns` | List the fill patterns available to draft fills. |  |
+| `drainage_apply_sizes` | `kimbim drainage apply-sizes` | Write the drainage system's pipe sizes (one undo step). | yes |
+| `drainage_size` | `kimbim drainage size` | Sanitary or storm flows, pipe and stack sizes and slope checks for a drainage system. |  |
+| `electrical_apply_schedule` | `kimbim electrical apply-schedule` | Write the board's chosen breakers, cables and balanced phases to its circuits (one undo step). | yes |
+| `electrical_circuits` | `kimbim electrical circuits` | List the distribution boards and circuits. |  |
+| `electrical_create_circuit` | `kimbim electrical create-circuit` | Create a circuit from a board to devices. | yes |
+| `electrical_panel_schedule` | `kimbim electrical panel-schedule` | A board's circuits with breakers, cables, voltage drop, phase loads and the main breaker. |  |
+| `engineering_set_settings` | `kimbim engineering set-settings` | Change some of a discipline's engineering settings (codes, limits, tables). | yes |
+| `engineering_settings` | `kimbim engineering settings` | Read a discipline's engineering settings and their defaults. |  |
 | `export_ifc` | `kimbim export ifc` | Export the model as an IFC file. |  |
 | `export_options` | `kimbim export options` | List what an IFC export can include: scopes, product classes with counts, levels and defaults. |  |
 | `graphics_purpose` | `kimbim graphics purpose` | Switch the view to a graphic purpose (renovation filter, visibility and overrides). |  |
 | `graphics_set` | `kimbim graphics set` | Change a graphic setting (pen, visibility, override) in the project's graphics state. |  |
 | `graphics_state` | `kimbim graphics state` | The current pen, purpose and graphics state of the model. |  |
 | `graphics_tables` | `kimbim graphics tables` | The project's pens, line types, fills, element styles, overrides, purposes and filters. |  |
+| `hvac_apply_sizes` | `kimbim hvac apply-sizes` | Write the air system's duct sizes and design flows (one undo step). | yes |
+| `hvac_size` | `kimbim hvac size` | Room airflows, duct sizes (equal friction, velocity limits), pressure drop and fan duty for an air system. |  |
 | `import_formats` | `kimbim import formats` | List the mesh file formats the importer reads (OBJ, STL, PLY, COLLADA, glTF/GLB and FBX). |  |
 | `import_mesh` | `kimbim import mesh` | Import a mesh (OBJ, STL, PLY, COLLADA, glTF/GLB or FBX) as a proxy on a level, scaled, rotated about Z and moved. | yes |
 | `import_pointcloud` | `kimbim import pointcloud` | Import a point cloud as a visible proxy on a level, decimated to a marker per point. | yes |
@@ -347,11 +357,26 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `materials_list` | `kimbim materials list` | List the building materials and composites in the project. |  |
 | `materials_purge` | `kimbim materials purge` | Remove unused materials. | yes |
 | `measure_points` | `kimbim measure points` | Measure through points like the Measure tool: each segment, the total length, the 3D distance between the first and last point and, for a closed outline, its plan area and perimeter (metres). |  |
+| `mep_assign` | `kimbim mep assign` | Put elements in a system; their ports of its domain take its kind. | yes |
+| `mep_catalogue` | `kimbim mep catalogue` | List the terminal and equipment kinds (with ports and design values) and the system kinds. |  |
+| `mep_connect` | `kimbim mep connect` | Connect every pair of free ports that touch (one system, or the whole model). | yes |
+| `mep_create_system` | `kimbim mep create-system` | Create a distribution system of a kind (supply_air, cold_water, sanitary, power...). | yes |
+| `mep_drain_run` | `kimbim mep drain-run` | Draw a drain pipe falling at a slope through plan points. | yes |
+| `mep_network` | `kimbim mep network` | A system's network: its source, tree, unreached elements, open ports and loops. |  |
+| `mep_place` | `kimbim mep place` | Place a terminal or piece of equipment (diffuser, AHU, WC, basin, drain, board, socket, light...). | yes |
+| `mep_run` | `kimbim mep run` | Draw a connected duct/pipe/tray run through 3D points with elbows; its ends join touching ports or tee into a segment they land on. | yes |
+| `mep_set_design` | `kimbim mep set-design` | Set an MEP element's design values. | yes |
+| `mep_systems` | `kimbim mep systems` | List the MEP distribution systems with their kind, domain, element count and open ports. |  |
 | `models_create` | `kimbim models create` | Create an empty model container below the building; draw the unit in it, then place it on levels. | yes |
 | `models_explode` | `kimbim models explode` | Unlink an instance: its elements become ordinary elements that no longer follow the model. | yes |
 | `models_list` | `kimbim models list` | List the project's models (units drawn once and placed on levels) with their GlobalId, name, elevation and how many places use them. |  |
 | `models_place` | `kimbim models place` | Place a model on a building level as one linked instance (a copy of its elements that follows later edits to the model). | yes |
 | `models_update` | `kimbim models update` | Apply the model's current content to every place it is used; edits already do this automatically, so this is for a project loaded with stale instances. | yes |
+| `plumbing_apply_sizes` | `kimbim plumbing apply-sizes` | Write the water system's pipe sizes and design values (one undo step). | yes |
+| `plumbing_size` | `kimbim plumbing size` | Peak flows, pipe sizes and the pressure left at each fixture for a cold or hot water system. |  |
+| `structure_analyse` | `kimbim structure analyse` | Analyse the structure: loads from the model, a frame solve, member utilisation and deflection checks. |  |
+| `structure_results` | `kimbim structure results` | The stored structural results on the members (from the last applied analysis). |  |
+| `structure_save_results` | `kimbim structure save-results` | Analyse and store the results on the members and the IFC analysis model (one undo step). | yes |
 | `terrain_clear_pads` | `kimbim terrain clear-pads` | Remove a terrain's building pads and restore the surface kept before the first pad. | yes |
 | `terrain_create` | `kimbim terrain create` | Create a terrain mesh from survey points ([x, y, z]) on a level, triangulated in plan. | yes |
 | `terrain_delete` | `kimbim terrain delete` | Delete a terrain. | yes |
@@ -384,7 +409,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `worksheets_rename` | `kimbim worksheets rename` | Rename a worksheet and its drawing. | yes |
 <!-- tools:end -->
 
-The list is generated from the catalogue (223 exposed tools today). What is still missing on the agent side — in the
+The list is generated from the catalogue (248 exposed tools today). What is still missing on the agent side — in the
 tool surface, the client/transport setup and remote sessions — is listed in
 [18 §6](18-agent-tools-and-sessions.md#6-pending-integrations).
 

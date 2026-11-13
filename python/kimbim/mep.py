@@ -429,7 +429,8 @@ def _new_segment(storey, kind: str, p1, p2, width: float, height: float, system_
 
 
 def segment_ends(element) -> tuple[np.ndarray, np.ndarray] | None:
-    """World start and end of a straight MEP segment (metres)."""
+    """World start and end of a straight MEP segment (metres); for a tessellated segment, the ends of
+    its shape's long axis."""
     m = _matrix(element)
     rep = getattr(element, "Representation", None)
     for shape in (rep.Representations if rep else ()):
@@ -437,7 +438,30 @@ def segment_ends(element) -> tuple[np.ndarray, np.ndarray] | None:
             if item.is_a("IfcExtrudedAreaSolid"):
                 start = m[:3, 3]
                 return start, start + m[:3, 2] * float(item.Depth) * A._scale()
+    if element.is_a("IfcFlowSegment"):
+        est = _mesh_estimate(element)
+        if est is not None:
+            return est[0], est[1]
     return None
+
+
+def is_estimated(element) -> bool:
+    """True when a segment has no extrusion and its ends and size come from its shape."""
+    rep = getattr(element, "Representation", None)
+    for shape in (rep.Representations if rep else ()):
+        for item in shape.Items or ():
+            if item.is_a("IfcExtrudedAreaSolid"):
+                return False
+    return True
+
+
+def _mesh_estimate(element):
+    from . import structanalysis
+
+    try:
+        return structanalysis.mesh_member(element)
+    except Exception:  # noqa: BLE001 - odd geometry: no estimate
+        return None
 
 
 def segment_size(element) -> tuple[float, float, str]:
@@ -453,6 +477,13 @@ def segment_size(element) -> tuple[float, float, str]:
                 if p.is_a("IfcRectangleProfileDef"):
                     return float(p.XDim) * s, float(p.YDim) * s, "rect"
     data = ifcopenshell.util.element.get_pset(element, MEP_PSET) or {}
+    if not data and element.is_a("IfcFlowSegment"):
+        est = _mesh_estimate(element)
+        if est is not None:
+            b, h = est[3]["b"], est[3]["h"]
+            if _segment_kind(element) == "pipe":
+                return max(b, h), max(b, h), "round"
+            return b, h, "rect"
     return float(data.get("Width") or 0.1), float(data.get("Height") or 0.1), "round" if _segment_kind(element) == "pipe" else "rect"
 
 
@@ -884,6 +915,15 @@ def system_kind(system) -> str:
     for k, v in SYSTEM_KINDS.items():
         if pt and v["predefined"] == pt:
             return k
+    name = (system.Name or "").lower()  # IFC2X3 and other tools: the name often says
+    for words, k in ((("supply air", "impuls"), "supply_air"), (("return air", "retorno"), "return_air"),
+                     (("exhaust", "extrac", "flue"), "exhaust_air"), (("outside air", "fresh air"), "outside_air"),
+                     (("hot water", "caliente"), "hot_water"), (("cold water", "fría", "fria", "water supply"), "cold_water"),
+                     (("storm", "rain", "pluvial"), "storm"), (("waste", "sewage", "sewer", "sanitary", "drain",
+                                                             "residual", "saneamiento"), "sanitary"),
+                     (("vent",), "vent"), (("lighting", "alumbrado"), "lighting"), (("power", "fuerza"), "power")):
+        if any(w in name for w in words):
+            return k
     for e in system_members(system):  # an old D234 system: guess from its members' ports
         for port, _q in port_points(e):
             if port_kind(port):
@@ -1091,6 +1131,11 @@ def network(system) -> dict:
         lowest = min(open_ports, key=lambda o: o["point"][2], default=None)  # the lowest open pipe end
         if lowest is not None and role(by_guid[lowest["guid"]]) == "part":
             sources.append(lowest["guid"])
+        else:  # no open end (a manhole network): drainage runs to its lowest point
+            ranked = [(min(q[2] for _p, q in port_points(e)), role(e) == "part", g) for g, e in by_guid.items()
+                      if port_points(e)]
+            if ranked:
+                sources.append(min(ranked)[2])
     tree, order = {}, []
     loops = 0
     for root in sources:
@@ -1147,15 +1192,17 @@ def mep_network(system: str) -> str:
 
 def connect_network(system: str = "") -> str:
     """Join every pair of free ports that touch (within mep_settings.connect_tolerance), in one
-    system or in the whole model. One undo step."""
+    system or in the whole model. Elements without ports (files from other tools) get them first,
+    inferred from their geometry. One undo step."""
     if B._model is None:
         return _fail("no model open")
     group = _find_system(system) if system else None
     if system and group is None:
         return _fail(f"unknown system {system}")
-    made = {"connected": 0}
+    made = {"connected": 0, "inferred": 0}
 
     def action():
+        made["inferred"] = _infer_ports(system_members(group) if group is not None else None)
         free = _free_ports()
         if group is not None:
             ids = {e.id() for e in system_members(group)}
@@ -1168,7 +1215,10 @@ def connect_network(system: str = "") -> str:
             for p2, q2 in free[i + 1:]:
                 if p2.id() in used or _port_element(p2) == _port_element(p):
                     continue
-                if np.linalg.norm(np.asarray(q) - np.asarray(q2)) <= tol and _compatible(p, p2):
+                reach = tol
+                if INFERRED in (p.Name or "") or INFERRED in (p2.Name or ""):
+                    reach = max(tol, 0.6 * max(_size_at(p), _size_at(p2)))  # meshes meet only roughly
+                if np.linalg.norm(np.asarray(q) - np.asarray(q2)) <= reach and _compatible(p, p2):
                     _connect(p, p2)
                     used.update((p.id(), p2.id()))
                     made["connected"] += 1
@@ -1180,6 +1230,57 @@ def connect_network(system: str = "") -> str:
     except Exception as ex:  # noqa: BLE001
         return _fail(f"{type(ex).__name__}: {ex}")
     return B._dump({**r, **made})
+
+
+INFERRED = "(inferred)"
+INFER_REACH = 1.0  # m: how far from a chamber or terminal a pipe end may stop and still join it
+
+
+def _size_at(port) -> float:
+    e = _port_element(port)
+    if e is None or not e.is_a("IfcFlowSegment"):
+        return 0.0
+    w, h, _shape = segment_size(e)
+    return max(w, h)
+
+
+def _infer_ports(members=None) -> int:
+    """Inside an action: ports for MEP elements that have none (files from elsewhere): segments at
+    their ends, chambers and terminals at the segment ends that stop near them. Returns how many."""
+    f = B._model
+    cls = "IfcDistributionElement" if f.schema != "IFC2X3" else "IfcDistributionFlowElement"
+    pool = [e for e in (members if members is not None else f.by_type(cls)) if e.is_a(cls)]
+    bare = [e for e in pool if not ifcopenshell.util.system.get_ports(e)]
+    if not bare:
+        return 0
+    added = 0
+    ends = []
+    for e in bare:
+        if not e.is_a("IfcFlowSegment"):
+            continue
+        got = segment_ends(e)
+        if got is None:
+            continue
+        kind = system_kind(_groups(e)[0]) if _groups(e) else ""
+        for port in add_ports(e, [{"point": got[0], "direction": "SINK", "system": kind},
+                                  {"point": got[1], "direction": "SOURCE", "system": kind}]):
+            port.Name = f"{port.Name} {INFERRED}"
+            added += 1
+        ends.extend([(e, got[0], kind), (e, got[1], kind)])
+    for e in pool:  # segments that already had ports count as ends too
+        if e.is_a("IfcFlowSegment") and e not in bare:
+            ends.extend((e, q, port_kind(p)) for p, q in port_points(e) if _connected(p) is None)
+    for e in bare:
+        if e.is_a("IfcFlowSegment"):
+            continue
+        here = _matrix(e)[:3, 3]
+        near = [(seg, q, kind) for seg, q, kind in ends if float(np.linalg.norm((q - here)[:2])) <= INFER_REACH]
+        if near:
+            ports = add_ports(e, [{"point": q, "direction": "SOURCEANDSINK", "system": kind} for _s, q, kind in near])
+            for port in ports:
+                port.Name = f"{port.Name} {INFERRED}"
+            added += len(ports)
+    return added
 
 
 def mep_issues(model) -> dict:

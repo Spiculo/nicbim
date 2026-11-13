@@ -80,14 +80,18 @@ def equivalent_loads(w_local: np.ndarray, L: float) -> np.ndarray:
     return f
 
 
+SPIN_STIFFNESS = 1e9  # kN·m/rad: a bearing holding a member against turning about its own axis
+
+
 def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = None,
-          member_loads: list[dict] | None = None, stations: int = 10) -> dict:
+          member_loads: list[dict] | None = None, stations: int = 10, spin: dict | None = None) -> dict:
     """Solve the frame.
 
     nodes: (n, 3) coordinates (m). members: dicts with i, j, E, G, A, Iy, Iz, J and optional zref.
     supports: {node: six values}: True restrains the DOF, a positive number adds a spring of that
     stiffness (kN/m or kN·m/rad), False/0 leaves it free. node_loads: {node: six values (kN, kN·m)}.
-    member_loads: [{member: index, w: (wx, wy, wz) global kN/m}].
+    member_loads: [{member: index, w: (wx, wy, wz) global kN/m}]. spin: {node: [unit axes]}: the support
+    also holds rotation about each axis (torsion restrained at a bearing) and nothing else.
 
     Returns displacements (n, 6), reactions {node: six values}, and per member: x stations, N, Vy, Vz,
     T, My, Mz arrays (tension and the usual right-hand signs), end forces (local, 12) and the largest
@@ -133,6 +137,11 @@ def solve(nodes, members: list[dict], supports: dict, node_loads: dict | None = 
             elif r and not isinstance(r, bool):
                 springs[6 * node + i] = float(r)
     K[np.diag_indices(ndof)] += springs
+    for node, axes in (spin or {}).items():
+        r = slice(6 * node + 3, 6 * node + 6)
+        for a in axes:
+            a = np.asarray(a, float)
+            K[r, r] += SPIN_STIFFNESS * np.outer(a, a) / float(a @ a)
     unused = [i for i in range(n) if i not in used]
     for node in unused:  # nodes without members carry nothing: take them out of the system
         fixed[6 * node:6 * node + 6] = True

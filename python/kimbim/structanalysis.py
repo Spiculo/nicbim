@@ -52,7 +52,7 @@ TAG = "KIMBIM analysis"
 CASES = ("G", "Q", "S")
 METHOD = ("Linear-elastic 3D frame (direct stiffness, Euler-Bernoulli members); slab loads to the nearest "
           "support; EN 1990 combinations; EN 1993-1-1 cross-section and flexural buckling (curve b) for steel")
-PIN_SPRING = 1.0  # kN·m/rad: keeps pinned members from spinning about their axis
+PINNED = (True, True, True, False, False, False)  # translations held; spin about members held separately
 COLOURS = {"pass": "#2e9e44", "warn": "#e0a100", "fail": "#d0312d", "none": "#9a9a9a"}
 
 
@@ -135,6 +135,138 @@ def member_axis(element):
     return start[:3] * s, end[:3] * s, zref / np.linalg.norm(zref), profile
 
 
+def mesh(element):
+    """(world points (n, 3) in metres, triangles (m, 3) indices) of a tessellated or faceted body."""
+    rep = getattr(element, "Representation", None)
+    if rep is None:
+        return None
+    s = _scale()
+    M = np.array(ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement), float)
+    points, tris = [], []
+
+    def add(item, T):
+        if item.is_a("IfcMappedItem"):
+            src = item.MappingSource
+            origin = np.eye(4)
+            if src.MappingOrigin is not None and src.MappingOrigin.is_a("IfcAxis2Placement3D"):
+                origin = np.array(ifcopenshell.util.placement.get_axis2placement(src.MappingOrigin), float)
+            target = np.eye(4)
+            tgt = item.MappingTarget
+            if tgt is not None and tgt.is_a("IfcCartesianTransformationOperator3D"):
+                target[:3, 3] = tgt.LocalOrigin.Coordinates[:3]
+                target[:3, :3] *= float(tgt.Scale or 1.0)
+            for sub in src.MappedRepresentation.Items or ():
+                add(sub, T @ target @ origin)
+            return
+        if item.is_a("IfcTriangulatedFaceSet") or item.is_a("IfcPolygonalFaceSet"):
+            base = len(points)
+            coords = np.array(item.Coordinates.CoordList, float)
+            world = (T @ np.c_[coords, np.ones(len(coords))].T).T[:, :3] * s
+            points.extend(world)
+            if item.is_a("IfcTriangulatedFaceSet"):
+                for t in item.CoordIndex:
+                    tris.append([base + int(i) - 1 for i in t])
+            else:
+                for face in item.Faces:
+                    idx = [base + int(i) - 1 for i in face.CoordIndex]
+                    tris.extend([idx[0], idx[k], idx[k + 1]] for k in range(1, len(idx) - 1))
+            return
+        if item.is_a("IfcFacetedBrep"):
+            for face in item.Outer.CfsFaces:
+                for bound in face.Bounds:
+                    loop = bound.Bound
+                    if not loop.is_a("IfcPolyLoop"):
+                        continue
+                    base = len(points)
+                    for pt in loop.Polygon:
+                        c = list(pt.Coordinates) + [0.0] * (3 - len(pt.Coordinates))
+                        points.append((T @ np.array([*c, 1.0]))[:3] * s)
+                    n = len(loop.Polygon)
+                    if bound.Orientation:
+                        tris.extend([base, base + k, base + k + 1] for k in range(1, n - 1))
+                    else:
+                        tris.extend([base, base + k + 1, base + k] for k in range(1, n - 1))
+
+    for shape in rep.Representations or ():
+        if shape.RepresentationIdentifier not in (None, "Body", "Facetation"):
+            continue
+        for item in shape.Items or ():
+            add(item, M)
+    if len(points) < 4:
+        return None
+    return np.array(points), np.array(tris, int).reshape(-1, 3)
+
+
+def mesh_member(element):
+    """(start, end, zref, section) of a linear member from its mesh: the principal direction is the
+    axis and the extents across it a solid rectangle (an estimate: an I section is overrated)."""
+    got = mesh(element)
+    if got is None:
+        return None
+    pts, _tris = got
+    centre = pts.mean(axis=0)
+    _u, _s, vt = np.linalg.svd(pts - centre, full_matrices=False)
+    axis, v2, v3 = vt[0], vt[1], vt[2]
+    along = (pts - centre) @ axis
+    e2 = (pts - centre) @ v2
+    e3 = (pts - centre) @ v3
+    length = float(along.max() - along.min())
+    d2, d3 = float(e2.max() - e2.min()), float(e3.max() - e3.min())
+    if min(d2, d3) <= 0 or length < 2 * max(d2, d3):
+        return None  # not a linear member
+    mid = centre + v2 * (e2.max() + e2.min()) / 2 + v3 * (e3.max() + e3.min()) / 2
+    start = mid + axis * along.min()
+    end = mid + axis * along.max()
+    if start[2] > end[2] + 1e-6:
+        start, end = end, start
+    if abs(v3[2]) > abs(v2[2]):  # the depth is the cross direction nearer vertical
+        zref, b, h = v3, d2, d3
+    else:
+        zref, b, h = v2, d3, d2
+    sec = {"kind": "estimated", "A": b * h, "Iy": b * h ** 3 / 12, "Iz": h * b ** 3 / 12,
+           "J": sections._rect_j(b, h), "Wy": b * h * h / 6, "Wz": h * b * b / 6, "h": h, "b": b}
+    return start, end, zref, sec
+
+
+def mesh_slab(element):
+    """(convex outline, z bottom, z top, thickness = volume / plan area) of a tessellated slab."""
+    got = mesh(element)
+    if got is None:
+        return None
+    pts, tris = got
+    hull = _convex_hull(pts[:, :2])
+    if len(hull) < 3:
+        return None
+    area = _polygon_area(hull)
+    if area < 1e-6:
+        return None
+    volume = 0.0
+    for a, b, c in tris:
+        volume += float(np.dot(pts[a], np.cross(pts[b], pts[c]))) / 6
+    thickness = abs(volume) / area if abs(volume) > 1e-9 else float(pts[:, 2].max() - pts[:, 2].min())
+    return hull, float(pts[:, 2].min()), float(pts[:, 2].max()), thickness
+
+
+def _convex_hull(p: np.ndarray) -> np.ndarray:
+    pts = sorted(set(map(tuple, np.round(p, 6))))
+    if len(pts) < 3:
+        return np.array(pts)
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower, upper = [], []
+    for q in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], q) <= 0:
+            lower.pop()
+        lower.append(q)
+    for q in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], q) <= 0:
+            upper.pop()
+        upper.append(q)
+    return np.array(lower[:-1] + upper[:-1])
+
+
 def _centroid(pts: np.ndarray) -> np.ndarray:
     x, y = pts[:, 0], pts[:, 1]
     x1, y1 = np.roll(x, -1), np.roll(y, -1)
@@ -149,7 +281,7 @@ def _slab_outline(slab):
     """(2D outline points in metres, z bottom, z top, thickness) of a slab or roof slab."""
     item = _body(slab)
     if item is None:
-        return None
+        return mesh_slab(slab)
     s = _scale()
     M = np.array(ifcopenshell.util.placement.get_local_placement(slab.ObjectPlacement), float)
     P = np.array(ifcopenshell.util.placement.get_axis2placement(item.Position), float) if item.Position else np.eye(4)
@@ -187,7 +319,7 @@ def _wall_line(wall):
                     axis = (pts[0], pts[-1])
     item = _body(wall)
     if item is None:
-        return None
+        return _mesh_wall(wall)
     depth = float(item.Depth)
     thickness = 0.0
     profile = item.SweptArea
@@ -206,6 +338,37 @@ def _wall_line(wall):
     a = (M @ np.array([axis[0][0], axis[0][1], 0.0, 1.0]))[:3] * s
     b = (M @ np.array([axis[1][0], axis[1][1], 0.0, 1.0]))[:3] * s
     return a[:2], b[:2], thickness * s, float(a[2] + depth * s), float(a[2])
+
+
+def _mesh_wall(wall):
+    """A tessellated wall's axis: its longer horizontal direction through the middle of its plan."""
+    got = mesh(wall)
+    if got is None:
+        return None
+    pts, _tris = got
+    xy = pts[:, :2]
+    centre = xy.mean(axis=0)
+    _u, _s, vt = np.linalg.svd(xy - centre, full_matrices=False)
+    d, n = vt[0], vt[1]
+    along = (xy - centre) @ d
+    across = (xy - centre) @ n
+    thickness = float(across.max() - across.min())
+    if thickness <= 0 or float(along.max() - along.min()) < thickness:
+        return None
+    mid = centre + n * (across.max() + across.min()) / 2
+    return mid + d * along.min(), mid + d * along.max(), thickness, float(pts[:, 2].max()), float(pts[:, 2].min())
+
+
+def _crossing(a, b, c, d):
+    """(t along ab, u along cd) where two 2D segments' lines cross, or (None, None) if parallel."""
+    r, q = b - a, d - c
+    den = r[0] * q[1] - r[1] * q[0]
+    if abs(den) < 1e-12:
+        return None, None
+    w = c - a
+    t = (w[0] * q[1] - w[1] * q[0]) / den
+    u = (w[0] * r[1] - w[1] * r[0]) / den
+    return float(t), float(u)
 
 
 def _seg_distance(points: np.ndarray, a: np.ndarray, b: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -306,14 +469,20 @@ def _physical_members(settings, warnings) -> list[Member]:
         for e in f.by_type(cls):
             axis = member_axis(e)
             if axis is None:
-                warnings.append(f"{e.Name or cls}: no straight extruded body, left out of the analysis")
-                continue
-            a, b, zref, profile = axis
+                estimate = mesh_member(e)
+                if estimate is None:
+                    warnings.append(f"{e.Name or cls}: neither an extruded profile nor a linear shape, left out")
+                    continue
+                a, b, zref, sec = estimate
+                warnings.append(f"{e.Name or cls}: no profile, section estimated from its shape as a "
+                                f"{sec['b'] * 1000:.0f} x {sec['h'] * 1000:.0f} mm solid")
+            else:
+                a, b, zref, profile = axis
+                sec = sections.section(profile, _scale())
+                if sec is None:
+                    warnings.append(f"{e.Name or cls}: profile {profile.is_a()} is not supported, left out")
+                    continue
             if np.linalg.norm(b - a) < 0.05:
-                continue
-            sec = sections.section(profile, _scale())
-            if sec is None:
-                warnings.append(f"{e.Name or cls}: profile {profile.is_a()} is not supported, left out")
                 continue
             props, name, category, warning = material_for(e, settings, kind, sec)
             if warning:
@@ -381,15 +550,34 @@ def build(settings: dict | None = None) -> Analysis:
     walls = _bearing_walls(settings)
     nodes, index = _merge_nodes([p for m in members for p in (m.a, m.b)], tol)
     end_nodes = [(index[2 * k], index[2 * k + 1]) for k in range(len(members))]
+    # where a beam passes over a bearing wall's top away from its ends, it bears there too
+    bearing_nodes: set[int] = set()
+    over_wall: dict[int, list] = {}
+    for k, m in enumerate(members):
+        if m.kind == "column":
+            continue
+        for _w, wa, wb, thick, top, bottom in walls:
+            t, u = _crossing(m.a[:2], m.b[:2], wa, wb)
+            if t is None or not (0.0 < u < 1.0):
+                continue
+            L = m.length
+            if t * L <= thick / 2 + tol or (1 - t) * L <= thick / 2 + tol:
+                continue  # at an end: the end check below handles it
+            q = m.a + (m.b - m.a) * t
+            if bottom - tol <= q[2] <= top + m.section["h"] + 0.3:  # on the top, or built into the wall
+                nodes.append(q)
+                over_wall.setdefault(k, []).append((t, len(nodes) - 1))
+                bearing_nodes.add(len(nodes) - 1)
     # split members at nodes lying on them, and subdivide beams about every metre
     frame_members = []
     for k, m in enumerate(members):
         i0, j0 = end_nodes[k]
         d = m.b - m.a
         L = m.length
-        cuts = []
+        cuts = list(over_wall.get(k, []))
+        own = {n for _t, n in cuts}
         for n_i, q in enumerate(nodes):
-            if n_i in (i0, j0):
+            if n_i in (i0, j0) or n_i in own:
                 continue
             t = float(np.dot(q - m.a, d) / (L * L))
             if tol / L < t < 1 - tol / L and np.linalg.norm(m.a + d * t - q) <= tol:
@@ -433,7 +621,7 @@ def build(settings: dict | None = None) -> Analysis:
         if below or lower_member:
             continue
         if pinned:
-            supports[node] = (True, True, True, PIN_SPRING, PIN_SPRING, PIN_SPRING)
+            supports[node] = PINNED
             support_kind[node] = "pinned"
         else:
             supports[node] = (True,) * 6
@@ -449,12 +637,15 @@ def build(settings: dict | None = None) -> Analysis:
             node = end_nodes[k][0 if end == "a" else 1]
             if node in supports:
                 continue
-            for w, wa, wb, thick, top, _bottom in walls:
+            for w, wa, wb, thick, top, bottom in walls:
                 dist, _t = _seg_distance(p[None, :2], wa, wb)
-                if dist[0] <= thick / 2 + tol + 0.05 and abs(p[2] - top) <= m.section["h"] + 0.3:
-                    supports[node] = (True, True, True, PIN_SPRING, PIN_SPRING, PIN_SPRING)
+                if dist[0] <= thick / 2 + tol + 0.05 and bottom - tol <= p[2] <= top + m.section["h"] + 0.3:
+                    supports[node] = PINNED
                     support_kind[node] = "wall"
                     break
+    for node in bearing_nodes:
+        supports[node] = PINNED
+        support_kind[node] = "wall"
     analysis = Analysis(nodes=nodes, members=members, frame_members=frame_members, supports=supports,
                         cases={c: {"node": {}, "member": []} for c in CASES}, wall_loads={}, slab_loads={},
                         warnings=warnings, excluded=[], support_kind=support_kind)
@@ -489,11 +680,15 @@ def _is_roof(slab) -> bool:
 
 
 def _slabs():
+    """Slabs that carry loads, and roofs that are one element (not made of slab parts)."""
     out = []
     for s in B._model.by_type("IfcSlab"):
         if getattr(s, "PredefinedType", None) in ("LANDING", "BASESLAB"):
             continue
         out.append(s)
+    for r in B._model.by_type("IfcRoof"):
+        if not any(rel.RelatedObjects for rel in getattr(r, "IsDecomposedBy", ()) or ()):
+            out.append(r)
     return out
 
 
@@ -617,6 +812,47 @@ def _nearest_node(an: Analysis, p: np.ndarray) -> int:
     return int(np.argmin([np.linalg.norm(np.asarray(q) - p) for q in an.nodes]))
 
 
+def _components(an: Analysis):
+    parent = list(range(len(an.nodes)))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for fm in an.frame_members:
+        parent[find(fm["i"])] = find(fm["j"])
+    return find
+
+
+def _exclude(an: Analysis, roots: set, why: str) -> None:
+    find = _components(an)
+    gone = {fm["phys"] for fm in an.frame_members if find(fm["i"]) in roots}
+    names = ", ".join(sorted({an.members[k].element.Name or an.members[k].kind for k in gone}))[:300]
+    an.warnings.append(f"{len(gone)} member(s) left out: the part {why}: {names}")
+    _keep(an, lambda fm: find(fm["i"]) not in roots, gone)
+    an.supports = {n: v for n, v in an.supports.items() if find(n) not in roots}
+
+
+def _keep(an: Analysis, keep_fm, gone: set) -> None:
+    for k in sorted(gone):
+        an.excluded.append(an.members[k].element.GlobalId)
+    old_to_new = {}
+    frame_members = []
+    for old, fm in enumerate(an.frame_members):
+        if keep_fm(fm):
+            old_to_new[old] = len(frame_members)
+            frame_members.append(fm)
+    an.frame_members = frame_members
+    for m in an.members:
+        m.subs = [(old_to_new[i], t0, t1) for i, t0, t1 in m.subs if i in old_to_new]
+    used = {fm["i"] for fm in frame_members} | {fm["j"] for fm in frame_members}
+    for case in an.cases.values():
+        case["member"] = [{**l, "member": old_to_new[l["member"]]} for l in case["member"] if l["member"] in old_to_new]
+        case["node"] = {n: v for n, v in case["node"].items() if n in used}
+
+
 def _drop_unsupported(an: Analysis) -> None:
     """Leave out connected parts with no support (they would be mechanisms), with a warning."""
     parent = list(range(len(an.nodes)))
@@ -660,14 +896,49 @@ def combinations(settings: dict) -> dict:
     return {"ULS": dict(settings["uls"]), "SLS": dict(settings["sls"])}
 
 
+def _spin_axes(an: Analysis) -> dict:
+    """Pinned supports hold their members against turning about their own axes."""
+    out = {}
+    for node, restraint in an.supports.items():
+        if all(r is True for r in restraint):
+            continue
+        axes = []
+        for fm in an.frame_members:
+            if node in (fm["i"], fm["j"]):
+                d = np.asarray(an.nodes[fm["j"]]) - np.asarray(an.nodes[fm["i"]])
+                axes.append(d / np.linalg.norm(d))
+        out[node] = axes
+    return out
+
+
+def _drop_mechanisms(an: Analysis) -> None:
+    """Solve each connected part on its own; leave out the parts that are mechanisms, with a warning."""
+    find = _components(an)
+    roots = {find(fm["i"]) for fm in an.frame_members}
+    unstable = {}
+    spin = _spin_axes(an)
+    for root in roots:
+        members = [fm for fm in an.frame_members if find(fm["i"]) == root]
+        supports = {n: v for n, v in an.supports.items() if find(n) == root}
+        try:
+            frame.solve(an.nodes, members, supports, {}, [], 2, {n: spin[n] for n in supports if n in spin})
+        except frame.Unstable as ex:
+            unstable[root] = str(ex)
+    if unstable:
+        _exclude(an, set(unstable), "is a mechanism (a beam on one pinned support, or free to swing): it needs "
+                                    "another support or a fixed connection")
+
+
 def _solve_cases(an: Analysis, stations: int) -> dict:
     out = {}
+    spin = _spin_axes(an)
     for case in CASES:
         loads = an.cases[case]
         if not loads["member"] and not loads["node"]:
             out[case] = None
             continue
-        out[case] = frame.solve(an.nodes, an.frame_members, an.supports, loads["node"], loads["member"], stations)
+        out[case] = frame.solve(an.nodes, an.frame_members, an.supports, loads["node"], loads["member"], stations,
+                                spin)
     return out
 
 
@@ -815,6 +1086,13 @@ def run_analysis(settings: dict | None = None) -> dict:
                            if an.members else "there are no columns or beams to analyse")
         return report
     try:
+        _drop_mechanisms(an)
+        report["warnings"] = list(an.warnings)
+        report["excluded"] = an.excluded
+        if not an.frame_members:
+            report["ok"] = False
+            report["error"] = "nothing left to analyse: every part is a mechanism"
+            return report
         results = _solve_cases(an, stations)
     except frame.Unstable as ex:
         report["ok"] = False
