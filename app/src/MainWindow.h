@@ -393,6 +393,8 @@ public:
     void finishCommand(const QString& kind); // "floor", "skirting" or "wall", for the selected rooms
     void shaftCommand();                     // two corners, then up to which level
     void mepCommand(const QString& kind);    // "duct", "pipe" or "cable_tray": a run of clicked points
+    void placeMepTerminalCommand();          // D242: the kind, then where it goes
+    void engineeringCalcDialog(const QString& kind); // D243-D247: "air", "water", "drainage", "panel", "structure"
     void beamSystemCommand();                // the type and spacing, then two corners
     void terrainHeightsDialog(const QVector<QPointF>& points); // clicked survey points: their heights
     void clipUnderlayCommand(bool clear); // a DXF/vector underlay clipped to a clicked rectangle (or not)
@@ -932,6 +934,12 @@ private:
     QStringList m_phaseDemolished;
     bool m_phaseColoured = false;
     void buildFinishAndMepCommands();
+    // D248: the Engineering menu (Engineering.cpp)
+    void buildEngineeringMenu();
+    void mepSystemsDialog();
+    void drainRunCommand();
+    void circuitFromSelection();
+    void engineeringSettingsDialog();
     QSlider* m_cutSlider = nullptr;
     QLabel* m_cutLabel = nullptr;
     void updateCutSliderRange();

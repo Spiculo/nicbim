@@ -313,6 +313,41 @@ private slots:
         QCOMPARE(w.undoHistoryPanel()->current(), steps);
     }
 
+    // D248: MEP and structure live in their own Engineering menu.
+    void engineeringMenuHasTheDisciplines()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.findChild<QMenu*>(QStringLiteral("engineeringMenu")));
+        for (const char* name : {"actionMepSystems", "actionPlaceMepTerminal", "actionDrainRun", "actionConnectNetwork",
+                 "actionAirflowSizing", "actionWaterSizing", "actionDrainageSizing", "actionCreateCircuit",
+                 "actionPanelSchedule", "actionAnalyseStructure", "actionShowUtilisation", "actionEngineeringSettings"})
+            QVERIFY2(action(w, name), name);
+        auto* mepMenu = w.findChild<QMenu*>(QStringLiteral("engineeringMenuMep"));
+        for (const char* name : {"actionDuct", "actionPipe", "actionCableTray"})
+            QVERIFY2(mepMenu->actions().contains(action(w, name)), name);
+        auto* structure = w.findChild<QMenu*>(QStringLiteral("engineeringMenuStructure"));
+        QVERIFY(structure->actions().contains(action(w, "actionAnalyticalModel")));
+        QVERIFY(!w.findChild<QMenu*>(QStringLiteral("modelMenuMep")));
+        // a terminal goes where it is clicked, with its ports, as one step
+        QVERIFY(w.newProject());
+        const int before = int(w.viewport()->guids().size());
+        w.runCommand(action(w, "actionPlaceMepTerminal"));
+        QVERIFY(w.pickingPoints());
+        w.pickPointAt(QPointF(2, 3), 0.01);
+        QVERIFY(!w.pickingPoints());
+        QCOMPARE(int(w.viewport()->guids().size()), before + 1);
+        // a drain run of three points: two pipes and an elbow
+        w.runCommand(action(w, "actionDrainRun"));
+        w.pickPointAt(QPointF(0, 0), 0.01);
+        w.pickPointAt(QPointF(4, 0), 0.01);
+        w.pickPointAt(QPointF(4, 3), 0.01);
+        emit w.viewport()->drawingConfirmed();
+        QCOMPARE(int(w.viewport()->guids().size()), before + 4);
+        // utilisation colours toggle on an unanalysed model without trouble
+        action(w, "actionShowUtilisation")->trigger();
+        action(w, "actionShowUtilisation")->trigger();
+    }
+
     void mepRunsContinueFromPointToPoint()
     {
         kimbim::MainWindow w(nullptr, true);
@@ -332,7 +367,7 @@ private slots:
         emit w.viewport()->drawingEnded(); // Esc cancels
         QVERIFY(!w.pickingPoints());
         QCOMPARE(w.undoHistoryPanel()->current(), 1);
-        for (const char* name : {"modelMenuMep", "modelMenuFinishes"})
+        for (const char* name : {"engineeringMenuMep", "modelMenuFinishes"})
             QVERIFY2(w.findChild<QMenu*>(QLatin1String(name)), name);
         // finishes need rooms selected; a shaft needs slabs to cut
         w.setSelection({});

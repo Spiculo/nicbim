@@ -1074,7 +1074,7 @@ private slots:
         QStringList menus;
         for (QAction* a : bar->menuBar()->actions())
             menus << a->text().remove(QLatin1Char('&'));
-        QCOMPARE(menus, QStringList({"File", "Edit", "View", "Model", "Graphics", "Versions", "Help"}));
+        QCOMPARE(menus, QStringList({"File", "Edit", "View", "Model", "Engineering", "Graphics", "Versions", "Help"}));
         // Add level and New model are in the level drop-down and the Model menu, not buttons.
         QVERIFY(!bar->findChild<QToolButton*>(QStringLiteral("addLevel")));
         QVERIFY(action(w, "actionAddLevel") && action(w, "actionNewModel"));

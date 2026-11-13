@@ -478,6 +478,7 @@ void MainWindow::buildQolTools()
     buildFinishAndMepCommands();
     buildPhaseMenu();
     groupModelMenu();
+    buildEngineeringMenu(); // D248: MEP and structure move out of Model into Engineering
 }
 
 void MainWindow::setUserOrigin(QPointF origin)
@@ -1359,7 +1360,6 @@ void MainWindow::groupModelMenu()
                 "actionOpeningSize", "actionSkylight", "actionCornerWindow", "actionCurtainWallSettings",
                 "actionGridSystem", "actionShaft", "actionBeamSystem", "actionLintels", "actionSills", "actionReveals", "actionWallHandrail"}},
         {tr("&Finishes"), "modelMenuFinishes", {"actionFloorFinish", "actionSkirting", "actionWallFinish"}},
-        {tr("&MEP"), "modelMenuMep", {"actionDuct", "actionPipe", "actionCableTray"}},
         {tr("&Massing and form"), "modelMenuMassing", {"actionMassingBox", "actionPushPull", "actionVisualScripts", "actionVisualGraph"}},
         {tr("&Site"), "modelMenuSite", {"actionTerrain", "actionTerrainPoints", "actionBuildingPad", "actionKerb", "actionRoadMarking", "actionPlantingArea"}},
         {tr("&Annotation and 2D"), "modelMenuAnnotation",
@@ -1371,7 +1371,7 @@ void MainWindow::groupModelMenu()
                 "actionLoadModelFromLibrary", "actionUpdateLibraryObjects", "actionCustomiseObjectCopy"}},
         {tr("&Links"), "modelMenuLinks", {"actionLinks", "actionMeshLink"}},
         {tr("A&nalysis and checking"), "modelMenuAnalysis",
-            {"actionCheckModel", "actionIssues", "actionEnergyReport", "actionAnalyticalModel", "actionCostEstimate",
+            {"actionCheckModel", "actionIssues", "actionEnergyReport", "actionCostEstimate",
                 "actionConstructionSequence", "actionAIVisualiser"}},
     };
     model->addSeparator();

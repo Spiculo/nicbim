@@ -3411,6 +3411,8 @@ License: GPL-3.0-or-later</source>
         <location filename="../src/MainWindow.cpp" line="8533"/>
         <location filename="../src/MainWindow.cpp" line="8602"/>
         <location filename="../src/MainWindow.cpp" line="9804"/>
+        <location filename="../src/Engineering.cpp" line="306"/>
+        <location filename="../src/Engineering.cpp" line="524"/>
         <source>Name:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4739,8 +4741,9 @@ License: GPL-3.0-or-later</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="3086"/>
-        <location filename="../src/QolTools.cpp" line="495"/>
-        <location filename="../src/QolTools.cpp" line="1346"/>
+        <location filename="../src/QolTools.cpp" line="496"/>
+        <location filename="../src/QolTools.cpp" line="1347"/>
+        <location filename="../src/Engineering.cpp" line="155"/>
         <source>&amp;Model</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5350,238 +5353,238 @@ License: GPL-3.0-or-later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="487"/>
+        <location filename="../src/QolTools.cpp" line="488"/>
         <source>User origin reset to the project origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="488"/>
+        <location filename="../src/QolTools.cpp" line="489"/>
         <source>User origin at %1, %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="506"/>
+        <location filename="../src/QolTools.cpp" line="507"/>
         <source>&amp;Floor finish...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="506"/>
+        <location filename="../src/QolTools.cpp" line="507"/>
         <source>A floor finish over each selected room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="508"/>
+        <location filename="../src/QolTools.cpp" line="509"/>
         <source>S&amp;kirting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="508"/>
+        <location filename="../src/QolTools.cpp" line="509"/>
         <source>A skirting just inside the walls of each selected room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="510"/>
+        <location filename="../src/QolTools.cpp" line="511"/>
         <source>Wall &amp;finish...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="510"/>
+        <location filename="../src/QolTools.cpp" line="511"/>
         <source>Plaster or tiles on the walls of each selected room</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="512"/>
+        <location filename="../src/QolTools.cpp" line="513"/>
         <source>S&amp;haft...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="512"/>
+        <location filename="../src/QolTools.cpp" line="513"/>
         <source>Cut a rectangle through every slab from this level up to another</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="514"/>
+        <location filename="../src/QolTools.cpp" line="515"/>
         <source>&amp;Duct...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="514"/>
+        <location filename="../src/QolTools.cpp" line="515"/>
         <source>Draw a straight duct run: click its points, Esc ends</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="516"/>
+        <location filename="../src/QolTools.cpp" line="517"/>
         <source>&amp;Pipe...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="516"/>
+        <location filename="../src/QolTools.cpp" line="517"/>
         <source>Draw a straight pipe run: click its points, Esc ends</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="518"/>
+        <location filename="../src/QolTools.cpp" line="519"/>
         <source>Cable &amp;tray...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="518"/>
+        <location filename="../src/QolTools.cpp" line="519"/>
         <source>Draw a straight cable-tray run: click its points, Esc ends</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="520"/>
+        <location filename="../src/QolTools.cpp" line="521"/>
         <source>&amp;Kerb...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="520"/>
+        <location filename="../src/QolTools.cpp" line="521"/>
         <source>A kerb along a path: click its points, Enter finishes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="521"/>
+        <location filename="../src/QolTools.cpp" line="522"/>
         <source>Kerb: click where it starts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="521"/>
+        <location filename="../src/QolTools.cpp" line="522"/>
         <source>Kerb: click the next point; Enter finishes, Esc cancels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="530"/>
-        <location filename="../src/QolTools.cpp" line="533"/>
+        <location filename="../src/QolTools.cpp" line="531"/>
+        <location filename="../src/QolTools.cpp" line="534"/>
         <source>Kerb</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="538"/>
+        <location filename="../src/QolTools.cpp" line="539"/>
         <source>&amp;Road marking...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="538"/>
+        <location filename="../src/QolTools.cpp" line="539"/>
         <source>Painted lines along a path: solid, dashed or double</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="541"/>
+        <location filename="../src/QolTools.cpp" line="542"/>
         <source>Dashed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="541"/>
+        <location filename="../src/QolTools.cpp" line="542"/>
         <source>Solid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="541"/>
+        <location filename="../src/QolTools.cpp" line="542"/>
         <source>Double</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="543"/>
-        <location filename="../src/QolTools.cpp" line="556"/>
-        <location filename="../src/QolTools.cpp" line="559"/>
+        <location filename="../src/QolTools.cpp" line="544"/>
+        <location filename="../src/QolTools.cpp" line="557"/>
+        <location filename="../src/QolTools.cpp" line="560"/>
         <source>Road marking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="543"/>
+        <location filename="../src/QolTools.cpp" line="544"/>
         <source>Style:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="548"/>
+        <location filename="../src/QolTools.cpp" line="549"/>
         <source>Road marking: click where it starts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="548"/>
+        <location filename="../src/QolTools.cpp" line="549"/>
         <source>Road marking: click the next point; Enter finishes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="564"/>
+        <location filename="../src/QolTools.cpp" line="565"/>
         <source>&amp;Planting area...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="564"/>
+        <location filename="../src/QolTools.cpp" line="565"/>
         <source>A planting bed: click its outline, Enter closes it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="568"/>
-        <location filename="../src/QolTools.cpp" line="581"/>
-        <location filename="../src/QolTools.cpp" line="584"/>
+        <location filename="../src/QolTools.cpp" line="569"/>
+        <location filename="../src/QolTools.cpp" line="582"/>
+        <location filename="../src/QolTools.cpp" line="585"/>
         <source>Planting area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="568"/>
+        <location filename="../src/QolTools.cpp" line="569"/>
         <source>Planting (species or mix):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="573"/>
+        <location filename="../src/QolTools.cpp" line="574"/>
         <source>Planting area: click the first corner</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="573"/>
+        <location filename="../src/QolTools.cpp" line="574"/>
         <source>Planting area: click the next corner; Enter closes it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="589"/>
+        <location filename="../src/QolTools.cpp" line="590"/>
         <source>Terrain from &amp;clicked points...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="590"/>
+        <location filename="../src/QolTools.cpp" line="591"/>
         <source>Click survey points in the view, then type each one&apos;s height</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="591"/>
+        <location filename="../src/QolTools.cpp" line="592"/>
         <source>Terrain: click the first survey point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="592"/>
+        <location filename="../src/QolTools.cpp" line="593"/>
         <source>Terrain: click the next survey point; Enter when done (at least 3)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="595"/>
+        <location filename="../src/QolTools.cpp" line="596"/>
         <source>&amp;Handrail on wall...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="595"/>
+        <location filename="../src/QolTools.cpp" line="596"/>
         <source>A handrail fixed to a face of each selected wall</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="603"/>
+        <location filename="../src/QolTools.cpp" line="604"/>
         <source>Left of the wall&apos;s direction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="603"/>
+        <location filename="../src/QolTools.cpp" line="604"/>
         <source>Right of the wall&apos;s direction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="604"/>
-        <location filename="../src/QolTools.cpp" line="616"/>
+        <location filename="../src/QolTools.cpp" line="605"/>
+        <location filename="../src/QolTools.cpp" line="617"/>
         <source>Handrail on wall</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="620"/>
+        <location filename="../src/QolTools.cpp" line="621"/>
         <source>%n handrail(s) added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -5589,142 +5592,142 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="624"/>
+        <location filename="../src/QolTools.cpp" line="625"/>
         <source>Select 2D elements first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="636"/>
+        <location filename="../src/QolTools.cpp" line="637"/>
         <source>There is no detail drawing yet: draw one with the Detail tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="642"/>
+        <location filename="../src/QolTools.cpp" line="643"/>
         <source>Show only on a detail</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="642"/>
+        <location filename="../src/QolTools.cpp" line="643"/>
         <source>Detail:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="652"/>
+        <location filename="../src/QolTools.cpp" line="653"/>
         <source>Detail 2D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="656"/>
+        <location filename="../src/QolTools.cpp" line="657"/>
         <source>Shown only on the detail drawing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="656"/>
+        <location filename="../src/QolTools.cpp" line="657"/>
         <source>Shown on every drawing of the level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="658"/>
+        <location filename="../src/QolTools.cpp" line="659"/>
         <source>Show only on a &amp;detail...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="659"/>
+        <location filename="../src/QolTools.cpp" line="660"/>
         <source>The selected 2D appears on one detail drawing and not on the level&apos;s plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="660"/>
+        <location filename="../src/QolTools.cpp" line="661"/>
         <source>Show on every drawing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="660"/>
+        <location filename="../src/QolTools.cpp" line="661"/>
         <source>The selected 2D appears on every drawing of its level again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="662"/>
+        <location filename="../src/QolTools.cpp" line="663"/>
         <source>Visual script &amp;graph...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="663"/>
+        <location filename="../src/QolTools.cpp" line="664"/>
         <source>Build a visual script by wiring nodes: each node&apos;s result feeds the inputs it is wired to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="665"/>
+        <location filename="../src/QolTools.cpp" line="666"/>
         <source>&amp;Edit model in place</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="666"/>
+        <location filename="../src/QolTools.cpp" line="667"/>
         <source>Edit the selected placed model where it is: the changes go to the model and every placement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="668"/>
+        <location filename="../src/QolTools.cpp" line="669"/>
         <source>&amp;Finish editing in place</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="668"/>
+        <location filename="../src/QolTools.cpp" line="669"/>
         <source>Stop sending edits back to the model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="670"/>
+        <location filename="../src/QolTools.cpp" line="671"/>
         <source>Save model to &amp;library...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="670"/>
+        <location filename="../src/QolTools.cpp" line="671"/>
         <source>Save a model in the office library for other projects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="672"/>
+        <location filename="../src/QolTools.cpp" line="673"/>
         <source>Load model from l&amp;ibrary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="672"/>
+        <location filename="../src/QolTools.cpp" line="673"/>
         <source>Bring a model saved in the library into this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="674"/>
+        <location filename="../src/QolTools.cpp" line="675"/>
         <source>&amp;Area label...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="674"/>
+        <location filename="../src/QolTools.cpp" line="675"/>
         <source>Click an outline: its area goes in a label at its middle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="675"/>
+        <location filename="../src/QolTools.cpp" line="676"/>
         <source>Area label: click the first corner</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="675"/>
+        <location filename="../src/QolTools.cpp" line="676"/>
         <source>Area label: click the next corner; Enter places the label</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="686"/>
+        <location filename="../src/QolTools.cpp" line="687"/>
         <source>Area label: the outline has no area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="690"/>
+        <location filename="../src/QolTools.cpp" line="691"/>
         <source>Area label</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="702"/>
+        <location filename="../src/QolTools.cpp" line="703"/>
         <source>%1: %n element(s) added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -5732,62 +5735,62 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="704"/>
+        <location filename="../src/QolTools.cpp" line="705"/>
         <source>&amp;Sills</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="704"/>
+        <location filename="../src/QolTools.cpp" line="705"/>
         <source>A sill under each selected window, door or wall opening</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="705"/>
+        <location filename="../src/QolTools.cpp" line="706"/>
         <source>Sills</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="706"/>
+        <location filename="../src/QolTools.cpp" line="707"/>
         <source>&amp;Reveals</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="706"/>
+        <location filename="../src/QolTools.cpp" line="707"/>
         <source>Reveal linings on the jambs and head of each selected opening</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="707"/>
+        <location filename="../src/QolTools.cpp" line="708"/>
         <source>Reveals</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="708"/>
+        <location filename="../src/QolTools.cpp" line="709"/>
         <source>&amp;Beam system...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="708"/>
+        <location filename="../src/QolTools.cpp" line="709"/>
         <source>Joists or rafters at a spacing across an area: click two corners</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="710"/>
+        <location filename="../src/QolTools.cpp" line="711"/>
         <source>&amp;Lintels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="710"/>
+        <location filename="../src/QolTools.cpp" line="711"/>
         <source>A lintel over each selected door, window or wall opening</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="715"/>
+        <location filename="../src/QolTools.cpp" line="716"/>
         <source>Lintels</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="719"/>
+        <location filename="../src/QolTools.cpp" line="720"/>
         <source>%n lintel(s) added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -5795,27 +5798,27 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="721"/>
+        <location filename="../src/QolTools.cpp" line="722"/>
         <source>&amp;Interior elevations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="722"/>
+        <location filename="../src/QolTools.cpp" line="723"/>
         <source>An elevation of each wall of the selected room, seen from inside it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="724"/>
+        <location filename="../src/QolTools.cpp" line="725"/>
         <source>Select one room first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="729"/>
+        <location filename="../src/QolTools.cpp" line="730"/>
         <source>Interior elevations</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="733"/>
+        <location filename="../src/QolTools.cpp" line="734"/>
         <source>%n interior elevation(s) added to the Drawings panel</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -5823,222 +5826,222 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="750"/>
+        <location filename="../src/QolTools.cpp" line="751"/>
         <source>No underlay is clipped</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="750"/>
+        <location filename="../src/QolTools.cpp" line="751"/>
         <source>No DXF, DWG or vector-PDF underlay to clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="756"/>
+        <location filename="../src/QolTools.cpp" line="757"/>
         <source>Clear underlay clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="756"/>
-        <location filename="../src/QolTools.cpp" line="767"/>
+        <location filename="../src/QolTools.cpp" line="757"/>
+        <location filename="../src/QolTools.cpp" line="768"/>
         <source>Clip underlay</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="771"/>
+        <location filename="../src/QolTools.cpp" line="772"/>
         <source>Underlay %1 shown whole again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="772"/>
+        <location filename="../src/QolTools.cpp" line="773"/>
         <source>Underlay %1 clipped</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="778"/>
+        <location filename="../src/QolTools.cpp" line="779"/>
         <source>Clip underlay: click a corner of what to keep</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="778"/>
+        <location filename="../src/QolTools.cpp" line="779"/>
         <source>Clip underlay: click the opposite corner (Esc cancels)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="821"/>
+        <location filename="../src/QolTools.cpp" line="822"/>
         <source>P&amp;hases</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="837"/>
+        <location filename="../src/QolTools.cpp" line="838"/>
         <source>Show all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="838"/>
+        <location filename="../src/QolTools.cpp" line="839"/>
         <source>Show complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="838"/>
+        <location filename="../src/QolTools.cpp" line="839"/>
         <source>Show new</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="839"/>
+        <location filename="../src/QolTools.cpp" line="840"/>
         <source>Show previous and demolished</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="849"/>
+        <location filename="../src/QolTools.cpp" line="850"/>
         <source>Assign selection to a phase...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="852"/>
+        <location filename="../src/QolTools.cpp" line="853"/>
         <source>Edit phases...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="860"/>
-        <location filename="../src/QolTools.cpp" line="871"/>
+        <location filename="../src/QolTools.cpp" line="861"/>
+        <location filename="../src/QolTools.cpp" line="872"/>
         <source>Edit phases</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="861"/>
+        <location filename="../src/QolTools.cpp" line="862"/>
         <source>One phase per line, oldest first:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="882"/>
+        <location filename="../src/QolTools.cpp" line="883"/>
         <source>Phases</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="887"/>
+        <location filename="../src/QolTools.cpp" line="888"/>
         <source>Showing phase %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="894"/>
+        <location filename="../src/QolTools.cpp" line="895"/>
         <source>Select elements first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="913"/>
+        <location filename="../src/QolTools.cpp" line="914"/>
         <source>Created in:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="914"/>
+        <location filename="../src/QolTools.cpp" line="915"/>
         <source>Demolished in:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="941"/>
+        <location filename="../src/QolTools.cpp" line="942"/>
         <source>Finished editing the model in place</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="951"/>
+        <location filename="../src/QolTools.cpp" line="952"/>
         <source>Select an element of a placed model first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="956"/>
+        <location filename="../src/QolTools.cpp" line="957"/>
         <source>Edit in place</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="959"/>
+        <location filename="../src/QolTools.cpp" line="960"/>
         <source>Editing model %1 in place: its changes go to every placement. Model &gt; Finish editing in place when done</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="984"/>
-        <location filename="../src/QolTools.cpp" line="994"/>
+        <location filename="../src/QolTools.cpp" line="985"/>
+        <location filename="../src/QolTools.cpp" line="995"/>
         <source>Save model to library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="989"/>
+        <location filename="../src/QolTools.cpp" line="990"/>
         <source>Library folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="997"/>
+        <location filename="../src/QolTools.cpp" line="998"/>
         <source>Model saved to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1012"/>
+        <location filename="../src/QolTools.cpp" line="1013"/>
         <source>Another file...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1014"/>
-        <location filename="../src/QolTools.cpp" line="1023"/>
-        <location filename="../src/QolTools.cpp" line="1029"/>
+        <location filename="../src/QolTools.cpp" line="1015"/>
+        <location filename="../src/QolTools.cpp" line="1024"/>
+        <location filename="../src/QolTools.cpp" line="1030"/>
         <source>Load model from library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1023"/>
+        <location filename="../src/QolTools.cpp" line="1024"/>
         <source>Library models (*.kimmodel.ifc)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1033"/>
+        <location filename="../src/QolTools.cpp" line="1034"/>
         <source>Model %1 loaded: place it with the Place model tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1048"/>
+        <location filename="../src/QolTools.cpp" line="1049"/>
         <source>New script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1076"/>
+        <location filename="../src/QolTools.cpp" line="1077"/>
         <source>(new script)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1078"/>
+        <location filename="../src/QolTools.cpp" line="1079"/>
         <source>Visual script graph</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1078"/>
+        <location filename="../src/QolTools.cpp" line="1079"/>
         <source>Script:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1096"/>
+        <location filename="../src/QolTools.cpp" line="1097"/>
         <source>Terrain heights</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1098"/>
+        <location filename="../src/QolTools.cpp" line="1099"/>
         <source>The height of each survey point above the project zero:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1100"/>
+        <location filename="../src/QolTools.cpp" line="1101"/>
         <source>X</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1100"/>
+        <location filename="../src/QolTools.cpp" line="1101"/>
         <source>Y</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1100"/>
+        <location filename="../src/QolTools.cpp" line="1101"/>
         <source>Height</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="1136"/>
+        <location filename="../src/QolTools.cpp" line="1137"/>
         <source>Terrain made from %n point(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -6046,44 +6049,44 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1147"/>
+        <location filename="../src/QolTools.cpp" line="1148"/>
         <source>There is no beam type yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1154"/>
-        <location filename="../src/QolTools.cpp" line="1187"/>
-        <location filename="../src/QolTools.cpp" line="1190"/>
+        <location filename="../src/QolTools.cpp" line="1155"/>
+        <location filename="../src/QolTools.cpp" line="1188"/>
+        <location filename="../src/QolTools.cpp" line="1191"/>
         <source>Beam system</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1164"/>
+        <location filename="../src/QolTools.cpp" line="1165"/>
         <source>Beam type:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1165"/>
+        <location filename="../src/QolTools.cpp" line="1166"/>
         <source>Spacing:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1166"/>
+        <location filename="../src/QolTools.cpp" line="1167"/>
         <source>Direction from +X:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1178"/>
+        <location filename="../src/QolTools.cpp" line="1179"/>
         <source>Beam system: click a corner of the area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1178"/>
+        <location filename="../src/QolTools.cpp" line="1179"/>
         <source>Beam system: click the opposite corner (Esc cancels)</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="1193"/>
+        <location filename="../src/QolTools.cpp" line="1194"/>
         <source>%n beam(s) added</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -6091,23 +6094,23 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1200"/>
+        <location filename="../src/QolTools.cpp" line="1201"/>
         <source>Select one or more rooms first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1206"/>
-        <location filename="../src/QolTools.cpp" line="1222"/>
+        <location filename="../src/QolTools.cpp" line="1207"/>
+        <location filename="../src/QolTools.cpp" line="1223"/>
         <source>Finish</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1212"/>
+        <location filename="../src/QolTools.cpp" line="1213"/>
         <source>Skirting</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="1227"/>
+        <location filename="../src/QolTools.cpp" line="1228"/>
         <source>%n finish(es) made; some of the selection are not rooms</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -6115,7 +6118,7 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="1229"/>
+        <location filename="../src/QolTools.cpp" line="1230"/>
         <source>%n finish(es) made</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -6123,34 +6126,34 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1234"/>
+        <location filename="../src/QolTools.cpp" line="1235"/>
         <source>Shaft: click a corner</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1234"/>
+        <location filename="../src/QolTools.cpp" line="1235"/>
         <source>Shaft: click the opposite corner (Esc cancels)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1238"/>
+        <location filename="../src/QolTools.cpp" line="1239"/>
         <source>Shaft: the corners must differ in X and Y</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1256"/>
-        <location filename="../src/QolTools.cpp" line="1266"/>
-        <location filename="../src/QolTools.cpp" line="1269"/>
+        <location filename="../src/QolTools.cpp" line="1257"/>
+        <location filename="../src/QolTools.cpp" line="1267"/>
+        <location filename="../src/QolTools.cpp" line="1270"/>
         <source>Shaft</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1256"/>
+        <location filename="../src/QolTools.cpp" line="1257"/>
         <source>Up to level:</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/QolTools.cpp" line="1272"/>
+        <location filename="../src/QolTools.cpp" line="1273"/>
         <source>Shaft cut through %n slab(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -6158,73 +6161,996 @@ License: GPL-3.0-or-later</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1278"/>
+        <location filename="../src/QolTools.cpp" line="1279"/>
+        <location filename="../src/Engineering.cpp" line="568"/>
         <source>Duct</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1278"/>
+        <location filename="../src/QolTools.cpp" line="1279"/>
+        <location filename="../src/Engineering.cpp" line="576"/>
+        <location filename="../src/Engineering.cpp" line="584"/>
         <source>Pipe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1278"/>
+        <location filename="../src/QolTools.cpp" line="1279"/>
         <source>Cable tray</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1299"/>
+        <location filename="../src/QolTools.cpp" line="1300"/>
         <source>%1 system</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1300"/>
+        <location filename="../src/QolTools.cpp" line="1301"/>
+        <location filename="../src/Engineering.cpp" line="463"/>
         <source>Diameter:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1303"/>
+        <location filename="../src/QolTools.cpp" line="1304"/>
         <source>Centreline above the level:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1304"/>
+        <location filename="../src/QolTools.cpp" line="1305"/>
+        <location filename="../src/Engineering.cpp" line="412"/>
+        <location filename="../src/Engineering.cpp" line="466"/>
+        <location filename="../src/Engineering.cpp" line="626"/>
         <source>System:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1317"/>
+        <location filename="../src/QolTools.cpp" line="1318"/>
         <source>Click where the run starts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1317"/>
+        <location filename="../src/QolTools.cpp" line="1318"/>
         <source>Click the next point of the run; Enter finishes, Esc cancels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1327"/>
+        <location filename="../src/QolTools.cpp" line="1328"/>
         <source>MEP run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1333"/>
+        <location filename="../src/QolTools.cpp" line="1334"/>
         <source>%1: %2 segment(s), %3 fitting(s) in %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1356"/>
+        <location filename="../src/QolTools.cpp" line="1357"/>
         <source>&amp;Walls, slabs and openings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1361"/>
+        <location filename="../src/QolTools.cpp" line="1362"/>
         <source>&amp;Finishes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="1362"/>
+        <location filename="../src/Engineering.cpp" line="45"/>
+        <source>Supply air</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="45"/>
+        <source>Return air</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="46"/>
+        <source>Exhaust air</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="46"/>
+        <source>Outside air</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="47"/>
+        <source>Domestic cold water</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="48"/>
+        <source>Domestic hot water</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="49"/>
+        <source>Sanitary drainage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="49"/>
+        <source>Storm water</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="50"/>
+        <source>Vent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="50"/>
+        <source>Data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="51"/>
+        <source>Supply diffuser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="51"/>
+        <source>Return grille</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="52"/>
+        <source>Exhaust valve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="52"/>
+        <source>Air handling unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="53"/>
+        <source>Fan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="53"/>
+        <source>WC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="54"/>
+        <source>Wash basin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="54"/>
+        <source>Kitchen sink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="55"/>
+        <source>Shower</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="55"/>
+        <source>Bath</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="56"/>
+        <source>Urinal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="56"/>
+        <source>Washing machine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="57"/>
+        <source>Dishwasher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="57"/>
+        <source>Floor drain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="58"/>
+        <source>Roof drain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="58"/>
+        <source>Drain outlet (to sewer)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="59"/>
+        <source>Water main / meter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="59"/>
+        <source>Water heater</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="60"/>
+        <source>Pump</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="60"/>
+        <source>Distribution board</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="61"/>
+        <source>Socket outlet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="61"/>
+        <source>Light fixture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="62"/>
+        <source>Switch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="62"/>
+        <source>Electric appliance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="63"/>
+        <source>ok</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="63"/>
+        <source>pass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="64"/>
+        <source>warn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="64"/>
+        <source>fail</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="65"/>
+        <source>no flow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="65"/>
+        <source>low pressure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="66"/>
+        <source>largest size exceeded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="67"/>
+        <source>largest stack exceeded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="68"/>
+        <source>falls the wrong way</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="69"/>
+        <source>voltage drop over the limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="70"/>
+        <source>load above the largest breaker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="71"/>
+        <source>main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="71"/>
+        <source>branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="72"/>
+        <source>terminal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="72"/>
+        <source>power</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="73"/>
+        <source>lighting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="73"/>
+        <source>column</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="74"/>
+        <source>beam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="74"/>
+        <source>member</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="75"/>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="75"/>
+        <source>stack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="159"/>
+        <source>&amp;Engineering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="183"/>
         <source>&amp;MEP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="185"/>
+        <source>MEP &amp;systems...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="186"/>
+        <source>Distribution systems: their kind, elements and open ports; new systems and assigning the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="188"/>
+        <source>Place &amp;terminal or equipment...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="189"/>
+        <source>Diffusers, grilles, air handlers, fixtures, drains, boards, sockets, lights... with their ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="193"/>
+        <source>&amp;Drain run...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="193"/>
+        <source>A drain pipe through clicked points falling at a slope</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="195"/>
+        <source>&amp;Connect touching ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="196"/>
+        <source>Join every pair of free MEP ports that touch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="199"/>
+        <source>Connect touching ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/Engineering.cpp" line="201"/>
+        <location filename="../src/Engineering.cpp" line="335"/>
+        <source>%n connection(s) made</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="205"/>
+        <source>&amp;HVAC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="207"/>
+        <source>&amp;Airflow and duct sizing...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="208"/>
+        <source>Room airflows, duct sizes by equal friction and velocity, pressure drop and the fan duty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="210"/>
+        <source>&amp;Plumbing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="212"/>
+        <source>&amp;Water supply sizing...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="213"/>
+        <source>Peak flows, pipe sizes and the pressure left at each fixture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="215"/>
+        <source>&amp;Drainage sizing...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="216"/>
+        <source>Sanitary and storm flows, pipe and stack sizes, slope checks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="218"/>
+        <source>E&amp;lectrical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="220"/>
+        <source>&amp;Circuit from selection...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="221"/>
+        <source>A circuit from a distribution board to the selected devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="222"/>
+        <source>&amp;Panel schedule...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="223"/>
+        <source>A board&apos;s circuits with breakers, cables, voltage drop and phase loads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="225"/>
+        <source>&amp;Structure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="228"/>
+        <source>&amp;Analyse structure...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="229"/>
+        <source>Loads from the model, a frame analysis and member checks (utilisation and deflection)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="231"/>
+        <source>Show &amp;utilisation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="232"/>
+        <source>Colour the analysed members green, amber or red by their utilisation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="245"/>
+        <source>No structural results yet: run Analyse structure first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/Engineering.cpp" line="246"/>
+        <source>%n member(s) coloured by utilisation</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="250"/>
+        <source>Engineering &amp;settings...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="251"/>
+        <source>Codes, limits and tables behind the MEP and structural calculations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="258"/>
+        <location filename="../src/Engineering.cpp" line="322"/>
+        <location filename="../src/Engineering.cpp" line="325"/>
+        <location filename="../src/Engineering.cpp" line="332"/>
+        <location filename="../src/Engineering.cpp" line="342"/>
+        <location filename="../src/Engineering.cpp" line="366"/>
+        <source>MEP systems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="264"/>
+        <source>System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="264"/>
+        <source>Open ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="298"/>
+        <source>New system...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="300"/>
+        <location filename="../src/Engineering.cpp" line="316"/>
+        <source>New system</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="322"/>
+        <source>Select a system here and elements in the model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="329"/>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="337"/>
+        <source>Check network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="346"/>
+        <source>The network is connected from its source to every element</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="354"/>
+        <source>Select elements</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="388"/>
+        <location filename="../src/Engineering.cpp" line="432"/>
+        <source>Place terminal or equipment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="413"/>
+        <source>Base above the level:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="426"/>
+        <source>Click where it goes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="433"/>
+        <source>Place terminal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="445"/>
+        <location filename="../src/Engineering.cpp" line="488"/>
+        <location filename="../src/Engineering.cpp" line="489"/>
+        <source>Drain run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="464"/>
+        <source>Start height above the level:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="465"/>
+        <source>Slope:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="478"/>
+        <source>Click where the drain starts (its high end)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="479"/>
+        <source>Click the next point downhill; Enter finishes, Esc cancels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="500"/>
+        <location filename="../src/Engineering.cpp" line="502"/>
+        <location filename="../src/Engineering.cpp" line="507"/>
+        <location filename="../src/Engineering.cpp" line="540"/>
+        <source>Circuit from selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="500"/>
+        <source>Place a distribution board first (MEP &gt; Place terminal or equipment)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="502"/>
+        <source>Select the sockets, lights or appliances the circuit feeds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="515"/>
+        <source>Balance automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="518"/>
+        <source>Three-phase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="520"/>
+        <source>From the devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="521"/>
+        <source>Power</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="522"/>
+        <source>Lighting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="523"/>
+        <location filename="../src/Engineering.cpp" line="621"/>
+        <source>Board:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="525"/>
+        <source>Phase:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="542"/>
+        <source>Circuit %1 made</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="550"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="564"/>
+        <source>Airflow and duct sizing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="568"/>
+        <location filename="../src/Engineering.cpp" line="576"/>
+        <source>Role</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="568"/>
+        <location filename="../src/Engineering.cpp" line="584"/>
+        <source>Flow L/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="569"/>
+        <location filename="../src/Engineering.cpp" line="577"/>
+        <source>Velocity m/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="569"/>
+        <source>Pa/m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="569"/>
+        <location filename="../src/Engineering.cpp" line="578"/>
+        <source>Δp Pa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="572"/>
+        <source>Water supply sizing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="576"/>
+        <source>LU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="577"/>
+        <source>Peak L/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="580"/>
+        <source>Drainage sizing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="584"/>
+        <source>DU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="585"/>
+        <source>Slope %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="589"/>
+        <source>Capacity L/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="591"/>
+        <source>Panel schedule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="594"/>
+        <source>Circuit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="599"/>
+        <source>Devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="599"/>
+        <source>Demand VA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="599"/>
+        <source>Ib A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="600"/>
+        <source>Breaker A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="600"/>
+        <source>Cable mm²</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="600"/>
+        <source>Length m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="601"/>
+        <source>ΔU %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="603"/>
+        <source>Structural analysis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="606"/>
+        <source>Member</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="606"/>
+        <source>Material</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="607"/>
+        <source>Utilisation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="607"/>
+        <source>Governing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="608"/>
+        <source>N kN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="608"/>
+        <source>My kNm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="608"/>
+        <source>Deflection mm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="609"/>
+        <source>Limit mm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="635"/>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="656"/>
+        <source>Save results to the model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="657"/>
+        <source>Apply breakers, cables and phases</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="658"/>
+        <source>Apply sizes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="659"/>
+        <source>Select failing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="671"/>
+        <source>There is no distribution board</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="672"/>
+        <source>There is no system of this kind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="710"/>
+        <source>System flow %1 L/s; the fan must give %2 Pa at the critical terminal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="714"/>
+        <source>Peak flow %1 L/s; %2 kPa left at the critical fixture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="718"/>
+        <source>%1 L/s at the outlet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="721"/>
+        <source>Demand %1 VA (L1 %2, L2 %3, L3 %4); main breaker %5 A; imbalance %6 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="728"/>
+        <source>Highest utilisation %1: %2 pass, %3 warn, %4 fail. Loads %5 kN = reactions %6 kN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="741"/>
+        <source>Support at %1, %2 (%3): Fz %4 kN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="747"/>
+        <source>Wall %1: %2 kN/m (ULS)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="750"/>
+        <source>Method: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="780"/>
+        <source>MEP network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="780"/>
+        <source>HVAC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="781"/>
+        <source>Water supply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="781"/>
+        <source>Drainage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="782"/>
+        <source>Electrical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="782"/>
+        <source>Structure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="784"/>
+        <location filename="../src/Engineering.cpp" line="850"/>
+        <location filename="../src/Engineering.cpp" line="863"/>
+        <source>Engineering settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="794"/>
+        <source>Setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="794"/>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="797"/>
+        <source>Numbers, text, or a JSON table for new entries (for example a material). Defaults follow EN 16798-1, EN 806-3/DIN 1988-300, EN 12056-2, IEC 60364 and the Eurocodes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="804"/>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="805"/>
+        <source>Reset to defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Engineering.cpp" line="850"/>
+        <source>%1 must be a number</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6357,7 +7283,7 @@ License: GPL-3.0-or-later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QolTools.cpp" line="604"/>
+        <location filename="../src/QolTools.cpp" line="605"/>
         <source>Face:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6646,6 +7572,7 @@ License: GPL-3.0-or-later</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="3477"/>
         <location filename="../src/MainWindow.cpp" line="3534"/>
+        <location filename="../src/Engineering.cpp" line="595"/>
         <source>Phase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6667,6 +7594,7 @@ License: GPL-3.0-or-later</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="3477"/>
         <location filename="../src/MainWindow.cpp" line="8712"/>
+        <location filename="../src/Engineering.cpp" line="264"/>
         <source>Elements</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6686,6 +7614,7 @@ License: GPL-3.0-or-later</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="3485"/>
+        <location filename="../src/Engineering.cpp" line="320"/>
         <source>Assign selection</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6716,8 +7645,8 @@ License: GPL-3.0-or-later</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="3564"/>
-        <location filename="../src/QolTools.cpp" line="904"/>
-        <location filename="../src/QolTools.cpp" line="928"/>
+        <location filename="../src/QolTools.cpp" line="905"/>
+        <location filename="../src/QolTools.cpp" line="929"/>
         <source>Assign phase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7111,6 +8040,7 @@ License: GPL-3.0-or-later</source>
         <location filename="../src/MainWindow.cpp" line="8418"/>
         <location filename="../src/MainWindow.cpp" line="9063"/>
         <location filename="../src/MainWindow.cpp" line="9666"/>
+        <location filename="../src/Engineering.cpp" line="361"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8162,6 +9092,9 @@ Large models can take a few minutes.</source>
         <location filename="../src/MainWindow.cpp" line="9226"/>
         <location filename="../src/MainWindow.cpp" line="9670"/>
         <location filename="../src/MainWindow.cpp" line="11571"/>
+        <location filename="../src/Engineering.cpp" line="371"/>
+        <location filename="../src/Engineering.cpp" line="660"/>
+        <location filename="../src/Engineering.cpp" line="806"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8382,7 +9315,7 @@ Large models can take a few minutes.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="4856"/>
-        <location filename="../src/QolTools.cpp" line="972"/>
+        <location filename="../src/QolTools.cpp" line="973"/>
         <source>There are no models yet: use New model... next to the levels</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8425,7 +9358,7 @@ Large models can take a few minutes.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="4958"/>
-        <location filename="../src/QolTools.cpp" line="597"/>
+        <location filename="../src/QolTools.cpp" line="598"/>
         <source>Select one or more walls first</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8445,7 +9378,7 @@ Large models can take a few minutes.</source>
         <location filename="../src/MainWindow.cpp" line="7633"/>
         <location filename="../src/Underlays.cpp" line="86"/>
         <location filename="../src/Underlays.cpp" line="100"/>
-        <location filename="../src/QolTools.cpp" line="1300"/>
+        <location filename="../src/QolTools.cpp" line="1301"/>
         <location filename="../src/QolTools.cpp" line="1772"/>
         <location filename="../src/QolTools.cpp" line="1817"/>
         <source>Width:</source>
@@ -8456,8 +9389,8 @@ Large models can take a few minutes.</source>
         <location filename="../src/MainWindow.cpp" line="4962"/>
         <location filename="../src/MainWindow.cpp" line="4988"/>
         <location filename="../src/MainWindow.cpp" line="9447"/>
-        <location filename="../src/QolTools.cpp" line="1212"/>
-        <location filename="../src/QolTools.cpp" line="1302"/>
+        <location filename="../src/QolTools.cpp" line="1213"/>
+        <location filename="../src/QolTools.cpp" line="1303"/>
         <location filename="../src/QolTools.cpp" line="1818"/>
         <source>Height:</source>
         <translation type="unfinished"></translation>
@@ -8751,6 +9684,7 @@ Large models can take a few minutes.</source>
         <location filename="../src/MainWindow.cpp" line="230"/>
         <location filename="../src/MainWindow.cpp" line="8712"/>
         <location filename="../src/MainWindow.cpp" line="9568"/>
+        <location filename="../src/Engineering.cpp" line="560"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9239,6 +10173,7 @@ Open it read-only?</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5667"/>
+        <location filename="../src/Engineering.cpp" line="396"/>
         <source>(none)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10273,7 +11208,7 @@ Large sheets can take a minute.</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="8522"/>
         <location filename="../src/MainWindow.cpp" line="8585"/>
-        <location filename="../src/QolTools.cpp" line="1163"/>
+        <location filename="../src/QolTools.cpp" line="1164"/>
         <source> degrees</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10287,6 +11222,7 @@ Large sheets can take a minute.</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="8535"/>
         <location filename="../src/MainWindow.cpp" line="8604"/>
+        <location filename="../src/Engineering.cpp" line="414"/>
         <source>Rotation:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10650,7 +11586,7 @@ Large sheets can take a minute.</source>
     </message>
     <message numerus="yes">
         <location filename="../src/MainWindow.cpp" line="9088"/>
-        <location filename="../src/QolTools.cpp" line="1063"/>
+        <location filename="../src/QolTools.cpp" line="1064"/>
         <source>Ran &quot;%1&quot;: %n step(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -10915,7 +11851,7 @@ Large sheets can take a minute.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="9455"/>
-        <location filename="../src/QolTools.cpp" line="910"/>
+        <location filename="../src/QolTools.cpp" line="911"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10931,6 +11867,9 @@ Large sheets can take a minute.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="9463"/>
+        <location filename="../src/Engineering.cpp" line="264"/>
+        <location filename="../src/Engineering.cpp" line="594"/>
+        <location filename="../src/Engineering.cpp" line="606"/>
         <source>Kind</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11110,8 +12049,8 @@ Large sheets can take a minute.</source>
         <location filename="../src/MainWindow.cpp" line="9795"/>
         <location filename="../src/MainWindow.cpp" line="9849"/>
         <location filename="../src/MainWindow.cpp" line="9860"/>
-        <location filename="../src/QolTools.cpp" line="1130"/>
-        <location filename="../src/QolTools.cpp" line="1133"/>
+        <location filename="../src/QolTools.cpp" line="1131"/>
+        <location filename="../src/QolTools.cpp" line="1134"/>
         <source>Terrain</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11286,6 +12225,9 @@ Contours: a blank line between polylines.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="10127"/>
+        <location filename="../src/Engineering.cpp" line="307"/>
+        <location filename="../src/Engineering.cpp" line="411"/>
+        <location filename="../src/Engineering.cpp" line="526"/>
         <source>Kind:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11386,7 +12328,7 @@ Contours: a blank line between polylines.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="10205"/>
-        <location filename="../src/QolTools.cpp" line="1206"/>
+        <location filename="../src/QolTools.cpp" line="1207"/>
         <source>Thickness:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11574,8 +12516,8 @@ Contours: a blank line between polylines.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="10448"/>
-        <location filename="../src/QolTools.cpp" line="978"/>
-        <location filename="../src/QolTools.cpp" line="1014"/>
+        <location filename="../src/QolTools.cpp" line="979"/>
+        <location filename="../src/QolTools.cpp" line="1015"/>
         <source>Model:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12654,7 +13596,7 @@ Large models can take a few minutes.</source>
     </message>
     <message>
         <location filename="../src/Underlays.cpp" line="127"/>
-        <location filename="../src/QolTools.cpp" line="757"/>
+        <location filename="../src/QolTools.cpp" line="758"/>
         <source>Underlay:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12813,6 +13755,7 @@ Large models can take a few minutes.</source>
     </message>
     <message>
         <location filename="../src/MarkupTools.cpp" line="99"/>
+        <location filename="../src/Engineering.cpp" line="513"/>
         <source>Automatic</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13063,6 +14006,8 @@ Large models can take a few minutes.</source>
     <message>
         <location filename="../src/LibraryTools.cpp" line="258"/>
         <location filename="../src/LibraryTools.cpp" line="304"/>
+        <location filename="../src/Engineering.cpp" line="457"/>
+        <location filename="../src/Engineering.cpp" line="794"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
