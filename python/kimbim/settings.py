@@ -98,6 +98,8 @@ DEFAULTS = {
                         "heating_degree_days": 2200.0, "lighting_power_density": 8.0,
                         "occupancy_hours": 2500.0},  # D222: early-stage energy/daylight inputs
     "visual_scripts": {},  # D223: linear visual scripts by name {steps: [{op, args}]}
+    "mep_settings": {}, "hvac_settings": {}, "plumbing_settings": {},  # D242-D247: engineering overrides
+    "drainage_settings": {}, "electrical_settings": {}, "structure_settings": {},  # (engsettings.get merges)
     "sun": {},  # D96: the sun for 3D light and shadows (sun.DEFAULT fills it in)  # D97: Archicad's Favourites, by name: {tool, fields {object name: value}, object?}  # D97: complex wall sections by name: [[across, up], ...] metres from the base line  # D96: walls and slabs show each layer on their ends and tops in 3D  # D97: where a new wall's clicked line is (Archicad default)
 }
 UNITS = {"m": 1.0, "cm": 100.0, "mm": 1000.0, "ft": 1 / 0.3048, "in": 1 / 0.0254}
@@ -316,6 +318,11 @@ def _error(key: str, value) -> str | None:
             v = value.get(name, 0.0)
             if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
                 return f"the work plane's {name} must be between {lo:g} and {hi:g}"
+    if key in ("mep_settings", "hvac_settings", "plumbing_settings", "drainage_settings",
+               "electrical_settings", "structure_settings"):  # D242-D247
+        from . import engsettings
+
+        return engsettings.validate(key, value)
     if key == "energy_settings":  # D222
         if not isinstance(value, dict):
             return "the energy settings are a table of U-values and use figures"
