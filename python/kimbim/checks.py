@@ -38,7 +38,8 @@ import ifcopenshell.util.unit
 from . import app_bridge as B
 
 CHECKS = ("schema", "ids", "clash", "model")
-MODEL_CHECKS = ("duplicates", "rooms", "zero_walls", "not_on_level", "no_host")
+MODEL_CHECKS = ("duplicates", "rooms", "zero_walls", "not_on_level", "no_host",
+                "mep_open_ports", "mep_no_system", "mep_no_source")  # D242: MEP network checks
 CLASH_MODES = ("hard", "clearance")
 PRECOMMIT_MODES = ("warn", "block")
 PRECOMMIT_RECORDED_ISSUES = 200  # per check in checks.json: enough to list, small enough for every version
@@ -754,6 +755,15 @@ def _no_host(model) -> list[dict]:
     return out
 
 
+def _mep(model, which: str, cache: dict) -> list[dict]:
+    """D242: the MEP network findings, computed once per check run for the three checks."""
+    from . import mep
+
+    if not cache:
+        cache.update(mep.mep_issues(model))
+    return [_issue(severity, message, elements, "MEP") for severity, message, elements in cache[which]]
+
+
 def check_model(model, options: dict) -> dict:
     from . import settings
 
@@ -763,12 +773,16 @@ def check_model(model, options: dict) -> dict:
     partial = bool(options.get("partial_duplicates", settings.current().get("check_partial_duplicates", False)))
     issues, groups = [], []
     timings = {}
+    mep_found: dict = {}
     for name, title, run in (
         ("duplicates", "Duplicate elements", lambda: _duplicates(model, elements, unit, partial)),
         ("rooms", "Rooms without a number or name", lambda: _rooms(model)),
         ("zero_walls", "Walls with zero length", lambda: _zero_walls(model, unit)),
         ("not_on_level", "Elements not on a level", lambda: _not_on_level(model, elements)),
         ("no_host", "Doors and windows without a host", lambda: _no_host(model)),
+        ("mep_open_ports", "MEP parts with open ports", lambda: _mep(model, "mep_open_ports", mep_found)),
+        ("mep_no_system", "MEP elements in no system", lambda: _mep(model, "mep_no_system", mep_found)),
+        ("mep_no_source", "MEP systems without a source", lambda: _mep(model, "mep_no_source", mep_found)),
     ):
         if name not in which:
             continue

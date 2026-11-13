@@ -1439,6 +1439,23 @@ _EXPORTS = {
         "interior_elevations",
         "wall_handrail",
     ),
+    "mep": (  # D242 (mep_systems comes through finishes)
+        "assign_to_system",
+        "connect_network",
+        "create_mep_run3d",
+        "create_mep_segment3d",
+        "create_mep_system",
+        "mep_catalogue",
+        "mep_network",
+        "place_mep_terminal",
+        "remove_mep_system",
+        "set_design_values",
+    ),
+    "engsettings": (  # D242-D247
+        "engineering_settings",
+        "reset_engineering_settings",
+        "set_engineering_settings",
+    ),
     "finishes": (
         "create_mep_run",
         "create_mep_segment",

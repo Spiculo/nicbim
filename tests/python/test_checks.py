@@ -85,7 +85,7 @@ def test_the_house_has_no_schema_or_model_issues(house_file):
         r = run(name)
         assert r["issues"] == [], (name, r["issues"][:5])
     model = run("model")
-    assert [g["status"] for g in model["groups"]] == ["pass"] * 5
+    assert [g["status"] for g in model["groups"]] == ["pass"] * len(checks.MODEL_CHECKS)
     # Walls never clash with walls they are joined to; doors never with their walls.
     r = run("clash", {"clash_sets": {"walls": {"a": {"classes": ["IfcWall"]}},
                                      "doors": {"a": {"classes": ["IfcDoor", "IfcWindow"]}, "b": {"classes": ["IfcWall"]}}}})

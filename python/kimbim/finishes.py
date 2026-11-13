@@ -227,154 +227,38 @@ def create_shaft(points_json: str, bottom_storey: str, top_storey: str, name: st
 
 def create_mep_segment(storey_guid: str, kind: str, x1, y1, x2, y2, elevation=2.6, width=0.3, height=0.2) -> str:
     """A straight duct, pipe or cable tray from (x1, y1) to (x2, y2) on a level, its centreline
-    `elevation` above the level. Ducts and trays are `width` x `height`; a pipe's diameter is `width`."""
-    if B._model is None:
-        return A._fail("no model open")
-    kind = str(kind or "").strip().lower()
-    if kind not in MEP_KINDS:
-        return A._fail("the run is a duct, pipe or cable_tray")
-    storey = A._by_guid(storey_guid)
-    if storey is None or not storey.is_a("IfcBuildingStorey"):
-        return A._fail("unknown level")
+    `elevation` above the level. Ducts and trays are `width` x `height`; a pipe's diameter is `width`.
+    It has ports at both ends (D242) and joins free ports it touches."""
+    from . import mep
+
     try:
-        x1, y1, x2, y2, elevation, width, height = (float(v) for v in (x1, y1, x2, y2, elevation, width, height))
+        elevation = float(elevation)
     except (TypeError, ValueError) as ex:
         return A._fail(str(ex))
-    length = math.hypot(x2 - x1, y2 - y1)
-    if length < 0.01:
-        return A._fail("the run needs two different points")
-    if not 0.005 <= width <= 5 or (kind != "pipe" and not 0.005 <= height <= 5):
-        return A._fail("the run's size is out of range")
-    ifc_class, label = MEP_KINDS[kind]
-    if B._model.schema == "IFC2X3":
-        ifc_class = "IfcFlowSegment"
-    made = {}
-
-    def action():
-        f = B._model
-        s = A._scale()
-        segment = ifcopenshell.api.root.create_entity(f, ifc_class=ifc_class, name=label)
-        origin = f.createIfcAxis2Placement2D(f.createIfcCartesianPoint((0.0, 0.0)), None)
-        if kind == "pipe":
-            profile = f.createIfcCircleProfileDef("AREA", None, origin, width / 2 / s)
-        else:
-            profile = f.createIfcRectangleProfileDef("AREA", None, origin, width / s, height / s)
-        representation = ifcopenshell.api.geometry.add_profile_representation(
-            f, context=A._body_context(), profile=profile, depth=length)
-        ifcopenshell.api.geometry.assign_representation(f, product=segment, representation=representation)
-        d = np.array([(x2 - x1) / length, (y2 - y1) / length, 0.0])  # the extrusion (local Z) runs along it
-        up = np.array([0.0, 0.0, 1.0])
-        side = np.cross(up, d)  # local X across the run, local Y up
-        matrix = np.eye(4)
-        matrix[:3, 0], matrix[:3, 1], matrix[:3, 2] = side, up, d
-        matrix[:3, 3] = (x1, y1, A._elevation(storey) + elevation)
-        ifcopenshell.api.geometry.edit_object_placement(f, product=segment, matrix=matrix, is_si=True)
-        ifcopenshell.api.spatial.assign_container(f, products=[segment], relating_structure=storey)
-        pset = ifcopenshell.api.pset.add_pset(f, product=segment, name=MEP_PSET)
-        ifcopenshell.api.pset.edit_pset(f, pset=pset, properties={
-            "Kind": kind, "Width": width, "Height": width if kind == "pipe" else height,
-            "Elevation": elevation, "Length": round(length, 6)})
-        layers.assign_active(segment)
-        renovation.stamp_new(segment)
-        made["guid"] = segment.GlobalId
-        return 1, [segment.GlobalId], []
-
-    try:
-        r = B._run(action)
-    except Exception as ex:
-        return A._fail(f"{type(ex).__name__}: {ex}")
-    return B._dump({**r, "guid": made["guid"], "length": round(length, 6)})
+    return mep._segment3d(storey_guid, kind, x1, y1, elevation, x2, y2, elevation, width, height)
 
 
 # ---------------------------------------------------------------- MEP runs with fittings, in a system
 
-FITTING_CLASSES = {"duct": "IfcDuctFitting", "pipe": "IfcPipeFitting", "cable_tray": "IfcCableCarrierFitting"}
-
-
-def _system(name: str, kind: str):
-    """Inside an action: the distribution system called `name` (made when new)."""
-    f = B._model
-    cls = "IfcDistributionSystem" if f.schema != "IFC2X3" else "IfcSystem"
-    for s in f.by_type(cls):
-        if s.Name == name:
-            return s
-    system = ifcopenshell.api.root.create_entity(f, ifc_class=cls, name=name)
-    if cls == "IfcDistributionSystem":
-        system.PredefinedType = {"duct": "VENTILATION", "pipe": "WATERSUPPLY", "cable_tray": "ELECTRICAL"}.get(kind, "NOTDEFINED")
-    return system
-
-
 def create_mep_run(storey_guid: str, kind: str, points_json: str, elevation=2.6, width=0.3, height=0.2,
                    system: str = "") -> str:
-    """A run of straight segments through clicked points with an elbow fitting at each bend (IfcDuct/
-    Pipe/CableCarrierFitting: a block of the run's section, centred on the bend), all assigned to the
-    distribution system `system` (default "<Kind> system"). One undo step."""
-    if B._model is None:
-        return A._fail("no model open")
-    kind = str(kind or "").strip().lower()
-    if kind not in MEP_KINDS:
-        return A._fail("the run is a duct, pipe or cable_tray")
+    """A run of straight segments through clicked points with an elbow fitting at each bend, all
+    connected port to port (D242) and assigned to the distribution system `system` (default
+    "<Kind> system"). One undo step."""
+    from . import mep
+
     try:
-        pts = [(float(p[0]), float(p[1])) for p in json.loads(points_json)]
-        elevation, width, height = float(elevation), float(width), float(height)
+        pts = [[float(p[0]), float(p[1]), float(elevation)] for p in json.loads(points_json)]
     except (TypeError, ValueError, IndexError) as ex:
         return A._fail(str(ex))
-    pts = [p for i, p in enumerate(pts) if i == 0 or math.dist(p, pts[i - 1]) > 0.01]
-    if len(pts) < 2:
-        return A._fail("the run needs two different points")
-    storey = A._by_guid(storey_guid)
-    if storey is None or not storey.is_a("IfcBuildingStorey"):
-        return A._fail("unknown level")
-    system_name = (system or "").strip() or f"{MEP_KINDS[kind][1]} system"
-    size = width if kind == "pipe" else max(width, height)
-    from . import console
-
-    made = {"segments": [], "fittings": []}
-    try:
-        with console.edit():
-            f = B._model
-            for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
-                r = json.loads(create_mep_segment(storey_guid, kind, x1, y1, x2, y2, elevation, width, height))
-                if not r.get("ok"):
-                    raise RuntimeError(r.get("error"))
-                made["segments"].append(r["guid"])
-            fitting_class = FITTING_CLASSES[kind] if f.schema != "IFC2X3" else "IfcFlowFitting"
-            for x, y in pts[1:-1]:  # an elbow at each bend
-                fitting = ifcopenshell.api.root.create_entity(f, ifc_class=fitting_class, name="Elbow")
-                if hasattr(fitting, "PredefinedType") and fitting_class != "IfcFlowFitting":
-                    fitting.PredefinedType = "BEND"
-                representation = ifcopenshell.api.geometry.add_wall_representation(
-                    f, context=A._body_context(), length=size, height=height if kind != "pipe" else width, thickness=size)
-                ifcopenshell.api.geometry.assign_representation(f, product=fitting, representation=representation)
-                matrix = np.eye(4)
-                h = (height if kind != "pipe" else width)
-                matrix[:3, 3] = (x - size / 2, y - size / 2, A._elevation(storey) + elevation - h / 2)
-                ifcopenshell.api.geometry.edit_object_placement(f, product=fitting, matrix=matrix, is_si=True)
-                ifcopenshell.api.spatial.assign_container(f, products=[fitting], relating_structure=storey)
-                layers.assign_active(fitting)
-                renovation.stamp_new(fitting)
-                made["fittings"].append(fitting.GlobalId)
-            group = _system(system_name, kind)
-            members = [f.by_guid(g) for g in made["segments"] + made["fittings"]]
-            ifcopenshell.api.group.assign_group(f, products=members, group=group)
-    except Exception as ex:
-        return A._fail(f"{type(ex).__name__}: {ex}" if not isinstance(ex, RuntimeError) else str(ex))
-    everything = made["segments"] + made["fittings"]
-    return B._dump({"ok": True, **made, "system": system_name, **B._flags(),
-                    "geometry": {"changed": everything, "removed": []}})
+    r = json.loads(mep._run3d(storey_guid, kind, json.dumps(pts), width, height, system))
+    if r.get("ok"):
+        r["geometry"] = r.get("geometry") or {"changed": r["segments"] + r["fittings"], "removed": []}
+    return B._dump(r)
 
 
 def mep_systems() -> str:
-    """The distribution systems and how many elements each holds."""
-    if B._model is None:
-        return A._fail("no model open")
-    out = []
-    for cls in ("IfcDistributionSystem", "IfcSystem"):
-        try:
-            found = B._model.by_type(cls, include_subtypes=False)
-        except RuntimeError:
-            continue
-        for s in found:
-            members = [e for rel in getattr(s, "IsGroupedBy", ()) or () for e in rel.RelatedObjects]
-            out.append({"guid": s.GlobalId, "name": s.Name or "", "count": len(members)})
-    return B._dump({"ok": True, "systems": out})
+    """The distribution systems and how many elements each holds (D242: with kind and open ports)."""
+    from . import mep
+
+    return mep.mep_systems()
