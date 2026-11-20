@@ -150,4 +150,4 @@ from D100 to D251 are listed in [decisions.md](decisions.md). What is left:
 4. **Scale to 1M objects** ([08](08-future.md#scale-1m-objects)); `pixi run bench-100k` stays the release gate.
 
 ## Then
-See [08-future.md](08-future.md). Git remote push/pull is in, in the CLI and the Versions menu (D107), and a divergent pull merges through the record engine (D128). Live concurrent editing, sync servers and federation are the future steps.
+The long-range plan is [22](22-moonshot-roadmap.md); collaboration is in [08-future.md](08-future.md). Git remote push/pull is in, in the CLI and the Versions menu (D107), and a divergent pull merges through the record engine (D128). Live concurrent editing, sync servers and federation are the future steps.
