@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Build the portable KimBim desktop package (the installer-free distribution).
+"""Build the portable NicBim desktop package (the installer-free distribution).
 
 It packs the app's conda environment with conda-pack, trims build-only files, unpacks it under
-dist/KimBim/runtime (conda-unpack rewrites every prefix), and adds the app binary, the Python
+dist/NicBim/runtime (conda-unpack rewrites every prefix), and adds the app binary, the Python
 sources, the bundled library and a launcher that carries the environment with it.
 
 Run it through `pixi run -e pack package` (or `pixi run -e pack package -- --zip`). The result
-starts on a machine with no pixi, no conda and no KimBim checkout: see tools/check_package.py.
+starts on a machine with no pixi, no conda and no NicBim checkout: see tools/check_package.py.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ import tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-PACKAGE = DIST / "KimBim"
+PACKAGE = DIST / "NicBim"
 WORK = ROOT / "build" / "package"
 
 # Build-only material. The app needs the Python runtime, Qt, OCCT, MKL, git (versioning) and the
@@ -132,10 +132,10 @@ def remove_tree(path: pathlib.Path) -> None:
 
 def write_launchers(package: pathlib.Path) -> None:
     if os.name == "nt":
-        (package / "KimBim.cmd").write_text(
+        (package / "NicBim.cmd").write_text(
             "@echo off\r\n"
             "rem SPDX-License-Identifier: GPL-3.0-or-later\r\n"
-            "rem Portable KimBim launcher: the runtime and the Python sources travel with this folder.\r\n"
+            "rem Portable NicBim launcher: the runtime and the Python sources travel with this folder.\r\n"
             "setlocal\r\n"
             'set "KIMBIM_HOME=%~dp0"\r\n'
             'set "CONDA_PREFIX=%KIMBIM_HOME%runtime"\r\n'
@@ -159,11 +159,11 @@ def write_launchers(package: pathlib.Path) -> None:
             newline="",
         )
     else:
-        launcher = package / "KimBim.sh"
+        launcher = package / "NicBim.sh"
         launcher.write_text(
             "#!/bin/sh\n"
             "# SPDX-License-Identifier: GPL-3.0-or-later\n"
-            "# Portable KimBim launcher: the runtime and the Python sources travel with this folder.\n"
+            "# Portable NicBim launcher: the runtime and the Python sources travel with this folder.\n"
             'here=$(cd "$(dirname "$0")" && pwd)\n'
             'export CONDA_PREFIX="$here/runtime"\n'
             'export KIMBIM_PYTHON_PATH="$here/python"\n'
@@ -191,20 +191,20 @@ def write_readme(package: pathlib.Path) -> None:
     version = app_version()
     windows = os.name == "nt"
     if windows:
-        start = "Double-click **KimBim.cmd** (or run it from a terminal)."
+        start = "Double-click **NicBim.cmd** (or run it from a terminal)."
         platform_name = "Windows 10/11 x64"
         fallback = "set `QT_OPENGL=software` before launching (the bundled `opengl32sw.dll` is used)"
         cli = "`kimbim-cli.cmd`"
     else:
-        start = "Run **./KimBim.sh** from a terminal."
+        start = "Run **./NicBim.sh** from a terminal."
         platform_name = f"Linux {platform.machine()}"
         fallback = "set `QT_OPENGL=software` before launching"
         cli = "`kimbim-cli.sh`"
-    text = f"""# KimBim {version} — portable build ({platform_name})
+    text = f"""# NicBim {version} — portable build ({platform_name})
 
 {start}
 
-Everything KimBim needs is in this folder. Move the whole folder anywhere you like; keep
+Everything NicBim needs is in this folder. Move the whole folder anywhere you like; keep
 `runtime/` and `python/` next to `kimbim-app` — the launcher finds them relative to itself.
 
 - `samples/house.ifc` — the two-storey sample used by the tests.
@@ -214,14 +214,14 @@ Everything KimBim needs is in this folder. Move the whole folder anywhere you li
 - DWG import/export needs a separate LibreDWG install (the `dwg` pixi environment in a source
   checkout); this portable build does not bundle it. DXF works out of the box.
 - Preferences are stored in the user profile; projects are saved where you choose.
-- KimBim is GPL-3.0-or-later. The third-party components are listed in `THIRD_PARTY.md`.
+- NicBim is GPL-3.0-or-later. The third-party components are listed in `THIRD_PARTY.md`.
 
 This build is not code-signed, so Windows SmartScreen (or your desktop's security policy) may warn
 the first time. An installer and signing are future work.
 """
     (package / "README-PORTABLE.md").write_text(text, encoding="utf-8")
     (package / "START-HERE.txt").write_text(
-        f"KimBim {version}\n\n{start}\nSee README-PORTABLE.md for details.\n", encoding="utf-8"
+        f"NicBim {version}\n\n{start}\nSee README-PORTABLE.md for details.\n", encoding="utf-8"
     )
 
 
@@ -288,8 +288,8 @@ def main() -> int:
     zip_path = None
     if args.zip:
         print("writing the zip (several minutes)...")
-        base = DIST / f"KimBim-{app_version()}-{platform.system().lower()}-{platform.machine().lower()}"
-        zip_path = pathlib.Path(shutil.make_archive(str(base), "zip", root_dir=DIST, base_dir="KimBim"))
+        base = DIST / f"NicBim-{app_version()}-{platform.system().lower()}-{platform.machine().lower()}"
+        zip_path = pathlib.Path(shutil.make_archive(str(base), "zip", root_dir=DIST, base_dir="NicBim"))
 
     size = package_size(package)
     result = {

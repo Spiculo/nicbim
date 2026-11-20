@@ -22,7 +22,7 @@ __pycache__/
 # pixi / conda environments
 .pixi/
 
-# KimBim local project data (caches, oplog, index) — never committed
+# NicBim local project data (caches, oplog, index) — never committed
 .kimbim/
 
 # Qt

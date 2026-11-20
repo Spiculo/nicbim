@@ -21,8 +21,8 @@ int main(int argc, char* argv[])
     // the 3D surface on scaled displays (owner feedback: invisible status/proposal bars, black gap).
     QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
     QApplication app(argc, argv);
-    QApplication::setApplicationName(QStringLiteral("KimBim"));
-    QApplication::setOrganizationName(QStringLiteral("KimBim")); // QSettings: the window layout (D71)
+    QApplication::setApplicationName(QStringLiteral("NicBim"));
+    QApplication::setOrganizationName(QStringLiteral("NicBim")); // QSettings: the window layout (D71)
     QApplication::setApplicationVersion(QStringLiteral(KIMBIM_VERSION));
 
     QCommandLineParser parser;
@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
     parser.process(app);
 
     if (parser.isSet(version)) {
-        std::printf("KimBim %s\n", KIMBIM_VERSION);
+        std::printf("NicBim %s\n", KIMBIM_VERSION);
         return 0;
     }
     kimbim::Preferences prefs(kimbim::Preferences::defaultPath()); // D72: the language preference

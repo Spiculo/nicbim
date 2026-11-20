@@ -426,7 +426,7 @@ def create_wall(storey_guid: str, type_guid: str, x1, y1, x2, y2, height, join_s
         return _fail(f"unknown reference line {reference}")
     from . import curved_walls
 
-    # D97: a curved wall is joined in KimBim's own mitre (the regenerator's joins are straight)
+    # D97: a curved wall is joined in NicBim's own mitre (the regenerator's joins are straight)
     curved_joins = [(w, point) for guid, point in ((join_start_guid, p1), (join_end_guid, p2))
                     if guid and (w := _by_guid(guid)) is not None and w.is_a("IfcWall") and curved_walls.is_curved(w)]
     joins = [(guid, point) for guid, point in ((join_start_guid, p1), (join_end_guid, p2))
@@ -1262,7 +1262,7 @@ def update_curtain_wall(guid: str, changes_json: str) -> str:
         return _fail("changes must be an object")
     values = ifcopenshell.util.element.get_pset(wall, CURTAIN_PSET)
     if not values:
-        return _fail("not a KimBim curtain wall")
+        return _fail("not a NicBim curtain wall")
     try:
         height = float(changes.get("height", values.get("Height")))
         spacing = float(changes.get("spacing", values.get("MullionSpacing")))
@@ -1411,7 +1411,7 @@ def copy_curtain_panel(guid: str, from_index, targets_json: str) -> str:
         return _fail("unknown curtain wall")
     values = ifcopenshell.util.element.get_pset(wall, CURTAIN_PSET)
     if not values:
-        return _fail("not a KimBim curtain wall")
+        return _fail("not a NicBim curtain wall")
     try:
         source = int(from_index)
         data = json.loads(targets_json) if isinstance(targets_json, str) else targets_json
@@ -1442,7 +1442,7 @@ def swap_curtain_panels(guid: str, a, b) -> str:
         return _fail("unknown curtain wall")
     values = ifcopenshell.util.element.get_pset(wall, CURTAIN_PSET)
     if not values:
-        return _fail("not a KimBim curtain wall")
+        return _fail("not a NicBim curtain wall")
     try:
         first, second = int(a), int(b)
     except (TypeError, ValueError) as ex:
@@ -3257,7 +3257,7 @@ def _instance_info(e) -> dict:
 
 
 def _instances() -> dict:
-    """instance id -> [elements]; reads only KimBim's instance property sets (reading every
+    """instance id -> [elements]; reads only NicBim's instance property sets (reading every
     product's psets takes seconds on real files)."""
     out = {}
     if not any(_is_model(s) for s in B._model.by_type("IfcBuildingStorey")):
@@ -3274,7 +3274,7 @@ def _instances() -> dict:
 
 
 def create_model(name: str) -> str:
-    """A model container ("Apartment A"): a level below the building, marked as a KimBim model,
+    """A model container ("Apartment A"): a level below the building, marked as a NicBim model,
     where a unit is drawn once and then placed on many levels."""
     if B._model is None:
         return _fail("no model open")

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Project settings (step 2, D72): values that belong to the project, not the computer. They live in
 the `.nic` / project folder and in every version's tree (settings.json), so going back to a version
-brings back its settings. Unknown keys are kept, so an older KimBim never drops a newer one's settings.
+brings back its settings. Unknown keys are kept, so an older NicBim never drops a newer one's settings.
 
 Same protocol as app_bridge for the bridge functions (strings in, JSON out, never raise).
 """

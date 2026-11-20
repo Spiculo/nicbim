@@ -157,7 +157,7 @@ def test_owner_history_is_bookkeeping_not_content(project, tmp_path):
 
 
 def test_changes_survive_cyclic_anchor_references():
-    """Content comparison follows anchors from record to record; a cycle (never written by KimBim, but
+    """Content comparison follows anchors from record to record; a cycle (never written by NicBim, but
     records come from files) must end, not recurse forever."""
     from kimbim.layout import blob_oid, key_to_path
     from kimbim.project import _by_content

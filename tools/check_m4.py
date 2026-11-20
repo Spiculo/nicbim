@@ -85,8 +85,8 @@ def main(argv) -> int:
             problems.append("no fonts: the text is missing")
     if svg.exists():
         text = svg.read_text(encoding="utf-8")
-        wanted = ["Level 1 Floor Plan", "Section 1", "South Elevation", "KimBim two-storey house",
-                  "Client: KimBim test client", "A01", "1:100"]
+        wanted = ["Level 1 Floor Plan", "Section 1", "South Elevation", "NicBim two-storey house",
+                  "Client: NicBim test client", "A01", "1:100"]
         report["svg_texts"] = {w: f">{w}<" in text for w in wanted}
         problems += [f"the sheet lacks '{w}'" for w, ok in report["svg_texts"].items() if not ok]
         if text.count('class="kimbim-view"') != 3:

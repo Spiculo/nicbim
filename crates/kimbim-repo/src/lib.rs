@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Git-backed record store for KimBim (docs/03-versioning.md, D39).
+//! Git-backed record store for NicBim (docs/03-versioning.md, D39).
 //!
 //! Writes go through `git fast-import` (one pack per commit, never loose objects).
 //! Reads use gitoxide. The repository lives at `<project>/.git` with `core.bare = true`;
@@ -13,7 +13,7 @@ use rayon::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("not a KimBim project (no .git found): {0}")]
+    #[error("not a NicBim project (no .git found): {0}")]
     NotARepo(PathBuf),
     #[error("a repository already exists at {0}")]
     AlreadyExists(PathBuf),

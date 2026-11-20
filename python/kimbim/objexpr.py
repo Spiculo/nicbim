@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Formulas in object definitions (D99, doc 16 §1): numbers, parameter names, + - * / ^ %, comparisons,
-and/or/not, if(), a few functions (trig in degrees). A recursive-descent parser written for KimBim:
+and/or/not, if(), a few functions (trig in degrees). A recursive-descent parser written for NicBim:
 nothing here calls Python's eval, and nothing a formula says can reach Python objects."""
 from __future__ import annotations
 

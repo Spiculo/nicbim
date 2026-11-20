@@ -105,7 +105,7 @@ def test_request_starts_worker(house):
     found = json.loads(_discovery(house).read_text(encoding="utf-8"))
     assert found["pid"] == pid and found["kind"] == "worker" and found["project"] == str(house)
     lock = json.loads(K.lock_path(house).read_text(encoding="utf-8"))
-    assert lock["user"] == "KimBim agent" and lock["pid"] == pid
+    assert lock["user"] == "NicBim agent" and lock["pid"] == pid
     bye = client.request(str(house), "_shutdown", {})
     assert bye["ok"], bye
     assert _wait(lambda: not K.pid_alive(pid))

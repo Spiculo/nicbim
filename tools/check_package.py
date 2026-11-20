@@ -16,7 +16,7 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFAULT_PACKAGE = ROOT / "dist" / "KimBim"
+DEFAULT_PACKAGE = ROOT / "dist" / "NicBim"
 
 
 def clean_env() -> dict[str, str]:
@@ -34,8 +34,8 @@ def run(command: list[str], env: dict[str, str], cwd: pathlib.Path | None = None
 
 def launcher(package: pathlib.Path) -> list[str]:
     if os.name == "nt":
-        return ["cmd", "/c", "call", str(package / "KimBim.cmd")]
-    return [str(package / "KimBim.sh")]
+        return ["cmd", "/c", "call", str(package / "NicBim.cmd")]
+    return [str(package / "NicBim.sh")]
 
 
 def cli_launcher(package: pathlib.Path) -> list[str]:
@@ -54,7 +54,7 @@ def main() -> int:
 
     problems: list[str] = []
     version = run(launcher_command + ["--version"], env)
-    if version.returncode != 0 or "KimBim" not in version.stdout:
+    if version.returncode != 0 or "NicBim" not in version.stdout:
         problems.append(f"version failed ({version.returncode}): {version.stdout}{version.stderr}")
 
     sample = package / "samples" / "house.ifc"

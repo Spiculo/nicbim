@@ -78,7 +78,7 @@ def test_ifc2x3_uses_kimbim_renovation():
 def test_writing_clears_the_other_place():
     f = _model()
     w = _el(f, "IfcWall", KIMBIM_Renovation={"Status": "DEMOLISH"})
-    r.write_status(w, "existing")  # goes to Pset_WallCommon; the KimBim one must not contradict it
+    r.write_status(w, "existing")  # goes to Pset_WallCommon; the NicBim one must not contradict it
     assert "Status" not in (ifcopenshell.util.element.get_pset(w, "KIMBIM_Renovation") or {})
     assert r.status_of(w) == "existing"
 
@@ -99,7 +99,7 @@ def test_auxiliary_has_no_ifc_value_so_it_lives_in_kimbims_pset():
     assert ifcopenshell.util.element.get_pset(w, "KIMBIM_Renovation")["Status"] == "AUXILIARY"
     assert not [p for p in f.by_type("IfcPropertyEnumeratedValue") if p.Name == "Status"]
     assert r.status_of(w) == "auxiliary"
-    r.write_status(w, "new")  # switching back clears KimBim's pset
+    r.write_status(w, "new")  # switching back clears NicBim's pset
     assert "Status" not in (ifcopenshell.util.element.get_pset(w, "KIMBIM_Renovation") or {})
     assert r.status_of(w) == "new"
 

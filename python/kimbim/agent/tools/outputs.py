@@ -183,7 +183,7 @@ def _pdf(number: str, out: str) -> None:
 @tool("sheets.export", {"required": ["sheet", "format", "out"], "properties": {
     "sheet": _SHEET, "format": {"type": "string", "enum": ["pdf", "svg", "dxf", "dwg"]}, "out": _OUT}})
 def sheets_export(session, sheet, format, out):
-    """Export a sheet as PDF, SVG, DXF or DWG. PDF needs the KimBim app binary (render_failed when it is missing);
+    """Export a sheet as PDF, SVG, DXF or DWG. PDF needs the NicBim app binary (render_failed when it is missing);
     DWG needs a DWG converter."""
     number = _sheet_number(sheet)
     if format == "svg":

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Slice 21 (R4): three-way merge of records. Cases ported from ifcmerge (Bruno Postle, GPL-3.0-or-later,
-t/003.ifc.t and t/005.float_normalisation.t); fixtures in tests/fixtures/ifcmerge. KimBim merges by
-GlobalId records, not STEP ids, so ifcmerge's renumbering cases simply merge; where KimBim's rules differ
+t/003.ifc.t and t/005.float_normalisation.t); fixtures in tests/fixtures/ifcmerge. NicBim merges by
+GlobalId records, not STEP ids, so ifcmerge's renumbering cases simply merge; where NicBim's rules differ
 on purpose (both sides moving one element is a conflict, docs/03) the test says so."""
 import json
 import pathlib
@@ -131,7 +131,7 @@ def test_boundary_type_conflict():
 
 
 def test_both_moving_one_element_is_a_conflict():
-    # 13: ifcmerge picks one placement automatically; KimBim asks (placements are absolute, docs/03).
+    # 13: ifcmerge picks one placement automatically; NicBim asks (placements are absolute, docs/03).
     r = merge(BASE, "placement_window1_moved_left.ifc", "placement_window1_moved_right.ifc")
     assert not r.clean
     assert any(c.kind == "attribute" and c.attribute == "ObjectPlacement" or c.key.startswith("n/") for c in r.conflicts)

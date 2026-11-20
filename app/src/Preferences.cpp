@@ -40,7 +40,7 @@ QJsonObject Preferences::defaults()
     const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     return {
         {"language", "auto"},
-        {"templates_folder", QDir(docs).filePath(QStringLiteral("KimBim Templates"))},
+        {"templates_folder", QDir(docs).filePath(QStringLiteral("NicBim Templates"))},
         {"author_name", ""},
         {"author_email", ""},
         {"new_views", "tab"},

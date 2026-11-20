@@ -162,7 +162,7 @@ def export(session, out, version="HEAD"):
 
 @tool("selection.get", {})
 def selection_get(session):
-    """Read the app's current selection. Needs the KimBim app to be running."""
+    """Read the app's current selection. Needs the NicBim app to be running."""
     if session._selection_get is None:
         raise AgentError("needs_app")
     return {"elements": [{"guid": g, "label": session.label(g)} for g in session._selection_get()]}
@@ -171,7 +171,7 @@ def selection_get(session):
 @tool("selection.set", {"required": ["elements"], "properties": {
     "elements": {"type": "array", "items": {"type": "string"}, "description": "GlobalIds to select."}}})
 def selection_set(session, elements):
-    """Select elements in the app's window. Needs the KimBim app to be running."""
+    """Select elements in the app's window. Needs the NicBim app to be running."""
     if session._selection_set is None:
         raise AgentError("needs_app")
     session._selection_set(list(elements))
@@ -184,10 +184,10 @@ def _scripts_on(session, code):
 
 
 @tool("script.run", {"required": ["code"], "properties": {
-    "code": {"type": "string", "description": "Python, as in the console: `ifc` is the model, `bridge` the KimBim "
+    "code": {"type": "string", "description": "Python, as in the console: `ifc` is the model, `bridge` the NicBim "
                                               "commands, edit() groups edits."}}}, writes=True, check=_scripts_on)
 def run(session, code):
-    """Run a Python script in the project's console (the model is `ifc`, KimBim commands are in `bridge`). It is one
+    """Run a Python script in the project's console (the model is `ifc`, NicBim commands are in `bridge`). It is one
     undo step with the rest of the call; a script that raises is rolled back. Only when the architect allows
     scripts."""
     out = bridge(console.console_run, code, "[]")

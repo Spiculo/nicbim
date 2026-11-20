@@ -2,7 +2,7 @@
 """Plan annotations (owner feedback, Slice 13): text labels, linear dimensions and marks.
 
 Each is an IfcAnnotation on a level with a 2D representation in the Plan/Annotation/PLAN_VIEW
-context (text literals, polylines, a circle), so other IFC tools see them. KimBim also keeps what
+context (text literals, polylines, a circle), so other IFC tools see them. NicBim also keeps what
 it needs to draw and edit them in a property set (kind, text, points relative to the annotation's
 placement), so moving the annotation is the generic placement move. Same protocol as app_bridge.
 """
@@ -567,7 +567,7 @@ def rebuild(annotation):
 
 def mirror(annotation, point) -> bool:
     """Inside an action: reflect an annotation's points with `point` (a function on world metres);
-    False if it is not one of KimBim's annotations."""
+    False if it is not one of NicBim's annotations."""
     if _read(annotation) is None:
         return False
     replace_points(annotation, [tuple(float(v) for v in point(p)) for p in world_points(annotation)])

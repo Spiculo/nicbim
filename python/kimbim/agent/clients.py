@@ -173,9 +173,9 @@ def agents_section() -> str:
     how = f"`{cli}`" + (f" with the environment variable `PYTHONPATH={env['PYTHONPATH']}`" if env else "")
     return "\n".join([
         AGENTS_START,
-        "## KimBim",
+        "## NicBim",
         "",
-        "This folder holds a KimBim project (a BIM model with saved versions). The `kimbim` MCP server gives you its",
+        "This folder holds a NicBim project (a BIM model with saved versions). The `kimbim` MCP server gives you its",
         "tools. The same tools are a command line, `kimbim`: run it as " + how + ";",
         "`--help`, `<group> --help` and `<group> <verb> --help` describe the commands, and `--json` prints the result",
         "envelope. Make changes inside a task (`task start`, then `task finish` with a summary) so the architect can",

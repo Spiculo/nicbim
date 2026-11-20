@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Portable install/uninstall for the packaged KimBim build (D144).
+"""Portable install/uninstall for the packaged NicBim build (D144).
 
-`dist/KimBim` is a relocatable folder (app, embedded Python and runtime). This module copies it to
+`dist/NicBim` is a relocatable folder (app, embedded Python and runtime). This module copies it to
 the user's per-user application folder (no administrator), writes a marker so a later uninstall only
 removes a folder this installer owns, and wires the `.nic`/`.ifc` associations from D139. Uninstall
 calls `associations.remove()` and deletes the installed tree.
@@ -23,10 +23,10 @@ APP_NAMES = ("kimbim-app.exe", "kimbim-app")
 
 
 def default_source() -> pathlib.Path:
-    """The packaged build: `dist/KimBim` in a checkout, or the folder this package lives in when
+    """The packaged build: `dist/NicBim` in a checkout, or the folder this package lives in when
     running inside an installed/packaged tree."""
     root = pathlib.Path(__file__).resolve().parents[2]
-    packaged = root / "dist" / "KimBim"
+    packaged = root / "dist" / "NicBim"
     if packaged.is_dir():
         return packaged
     return root
@@ -35,9 +35,9 @@ def default_source() -> pathlib.Path:
 def default_dest() -> pathlib.Path:
     if sys.platform.startswith("win"):
         local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
-        return pathlib.Path(local) / "Programs" / "KimBim"
+        return pathlib.Path(local) / "Programs" / "NicBim"
     data = pathlib.Path(os.environ.get("XDG_DATA_HOME") or (pathlib.Path.home() / ".local" / "share"))
-    return data / "KimBim"
+    return data / "NicBim"
 
 
 def app_executable(folder: pathlib.Path) -> pathlib.Path:
@@ -45,7 +45,7 @@ def app_executable(folder: pathlib.Path) -> pathlib.Path:
         candidate = folder / name
         if candidate.is_file():
             return candidate
-    raise ValueError(f"not a KimBim build: no {' or '.join(APP_NAMES)} in {folder}")
+    raise ValueError(f"not a NicBim build: no {' or '.join(APP_NAMES)} in {folder}")
 
 
 def _marker(dest: pathlib.Path) -> dict | None:
@@ -87,7 +87,7 @@ def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None
     marker = _marker(dst)
     exists = dst.exists()
     if exists and marker is None:
-        raise ValueError(f"{dst} already exists and was not installed by KimBim; choose another --dest")
+        raise ValueError(f"{dst} already exists and was not installed by NicBim; choose another --dest")
     if exists and marker is not None and not force:
         raise ValueError(f"{dst} is already installed; use --force to replace it")
     actions = [f"copy {src} -> {dst}", f"write {dst / MARKER}",
@@ -99,7 +99,7 @@ def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(src, dst)
     installed_exe = app_executable(dst)
-    data = {"product": "KimBim", "installed": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    data = {"product": "NicBim", "installed": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "source": str(src), "app": str(installed_exe), "associations": bool(associations)}
     (dst / MARKER).write_text(json.dumps(data, indent=2), encoding="utf-8")
     if associations:
@@ -118,7 +118,7 @@ def uninstall(dest: pathlib.Path | None = None, *, dry_run: bool = False, unasso
     folder = pathlib.Path(dest or default_dest()).resolve()
     marker = _marker(folder)
     if marker is None:
-        raise ValueError(f"{folder} is not a KimBim installation (no {MARKER})")
+        raise ValueError(f"{folder} is not a NicBim installation (no {MARKER})")
     actions = [f"remove file associations", f"delete {folder}"]
     if dry_run:
         return {"ok": True, "dry_run": True, "actions": actions, "path": str(folder), "marker": marker}

@@ -44,7 +44,7 @@ bool exportSvgToPdf(const QByteArray& svg, double widthMm, double heightMm, cons
         return false;
     }
     QPdfWriter pdf(path);
-    pdf.setCreator(QStringLiteral("KimBim"));
+    pdf.setCreator(QStringLiteral("NicBim"));
     pdf.setResolution(600); // QPdfWriter is vector; this only sets the painter's unit
     const QPageSize size(QSizeF(widthMm, heightMm), QPageSize::Millimeter);
     if (!pdf.setPageSize(size) || !pdf.setPageMargins(QMarginsF(0, 0, 0, 0))) {

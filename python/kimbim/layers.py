@@ -4,7 +4,7 @@
 Layers are IFC presentation layers (IfcPresentationLayerAssignment) holding the elements'
 representations, so other IFC tools see them. Visibility and locks are view state, not model
 data: they live in views. A view is a named collection of layer states (plus level, plan/3D, cut
-height), stored in the model as a KimBim property set on IfcProject so it travels with the file
+height), stored in the model as a NicBim property set on IfcProject so it travels with the file
 and its versions. Same protocol as app_bridge.
 """
 from __future__ import annotations

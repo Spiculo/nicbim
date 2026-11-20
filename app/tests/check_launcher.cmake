@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Runs the generated desktop launcher and checks that it starts KimBim with its own environment.
+# Runs the generated desktop launcher and checks that it starts NicBim with its own environment.
 if(NOT DEFINED LAUNCHER)
     message(FATAL_ERROR "LAUNCHER is not set")
 endif()
@@ -14,7 +14,7 @@ endif()
 if(NOT rc EQUAL 0)
     message(FATAL_ERROR "launcher failed (${rc}): ${out}${err}")
 endif()
-if(NOT out MATCHES "KimBim [0-9]")
+if(NOT out MATCHES "NicBim [0-9]")
     message(FATAL_ERROR "unexpected launcher output: ${out}${err}")
 endif()
 message(STATUS "launcher OK: ${out}")

@@ -212,7 +212,7 @@ def _take_2d(session, view, args) -> dict:
     "size": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 8192},
              "description": "[w, h] in pixels; default [1024, 768]."},
     "format": {"type": "string", "enum": ["png", "svg"], "description": "png, or svg for 2D views (default png)."},
-    "out": {"type": "string", "description": "The file to write; default a new file in the KimBim data folder."}}})
+    "out": {"type": "string", "description": "The file to write; default a new file in the NicBim data folder."}}})
 def take(session, view="3d", level="", drawing="", sheet="", elements=None, isolate=False, highlight=None,
          changes=None, camera=None, style="", purpose="", cut=None, size=None, format="png", out="",
          client="cli", task_id=""):

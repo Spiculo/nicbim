@@ -29,7 +29,7 @@ Handle(Aspect_DisplayConnection) sharedDisplay()
         } catch (const Standard_Failure& e) {
             if (attempt >= 9)
                 throw;
-            qWarning("KimBim: no display connection yet (%s), retrying", e.what());
+            qWarning("NicBim: no display connection yet (%s), retrying", e.what());
             QThread::msleep(200);
         }
     }

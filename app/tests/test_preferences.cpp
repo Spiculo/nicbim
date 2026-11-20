@@ -35,7 +35,7 @@ private slots:
         QCOMPARE(p.angleMode(), QString("absolute"));
         QCOMPARE(p.typedLengthUnit(), QString("metres"));
         QVERIFY(p.tabAnnotations());
-        QVERIFY(p.templatesFolder().endsWith(QStringLiteral("KimBim Templates")));
+        QVERIFY(p.templatesFolder().endsWith(QStringLiteral("NicBim Templates")));
         QVERIFY(p.recent().isEmpty());
     }
 

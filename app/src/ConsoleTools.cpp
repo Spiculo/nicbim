@@ -37,7 +37,7 @@ void MainWindow::buildConsoleActions()
     auto* show = new QAction(tr("Python &console"), this);
     show->setObjectName(QStringLiteral("actionConsole"));
     show->setShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_P));
-    show->setToolTip(tr("Run Python on the open model (ifcopenshell and KimBim's commands)"));
+    show->setToolTip(tr("Run Python on the open model (ifcopenshell and NicBim's commands)"));
     connect(show, &QAction::triggered, this, [this] {
         consolePanel();
         m_dock->raisePanel(QStringLiteral("console"));
@@ -108,7 +108,7 @@ QJsonObject MainWindow::runConsoleCall(const char* fn, const QString& arg)
 
     // A short script just runs (input held back meanwhile); a long one shows a modal dialog with Stop.
     QDialog running(this);
-    running.setWindowTitle(QStringLiteral("KimBim"));
+    running.setWindowTitle(QStringLiteral("NicBim"));
     running.setModal(true);
     running.setWindowModality(Qt::ApplicationModal); // the console may float in its own window
     running.setWindowFlag(Qt::WindowCloseButtonHint, false);

@@ -321,7 +321,7 @@ def _apply_source(element, product, transform: dict) -> None:
 
 
 def _copy_properties(src_element, dst_element, dst_file) -> None:
-    """Copy scalar attributes and non-KimBim property sets from `src_element` to `dst_element`."""
+    """Copy scalar attributes and non-NicBim property sets from `src_element` to `dst_element`."""
     for name, value in src_element.get_info(recursive=False).items():
         if name in ("id", "type", "GlobalId", "Representation", "ObjectPlacement", "OwnerHistory"):
             continue

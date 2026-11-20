@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Canonical records: decompose an IFC model into KimBim records and compose it back.
+"""Canonical records: decompose an IFC model into NicBim records and compose it back.
 
 Specification: docs/02-data-model-and-format.md (validated by spike S3, docs/11). Record kinds:
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Where records live inside a KimBim Git tree (docs/03-versioning.md).
+"""Where records live inside a NicBim Git tree (docs/03-versioning.md).
 
 One shard level for now; adaptive sharding (D39) waits until models above ~64k records need it.
 This module is the only place that knows the layout.

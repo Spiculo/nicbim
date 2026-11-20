@@ -229,7 +229,7 @@ def test_m4_exit_sheet_has_plan_section_elevation_and_title_block(house, tmp_pat
     svg = r["svg"]
     assert re.search(r'<svg[^>]*width="420mm" height="297mm" viewBox="0 0 420 297"', svg)  # A3
     assert svg.count('class="kimbim-view"') == 3
-    for text in ("KimBim two-storey house", "A01", "1:100", "Level 1 Floor Plan", "Section 1", "South Elevation"):
+    for text in ("NicBim two-storey house", "A01", "1:100", "Level 1 Floor Plan", "Section 1", "South Elevation"):
         assert f">{text}<" in svg, text
     out = tmp_path / "A01.svg"
     assert call("export_sheet_svg", "A01", str(out))["ok"] and out.read_text(encoding="utf-8") == svg

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A KimBim project: IFC versions stored as canonical records in Git (docs/03-versioning.md)."""
+"""A NicBim project: IFC versions stored as canonical records in Git (docs/03-versioning.md)."""
 from __future__ import annotations
 
 import json
@@ -201,7 +201,7 @@ _AUTHOR: tuple[str, str] | None = None  # set by the app from its preferences (d
 def _author() -> tuple[str, str]:
     if _AUTHOR is not None:
         return _AUTHOR
-    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "KimBim User"
+    name = os.environ.get("KIMBIM_AUTHOR_NAME") or _git_config("user.name") or "NicBim User"
     email = os.environ.get("KIMBIM_AUTHOR_EMAIL") or _git_config("user.email") or "user@localhost"
     return name, email
 
@@ -389,12 +389,12 @@ class Project:
             if current and schema != current:
                 raise SchemaMismatch(
                     f"{ifc_path} is {schema} but this project is {current}; "
-                    "KimBim never converts schemas silently (docs/02, D30)"
+                    "NicBim never converts schemas silently (docs/02, D30)"
                 )
             bad = [r for r in f.by_type("IfcRoot") if not GLOBALID.fullmatch(r.GlobalId or "")]
             if bad:
                 raise InvalidInput(
-                    f"{ifc_path} has {len(bad)} malformed GlobalId(s); KimBim needs valid IFC GlobalIds to track objects",
+                    f"{ifc_path} has {len(bad)} malformed GlobalId(s); NicBim needs valid IFC GlobalIds to track objects",
                     [f"#{r.id()} {r.is_a()}: GlobalId {r.GlobalId!r}" for r in bad[:50]],
                 )
             records, _ = decompose_against_head(f, self._head_entries(), self.repo.read_blobs)
@@ -403,7 +403,7 @@ class Project:
             if current and schema != current:
                 raise SchemaMismatch(
                     f"{ifc_path} is {schema} but this project is {current}; "
-                    "KimBim never converts schemas silently (docs/02, D30)"
+                    "NicBim never converts schemas silently (docs/02, D30)"
                 )
         try:
             compose(records)  # records must be writable back to IFC (lossless guarantee, D36)
@@ -485,7 +485,7 @@ class Project:
         if current and new.schema_identifier != current:
             raise SchemaMismatch(
                 f"{ifc_path} is {new.schema_identifier} but this project is {current}; "
-                "KimBim never converts schemas silently (docs/02, D30)"
+                "NicBim never converts schemas silently (docs/02, D30)"
             )
         old = compose(self._records("HEAD"))
         report = reconcile(old, new, accept_heuristic)
@@ -676,7 +676,7 @@ class Project:
     def pull(self, remote: str = "origin", branch: str = "", merge: bool = False,
              resolutions: dict | None = None) -> dict:
         """Fetch a remote branch and fast-forward the current one. With `merge`, a diverged branch is
-        combined through KimBim's record merge (never git's text merge) and committed with two parents;
+        combined through NicBim's record merge (never git's text merge) and committed with two parents;
         without it, a diverged branch is refused. Conflicts raise MergeConflicts (use `merge_preview`
         with resolutions to review them)."""
         branch = branch or self.current_branch()

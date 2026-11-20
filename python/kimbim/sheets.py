@@ -1565,7 +1565,7 @@ def _title_defaults(sheet, info=None) -> dict:
         "sheet_number": _number(sheet) or "",
         "scale": scale,
         "date": datetime.date.today().isoformat(),
-        "issued": "KimBim",
+        "issued": "NicBim",
         "revision": "",
     }
 
@@ -1596,7 +1596,7 @@ def _title_block_listing(sheet) -> dict:
 
 def _title_block(sheet, width, height, info) -> list:
     """Archicad-like title block: project, client, address, sheet title and number, scale, date,
-    issued by KimBim. It can be moved and each field edited (D91)."""
+    issued by NicBim. It can be moved and each field edited (D91)."""
     x0, y0 = _title_block_geometry(sheet)
     fields = _title_block_fields(sheet, info)
     rows = [

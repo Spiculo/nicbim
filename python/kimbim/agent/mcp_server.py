@@ -27,15 +27,15 @@ from .catalogue import TOOLS, AgentError
 
 NAME = "kimbim"
 RESOURCE = "kimbim://project/info"
-_PROJECT = {"type": "string", "description": "The KimBim project: a folder, .nic or .ifc path."}
+_PROJECT = {"type": "string", "description": "The NicBim project: a folder, .nic or .ifc path."}
 _STALE = ("no_task", "unknown_task")  # the task we remembered is gone (finished or abandoned in the app)
 
 INSTRUCTIONS = """\
-KimBim is a BIM app. These tools read and change a KimBim project: an IFC model with saved versions.
+NicBim is a BIM app. These tools read and change a NicBim project: an IFC model with saved versions.
 Start with project_info (also the resource kimbim://project/info): levels, units, settings, the open task.
 Tasks and review:
 - Call task_start with a short title before changing anything. Your changes go in a design option
-  (agent/<title>) that the architect reviews in KimBim; a change made without a task starts one.
+  (agent/<title>) that the architect reviews in NicBim; a change made without a task starts one.
 - When you are done, call task_finish with a summary of what you changed and why. task_abandon discards it.
 - Never accept your own option: combining, accepting or rejecting it is the architect's decision.
 - Every write tool takes dry_run: true to see what would change without changing anything.

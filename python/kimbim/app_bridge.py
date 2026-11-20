@@ -452,7 +452,7 @@ def _elements(guids_json: str) -> list:
 
 
 def _model_content(elements) -> list:
-    """GlobalIds of edited elements that live in a KimBim model: editing them must refresh every
+    """GlobalIds of edited elements that live in a NicBim model: editing them must refresh every
     placement, even when the edit has no geometry (a name, a property)."""
     from . import authoring as A
 

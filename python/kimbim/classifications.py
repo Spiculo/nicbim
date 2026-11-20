@@ -2,7 +2,7 @@
 """Classifications (M2): Uniclass, OmniClass and local systems, their references and assignments.
 
 IFC keeps a system as `IfcClassification` and each code used as an `IfcClassificationReference`
-under it; assigning a reference to elements is an `IfcRelAssociatesClassification`. KimBim ships
+under it; assigning a reference to elements is an `IfcRelAssociatesClassification`. NicBim ships
 the metadata for the common systems (creating one is one undo step, like any edit) and lets offices
 add their own. Codes are deliberately not bundled: the project keeps the references it uses.
 

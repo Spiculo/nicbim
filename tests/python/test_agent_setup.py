@@ -177,7 +177,7 @@ def test_setup_opencode_uses_existing_jsonc_and_explains_comments(home, project,
 
 
 def test_merge_agents_keeps_a_blank_line_before_what_follows():
-    section = f"{clients.AGENTS_START}\nKimBim\n{clients.AGENTS_END}\n"
+    section = f"{clients.AGENTS_START}\nNicBim\n{clients.AGENTS_END}\n"
     text = f"# House\n\n{section}\nOur own notes.\n"
     once = clients.merge_agents(text, section)
     assert f"{clients.AGENTS_END}\n\nOur own notes." in once

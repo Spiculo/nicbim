@@ -524,7 +524,7 @@ def _psets(e) -> dict:
 
 
 def kind_of(e) -> str | None:
-    """'stair', 'ramp' or 'railing' for KimBim's parametric elements, else None."""
+    """'stair', 'ramp' or 'railing' for NicBim's parametric elements, else None."""
     if e is None:
         return None
     if e.is_a("IfcStair") and ifcopenshell.util.element.get_pset(e, STAIR_PSET):
@@ -628,7 +628,7 @@ def _pset_edit(f, e, name, props):
 
 
 def _text_props(f, props: dict) -> dict:
-    """KimBim's own values: strings as IfcText (the walking line and plan data can pass 255 chars)."""
+    """NicBim's own values: strings as IfcText (the walking line and plan data can pass 255 chars)."""
     return {k: (f.createIfcText(v) if isinstance(v, str) else v) for k, v in props.items()}
 
 
@@ -1028,7 +1028,7 @@ def set_stair_params(guid: str, params_json: str) -> str:
     e = A._by_guid(guid) if B._model is not None else None
     kind = kind_of(e)
     if kind not in ("stair", "ramp"):
-        return A._fail("not a KimBim stair or ramp")
+        return A._fail("not a NicBim stair or ramp")
     try:
         new = json.loads(params_json)
         allowed = ("Shape", "Turn", "Width", "Height", "Slope", "LandingDepth") if kind == "ramp" else \
@@ -1077,7 +1077,7 @@ def stair_info(guid: str) -> str:
     e = A._by_guid(guid) if B._model is not None else None
     kind = kind_of(e)
     if kind not in ("stair", "ramp"):
-        return A._fail("not a KimBim stair or ramp")
+        return A._fail("not a NicBim stair or ramp")
     data = {k: v for k, v in _params(e).items() if k not in ("id", "Plan")}
     lay = _layout_of(e)
     out = {"ok": True, "kind": kind, "params": data, "flights": len(lay["flights"]), "landings": len(lay["landings"])}
@@ -1181,7 +1181,7 @@ def add_stair_railings(guid: str, height="", sides: str = "both") -> str:
     if host is not None and whole_of(host) is not None:
         host = whole_of(host)
     if kind_of(host) not in ("stair", "ramp"):
-        return A._fail("click a stair or ramp drawn with KimBim")
+        return A._fail("click a stair or ramp drawn with NicBim")
     try:
         height = float(height) if str(height).strip() else RAILING_HEIGHT["stair"]
     except ValueError:
@@ -1244,7 +1244,7 @@ def create_railing(storey_guid: str, points_json: str, height="") -> str:
 
 
 def stair_at(storey_guid: str, x, y) -> str:
-    """The KimBim stair or ramp on a level whose outline holds the point (world metres), if any."""
+    """The NicBim stair or ramp on a level whose outline holds the point (world metres), if any."""
     storey = A._by_guid(storey_guid) if B._model is not None else None
     if storey is None:
         return B._dump({"guid": ""})

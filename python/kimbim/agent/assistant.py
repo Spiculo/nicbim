@@ -118,7 +118,7 @@ def _tool_names() -> tuple[list[dict], dict[str, str]]:
 def _system(config: dict) -> str:
     selection = [g for g in (config.get("selection") or []) if isinstance(g, str)]
     lines = [
-        "You are the assistant inside KimBim, a BIM application. You work on the project the architect has open.",
+        "You are the assistant inside NicBim, a BIM application. You work on the project the architect has open.",
         "Use the tools to read, change and picture the model. Never claim a change you did not make.",
         "A write tool called without a task starts one; prefer task_start with a short title, then the changes, then",
         "task_finish with a summary. Changes go in a design option the architect reviews; never accept your own work.",
@@ -536,7 +536,7 @@ def chat(messages_json: str, config_json: str) -> str:
         except ValueError as ex:
             return _dump({"ok": False, "error": {"code": "bad_input", "message": str(ex)}})
         if live._host is None:
-            return _dump({"ok": False, "error": {"code": "needs_app", "message": "Open a project in KimBim first."}})
+            return _dump({"ok": False, "error": {"code": "needs_app", "message": "Open a project in NicBim first."}})
         session_id = str(config.get("session") or "")
         if session_id:
             try:

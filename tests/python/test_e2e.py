@@ -31,7 +31,7 @@ def test_duplex_property_edit_roundtrip(tmp_path):
     walls = f.by_type("IfcWall")
     wall = walls[len(walls) // 2]
     pset = ifcopenshell.util.element.get_pset(wall, "Pset_WallCommon")
-    ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(pset["id"]), properties={"FireRating": "EI60-KimBim"})
+    ifcopenshell.api.pset.edit_pset(f, pset=f.by_id(pset["id"]), properties={"FireRating": "EI60-NicBim"})
     edited = tmp_path / "edited.ifc"
     f.write(str(edited))
     _, changes = proj.commit(edited, "FireRating EI60", author=("T", "t@e.org"), time=2)
@@ -40,5 +40,5 @@ def test_duplex_property_edit_roundtrip(tmp_path):
     assert not changes.removed
 
     v2 = proj.export(tmp_path / "v2.ifc")
-    assert "EI60-KimBim" in body_text(v2)
+    assert "EI60-NicBim" in body_text(v2)
     assert not proj.status(v2)

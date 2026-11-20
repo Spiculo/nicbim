@@ -163,7 +163,7 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
     form->addRow(tr("Column and beam material:"), m_memberMaterial);
     m_importedWalls = new QComboBox(this); // D92
     m_importedWalls->setObjectName(QStringLiteral("importedWalls"));
-    m_importedWalls->addItem(tr("Rebuild with KimBim's shape"), QStringLiteral("rebuild"));
+    m_importedWalls->addItem(tr("Rebuild with NicBim's shape"), QStringLiteral("rebuild"));
     m_importedWalls->addItem(tr("Keep the imported shape and cut it"), QStringLiteral("keep"));
     m_importedWalls->setCurrentIndex(m_importedWalls->findData(settings.value("imported_walls").toString(QStringLiteral("rebuild"))));
     m_importedWalls->setToolTip(tr("Splitting a wall imported from another program: rebuild it (so it edits and joins like one drawn here) or keep the other program's body and cut it"));

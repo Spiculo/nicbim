@@ -15,7 +15,7 @@ become linetypes (patterns in paper mm, $LTSCALE takes them to model units); a c
 HATCH (on the element layer's "-PATT" sublayer); text is TEXT; a dimension chain is real DIMENSION
 entities (one per segment, sharing the dimension line), or exploded lines and text on request.
 
-Layers: by KimBim layer (the IFC presentation layer; Archicad's translator default), with elements
+Layers: by NicBim layer (the IFC presentation layer; Archicad's translator default), with elements
 without one on the layer of their kind; or by element kind (US National CAD Standard names, as Revit
 exports). Same protocol as app_bridge for the bridge functions (strings in, JSON out, never raise).
 """
@@ -170,7 +170,7 @@ class Doc:
         h["$LTSCALE"] = self.ltscale
         h["$PSLTSCALE"] = 0
         h["$LWDISPLAY"] = 1
-        self.doc.styles.add("KimBim", font="arial.ttf")
+        self.doc.styles.add("NicBim", font="arial.ttf")
         self.line_types = {tuple(round(float(v), 4) for v in d): name for name, d in (line_types or {}).items()
                            if isinstance(d, list) and d}
         self.layers: dict[str, str] = {}
@@ -188,21 +188,21 @@ class Doc:
         if not dash:
             return "CONTINUOUS"
         key = tuple(round(float(v), 4) for v in dash)
-        name = layer_name(self.line_types.get(key) or "KimBim-" + "-".join(f"{v:g}" for v in key)).upper()
+        name = layer_name(self.line_types.get(key) or "NicBim-" + "-".join(f"{v:g}" for v in key)).upper()
         if name not in self.doc.linetypes:
             if len(key) % 2:
                 key = key + key  # SVG repeats an odd dash list twice
             pattern = [sum(key)] + [v if i % 2 == 0 else -v for i, v in enumerate(key)]
-            self.doc.linetypes.add(name, pattern=pattern, description=f"KimBim {name.title()}")
+            self.doc.linetypes.add(name, pattern=pattern, description=f"NicBim {name.title()}")
         return name
 
     def dimension_style(self) -> str:
         if self.dimstyle is None:
-            self.dimstyle = "KimBim"
+            self.dimstyle = "NicBim"
             self.doc.dimstyles.new(self.dimstyle, dxfattribs={
                 "dimscale": self.ltscale, "dimtxt": G.TEXT_SIZE, "dimtsz": 1.0, "dimasz": 1.0, "dimexe": 1.0,
                 "dimexo": 0.0, "dimgap": 0.6, "dimtad": 1, "dimjust": 0, "dimtih": 0, "dimtoh": 0,
-                "dimtxsty": "KimBim", "dimlunit": 2, "dimdec": 0})
+                "dimtxsty": "NicBim", "dimlunit": 2, "dimdec": 0})
         return self.dimstyle
 
 
@@ -567,7 +567,7 @@ class Writer:
                                 self.count += 1
                     if definition:
                         hatch = self.target.add_hatch(color=aci(ctx["fill"]), dxfattribs=hatch_attribs)
-                        hatch.set_pattern_fill(layer_name(ctx["pattern"]).upper()[:31] or "KimBim", color=aci(ctx["fill"]),
+                        hatch.set_pattern_fill(layer_name(ctx["pattern"]).upper()[:31] or "NicBim", color=aci(ctx["fill"]),
                                                definition=definition, scale=1.0)
                         hatch.dxf.hatch_style = 0
                         for loop in loops:
@@ -628,7 +628,7 @@ class Writer:
         definition = [] if pattern.get("solid") else _pattern_definition(pattern, k)
         if definition:
             hatch = self.target.add_hatch(color=aci(ctx["color"]), dxfattribs=layer)
-            hatch.set_pattern_fill(layer_name(name).upper()[:31] or "KimBim", color=aci(ctx["color"]),
+            hatch.set_pattern_fill(layer_name(name).upper()[:31] or "NicBim", color=aci(ctx["color"]),
                                    definition=definition, scale=1.0)
             hatch.paths.add_polyline_path(loop, is_closed=True)
             self.count += 1
@@ -662,7 +662,7 @@ class Writer:
                  ("end", True): TextEntityAlignment.MIDDLE_RIGHT}.get((anchor, middle), TextEntityAlignment.LEFT)
         color = ctx.get("text_color") or ctx["color"]
         p = self.map(x, y)
-        attribs = {"layer": self.doc.layer(ctx["layer"]), "color": aci(color), "style": "KimBim",
+        attribs = {"layer": self.doc.layer(ctx["layer"]), "color": aci(color), "style": "NicBim",
                    "height": size * self.map.size, "rotation": self.map.angle(angle)}
         e = self.target.add_text(value, dxfattribs=attribs)
         e.set_placement(p, align=align)
@@ -784,7 +784,7 @@ class Styler:
 
 
 def write_dimensions(doc: Doc, target, styler: Styler, u: float, offset=None) -> int:
-    """KimBim's dimension chains as DIMENSION entities: one rotated linear dimension per segment, all on
+    """NicBim's dimension chains as DIMENSION entities: one rotated linear dimension per segment, all on
     the chain's dimension line, the segment's label as the text (empty: the measured value)."""
     count = 0
     style = doc.dimension_style() if styler.dimension_groups else None
@@ -920,7 +920,7 @@ def sheet_document(number: str, opts: dict):
     dxf = doc.doc
     title = f"{S._number(sheet)} {sheet.Name or ''}".strip()
     layout = dxf.layouts.new(layer_name(title)[:200])
-    layout.page_setup(size=(width, height), margins=(0, 0, 0, 0), units="mm", scale=(1, 1), name="KimBim")
+    layout.page_setup(size=(width, height), margins=(0, 0, 0, 0), units="mm", scale=(1, 1), name="NicBim")
     if "Layout1" in dxf.layouts:
         dxf.layouts.delete("Layout1")
     paper = Mapping([[1, 0, 0], [0, -1, height], [0, 0, 1]])  # sheet mm, y down -> paper space, y up

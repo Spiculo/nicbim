@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """DWG in and out (docs/14 §14/§18) through LibreDWG or the ODA File Converter.
 
-DWG is a proprietary format; KimBim does not parse it itself. It calls a converter when one is
+DWG is a proprietary format; NicBim does not parse it itself. It calls a converter when one is
 available: LibreDWG's `dwg2dxf` and `dxf2dwg` (GPL-3.0-or-later, the `dwg` pixi environment) or the
 ODA File Converter. DWG underlays are converted to DXF and read by the existing DXF path; drawings
 and sheets exported to DWG are first written as DXF, then converted.

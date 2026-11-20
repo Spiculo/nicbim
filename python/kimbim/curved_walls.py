@@ -344,7 +344,7 @@ def set_length(wall, metres: float) -> str:
 # ---------------------------------------------------------------- joins with straight walls (D97)
 # A straight wall drawn to or from a curved wall's end meets it in a mitre, as Archicad's walls do:
 # the line through where their outside faces meet and where their inside faces meet (the arc's faces
-# taken along its tangent there). The regenerator knows only lines, so KimBim keeps these joins in
+# taken along its tangent there). The regenerator knows only lines, so NicBim keeps these joins in
 # KIMBIM_Wall.ArcJoins on both walls ([{wall, end}]: the other wall, and which end of this one) and
 # recomputes the mitre from both walls as they are whenever either is rebuilt.
 

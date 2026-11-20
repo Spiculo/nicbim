@@ -574,7 +574,7 @@ def _new_versions_file(model):
     import ifcopenshell.guid
 
     f = ifcopenshell.api.project.create_file(version=model.schema_identifier)
-    project = f.create_entity("IfcProject", GlobalId=ifcopenshell.guid.new(), Name="KimBim versions")
+    project = f.create_entity("IfcProject", GlobalId=ifcopenshell.guid.new(), Name="NicBim versions")
     units = next(iter(model.by_type("IfcProject")), None)
     if units is not None and units.UnitsInContext is not None:
         project.UnitsInContext = f.add(units.UnitsInContext)

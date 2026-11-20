@@ -88,7 +88,7 @@ def test_a_tag_follows_its_element_and_shows_its_values(flat):
     tag = b._model.by_guid(t["guid"])
     assert tag.ObjectType == "TAG" and tags.element_of(tag).GlobalId == flat["door"]
     rel = next(r for r in tag.HasAssignments if r.is_a("IfcRelAssignsToProduct"))
-    assert rel.RelatingProduct.GlobalId == flat["door"]  # IFC's association, not only KimBim's pset
+    assert rel.RelatingProduct.GlobalId == flat["door"]  # IFC's association, not only NicBim's pset
     first = listed(flat["l1"])[t["guid"]]
     assert first["text"] == "0.90×2.10" and first["labels"][0]["text"] == "0.90×2.10"
     # The wall (and its door) move: the tag follows, keeping its place relative to the door.

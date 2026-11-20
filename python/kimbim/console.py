@@ -4,7 +4,7 @@ in the embedded interpreter in one persistent namespace with the open model and 
 
 The app runs `console_run` on a worker thread while a modal "Running..." dialog keeps the window painting;
 its Stop button calls `console_stop`, which makes the script raise KeyboardInterrupt at its next line of
-user code (never inside KimBim's own code, so an undo step is never left half-recorded).
+user code (never inside NicBim's own code, so an undo step is never left half-recorded).
 Same protocol as app_bridge for the bridge functions: strings in, JSON out, never raise.
 """
 from __future__ import annotations
@@ -19,10 +19,10 @@ import traceback
 
 from . import app_bridge as B
 
-HELP = """KimBim Python console
+HELP = """NicBim Python console
   ifc               the open model (an ifcopenshell.file)
   ifcopenshell      IfcOpenShell (ifcopenshell.api, ifcopenshell.util.element, ...)
-  kimbim, bridge    KimBim's modules; bridge = kimbim.app_bridge (the app's own commands, JSON in/out)
+  kimbim, bridge    NicBim's modules; bridge = kimbim.app_bridge (the app's own commands, JSON in/out)
   selection()       the selected elements (entities)
   select(items)     select elements: GlobalIds, entities, or a list of them ([] clears)
   with edit():      join the run's undo step explicitly (the run is one step already)
@@ -160,7 +160,7 @@ def _finish_step() -> bool:
 @contextlib.contextmanager
 def edit():
     """`with edit(): ...`: the changes made in the block are one undo step, and the views update when the
-    run ends. KimBim commands called inside (bridge.create_wall(...), ...) join the same step. Every run
+    run ends. NicBim commands called inside (bridge.create_wall(...), ...) join the same step. Every run
     is already one undo step (D92), so edit() simply joins it; used stand-alone it opens its own."""
     if B._model is None:
         raise RuntimeError("no model open")

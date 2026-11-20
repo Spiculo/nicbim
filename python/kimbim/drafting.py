@@ -3,7 +3,7 @@
 
 They are plan annotations (D59): an IfcAnnotation on the level, ObjectType LINE / POLYLINE / ARC /
 CIRCLE / FILL, with an Annotation2D representation (polylines, a trimmed circle, a circle, an
-IfcAnnotationFillArea styled with an IfcFillAreaStyle and its hatchings), and KimBim's own data in
+IfcAnnotationFillArea styled with an IfcFillAreaStyle and its hatchings), and NicBim's own data in
 the KIMBIM_Annotation property set (points relative to the placement, pen, line type, fill pattern,
 background pen, whether the area is shown). Moving, rotating, copying, deleting, layers and undo are
 the annotations' (so every element's).

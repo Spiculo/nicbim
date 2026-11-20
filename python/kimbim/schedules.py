@@ -441,7 +441,7 @@ def _family(e) -> str:
 
 def _rep(e, identifier: str):
     """The element's representation with this identifier (Body, Axis), in whatever context: imported
-    files often lack KimBim's Model/Body/MODEL_VIEW context (e.g. Revit 2011 exports)."""
+    files often lack NicBim's Model/Body/MODEL_VIEW context (e.g. Revit 2011 exports)."""
     shape = getattr(e, "Representation", None)
     for r in (shape.Representations if shape is not None else ()):
         if r.RepresentationIdentifier == identifier:
@@ -558,7 +558,7 @@ def _parametric(e, family: str, ctx: _Ctx) -> dict:
             layer_set = A._layer_set(e)
             if length is not None:
                 q["length"] = length
-                # KimBim walls have square ends: both faces run the axis length (joins are a later refinement).
+                # NicBim walls have square ends: both faces run the axis length (joins are a later refinement).
                 q["inside_face_length"] = length
                 q["outside_face_length"] = length
             if layer_set is not None:

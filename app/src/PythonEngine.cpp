@@ -76,7 +76,7 @@ bool PythonEngine::start(QString* error)
     const QByteArray prefix = qgetenv("CONDA_PREFIX");
     if (prefix.isEmpty()) {
         if (error)
-            *error = QStringLiteral("CONDA_PREFIX is not set: run KimBim through `pixi run app`");
+            *error = QStringLiteral("CONDA_PREFIX is not set: run NicBim through `pixi run app`");
         return false;
     }
 

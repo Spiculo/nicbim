@@ -85,11 +85,11 @@ DxfExportDialog::DxfExportDialog(const QJsonObject& targets, Bridge run, QWidget
     m_format->addItem(tr("DXF"), QStringLiteral("dxf"));
     m_format->addItem(tr("DWG"), QStringLiteral("dwg"));
     m_layers->setObjectName(QStringLiteral("dxfLayers"));
-    m_layers->addItem(tr("By KimBim layer"), QStringLiteral("layer"));
+    m_layers->addItem(tr("By NicBim layer"), QStringLiteral("layer"));
     m_layers->addItem(tr("By element kind (A-WALL, A-DOOR...)"), QStringLiteral("kind"));
     m_layers->addItem(tr("US NCS (A-WALL-FULL)"), QStringLiteral("iso"));  // D92: the ISO 13567 scheme
     m_layers->addItem(tr("One layer per pen (PEN-nn)"), QStringLiteral("pen"));
-    m_layers->setToolTip(tr("Elements without a KimBim layer go on the layer of their kind"));
+    m_layers->setToolTip(tr("Elements without a NicBim layer go on the layer of their kind"));
     m_colour->setObjectName(QStringLiteral("dxfColour"));
     m_colour->addItem(tr("Exact colours"), QStringLiteral("exact"));
     m_colour->addItem(tr("Nearest ACI index"), QStringLiteral("aci"));

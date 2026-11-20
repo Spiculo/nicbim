@@ -34,7 +34,7 @@ def _walls():
 def test_open_nic_and_save(nic):
     s = Session.open(str(nic))
     assert s.kind == "nic" and s.source == str(nic) and s.work and s.unit == "m"
-    assert K.display_user == "KimBim agent"
+    assert K.display_user == "NicBim agent"
     assert json.loads(B.set_name(json.dumps(_walls()[:1]), "Renamed"))["ok"]
     s.save()
     s.close()
@@ -51,7 +51,7 @@ def test_open_plain_ifc(model, tmp_path, monkeypatch):
     s = Session.open(str(ifc))
     assert s.kind == "ifc" and s.work == ""
     assert len(s.resolve(_walls())) == 2
-    assert K.display_user == "KimBim agent"
+    assert K.display_user == "NicBim agent"
     assert json.loads(B.set_name(json.dumps(_walls()[:1]), "Saved"))["ok"]
     s.save()
     s.close()

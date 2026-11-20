@@ -104,7 +104,7 @@ def _linux_get(provider: str) -> str:
 
 
 def _linux_set(provider: str, key: str) -> None:
-    out = _run(["secret-tool", "store", "--label", "KimBim Assistant", "service", _target(provider)], key)
+    out = _run(["secret-tool", "store", "--label", "NicBim Assistant", "service", _target(provider)], key)
     if out.returncode != 0:
         raise KeyStoreError(out.stderr.strip() or "the Secret Service refused to store the key")
 

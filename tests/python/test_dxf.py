@@ -142,7 +142,7 @@ def test_house_plan_to_dxf_at_real_size_with_pens(house, tmp_path):
     # D96: the walls' materials hatch them with their patterns, in the fill pen (12)
     assert any(not h.dxf.solid_fill and h.dxf.color == dxf.aci(pens["12"]["color"]) for h in hatches)
     dim = msp.query("DIMENSION").first
-    assert dim.dxf.layer == "A-ANNO-DIMS" and dim.dxf.dimstyle == "KimBim"
+    assert dim.dxf.layer == "A-ANNO-DIMS" and dim.dxf.dimstyle == "NicBim"
     assert dim.get_measurement() == pytest.approx(10000.0, abs=1.0)  # the house's 10 m chain
 
 
@@ -252,7 +252,7 @@ def test_sheet_a01_is_a_paper_space_layout(house, tmp_path):
         assert box.extmax.y <= 297 - view["y"] + 0.5 and box.extmin.y >= 297 - view["y"] - view["h"] - 0.5, view["name"]
     texts = [t.dxf.text for t in layout.query("TEXT")]
     assert "A01" in texts and "Level 1 Floor Plan" in texts and "1:100" in texts
-    assert "KimBim two-storey house" in texts or any("M4-01" in t for t in texts)
+    assert "NicBim two-storey house" in texts or any("M4-01" in t for t in texts)
     frame = layout.query('LWPOLYLINE[layer=="A-ANNO-TTLB"]')
     assert any(e.dxf.lineweight == 70 for e in frame)  # the 0.7 mm border
     # Model space has the same drawings at real size.

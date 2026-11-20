@@ -21,5 +21,5 @@ def test_share_a_sheet_as_a_web_page(tmp_path):
     saved = call("export_web", number, str(out))
     assert saved["ok"], saved
     text = out.read_text(encoding="utf-8")
-    assert "<svg" in text and "Ground floor" in text and "KimBim sheet" in text
+    assert "<svg" in text and "Ground floor" in text and "NicBim sheet" in text
     assert not call("share_html", "nope")["ok"]

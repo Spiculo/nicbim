@@ -951,7 +951,7 @@ def place_object(storey_guid: str, key: str, params_json: str, x, y, angle=0.0, 
 
 # ---------------------------------------------------------------- the settings dialog's preview (D100)
 
-PREVIEW_GUID = "0KimBimPreviewObject00"  # the preview's one element: each update replaces the last
+PREVIEW_GUID = "0NicBimPreviewObject00"  # the preview's one element: each update replaces the last
 
 
 def _preview_definition(key: str, params_json: str, version: str = ""):
@@ -1020,9 +1020,9 @@ def _preview_meshes(obj, values: dict):
     owner = ifcopenshell.api.owner.settings
     get_user, get_application = owner.get_user, owner.get_application
     if schema == "IFC2X3":  # every root entity needs an owner history: the scratch model's own user
-        organization = f.createIfcOrganization(None, "KimBim")
-        user = f.createIfcPersonAndOrganization(f.createIfcPerson(None, None, "KimBim"), organization)
-        application = f.createIfcApplication(organization, "0", "KimBim", "KimBim")
+        organization = f.createIfcOrganization(None, "NicBim")
+        user = f.createIfcPersonAndOrganization(f.createIfcPerson(None, None, "NicBim"), organization)
+        application = f.createIfcApplication(organization, "0", "NicBim", "NicBim")
         owner.get_user = lambda ifc: user if ifc is f else get_user(ifc)
         owner.get_application = lambda ifc: application if ifc is f else get_application(ifc)
     B._model = f

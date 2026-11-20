@@ -16,7 +16,7 @@ import ifcopenshell.util.element
 import ifcopenshell.util.pset
 
 STATUSES = ("existing", "demolish", "new", "temporary", "auxiliary")
-# IFC's PEnum_ElementStatus has no "Auxiliary": that one only lives in KimBim's own pset.
+# IFC's PEnum_ElementStatus has no "Auxiliary": that one only lives in NicBim's own pset.
 IFC_VALUE = {"existing": "EXISTING", "demolish": "DEMOLISH", "new": "NEW", "temporary": "TEMPORARY"}
 PSET = "KIMBIM_Renovation"
 NAMES = ("Status", "Renovation Status")
@@ -61,7 +61,7 @@ def _stored(element):
         sources.append(element_type)
     for source in sources:
         psets = ifcopenshell.util.element.get_psets(source, psets_only=True, should_inherit=False)
-        # KimBim's own pset first: it holds statuses IFC has no value for (Auxiliary) and never
+        # NicBim's own pset first: it holds statuses IFC has no value for (Auxiliary) and never
         # contradicts the common one (write_status clears the other place).
         for pset_name in (PSET, *[n for n in psets if n != PSET]):
             props = psets.get(pset_name) or {}
@@ -110,7 +110,7 @@ def write_status(element, status: str) -> None:
     f = element.file
     target = common_pset(element)
     if target is None or status not in IFC_VALUE:
-        # Classes without a Status template keep it in KimBim's pset; so does Auxiliary, which IFC's
+        # Classes without a Status template keep it in NicBim's pset; so does Auxiliary, which IFC's
         # PEnum_ElementStatus has no value for.
         ps = _own_pset(element, PSET) or ifcopenshell.api.pset.add_pset(f, product=element, name=PSET)
         ifcopenshell.api.pset.edit_pset(f, pset=ps, properties={"Status": IFC_VALUE.get(status, status.upper())})

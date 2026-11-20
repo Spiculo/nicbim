@@ -1114,7 +1114,7 @@ private slots:
         QVERIFY(w.newProject());
         kimbim::TitleBar* bar = w.titleBar();
         QVERIFY(bar->title().contains(QObject::tr("Untitled")));
-        QVERIFY(!bar->title().startsWith(QStringLiteral("KimBim")));
+        QVERIFY(!bar->title().startsWith(QStringLiteral("NicBim")));
         QVERIFY(w.addLevel(QStringLiteral("Level 2"), 3.0));
         QVERIFY(bar->title().endsWith(QStringLiteral("•")));
         QWidget* title = bar->findChild<QWidget*>(QStringLiteral("documentTitle"));

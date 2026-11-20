@@ -142,7 +142,7 @@ def test_existing_project_folders_open_with_default_settings(tmp_path):
     plain = tmp_path / "old.ifc"
     assert call("save", str(plain))["ok"]
     project = Project.init(tmp_path / "old")
-    project.commit(plain, "Made by an older KimBim")  # no settings.json in its tree
+    project.commit(plain, "Made by an older NicBim")  # no settings.json in its tree
     r = call("open_folder", str(tmp_path / "old"), "")
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
@@ -215,7 +215,7 @@ def test_nothing_is_written_without_unsaved_work(tmp_path):
 def test_templates_list_save_and_make_new_projects(tmp_path):
     folder = tmp_path / "Plantillas"
     assert call("templates", str(folder)) == {"templates": [
-        {"name": "KimBim default", "path": "builtin", "builtin": True, "modified": ""}], "folder_ok": False}
+        {"name": "NicBim default", "path": "builtin", "builtin": True, "modified": ""}], "folder_ok": False}
     house()
     assert call("set_project_info", json.dumps({"number": "2026-001", "name": "Casa"}))["ok"]
     sheet = call("add_sheet", "A1", "Plantas")["number"]
@@ -230,7 +230,7 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
     assert call("save_template", str(folder), "Oficina", "1")["ok"]
     assert not call("save_template", str(folder), "a/b")["ok"]
     listed = call("templates", str(folder))
-    assert listed["folder_ok"] and [t["name"] for t in listed["templates"]] == ["KimBim default", "Oficina"]
+    assert listed["folder_ok"] and [t["name"] for t in listed["templates"]] == ["NicBim default", "Oficina"]
 
     r = call("new_from_template", str(folder / "Oficina.nic"))
     assert r["ok"], r
@@ -249,7 +249,7 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
 def test_the_built_in_template_is_a_new_project():
     r = call("new_from_template", "builtin")
     assert r["ok"] and r["path"] == ""
-    assert call("storeys")["storeys"] and call("document_state")["template"] == "KimBim default"
+    assert call("storeys")["storeys"] and call("document_state")["template"] == "NicBim default"
 
 
 def test_an_opened_template_saves_back_as_a_template(tmp_path):

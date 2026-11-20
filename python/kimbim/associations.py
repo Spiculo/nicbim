@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Open `.nic` and `.ifc` files with KimBim: per-user file associations (D139).
+"""Open `.nic` and `.ifc` files with NicBim: per-user file associations (D139).
 
 Windows: `HKEY_CURRENT_USER\\Software\\Classes`, no administrator needed. `.nic` maps to
-`KimBim.Project` and `.ifc` to `KimBim.Ifc`; each class holds the `open` command and the app icon.
+`NicBim.Project` and `.ifc` to `NicBim.Ifc`; each class holds the `open` command and the app icon.
 Linux: a `kimbim.desktop` file in `$XDG_DATA_HOME/applications` (or `~/.local/share/applications`) and
 `xdg-mime default` for the two MIME types. `associations.plan()` returns the actions without changing
 anything; `apply()` performs them and `remove()` undoes them. No installer and no code signing yet.
@@ -17,9 +17,9 @@ import shutil
 import subprocess
 import sys
 
-APP_NAME = "KimBim"
-PROJECT_CLASS = "KimBim.Project"
-IFC_CLASS = "KimBim.Ifc"
+APP_NAME = "NicBim"
+PROJECT_CLASS = "NicBim.Project"
+IFC_CLASS = "NicBim.Ifc"
 PROJECT_MIME = "application/x-kimbim-project"
 IFC_MIME = "application/x-ifc"
 EXTENSIONS = {".nic": PROJECT_CLASS, ".ifc": IFC_CLASS}
@@ -89,7 +89,7 @@ def linux_desktop(exe: str) -> str:
     return "\n".join([
         "[Desktop Entry]",
         "Type=Application",
-        "Name=KimBim",
+        "Name=NicBim",
         "Comment=Open BIM authoring and versioning",
         f'Exec="{exe}" %f',
         f"Icon={ICON}",
@@ -110,7 +110,7 @@ def linux_mime_xml() -> str:
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="{PROJECT_MIME}">
-    <comment>KimBim project</comment>
+    <comment>NicBim project</comment>
     <glob pattern="*.nic"/>
   </mime-type>
   <mime-type type="{IFC_MIME}">
@@ -146,7 +146,7 @@ def _linux_apply(actions: list[dict]) -> list[str]:
 def plan(exe: str, home: str | None = None) -> dict:
     """The platform's actions without performing them, for `--print` and tests."""
     if not exe:
-        raise ValueError("no KimBim executable: pass --exe (or set KIMBIM_APP)")
+        raise ValueError("no NicBim executable: pass --exe (or set KIMBIM_APP)")
     if sys.platform.startswith("win"):
         return {"platform": "windows", "actions": windows_actions(exe), "exe": exe}
     return {"platform": "linux", "actions": linux_actions(exe, home), "exe": exe}
@@ -155,7 +155,7 @@ def plan(exe: str, home: str | None = None) -> dict:
 def apply(exe: str, home: str | None = None) -> list[str]:
     """Associate .nic and .ifc with `exe` for this user; returns what was written."""
     if not exe:
-        raise ValueError("no KimBim executable: pass --exe (or set KIMBIM_APP)")
+        raise ValueError("no NicBim executable: pass --exe (or set KIMBIM_APP)")
     if sys.platform.startswith("win"):
         return _windows_apply(windows_actions(exe))
     return _linux_apply(linux_actions(exe, home))

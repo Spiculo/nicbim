@@ -28,7 +28,7 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
-<header><b>{title}</b> &middot; KimBim sheet {number}</header>
+<header><b>{title}</b> &middot; NicBim sheet {number}</header>
 <div id="stage"><div id="sheet">{svg}</div></div>
 <script>
 (function () {{

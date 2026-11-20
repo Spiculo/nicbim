@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The headless agent worker (D102, spec §4.2): `kimbim serve PROJECT` opens the project (taking its lock as
-"KimBim agent") and keeps it open between CLI/MCP commands, so a big model is opened once, not per command.
+"NicBim agent") and keeps it open between CLI/MCP commands, so a big model is opened once, not per command.
 
 It listens on a local pipe (named pipe on Windows, Unix socket elsewhere) with a random authkey and announces
 itself in a discovery file, `<data dir>/agent/sessions/<path hash>.json`, that only this user can read:

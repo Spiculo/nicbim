@@ -194,7 +194,7 @@ def _rgb(entity, doc, layer_colours) -> tuple[int, int, int]:
     if aci == 256:
         aci = layer_colours.get(entity.dxf.get("layer", "0"), 7)
     if aci in (0, 7) or not 1 <= aci <= 255:
-        return (0, 0, 0)  # BYBLOCK and white/black follow the background: dark on KimBim's light plan
+        return (0, 0, 0)  # BYBLOCK and white/black follow the background: dark on NicBim's light plan
     return aci2rgb(aci)
 
 

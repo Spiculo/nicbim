@@ -1006,7 +1006,7 @@ bool Viewport::ensureWindow()
         return true;
     } catch (const Standard_Failure& e) {
         // Never let an OCCT exception escape into a Qt event handler (it aborts the app).
-        qWarning("KimBim: cannot attach the 3D view to its window: %s", e.what());
+        qWarning("NicBim: cannot attach the 3D view to its window: %s", e.what());
         return false;
     }
 }
@@ -3188,7 +3188,7 @@ QImage Viewport::renderImage(int width, int height)
     try {
         ok = m_view->ToPixMap(pixmap, options);
     } catch (const Standard_Failure& e) {
-        qWarning("KimBim: offscreen render failed: %s", e.what());
+        qWarning("NicBim: offscreen render failed: %s", e.what());
     }
     update();
     if (!ok || int(pixmap.SizeX()) != width || int(pixmap.SizeY()) != height)

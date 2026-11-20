@@ -460,7 +460,7 @@ def set_double_slant(wall, reference: float, opposite: float):
     usage = _usage(wall)
     axis = A._axis_world(wall)
     if usage is None or axis is None:
-        raise ValueError(f"{wall.Name or 'the wall'} is not a layered wall drawn by KimBim")
+        raise ValueError(f"{wall.Name or 'the wall'} is not a layered wall drawn by NicBim")
     p = _pset(wall, WALL_PSET)
     if p.get("DoubleSlant"):
         height = float(p["Height"])

@@ -69,7 +69,7 @@ def walkthrough_delete(session, name):
 @tool("walkthrough.render", {"required": ["name"], "properties": {
     "name": _NAME,
     "out": {"type": "string", "description": "The video file (.mp4, .mov or .webm); default a new .mp4 in the "
-                                             "KimBim data folder."},
+                                             "NicBim data folder."},
     "style": {"type": "string", "enum": ["shaded", "white", "lines", "textured", "render"],
               "description": "Default shaded; render is ray traced (slow for long videos)."},
     "purpose": {"type": "string", "description": "The purpose (pen set, visibility); default the project's."},

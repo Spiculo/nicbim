@@ -11,7 +11,7 @@ holds only the tables the source project customised (an empty table means the bu
 Importing merges by name: a table or entity the target already has is kept unless ``replace`` is
 set. The settings changes go through the settings step like every other settings dialog; the IFC
 entities are created or updated in one undo step. Layers are created by name; the colour and weight
-a file stores are kept for reference but not applied, because KimBim assigns shape representations
+a file stores are kept for reference but not applied, because NicBim assigns shape representations
 to a layer and a styled layer (IfcPresentationLayerWithStyle) may not hold them. Same protocol as
 app_bridge (strings in, JSON out, never raise).
 """
@@ -366,7 +366,7 @@ def _plan(data: dict, groups: list, replace: bool, skipped: list) -> dict:
 
 
 def _new_layer(f, name: str):
-    """A layer (IfcPresentationLayerAssignment). KimBim assigns shape representations to layers, which an
+    """A layer (IfcPresentationLayerAssignment). NicBim assigns shape representations to layers, which an
     IfcPresentationLayerWithStyle may not hold (its ApplicableOnlyToItems rule), so a layer's colour and
     weight travel in the file for reference but are not applied here."""
     import ifcopenshell.api.layer

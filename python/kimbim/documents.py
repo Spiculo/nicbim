@@ -53,8 +53,8 @@ def data_dir() -> pathlib.Path:
     if os.environ.get("KIMBIM_DATA_DIR"):
         return pathlib.Path(os.environ["KIMBIM_DATA_DIR"])
     if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        return pathlib.Path(os.environ["LOCALAPPDATA"]) / "KimBim"
-    return pathlib.Path.home() / ".local" / "share" / "KimBim"
+        return pathlib.Path(os.environ["LOCALAPPDATA"]) / "NicBim"
+    return pathlib.Path.home() / ".local" / "share" / "NicBim"
 
 
 def _same(a, b) -> bool:
@@ -223,7 +223,7 @@ def open_worktree(project_path: str, work: str, branch: str = "") -> str:
     try:
         project = Project.open_worktree(project_dir, work_dir)
     except (NotAProject, KimbimError) as ex:
-        return _fail(f"not a KimBim project: {ex}")
+        return _fail(f"not a NicBim project: {ex}")
     try:
         if branch:
             project.switch(branch)
@@ -288,7 +288,7 @@ def open_folder(folder: str, read_only: str = "") -> str:
     try:
         project = Project.open(path)
     except (NotAProject, KimbimError) as ex:
-        return _fail(f"not a KimBim project: {ex}")
+        return _fail(f"not a NicBim project: {ex}")
     if project.repo.head() is None:
         return _fail("the project has no versions yet")
     ro = bool(read_only)
@@ -647,7 +647,7 @@ def recover(id: str) -> str:
 # ---------------------------------------------------------------- templates
 
 BUILTIN = "builtin"
-BUILTIN_NAME = "KimBim default"
+BUILTIN_NAME = "NicBim default"
 _GUID = re.compile(r"[0-9A-Za-z_$]{22}")
 _BAD_NAME = re.compile(r'[\\/:*?"<>|]')
 

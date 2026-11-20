@@ -7,7 +7,7 @@
 namespace kimbim {
 
 // Installs the translator for `lang` ("en" is the source language and needs none).
-// Returns false for languages KimBim does not ship (docs/04 §12: English and Spanish).
+// Returns false for languages NicBim does not ship (docs/04 §12: English and Spanish).
 bool installTranslator(QCoreApplication& app, const QString& lang);
 
 // "en" or "es": what installTranslator installed.

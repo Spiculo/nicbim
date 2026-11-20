@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """An agent session (D102): one open project, opened the way the app opens it (lock, versioning, settings),
-so the app and an agent never edit the same file at once. The lock shows as "KimBim agent"."""
+so the app and an agent never edit the same file at once. The lock shows as "NicBim agent"."""
 from __future__ import annotations
 
 import json
@@ -83,7 +83,7 @@ class Session:
             raise AgentError("not_found", what=str(p))
         session = cls(kind, str(p), client)
         session._saved_user = K.display_user
-        K.display_user = "KimBim agent"
+        K.display_user = "NicBim agent"
         try:
             session._open(p)
             session.tasks = Tasks(session)
@@ -107,7 +107,7 @@ class Session:
         session = cls(kind, str(p), client)
         session.store, session.stored, session.stored_id = store, record, record.id
         session._saved_user = K.display_user
-        K.display_user = "KimBim agent"
+        K.display_user = "NicBim agent"
         try:
             worktree = store.ensure_worktree(record) if kind == "folder" else ""
             if worktree:

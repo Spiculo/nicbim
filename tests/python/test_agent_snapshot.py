@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import make_house  # noqa: E402
 
 app = pytest.mark.app
-needs_app = pytest.mark.skipif(render.app_binary() is None, reason="the KimBim app binary isn't built")
+needs_app = pytest.mark.skipif(render.app_binary() is None, reason="the NicBim app binary isn't built")
 
 
 @pytest.fixture

@@ -116,11 +116,11 @@ def read_manifest(nic) -> dict:
         with zipfile.ZipFile(nic) as z:
             manifest = json.loads(z.read(MANIFEST))
     except (zipfile.BadZipFile, KeyError, ValueError, OSError):
-        raise NicError(f"{nic.name} is not a KimBim file, or it is damaged") from None
+        raise NicError(f"{nic.name} is not a NicBim file, or it is damaged") from None
     if not isinstance(manifest, dict) or manifest.get("format") != "nic":
-        raise NicError(f"{nic.name} is not a KimBim file, or it is damaged")
+        raise NicError(f"{nic.name} is not a NicBim file, or it is damaged")
     if int(manifest.get("version", 0)) > VERSION:
-        raise NicError(f"{nic.name} was made by a newer KimBim; update KimBim to open it")
+        raise NicError(f"{nic.name} was made by a newer NicBim; update NicBim to open it")
     return manifest
 
 

@@ -284,7 +284,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `levels_list` | `kimbim levels list` | List the levels from the lowest: GlobalId, name, elevation, height to the next level and element count. |  |
 | `selection_get` | `kimbim selection get` | Read the app's current selection. |  |
 | `selection_set` | `kimbim selection set` | Select elements in the app's window. |  |
-| `script_run` | `kimbim script run` | Run a Python script in the project's console (the model is `ifc`, KimBim commands are in `bridge`). | yes |
+| `script_run` | `kimbim script run` | Run a Python script in the project's console (the model is `ifc`, NicBim commands are in `bridge`). | yes |
 | `snapshot_take` | `kimbim snapshot take` | Take a picture of the model to check your work: a 3D view (optionally framed on elements, with what your task changed coloured as the app's Compare shows it), a floor plan, a section or elevation, any drawing, or a sheet. |  |
 | `annotation_add` | `kimbim annotation add` | Add an annotation: text at a point, a dimension chain, a mark or a leader with text. | yes |
 | `annotation_auto_dimension` | `kimbim annotation auto-dimension` | Add a dimension chain along a row of aligned elements. | yes |

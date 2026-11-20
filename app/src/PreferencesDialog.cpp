@@ -50,7 +50,7 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
     m_language = choice(this, "language", {{tr("Automatic (system)"), "auto"}, {QStringLiteral("English"), "en"},
                                               {QStringLiteral("Español"), "es"}}, prefs.language());
     form->addRow(tr("Language:"), m_language);
-    m_restartNote = new QLabel(tr("The language changes the next time KimBim starts."), this);
+    m_restartNote = new QLabel(tr("The language changes the next time NicBim starts."), this);
     m_restartNote->setObjectName(QStringLiteral("restartNote"));
     m_restartNote->setVisible(false);
     form->addRow(QString(), m_restartNote);
@@ -109,7 +109,7 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
     m_largeIfc->setSuffix(tr(" MB"));
     m_largeIfc->setSpecialValueText(tr("Never"));
     m_largeIfc->setValue(qRound(prefs.largeIfcMb()));
-    m_largeIfc->setToolTip(tr("Making a .nic from a large IFC can take minutes; above this size KimBim asks first"));
+    m_largeIfc->setToolTip(tr("Making a .nic from a large IFC can take minutes; above this size NicBim asks first"));
     form->addRow(tr("Ask before converting IFC files over:"), m_largeIfc);
 
     auto* autoRow = new QHBoxLayout;

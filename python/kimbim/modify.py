@@ -75,7 +75,7 @@ def _distance_to_segment(p, a1, a2) -> float:
 # ---------------------------------------------------------------- walls and beams as lines
 
 def _editable_wall(wall) -> str:
-    """'' if KimBim can rebuild this wall's shape (a wall with an axis and layers), else why not."""
+    """'' if NicBim can rebuild this wall's shape (a wall with an axis and layers), else why not."""
     if A._axis_world(wall) is None:
         return "the wall has no axis"
     if A._layer_set(wall) is None:
@@ -84,16 +84,16 @@ def _editable_wall(wall) -> str:
 
 
 def _foreign_bodies(wall) -> list:
-    """Body representations KimBim didn't make (e.g. Revit's, on the plain Model context)."""
+    """Body representations NicBim didn't make (e.g. Revit's, on the plain Model context)."""
     ours = ifcopenshell.util.representation.get_representation(wall, "Model", "Body", "MODEL_VIEW")
     return [r for r in (wall.Representation.Representations if wall.Representation else ())
             if r.RepresentationIdentifier == "Body" and r != ours]
 
 
 def _adopt(wall):
-    """Inside an action: an imported layered wall gets KimBim's own shape (D80) — rebuilt from its
+    """Inside an action: an imported layered wall gets NicBim's own shape (D80) — rebuilt from its
     axis, layers and height, as walls drawn here are — so it can be split, trimmed and merged.
-    Its doors/windows keep their place. Walls with KimBim's shape are left alone."""
+    Its doors/windows keep their place. Walls with NicBim's shape are left alone."""
     if not wall.is_a("IfcWall") or A._layer_set(wall) is None or A._axis_world(wall) is None:
         return
     foreign = _foreign_bodies(wall)
@@ -130,7 +130,7 @@ def _adopt(wall):
 
 
 def _imported_policy() -> str:
-    """D92: splitting an imported wall either rebuilds it with KimBim's shape ("rebuild", default) or
+    """D92: splitting an imported wall either rebuilds it with NicBim's shape ("rebuild", default) or
     keeps the other program's shape and cuts it ("keep")."""
     from . import settings
 
@@ -138,7 +138,7 @@ def _imported_policy() -> str:
 
 
 def _is_foreign(wall) -> bool:
-    """True for a wall whose body KimBim didn't make (e.g. a Revit export) and would have to adopt."""
+    """True for a wall whose body NicBim didn't make (e.g. a Revit export) and would have to adopt."""
     return wall.is_a("IfcWall") and bool(_foreign_bodies(wall)) \
         and ifcopenshell.util.representation.get_representation(wall, "Model", "Body", "MODEL_VIEW") is None
 
@@ -218,7 +218,7 @@ def _beam_solid(beam):
 
 def _beam_axis(beam):
     """(start, end) of a beam's extrusion in world metres (3D), or None when its body is not one
-    extrusion (KimBim's beams, most exported ones)."""
+    extrusion (NicBim's beams, most exported ones)."""
     solid = _beam_solid(beam)
     if solid is None or beam.ObjectPlacement is None:
         return None
@@ -248,7 +248,7 @@ def _set_beam_axis(beam, a, b):
 
 
 def _wall_line(wall):
-    """A wall's axis in world metres. KimBim's walls keep it on Plan/Axis/GRAPH_VIEW; exported walls
+    """A wall's axis in world metres. NicBim's walls keep it on Plan/Axis/GRAPH_VIEW; exported walls
     (e.g. Revit's) often put their Axis polyline on the plain Model context, where
     authoring._axis_world doesn't look (it would answer a 1 m stub)."""
     if ifcopenshell.util.representation.get_representation(wall, "Plan", "Axis", "GRAPH_VIEW") is not None:
@@ -540,7 +540,7 @@ def split_element(guid: str, x, y, join="1") -> str:
                     f, relating_element=e, related_element=piece, relating_connection="ATEND", related_connection="ATSTART")
             if keep_imported and _clip_body(e, point, p2) and _clip_body(piece, point, p1):
                 pass  # the imported shape was cut in place
-            else:  # no single extrusion to cut: rebuild both with KimBim's shape
+            else:  # no single extrusion to cut: rebuild both with NicBim's shape
                 _adopt(e)
                 _adopt(piece)
                 rebuilt = _regen([e, piece, *neighbours])

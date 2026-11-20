@@ -19,7 +19,7 @@ def test_roundtrip_through_rust(tmp_path):
 
 
 def test_errors_are_repo_errors(tmp_path):
-    with pytest.raises(_core.RepoError, match="not a KimBim project"):
+    with pytest.raises(_core.RepoError, match="not a NicBim project"):
         _core.Repo.open(str(tmp_path))
     repo = _core.Repo.init(str(tmp_path))
     with pytest.raises(_core.RepoError, match="unknown revision"):

@@ -176,7 +176,7 @@ def open_project(folder: str) -> str:
     try:
         project = Project.open(folder)
     except (NotAProject, KimbimError) as ex:
-        return _fail(f"not a KimBim project: {ex}")
+        return _fail(f"not a NicBim project: {ex}")
     if project.repo.head() is None:
         return _fail("the project has no versions yet")
     try:

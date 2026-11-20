@@ -34,7 +34,7 @@ def named(listing, name):
 
 def build(out: str, schema: str = "") -> dict:
     schema = schema or os.environ.get("KIMBIM_HOUSE_SCHEMA", "IFC4")  # D241: the IFC4X3 test run
-    call("new_project", "KimBim two-storey house", schema)
+    call("new_project", "NicBim two-storey house", schema)
     l1 = call("storeys")["storeys"][0]["guid"]
     ext = named(call("wall_types"), "Exterior 300")["guid"]
     corners = [(0, 0), (10, 0), (10, 8), (0, 8)]
@@ -92,8 +92,8 @@ def build(out: str, schema: str = "") -> dict:
 
     # M4 exit (Slices 14-16): a section across the house and sheet A01 with the ground floor plan, the
     # section and the south elevation, under a title block filled from the project info.
-    call("set_project_info", json.dumps({"number": "M4-01", "name": "KimBim two-storey house",
-                                         "client": "KimBim test client", "address": "1 Sample Street"}))
+    call("set_project_info", json.dumps({"number": "M4-01", "name": "NicBim two-storey house",
+                                         "client": "NicBim test client", "address": "1 Sample Street"}))
     section = call("create_section", -1.0, 4.5, 11.0, 4.5, 5.0, 8.0, -1)["guid"]
     drawing = {d["name"]: d["guid"] for d in call("drawings")["drawings"]}
     sheet = call("add_sheet", "A3", "Plan, section and elevation")["number"]

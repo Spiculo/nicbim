@@ -498,7 +498,7 @@ def write_settings(f, drawing, s):
 
 
 # ---------------------------------------------------------------- overlay (Slice 15)
-# What the serializer does not draw, drawn by KimBim on top, in paper millimetres: door swings and
+# What the serializer does not draw, drawn by NicBim on top, in paper millimetres: door swings and
 # window glass lines in plans, plan annotations (text, dimension chains, marks, leaders), and the
 # section and elevation markers in plans.
 
@@ -571,7 +571,7 @@ def _operation(door) -> str:
 
 def door_swings(door, to_paper):
     """Plan symbol of a door: each leaf drawn open at 90 degrees with its swing arc, into the side
-    the door's local +Y points to (KimBim places doors on the wall's outer face, +Y into the wall)."""
+    the door's local +Y points to (NicBim places doors on the wall's outer face, +Y into the wall)."""
     unit = ifcopenshell.util.unit.calculate_unit_scale(door.file)
     m = ifcopenshell.util.placement.get_local_placement(door.ObjectPlacement)
     width = float(door.OverallWidth or 0.0) * unit

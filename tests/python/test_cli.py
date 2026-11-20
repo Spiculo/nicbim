@@ -94,7 +94,7 @@ def test_unicode_names_survive_real_pipes(tmp_path):
 
 def test_not_a_project(tmp_path, capsys):
     code, _, err = run(capsys, "--project", str(tmp_path), "versions", "show", "o/x")
-    assert code == 1 and "not a KimBim project" in err
+    assert code == 1 and "not a NicBim project" in err
 
 
 def test_engine_errors_are_messages_not_tracebacks(tmp_path, capsys, monkeypatch):

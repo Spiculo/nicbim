@@ -38,7 +38,7 @@ def _level_info(level: str) -> dict:
     info = next((r for r in json.loads(L.levels_table())["levels"] if r["guid"] == guid), None)
     if info is not None:
         return info
-    # A KimBim model is a storey below the building: the create tools can draw the unit in it too.
+    # A NicBim model is a storey below the building: the create tools can draw the unit in it too.
     storey = next(r for r in json.loads(A.storeys())["storeys"] if r["guid"] == guid)
     return {**storey, "height": storey.get("height") or 3.0}
 

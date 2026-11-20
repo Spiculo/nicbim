@@ -25,8 +25,8 @@ MESSAGES = {
                          "es": "Esa configuración solo la puede cambiar el usuario."},
     "scripts_off": {"en": "Scripts are turned off for this project.",
                     "es": "Los scripts están desactivados en este proyecto."},
-    "needs_app": {"en": "This needs the KimBim app to be running.",
-                  "es": "Esto requiere que la aplicación KimBim esté en ejecución."},
+    "needs_app": {"en": "This needs the NicBim app to be running.",
+                  "es": "Esto requiere que la aplicación NicBim esté en ejecución."},
     "render_failed": {"en": "The view could not be rendered.", "es": "No se pudo generar la vista."},
     "unknown_tool": {"en": "Unknown tool: {tool}", "es": "Herramienta desconocida: {tool}"},
     "not_found": {"en": "Not found: {what}", "es": "No se encontró: {what}"},
@@ -51,9 +51,9 @@ MESSAGES = {
     "hint_form": {"en": "{field} does not have an accepted form.", "es": "{field} no tiene una forma aceptada."},
     "hint_not_versioned": {"en": "Turn on versioning for the project, or start a task with mode \"direct\".",
                            "es": "Activa el historial de versiones del proyecto o inicia una tarea con mode \"direct\"."},
-    "hint_no_app": {"en": "The KimBim app binary was not found: build it with `pixi run app-build`, or set "
+    "hint_no_app": {"en": "The NicBim app binary was not found: build it with `pixi run app-build`, or set "
                            "KIMBIM_APP to its path. SVG needs no binary.",
-                    "es": "No se encontró el ejecutable de KimBim: compílalo con `pixi run app-build` o indica su "
+                    "es": "No se encontró el ejecutable de NicBim: compílalo con `pixi run app-build` o indica su "
                           "ruta en KIMBIM_APP. SVG no necesita el ejecutable."},
     "hint_render": {"en": "The renderer said: {error}. Its log: {log}",
                     "es": "El renderizador respondió: {error}. Su registro: {log}"},
@@ -104,7 +104,7 @@ MESSAGES = {
     "sum_snapshot": {"en": "Snapshot saved: {path}", "es": "Imagen guardada: {path}"},
 }
 
-_ORG = _APP = "KimBim"  # app/src/main.cpp
+_ORG = _APP = "NicBim"  # app/src/main.cpp
 
 
 def _prefs_path():

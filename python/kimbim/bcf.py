@@ -27,10 +27,10 @@ from . import settings
 
 STATUSES = ("Open", "In Progress", "Resolved", "Closed")
 DEFAULT_STATUS = "Open"
-DEFAULT_AUTHOR = "KimBim"
+DEFAULT_AUTHOR = "NicBim"
 FIELDS = ("title", "description", "type", "status", "priority", "assigned_to", "viewpoint", "comments")
 
-# Imported BCFs use their own vocabularies; map the common ones onto KimBim's statuses.
+# Imported BCFs use their own vocabularies; map the common ones onto NicBim's statuses.
 _STATUS_ALIASES = {
     "open": "Open", "new": "Open", "active": "In Progress", "in progress": "In Progress",
     "inprogress": "In Progress", "resolved": "Resolved", "done": "Resolved", "closed": "Closed",
@@ -407,13 +407,13 @@ def _direction(eye, target) -> list[float]:
 
 
 def _project() -> tuple[str, str]:
-    """The BCF project's id and name: a stable UUID from the open IFC project, or a KimBim project."""
+    """The BCF project's id and name: a stable UUID from the open IFC project, or a NicBim project."""
     if B._model is not None:
         projects = B._model.by_type("IfcProject")
         if projects:
             project_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"kimbim:bcf:project:{projects[0].GlobalId}"))
-            return project_id, projects[0].Name or "KimBim project"
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, "kimbim:bcf:project")), "KimBim project"
+            return project_id, projects[0].Name or "NicBim project"
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, "kimbim:bcf:project")), "NicBim project"
 
 
 def _viewpoint_guid(issue: dict) -> str:

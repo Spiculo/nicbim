@@ -28,7 +28,7 @@ Large files are stored with Git LFS or downloaded by a script, so they are not c
 | **Export validity** | Exported IFC passes `ifcopenshell.validate`, opens in web-ifc and in xBIM (independent parsers; `pixi run interop`, `pixi run interop-xbim`) | Yes |
 | **100k release gate** | First frame under 15 s and warm decomposition under 15 s on a 100k-object model (`pixi run bench-100k`); full load and cold decomposition are reported and gated at 240 s/150 s | Yes (tags and manual runs) |
 | **GUI smoke** | App launches, opens a corpus file, selects, cuts, saves (Qt Test) | Yes |
-| **Portable package** | `dist/KimBim` starts with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet to PDF (`tools/check_package.py`) | Yes (Windows CI) |
+| **Portable package** | `dist/NicBim` starts with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet to PDF (`tools/check_package.py`) | Yes (Windows CI) |
 | **Benchmarks** | Open time, frame rate, memory, commit time, diff time, merge time by model size | Tracks regressions |
 
 ## Benchmarks (tracked per release)

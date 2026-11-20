@@ -61,7 +61,7 @@ def issues_update(session, issue, **changes):
 
 @tool("issues.comment", {"required": ["issue", "text"], "properties": {
     "issue": _ISSUE, "text": {"type": "string"},
-    "author": {"type": "string", "description": "Who wrote it (default KimBim)."}}}, writes=True)
+    "author": {"type": "string", "description": "Who wrote it (default NicBim)."}}}, writes=True)
 def issues_comment(session, issue, text, author=""):
     """Add a comment to an issue."""
     return {"comment": bridge(BCF.add_comment, issue, text, author)["comment"]}

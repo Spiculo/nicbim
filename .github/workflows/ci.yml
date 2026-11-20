@@ -84,8 +84,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/')
         with:
-          name: KimBim-${{ github.ref_name }}-windows-x64
-          path: dist/KimBim-*.zip
+          name: NicBim-${{ github.ref_name }}-windows-x64
+          path: dist/NicBim-*.zip
           if-no-files-found: error
       - name: Desktop app - build and tests that need no GPU (Linux, virtual display)
         if: runner.os == 'Linux'

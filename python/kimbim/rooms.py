@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rooms (Slice 18), after Archicad's zones: click inside walls and the room takes the shape the wall
 faces enclose. A room is an IfcSpace in its level (number in Name, name in LongName, as Archicad
-exports zones), with its area in Qto_SpaceBaseQuantities. KimBim keeps the clicked point
+exports zones), with its area in Qto_SpaceBaseQuantities. NicBim keeps the clicked point
 (KIMBIM_Room.SeedX/SeedY), so when walls move the room is re-fitted in the same undo step.
 Same protocol as app_bridge.
 """
@@ -193,7 +193,7 @@ def _inside(p, polygon) -> bool:
 # ---------------------------------------------------------------- rooms in the model
 
 def _rooms(storey=None):
-    """KimBim's rooms (spaces with KIMBIM_Room), found through their property sets: imported models can
+    """NicBim's rooms (spaces with KIMBIM_Room), found through their property sets: imported models can
     have hundreds of other spaces."""
     out = []
     for pset in B._model.by_type("IfcPropertySet"):

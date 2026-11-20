@@ -289,7 +289,7 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     m_agentPoll->setInterval(150);
     connect(m_agentPoll, &QTimer::timeout, this, &MainWindow::pollAgentLive);
     m_agentPoll->start();
-    setWindowTitle(QStringLiteral("KimBim"));
+    setWindowTitle(QStringLiteral("NicBim"));
     resize(1280, 800);
     // The plan-cut height slider at the right edge of the active model view (owner feedback).
     m_cutColumn = new QWidget(this);
@@ -427,7 +427,7 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
 
     QString error;
     if (!PythonEngine::instance().start(&error))
-        showError(tr("KimBim cannot start"), error);
+        showError(tr("NicBim cannot start"), error);
     bridge("set_app_paths", {QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)});
     bridge("set_author", {m_prefs.authorName(), m_prefs.authorEmail()});
     applyDrawingPrefs();
@@ -484,7 +484,7 @@ void MainWindow::clampWindowSize()
     if (!huge && !tooWide && !tooTall && !offScreen)
         return;
     if (huge)
-        qWarning("KimBim: the window asked for %dx%d (minimum %dx%d); clamping it to the screen", width(),
+        qWarning("NicBim: the window asked for %dx%d (minimum %dx%d); clamping it to the screen", width(),
             height(), minimumWidth(), minimumHeight());
     m_clamping = true;
     if (huge) {
@@ -1512,7 +1512,7 @@ void MainWindow::buildMenus()
     connectAgent->setObjectName(QStringLiteral("actionConnectAgent"));
     connect(connectAgent, &QAction::triggered, this, &MainWindow::connectAgentDialog);
     help->addSeparator();
-    QAction* about = help->addAction(tr("&About KimBim"));
+    QAction* about = help->addAction(tr("&About NicBim"));
     connect(about, &QAction::triggered, this, &MainWindow::showAbout);
 }
 
@@ -2329,8 +2329,8 @@ void MainWindow::applyCutsTo(Viewport* view, CutSettings& settings)
 
 void MainWindow::showAbout()
 {
-    QMessageBox::about(this, tr("About KimBim"),
-        tr("KimBim %1\nOpen-source native BIM for architects, with version control built in.\n"
+    QMessageBox::about(this, tr("About NicBim"),
+        tr("NicBim %1\nOpen-source native BIM for architects, with version control built in.\n"
            "License: GPL-3.0-or-later")
             .arg(QStringLiteral(KIMBIM_VERSION)));
 }
@@ -2345,7 +2345,7 @@ void MainWindow::showError(const QString& title, const QString& message)
 void MainWindow::openDialog()
 {
     const QString path = QFileDialog::getOpenFileName(this, tr("Open"), QString(),
-        tr("KimBim and IFC files (*.nic *.ifc);;KimBim projects (*.nic);;IFC files (*.ifc)"));
+        tr("NicBim and IFC files (*.nic *.ifc);;NicBim projects (*.nic);;IFC files (*.ifc)"));
     if (!path.isEmpty())
         openPath(path);
 }
@@ -2460,7 +2460,7 @@ QJsonObject MainWindow::bridgeInBackground(const char* fn, const QStringList& ar
     const QByteArray name(fn);
     QThread* worker = QThread::create([&] { r = PythonEngine::instance().callJson(name.constData(), args, &error).object(); });
     QProgressDialog progress(label, QString(), 0, 0, this);
-    progress.setWindowTitle(QStringLiteral("KimBim"));
+    progress.setWindowTitle(QStringLiteral("NicBim"));
     progress.setWindowModality(Qt::ApplicationModal);
     progress.setCancelButton(nullptr); // the Python call can't be interrupted
     progress.setMinimumDuration(m_quiet ? std::numeric_limits<int>::max() : 300);
@@ -5276,7 +5276,7 @@ void MainWindow::enableVersioningDialog()
     if (m_versioned || m_quiet)
         return;
     QString path = QFileDialog::getSaveFileName(this, tr("Enable versioning"), m_document.value("path").toString(),
-        tr("KimBim project (*.nic)"));
+        tr("NicBim project (*.nic)"));
     if (path.isEmpty())
         return;
     if (QFileInfo(path).suffix().compare(QLatin1String("nic"), Qt::CaseInsensitive) != 0)
@@ -5459,7 +5459,7 @@ void MainWindow::applyProjectState(const QJsonObject& s, const QJsonObject& hist
         name += QStringLiteral(" (%1)").arg(option);
     if (doc.value("read_only").toBool())
         name += QStringLiteral(" [%1]").arg(tr("read-only"));
-    setWindowTitle(QStringLiteral("KimBim — %1[*]").arg(name));
+    setWindowTitle(QStringLiteral("NicBim — %1[*]").arg(name));
     setWindowModified(isDirty());
     if (m_assistant)
         m_assistant->refreshSessions(); // D111: the picker follows the project that is open
@@ -5535,7 +5535,7 @@ MainWindow::LargeIfc MainWindow::askLargeIfc(const QString& path, double mb)
         return m_largeIfcAnswer ? m_largeIfcAnswer(file, mb) : LargeIfc::MakeNic;
     QMessageBox box(QMessageBox::Question, tr("Open IFC"),
         tr("%1 is a large model (%2 MB).").arg(file, QLocale().toString(mb, 'f', mb < 10.0 ? 1 : 0)), QMessageBox::Cancel, this);
-    box.setInformativeText(tr("Making a KimBim project from it can take several minutes.\n\n"
+    box.setInformativeText(tr("Making a NicBim project from it can take several minutes.\n\n"
         "Editing the IFC directly opens it at once, without version history, options, compare or "
         "combine, and project settings (cut height, layer states, drawing scale, units) aren't kept. "
         "You can make a .nic later with File > Save As."));
@@ -5639,7 +5639,7 @@ void MainWindow::fillRecentMenu()
 
 void MainWindow::openProjectDialog()
 {
-    const QString folder = QFileDialog::getExistingDirectory(this, tr("Open a KimBim project folder"));
+    const QString folder = QFileDialog::getExistingDirectory(this, tr("Open a NicBim project folder"));
     if (!folder.isEmpty())
         openProject(folder);
 }
@@ -5757,7 +5757,7 @@ void MainWindow::pullRemote()
     QJsonObject r = bridge("pull", {remote});
     if (!r.value("ok").toBool() && r.value("error").toString().contains(QLatin1String("diverged"))) {
         if (QMessageBox::question(this, tr("Pull from remote"),
-                tr("The remote and this option have diverged. Combine them with KimBim's record merge?"))
+                tr("The remote and this option have diverged. Combine them with NicBim's record merge?"))
             == QMessageBox::Yes)
             r = bridge("pull", {remote, QString(), QStringLiteral("true")}); // D128: merge-aware pull
     }
@@ -8626,7 +8626,7 @@ void MainWindow::attributesDialog()
     layout->addLayout(buttons);
     connect(exportButton, &QPushButton::clicked, &dialog, [&] {
         QString path = QFileDialog::getSaveFileName(&dialog, tr("Export attributes"), QString(),
-            tr("KimBim attributes (*.json)"));
+            tr("NicBim attributes (*.json)"));
         if (path.isEmpty())
             return;
         if (!path.endsWith(QLatin1String(".json"), Qt::CaseInsensitive))
@@ -8640,7 +8640,7 @@ void MainWindow::attributesDialog()
     });
     connect(importButton, &QPushButton::clicked, &dialog, [&] {
         const QString path = QFileDialog::getOpenFileName(&dialog, tr("Import attributes"), QString(),
-            tr("KimBim attributes (*.json)"));
+            tr("NicBim attributes (*.json)"));
         if (path.isEmpty())
             return;
         const QJsonObject r = bridge("import_attributes", {path});
@@ -8727,7 +8727,7 @@ void MainWindow::linksDialog()
         return row >= 0 && row < links.size() ? links[row].toObject() : QJsonObject();
     };
     auto* openSource = new QPushButton(tr("Open source"), &dialog); // D140: edit the linked file live
-    openSource->setToolTip(tr("Open the linked IFC in a second KimBim window; saving it updates this link"));
+    openSource->setToolTip(tr("Open the linked IFC in a second NicBim window; saving it updates this link"));
     auto* makeEditable = new QPushButton(tr("Make editable..."), &dialog); // D141
     makeEditable->setToolTip(tr("Replace this read-only link with normal, editable elements tagged with their source identity"));
     auto* monitor = new QPushButton(tr("Monitor changes..."), &dialog);
@@ -8817,7 +8817,7 @@ void MainWindow::linksDialog()
             return;
         }
         if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), {path}))
-            showError(tr("Linked models"), tr("Could not start another KimBim window."));
+            showError(tr("Linked models"), tr("Could not start another NicBim window."));
     });
     connect(updateChanged, &QPushButton::clicked, &dialog, [&] {
         const QJsonObject r = bridge("refresh_links", {QString()});
@@ -11298,7 +11298,7 @@ void MainWindow::pollAgentLive()
             std::unique_ptr<QProgressDialog> busy;
             runningRequest = true;
             if (heavy) { // a write or a render can take seconds: say what the app is doing
-                busy = std::make_unique<QProgressDialog>(tr("KimBim is working on the agent's request..."),
+                busy = std::make_unique<QProgressDialog>(tr("NicBim is working on the agent's request..."),
                     QString(), 0, 0, this);
                 busy->setWindowTitle(tr("Agent"));
                 busy->setWindowModality(Qt::ApplicationModal);
@@ -11721,7 +11721,7 @@ void MainWindow::saveAsDialog()
 {
     QString selected;
     const QString path = QFileDialog::getSaveFileName(this, tr("Save As"), m_document.value("path").toString(),
-        tr("KimBim project (*.nic);;IFC file (*.ifc)"), &selected);
+        tr("NicBim project (*.nic);;IFC file (*.ifc)"), &selected);
     if (!path.isEmpty())
         saveAs(path);
 }
@@ -11927,7 +11927,7 @@ void MainWindow::newProjectDialog()
     choices->setObjectName(QStringLiteral("templateList"));
     for (const auto& v : list) {
         const QJsonObject t = v.toObject();
-        auto* item = new QListWidgetItem(t.value("builtin").toBool() ? tr("KimBim default")
+        auto* item = new QListWidgetItem(t.value("builtin").toBool() ? tr("NicBim default")
             : QStringLiteral("%1  (%2)").arg(t.value("name").toString(), t.value("modified").toString()), choices);
         item->setData(Qt::UserRole, t.value("path").toString());
     }
@@ -12031,7 +12031,7 @@ void MainWindow::offerRecovery()
         const QString what = item.value("name").toString().isEmpty() ? tr("an untitled project") : item.value("name").toString();
         const QString when = QLocale().toString(QDateTime::fromSecsSinceEpoch(qint64(item.value("time").toDouble())), QLocale::ShortFormat);
         const auto answer = QMessageBox::question(this, tr("Recover unsaved work"),
-            tr("KimBim closed unexpectedly. Recover your work on %1 from %2?").arg(what, when),
+            tr("NicBim closed unexpectedly. Recover your work on %1 from %2?").arg(what, when),
             QMessageBox::Yes | QMessageBox::Discard, QMessageBox::Yes);
         if (answer == QMessageBox::Yes)
             return void(recoverFrom(item.value("id").toString()));

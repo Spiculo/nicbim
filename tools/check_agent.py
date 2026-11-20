@@ -11,7 +11,7 @@ appear), main's head has not moved, and the snapshot is a real picture (a PNG wi
 
 Timing run on a big model (the numbers go in docs/17-agent-tools.md): `--project P.nic` works on that .nic (made
 from IFC on the first run, then reused) and `--windows N` widens any N windows instead of Level 1's. When fewer
-than N fit their wall 50 cm wider (none of the Clinic's Revit windows do: their openings aren't where KimBim's own
+than N fit their wall 50 cm wider (none of the Clinic's Revit windows do: their openings aren't where NicBim's own
 are), the write is timed as renaming N windows and the JSON line says so (`"write": "rename"`). On the Clinic the
 run stops at the `changes: "task"` snapshot: its compare takes minutes, longer than the client's 120 s wait.
 

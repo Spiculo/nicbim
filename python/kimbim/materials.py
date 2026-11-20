@@ -258,7 +258,7 @@ def main_material(element):
 
 
 def properties(material) -> dict:
-    """The material's KimBim fields read from its psets ({} when it has none)."""
+    """The material's NicBim fields read from its psets ({} when it has none)."""
     psets = ifcopenshell.util.element.get_psets(material)
     out = {}
     for field, (pset, prop) in _MATERIAL_FIELDS.items():
@@ -874,7 +874,7 @@ def _materials_in(mat) -> list:
 
 
 def _composite_type(layer_set):
-    """The wall/slab type that carries the layer set (KimBim's composites are types), or None."""
+    """The wall/slab type that carries the layer set (NicBim's composites are types), or None."""
     for rel in getattr(layer_set, "AssociatedTo", None) or ():
         for o in rel.RelatedObjects or ():
             if o.is_a("IfcTypeObject"):
@@ -1025,7 +1025,7 @@ def _reshape(f, element, touched: set):
 
 
 def _set_slab_depth(f, slab):
-    """A KimBim slab keeps its top where it was and takes its composite's thickness."""
+    """A NicBim slab keeps its top where it was and takes its composite's thickness."""
     from . import authoring as A
 
     ls = A._layer_set(slab)

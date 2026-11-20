@@ -44,25 +44,25 @@ class FakeRegistry:
 
 
 def test_windows_plan_associates_both_extensions():
-    exe = r"C:\Program Files\KimBim\kimbim-app.exe"
+    exe = r"C:\Program Files\NicBim\kimbim-app.exe"
     actions = A.windows_actions(exe)
     assert {a["key"] for a in actions} >= {r"Software\Classes\.nic", r"Software\Classes\.ifc"}
     nic = next(a for a in actions if a["key"] == r"Software\Classes\.nic")
-    assert nic["value"] == "KimBim.Project"
+    assert nic["value"] == "NicBim.Project"
     ifc = next(a for a in actions if a["key"] == r"Software\Classes\.ifc")
-    assert ifc["value"] == "KimBim.Ifc"
-    command = next(a for a in actions if a["key"].endswith(r"KimBim.Project\shell\open\command"))
+    assert ifc["value"] == "NicBim.Ifc"
+    command = next(a for a in actions if a["key"].endswith(r"NicBim.Project\shell\open\command"))
     assert command["value"] == f'"{exe}" "%1"'
     assert A.describe({"platform": "windows", "actions": actions, "exe": exe}).count("HKCU\\") == len(actions)
 
 
 def test_windows_apply_and_remove_with_a_fake_registry():
     reg = FakeRegistry()
-    removed = A._windows_apply(A.windows_actions(r"C:\KimBim\kimbim-app.exe"), registry=reg)
+    removed = A._windows_apply(A.windows_actions(r"C:\NicBim\kimbim-app.exe"), registry=reg)
     assert removed and (r"Software\Classes\.nic", "") in reg.values
-    assert reg.values[(r"Software\Classes\.nic", "")] == "KimBim.Project"
-    assert reg.values[(r"Software\Classes\KimBim.Ifc\shell\open\command", "")] == \
-        r'"C:\KimBim\kimbim-app.exe" "%1"'
+    assert reg.values[(r"Software\Classes\.nic", "")] == "NicBim.Project"
+    assert reg.values[(r"Software\Classes\NicBim.Ifc\shell\open\command", "")] == \
+        r'"C:\NicBim\kimbim-app.exe" "%1"'
     A._windows_apply(A.windows_actions(""), remove=True, registry=reg)
     assert reg.values == {}  # every class and extension key is gone
 
@@ -83,7 +83,7 @@ def test_linux_desktop_and_mime_files(tmp_path):
 
 
 def test_the_cli_prints_without_writing(capsys):
-    code = cli.main(["setup", "associations", "--print", "--exe", r"C:\KimBim\kimbim-app.exe"])
+    code = cli.main(["setup", "associations", "--print", "--exe", r"C:\NicBim\kimbim-app.exe"])
     out = capsys.readouterr().out
     assert code == 0
     assert "kimbim-app.exe" in out

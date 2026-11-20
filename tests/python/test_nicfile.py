@@ -81,17 +81,17 @@ def test_entries_outside_the_folder_are_refused(tmp_path, name):
 def test_damaged_unknown_and_newer_files_are_refused_untouched(tmp_path):
     junk = tmp_path / "junk.nic"
     junk.write_bytes(b"not a zip")
-    with pytest.raises(K.NicError, match="not a KimBim file"):
+    with pytest.raises(K.NicError, match="not a NicBim file"):
         K.read_manifest(junk)
     nomani = tmp_path / "nomani.nic"
     with zipfile.ZipFile(nomani, "w") as z:
         z.writestr("x", "y")
-    with pytest.raises(K.NicError, match="not a KimBim file"):
+    with pytest.raises(K.NicError, match="not a NicBim file"):
         K.read_manifest(nomani)
     newer = tmp_path / "newer.nic"
     with zipfile.ZipFile(newer, "w") as z:
         z.writestr(K.MANIFEST, json.dumps({"format": "nic", "version": 99, "kind": "project"}))
-    with pytest.raises(K.NicError, match="newer KimBim"):
+    with pytest.raises(K.NicError, match="newer NicBim"):
         K.unpack(newer, tmp_path / "o")
     assert junk.read_bytes() == b"not a zip"
 

@@ -180,7 +180,7 @@ def test_offset_copies_a_wall_parallel_and_grows_a_slab(room):
 
 def test_moving_walls_of_an_imported_model_keeps_their_geometry(room):
     """Revit's IFC2X3 exports put wall bodies on the Model context itself (no Body/MODEL_VIEW
-    sub-context). Moving such walls moves them; their geometry is theirs, not rebuilt as KimBim walls."""
+    sub-context). Moving such walls moves them; their geometry is theirs, not rebuilt as NicBim walls."""
     f = b._model
     body = ifcopenshell.util.representation.get_context(f, "Model", "Body", "MODEL_VIEW")
     model = body.ParentContext

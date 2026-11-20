@@ -281,7 +281,7 @@ def _mesh(element):
 
 
 def _terrains():
-    """(element, pset values) for every KimBim terrain, found through KIMBIM_Terrain."""
+    """(element, pset values) for every NicBim terrain, found through KIMBIM_Terrain."""
     out = []
     for pset in B._model.by_type("IfcPropertySet"):
         if pset.Name != PSET:

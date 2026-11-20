@@ -517,9 +517,9 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event)
 void TitleBar::updateTitle()
 {
     QString t = m_window->windowTitle();
-    const QString prefix = QStringLiteral("KimBim — "); // as MainWindow titles the window
+    const QString prefix = QStringLiteral("NicBim — "); // as MainWindow titles the window
     if (t.startsWith(prefix))
-        t = t.mid(prefix.size()); // the icon already says KimBim
+        t = t.mid(prefix.size()); // the icon already says NicBim
     t.replace(QStringLiteral("[*]"), m_window->isWindowModified() ? QStringLiteral(" •") : QString());
     m_title->setProperty("fullTitle", t);
     m_title->setToolTip(t);

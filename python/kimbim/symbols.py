@@ -4,7 +4,7 @@ angle, radius, diameter, level and spot-elevation dimensions.
 
 They are plan annotations (D59): an IfcAnnotation on the level, ObjectType TAG / NORTH / SCALEBAR /
 CLOUD / ANGLE / RADIUS / DIAMETER / LEVEL / SPOT, with an Annotation2D representation (polylines, fill
-areas, text literals) and KimBim's own data in the KIMBIM_Annotation property set: points relative to
+areas, text literals) and NicBim's own data in the KIMBIM_Annotation property set: points relative to
 the placement, the text, the pen and the values in EXTRA. Moving, rotating, copying, deleting, layers
 and undo are the annotations' (so every element's). Tags are kimbim.tags'.
 

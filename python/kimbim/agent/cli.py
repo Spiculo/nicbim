@@ -149,7 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     from .. import agent  # noqa: F401  (importing the package fills the catalogue)
 
     p = argparse.ArgumentParser(
-        prog="kimbim", description="KimBim: versioned IFC projects and agent tools.",
+        prog="kimbim", description="NicBim: versioned IFC projects and agent tools.",
         epilog="`kimbim <group> --help` lists a group's commands, `kimbim <group> <verb> --help` one command.")
     _add_globals(p, True)
     top = p.add_subparsers(dest="group", metavar="<group>", required=True)
@@ -427,7 +427,7 @@ def _people(group, top) -> None:
         lp.set_defaults(handler=handler)
         return lp
 
-    s = leaf("project", "init", _init, help="make a folder a KimBim project", description="Make a folder a KimBim project.")
+    s = leaf("project", "init", _init, help="make a folder a NicBim project", description="Make a folder a NicBim project.")
     s.add_argument("dir", nargs="?")
     s = leaf("versions", "save", _save, help="save a new version (of an IFC file, or of the open project)",
              description="Save a new version. With FILE, that IFC file becomes the version; without, the project's "
@@ -456,7 +456,7 @@ def _people(group, top) -> None:
     s.add_argument("remote", nargs="?", default="origin")
     s.add_argument("--branch", default="", help="the branch (default: the current option)")
     s.add_argument("--merge", action="store_true",
-                   help="combine a diverged remote through KimBim's record merge instead of refusing")
+                   help="combine a diverged remote through NicBim's record merge instead of refusing")
     s = leaf("versions", "show", _show, help="print one canonical record")
     s.add_argument("key")
     s.add_argument("--rev", default="HEAD")
@@ -482,7 +482,7 @@ def _people(group, top) -> None:
     s.add_argument("--drawing", action="append", default=[], metavar="NAME",
                    help="a drawing to export, by name (repeatable; default every drawing and sheet)")
     s.add_argument("--sheet", action="append", default=[], metavar="NUMBER", help="a sheet to export, by number (repeatable)")
-    s.add_argument("--layers", choices=("layer", "kind"), default="layer", help="layers by KimBim layer (default) or by element kind")
+    s.add_argument("--layers", choices=("layer", "kind"), default="layer", help="layers by NicBim layer (default) or by element kind")
     s.add_argument("--purpose", default="", help="the purpose (pens, visibility) to draw with")
     s = leaf("versions", "export-dwg", _export_dwg, help="write a version's drawings and sheets as DWG (people only)",
              description="Like export-dxf, then LibreDWG's dxf2dwg (or KIMBIM_DXF2DWG). Needs the `dwg` pixi "
@@ -552,16 +552,16 @@ def _people(group, top) -> None:
     st.add_argument("--remove", action="store_true", help="associations: remove the file associations")
     _add_globals(st, False, only_project)
     st.set_defaults(handler=_setup)
-    ins = top.add_parser("install", help="install the portable KimBim build for this user",
-                         description="Copy dist/KimBim to the user's application folder, write an install marker "
+    ins = top.add_parser("install", help="install the portable NicBim build for this user",
+                         description="Copy dist/NicBim to the user's application folder, write an install marker "
                                      "and associate .nic/.ifc. No administrator is needed.")
-    ins.add_argument("--source", default="", help="the packaged build (default: dist/KimBim)")
+    ins.add_argument("--source", default="", help="the packaged build (default: dist/NicBim)")
     ins.add_argument("--dest", default="", help="where to install (default: the user's application folder)")
-    ins.add_argument("--force", action="store_true", help="replace an existing KimBim installation")
+    ins.add_argument("--force", action="store_true", help="replace an existing NicBim installation")
     ins.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
     ins.add_argument("--no-associations", action="store_true", help="do not change .nic/.ifc associations")
     ins.set_defaults(handler=_install)
-    uni = top.add_parser("uninstall", help="remove a KimBim installation and its associations",
+    uni = top.add_parser("uninstall", help="remove a NicBim installation and its associations",
                          description="Remove an installation this tool made (a folder without its marker is refused).")
     uni.add_argument("--dest", default="", help="the installation folder (default: the user's application folder)")
     uni.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
@@ -569,7 +569,7 @@ def _people(group, top) -> None:
     sg = top.add_parser("sign", help="code-sign the packaged app with your certificate",
                         description="Sign kimbim-app with a .pfx/.p12 certificate (signtool on Windows, "
                                     "osslsigncode on Linux). The password can come from KIMBIM_SIGN_PASSWORD.")
-    sg.add_argument("--exe", default="", help="the app executable (default: dist/KimBim's)")
+    sg.add_argument("--exe", default="", help="the app executable (default: dist/NicBim's)")
     sg.add_argument("--certificate", default="", help="the .pfx/.p12 certificate (required)")
     sg.add_argument("--password", default=None, help="certificate password (prefer KIMBIM_SIGN_PASSWORD)")
     sg.add_argument("--timestamp", default="http://timestamp.digicert.com", help="RFC 3161 timestamp URL")
@@ -585,7 +585,7 @@ def _people(group, top) -> None:
 def _init(ns) -> int:
     target = pathlib.Path(ns.dir or ns.g_project or ".")
     Project.init(target)
-    print(f"Initialized KimBim project in {target.resolve()}")
+    print(f"Initialized NicBim project in {target.resolve()}")
     return 0
 
 
@@ -990,7 +990,7 @@ def _install(ns) -> int:
     if result["dry_run"]:
         print("dry run: nothing changed")
     else:
-        print(f"installed KimBim in {result['path']}")
+        print(f"installed NicBim in {result['path']}")
     return 0
 
 

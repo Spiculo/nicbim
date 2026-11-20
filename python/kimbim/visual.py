@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Linear visual scripts (D223).
 
-Grasshopper, Dynamo and Marionette are node graphs; KimBim's visual script is a linear stack of
+Grasshopper, Dynamo and Marionette are node graphs; NicBim's visual script is a linear stack of
 engine operations (a massing, a room, a push/pull, a mesh vertex move) saved with the project
 under ``visual_scripts``. A step is ``{op, args}`` and can refer to an earlier step's new element
 with ``"$1"`` (the first step), so a short program can build then shape. Only whitelisted

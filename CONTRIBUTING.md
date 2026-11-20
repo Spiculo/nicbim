@@ -19,7 +19,7 @@ pixi run app-test       # desktop tests (the live-agent test runs separately)
 pixi run app-test-agent # the live host + kimbim CLI test, in its own process
 pixi run house          # write the sample two-storey house (build/house.ifc)
 pixi install -e pack    # conda-pack, for the portable build
-pixi run -e pack package   # portable build in dist/KimBim (app + Python + relocatable runtime)
+pixi run -e pack package   # portable build in dist/NicBim (app + Python + relocatable runtime)
 pixi run check-package     # start it with CONDA/PIXI/PYTHON removed and export the sample sheet
 pixi run interop-xbim      # independent .NET (xBIM) interop check on the sample house
 pixi run ifcdump-check     # stage 1 of the Rust decomposer: C++ IfcParse bridge vs IfcOpenShell

@@ -1547,8 +1547,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/DxfExportDialog.cpp" line="88"/>
-        <source>By KimBim layer</source>
-        <translation>Por capa de KimBim</translation>
+        <source>By NicBim layer</source>
+        <translation>Por capa de NicBim</translation>
     </message>
     <message>
         <location filename="../src/DxfExportDialog.cpp" line="89"/>
@@ -1567,8 +1567,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/DxfExportDialog.cpp" line="92"/>
-        <source>Elements without a KimBim layer go on the layer of their kind</source>
-        <translation>Los elementos sin capa de KimBim van a la capa de su tipo</translation>
+        <source>Elements without a NicBim layer go on the layer of their kind</source>
+        <translation>Los elementos sin capa de NicBim van a la capa de su tipo</translation>
     </message>
     <message>
         <location filename="../src/DxfExportDialog.cpp" line="94"/>
@@ -2818,8 +2818,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="430"/>
-        <source>KimBim cannot start</source>
-        <translation>KimBim no puede iniciarse</translation>
+        <source>NicBim cannot start</source>
+        <translation>NicBim no puede iniciarse</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="302"/>
@@ -3123,8 +3123,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1515"/>
-        <source>&amp;About KimBim</source>
-        <translation>&amp;Acerca de KimBim</translation>
+        <source>&amp;About NicBim</source>
+        <translation>&amp;Acerca de NicBim</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1529"/>
@@ -3501,8 +3501,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="8730"/>
-        <source>Open the linked IFC in a second KimBim window; saving it updates this link</source>
-        <translation>Abrir el IFC vinculado en otra ventana de KimBim; al guardarlo se actualiza este vínculo</translation>
+        <source>Open the linked IFC in a second NicBim window; saving it updates this link</source>
+        <translation>Abrir el IFC vinculado en otra ventana de NicBim; al guardarlo se actualiza este vínculo</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="8816"/>
@@ -3511,8 +3511,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="8820"/>
-        <source>Could not start another KimBim window.</source>
-        <translation>No se pudo abrir otra ventana de KimBim.</translation>
+        <source>Could not start another NicBim window.</source>
+        <translation>No se pudo abrir otra ventana de NicBim.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="9266"/>
@@ -3965,8 +3965,8 @@ Intro ejecuta, Mayús+Intro añade una línea, Arriba/Abajo recuperan entradas a
     <message>
         <location filename="../src/MainWindow.cpp" line="8629"/>
         <location filename="../src/MainWindow.cpp" line="8643"/>
-        <source>KimBim attributes (*.json)</source>
-        <translation>Atributos KimBim (*.json)</translation>
+        <source>NicBim attributes (*.json)</source>
+        <translation>Atributos NicBim (*.json)</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="8639"/>
@@ -4478,15 +4478,15 @@ Curvas: una línea en blanco entre polilíneas.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="2332"/>
-        <source>About KimBim</source>
-        <translation>Acerca de KimBim</translation>
+        <source>About NicBim</source>
+        <translation>Acerca de NicBim</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="2333"/>
-        <source>KimBim %1
+        <source>NicBim %1
 Open-source native BIM for architects, with version control built in.
 License: GPL-3.0-or-later</source>
-        <translation>KimBim %1
+        <translation>NicBim %1
 BIM nativo de código abierto para arquitectos, con control de versiones integrado.
 Licencia: GPL-3.0 o posterior</translation>
     </message>
@@ -4696,8 +4696,8 @@ Licencia: GPL-3.0 o posterior</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5279"/>
-        <source>KimBim project (*.nic)</source>
-        <translation>Proyecto KimBim (*.nic)</translation>
+        <source>NicBim project (*.nic)</source>
+        <translation>Proyecto NicBim (*.nic)</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5457"/>
@@ -9900,8 +9900,8 @@ Las láminas grandes pueden tardar un minuto.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="2348"/>
-        <source>KimBim and IFC files (*.nic *.ifc);;KimBim projects (*.nic);;IFC files (*.ifc)</source>
-        <translation>Archivos KimBim e IFC (*.nic *.ifc);;Proyectos KimBim (*.nic);;Archivos IFC (*.ifc)</translation>
+        <source>NicBim and IFC files (*.nic *.ifc);;NicBim projects (*.nic);;IFC files (*.ifc)</source>
+        <translation>Archivos NicBim e IFC (*.nic *.ifc);;Proyectos NicBim (*.nic);;Archivos IFC (*.ifc)</translation>
     </message>
     <message>
         <location filename="../src/LibraryTools.cpp" line="395"/>
@@ -11214,8 +11214,8 @@ Las láminas grandes pueden tardar un minuto.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5642"/>
-        <source>Open a KimBim project folder</source>
-        <translation>Abrir una carpeta de proyecto KimBim</translation>
+        <source>Open a NicBim project folder</source>
+        <translation>Abrir una carpeta de proyecto NicBim</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5660"/>
@@ -11505,10 +11505,10 @@ Open it read-only?</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5538"/>
-        <source>Making a KimBim project from it can take several minutes.
+        <source>Making a NicBim project from it can take several minutes.
 
 Editing the IFC directly opens it at once, without version history, options, compare or combine, and project settings (cut height, layer states, drawing scale, units) aren&apos;t kept. You can make a .nic later with File &gt; Save As.</source>
-        <translation>Crear un proyecto KimBim a partir de él puede tardar varios minutos.
+        <translation>Crear un proyecto NicBim a partir de él puede tardar varios minutos.
 
 Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opciones, comparar ni combinar, y la configuración del proyecto (altura de corte, estado de las capas, escala de dibujo, unidades) no se guarda. Puedes crear un .nic más tarde con Archivo &gt; Guardar como.</translation>
     </message>
@@ -11606,8 +11606,8 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5760"/>
-        <source>The remote and this option have diverged. Combine them with KimBim&apos;s record merge?</source>
-        <translation>El remoto y esta opción han divergido. ¿Combinarlos con la fusión de registros de KimBim?</translation>
+        <source>The remote and this option have diverged. Combine them with NicBim&apos;s record merge?</source>
+        <translation>El remoto y esta opción han divergido. ¿Combinarlos con la fusión de registros de NicBim?</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="5765"/>
@@ -12461,8 +12461,8 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
         <translation>Una edición falló y no se pudo deshacer. Guarde una copia si la necesita y vuelva a abrir el archivo.</translation>
     </message>
     <message>
-        <source>Saved from KimBim</source>
-        <translation type="vanished">Guardado desde KimBim</translation>
+        <source>Saved from NicBim</source>
+        <translation type="vanished">Guardado desde NicBim</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11677"/>
@@ -12803,8 +12803,8 @@ Editar el IFC directamente lo abre de inmediato, sin historial de versiones, opc
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11301"/>
-        <source>KimBim is working on the agent&apos;s request...</source>
-        <translation>KimBim está trabajando en la solicitud del agente...</translation>
+        <source>NicBim is working on the agent&apos;s request...</source>
+        <translation>NicBim está trabajando en la solicitud del agente...</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11303"/>
@@ -12989,8 +12989,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11724"/>
-        <source>KimBim project (*.nic);;IFC file (*.ifc)</source>
-        <translation>Proyecto KimBim (*.nic);;Archivo IFC (*.ifc)</translation>
+        <source>NicBim project (*.nic);;IFC file (*.ifc)</source>
+        <translation>Proyecto NicBim (*.nic);;Archivo IFC (*.ifc)</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11733"/>
@@ -13113,8 +13113,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11930"/>
-        <source>KimBim default</source>
-        <translation>Predeterminada de KimBim</translation>
+        <source>NicBim default</source>
+        <translation>Predeterminada de NicBim</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="11949"/>
@@ -13164,8 +13164,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="12034"/>
-        <source>KimBim closed unexpectedly. Recover your work on %1 from %2?</source>
-        <translation>KimBim se cerró inesperadamente. ¿Recuperar tu trabajo en %1 de %2?</translation>
+        <source>NicBim closed unexpectedly. Recover your work on %1 from %2?</source>
+        <translation>NicBim se cerró inesperadamente. ¿Recuperar tu trabajo en %1 de %2?</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="12108"/>
@@ -13680,8 +13680,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/ConsoleTools.cpp" line="40"/>
-        <source>Run Python on the open model (ifcopenshell and KimBim&apos;s commands)</source>
-        <translation>Ejecutar Python sobre el modelo abierto (ifcopenshell y los comandos de KimBim)</translation>
+        <source>Run Python on the open model (ifcopenshell and NicBim&apos;s commands)</source>
+        <translation>Ejecutar Python sobre el modelo abierto (ifcopenshell y los comandos de NicBim)</translation>
     </message>
     <message>
         <location filename="../src/ConsoleTools.cpp" line="49"/>
@@ -16231,8 +16231,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/PreferencesDialog.cpp" line="53"/>
-        <source>The language changes the next time KimBim starts.</source>
-        <translation>El idioma cambia la próxima vez que se inicie KimBim.</translation>
+        <source>The language changes the next time NicBim starts.</source>
+        <translation>El idioma cambia la próxima vez que se inicie NicBim.</translation>
     </message>
     <message>
         <location filename="../src/PreferencesDialog.cpp" line="63"/>
@@ -16346,8 +16346,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/PreferencesDialog.cpp" line="112"/>
-        <source>Making a .nic from a large IFC can take minutes; above this size KimBim asks first</source>
-        <translation>Crear un .nic a partir de un IFC grande puede tardar minutos; por encima de este tamaño KimBim pregunta antes</translation>
+        <source>Making a .nic from a large IFC can take minutes; above this size NicBim asks first</source>
+        <translation>Crear un .nic a partir de un IFC grande puede tardar minutos; por encima de este tamaño NicBim pregunta antes</translation>
     </message>
     <message>
         <location filename="../src/PreferencesDialog.cpp" line="113"/>
@@ -16980,8 +16980,8 @@ Los modelos grandes pueden tardar unos minutos.</translation>
     </message>
     <message>
         <location filename="../src/ProjectSettingsDialog.cpp" line="166"/>
-        <source>Rebuild with KimBim&apos;s shape</source>
-        <translation>Reconstruir con la forma de KimBim</translation>
+        <source>Rebuild with NicBim&apos;s shape</source>
+        <translation>Reconstruir con la forma de NicBim</translation>
     </message>
     <message>
         <location filename="../src/ProjectSettingsDialog.cpp" line="167"/>

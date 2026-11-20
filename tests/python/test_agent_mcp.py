@@ -254,7 +254,7 @@ def test_worker_project_info_and_task(house):
 
 
 @pytest.mark.app
-@pytest.mark.skipif(render.app_binary() is None, reason="the KimBim app binary isn't built")
+@pytest.mark.skipif(render.app_binary() is None, reason="the NicBim app binary isn't built")
 def test_worker_snapshot_image(house):
     server = mcp_server.build_server(str(house))
 

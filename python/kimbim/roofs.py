@@ -6,7 +6,7 @@ longest edge slopes), gable (the edges parallel to the longest slope), hip (ever
 The roof surface is the lower envelope of the edge planes (each rises from its edge at its own angle),
 which for a convex footprint is the classic hipped/gabled shape. The body is a plate of constant
 vertical thickness (`IfcPolygonalFaceSet`); flat roofs are an extruded outline. The roof is an `IfcRoof`
-with its own body (as Bonsai makes them), contained in the level; KimBim keeps its definition in
+with its own body (as Bonsai makes them), contained in the level; NicBim keeps its definition in
 `KIMBIM_Roof` (outline relative to the roof's placement, slopes, thickness) so moved roofs stay right.
 
 Walls attach to a roof (Archicad: Trim to Roof): they are raised to reach its underside and clipped by
@@ -304,7 +304,7 @@ def roof_info(guid: str) -> str:
     roof = A._by_guid(guid) if B._model is not None else None
     definition = _definition(roof) if roof is not None and roof.is_a("IfcRoof") else None
     if definition is None:
-        return A._fail("not a KimBim roof")
+        return A._fail("not a NicBim roof")
     points, slopes, thickness, kind = definition
     m = _matrix_si(roof)
     world = [(m @ np.array([x, y, 0.0, 1.0]))[:3] for x, y in points]
@@ -426,7 +426,7 @@ def attach_walls_to_roof(roof_guid: str, walls_json: str) -> str:
     """Trim walls to a roof (Archicad: Trim to Roof): they reach up to its underside and stop there."""
     roof = A._by_guid(roof_guid) if B._model is not None else None
     if roof is None or not roof.is_a("IfcRoof") or _definition(roof) is None:
-        return A._fail("not a KimBim roof")
+        return A._fail("not a NicBim roof")
     walls = [w for w in B._elements(walls_json) if w.is_a("IfcWall") and A._layer_set(w) is not None]
     if not walls:
         return A._fail("no walls selected")

@@ -123,7 +123,7 @@ def test_diverged_pull_can_merge_with_kimbim_records(tmp_path):
     assert out["status"] == "merged", out
     assert out["head"] == other.head_commit()
     merge = other.log(limit=1)[0]
-    assert len(merge.parents) == 2  # a KimBim merge commit, not git's text merge
+    assert len(merge.parents) == 2  # a NicBim merge commit, not git's text merge
 
     merged = ifcopenshell.open(str(other.export(tmp_path / "merged.ifc")))
     names = sorted(w.Name for w in merged.by_type("IfcWall"))

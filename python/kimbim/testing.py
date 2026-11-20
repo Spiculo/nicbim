@@ -24,8 +24,8 @@ def _reset_owner():
 
 def _set_owner(f):
     """IFC2X3 requires an IfcOwnerHistory on every rooted entity; ifcopenshell.api needs a user/app."""
-    person = ifcopenshell.api.owner.add_person(f, identification="kimbim", family_name="Test", given_name="KimBim")
-    org = ifcopenshell.api.owner.add_organisation(f, identification="KimBim", name="KimBim")
+    person = ifcopenshell.api.owner.add_person(f, identification="kimbim", family_name="Test", given_name="NicBim")
+    org = ifcopenshell.api.owner.add_organisation(f, identification="NicBim", name="NicBim")
     user = ifcopenshell.api.owner.add_person_and_organisation(f, person=person, organisation=org)
     app = ifcopenshell.api.owner.add_application(f)
     ifcopenshell.api.owner.settings.get_user = lambda ifc: user

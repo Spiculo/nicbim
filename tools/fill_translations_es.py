@@ -18,13 +18,13 @@ ES = {
     "&View": "&Ver",
     "&Fit all": "&Encuadrar todo",
     "&Help": "A&yuda",
-    "&About KimBim": "&Acerca de KimBim",
-    "About KimBim": "Acerca de KimBim",
+    "&About NicBim": "&Acerca de NicBim",
+    "About NicBim": "Acerca de NicBim",
     "Ready": "Listo",
-    "KimBim %1\nOpen-source native BIM for architects, with version control built in.\nLicense: GPL-3.0-or-later":
-        "KimBim %1\nBIM nativo de código abierto para arquitectos, con control de versiones integrado.\n"
+    "NicBim %1\nOpen-source native BIM for architects, with version control built in.\nLicense: GPL-3.0-or-later":
+        "NicBim %1\nBIM nativo de código abierto para arquitectos, con control de versiones integrado.\n"
         "Licencia: GPL-3.0 o posterior",
-    "KimBim cannot start": "KimBim no puede iniciarse",
+    "NicBim cannot start": "NicBim no puede iniciarse",
     "Model": "Modelo",
     "Properties": "Propiedades",
     "Open IFC": "Abrir IFC",
@@ -207,7 +207,7 @@ ES = {
     "Open &project...": "Abrir &proyecto...",
     "Enable &versioning...": "Activar &versiones...",
     "Save &version...": "Guardar &versión...",
-    "Saved from KimBim": "Guardado desde KimBim",
+    "Saved from NicBim": "Guardado desde NicBim",
     "Project": "Proyecto",
     "Option": "Opción",
     "New option...": "Nueva opción...",
@@ -217,7 +217,7 @@ ES = {
     "This model is already versioned": "Este modelo ya tiene versiones",
     "Choose an empty folder for the project": "Elija una carpeta vacía para el proyecto",
     "Could not open the project": "No se pudo abrir el proyecto",
-    "Open a KimBim project folder": "Abrir una carpeta de proyecto KimBim",
+    "Open a NicBim project folder": "Abrir una carpeta de proyecto NicBim",
     "No version saved: %1": "No se guardó ninguna versión: %1",
     "Version saved: %1 added, %2 modified, %3 removed": "Versión guardada: %1 añadidos, %2 modificados, %3 eliminados",
     "Enable versioning first (File menu)": "Active las versiones primero (menú Archivo)",
@@ -856,7 +856,7 @@ ES = {
     "Run a Python file in the console": "Ejecutar un archivo Python en la consola",
     "Clear": "Borrar",
     "Python &console": "&Consola Python",
-    "Run Python on the open model (ifcopenshell and KimBim's commands)": "Ejecutar Python sobre el modelo abierto (ifcopenshell y los comandos de KimBim)",
+    "Run Python on the open model (ifcopenshell and NicBim's commands)": "Ejecutar Python sobre el modelo abierto (ifcopenshell y los comandos de NicBim)",
     "Run Python scrip&t...": "Ejecutar scrip&t Python...",
     "Run a .py file in the Python console": "Ejecutar un archivo .py en la consola Python",
     "Console": "Consola",
@@ -877,10 +877,10 @@ ES = {
     "File": "Archivo",
     "Floor plan": "Planta",
     "Folder for the DXF files": "Carpeta para los archivos DXF",
-    "By KimBim layer": "Por capa de KimBim",
+    "By NicBim layer": "Por capa de NicBim",
     "By element kind (A-WALL, A-DOOR...)": "Por tipo de elemento (A-WALL, A-DOOR...)",
-    "Elements without a KimBim layer go on the layer of their kind":
-        "Los elementos sin capa de KimBim van a la capa de su tipo",
+    "Elements without a NicBim layer go on the layer of their kind":
+        "Los elementos sin capa de NicBim van a la capa de su tipo",
     "Dimensions as DIMENSION entities": "Cotas como entidades DIMENSION",
     "Off: dimensions as lines and text": "Desactivado: cotas como líneas y texto",
     "Drawings go to model space at real size; sheets to a paper-space layout.":
@@ -1334,7 +1334,7 @@ ES = {
     'Tint new underlays this colour (leave empty for none)': 'Teñir las nuevas imágenes de fondo con este color (dejar vacío para ninguna)',
     'New underlay tint:': 'Tinte de las nuevas imágenes de fondo:',
     'Put each new underlay on its own layer, named after the file': 'Poner cada nueva imagen de fondo en su propia capa, con el nombre del archivo',
-    "Rebuild with KimBim's shape": 'Reconstruir con la forma de KimBim',
+    "Rebuild with NicBim's shape": 'Reconstruir con la forma de NicBim',
     'Keep the imported shape and cut it': 'Mantener la forma importada y recortarla',
     "Splitting a wall imported from another program: rebuild it (so it edits and joins like one drawn here) or keep the other program's body and cut it": 'Al dividir un muro importado de otro programa: reconstruirlo (para que se edite y una como uno dibujado aquí) o mantener el cuerpo del otro programa y recortarlo',
     'Imported walls:': 'Muros importados:',

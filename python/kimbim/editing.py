@@ -692,7 +692,7 @@ def fillet_corners(guids_json: str, size, mode: str = "fillet") -> str:
         if (why := curved_walls.refusal(walls)) is not None:
             return A._fail(why)
         if any(A._axis_world(w) is None or A._layer_set(w) is None for w in walls):
-            return A._fail("select two layered walls drawn by KimBim")
+            return A._fail("select two layered walls drawn by NicBim")
         return _fillet_walls(walls[0], walls[1], size, mode)
     slabs, shapes = [], []
     for e in B._elements(guids_json):
