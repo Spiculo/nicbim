@@ -8,9 +8,11 @@ already exists so new work builds on it instead of beside it.
 
 **NicBim designs, tests and explains any habitable system, from a cabin to a 150-storey tower to a sealed habitat
 on the Moon, with an agent that works as a real design partner: it understands the brief, the building, the people
-who will use it and the physics around it, and it can help with any task in the project.**
+who will use it and the physics around it, and it can help with any task in the project. Its projects live on
+**NicGit**, the forge where `.nic` and IFC models are saved, shown, compared, reviewed and combined, and where
+architectural actions run on every push: GitHub for buildings.**
 
-Three ideas make this NicBim's and not anyone else's:
+Four ideas make this NicBim's and not anyone else's:
 
 1. **Design options are real branches.** An agent can open a hundred variants, evaluate each one, and leave the
    architect a reviewed shortlist to compare and combine. No other BIM tool has merge-capable object history.
@@ -18,6 +20,8 @@ Three ideas make this NicBim's and not anyone else's:
    keyed by state hash is never computed twice, can be shared through NicGit, and proves which model it describes.
 3. **Evidence over inference** ([00](00-vision-and-scope.md) principle 6). Engines are the authority; the agent
    proposes, explains and orchestrates. Every claim the agent makes about performance points at an engine result.
+4. **One engine, two places.** The desktop app and NicGit run the same engine (NicGit pins it in `engine.rev`), so a
+   check, a simulation or a merge gives the same answer on an architect's laptop and on the forge.
 
 ## Principles kept (and their anti-goals)
 
@@ -34,10 +38,10 @@ Three ideas make this NicBim's and not anyone else's:
 
 | Horizon | Theme | Exit test (the "demo that proves it") |
 |---------|-------|---------------------------------------|
-| **H1 Foundations** | Scale, simulation jobs, people as data, a sharper agent | A 60-storey residential tower (≈1M objects) opens in < 20 s, orbits at 60 fps, and the agent writes a cited egress and lift report for it |
-| **H2 Tall and smart** | Tower design kit, human flow simulation, generative options | From a one-page brief, the agent produces 30 tower options as branches, evaluates structure, lifts, egress, daylight, carbon and cost, and presents a Pareto shortlist the architect combines in an afternoon |
-| **H3 Living systems** | Habitable-system modelling, dynamic physics, digital twin | A building runs for a simulated year with occupants, weather, energy, water and air in the loop; predicted vs metered data is compared once it is built |
-| **H4 Off-world and city-scale** | Sealed habitats, urban federation, autonomous design studios | A closed-loop lunar habitat for 12 crew passes mass, life-support, radiation, pressure and habitability checks; the same engine plans a 40-block district |
+| **H1 Foundations** | Scale, simulation jobs, people as data, a sharper agent, NicGit as the shared home | A 60-storey residential tower (≈1M objects) opens in < 20 s, orbits at 60 fps, and the agent writes a cited egress and lift report for it; pushed to NicGit, the same report runs as a required check on the proposal |
+| **H2 Tall and smart** | Tower design kit, human flow simulation, generative options, architectural actions | From a one-page brief, the agent produces 30 tower options as branches, evaluates structure, lifts, egress, daylight, carbon and cost (on NicGit runners when the laptop is not enough), and presents a Pareto shortlist the architect and the client combine in an afternoon, in the app or the browser |
+| **H3 Living systems** | Habitable-system modelling, dynamic physics, digital twin | A building runs for a simulated year with occupants, weather, energy, water and air in the loop; once built, its NicGit project receives metered data and compares predicted vs real per version |
+| **H4 Off-world and city-scale** | Sealed habitats, urban federation, autonomous design studios | A closed-loop lunar habitat for 12 crew passes mass, life-support, radiation, pressure and habitability checks; the same engine plans a 40-block district federated from dozens of NicGit projects owned by different studios |
 
 ---
 
@@ -192,7 +196,36 @@ Today: 257 tools, tasks and options, snapshots, sessions, MCP; the assistant's d
 - **Design by negotiation.** Stakeholder agents (client budget, neighbours' light, city planning, accessibility
   advocate) argue on branches; the architect sees the trade-offs instead of guessing them.
 
-## Track H — Platform
+## Track H — NicGit: the forge for buildings
+
+NicGit ([../nicgit](https://github.com/Spiculo/nicgit), AGPL) is the hosted or self-hosted forge for `.nic` and IFC
+projects. Today it hosts Git, shows any version in 3D in the browser, compares versions and options, runs proposals
+with role approvals and the engine's record merge, BCF issues, milestones, `.nic`/`.ifc` import and `.nic` export,
+check actions and AI summaries with budgets (its [future work](https://github.com/Spiculo/nicgit/blob/main/docs/future-work.md)
+lists the near-term gaps). The moonshot makes it the place where buildings are designed together:
+
+- **Diffs people understand.** Field-level IFC and `.nic` diffs exist; add drawing diffs (sheet overlays with automatic
+  revision clouds), quantity, cost, carbon and flow deltas per proposal, and a plain-language "what changed for
+  the client" narrative written by the agent from the engine's diff, never instead of it.
+- **Architectural actions (CI for buildings).** On every push or proposal: code compliance (Track F code engine),
+  egress and flow (Track C), energy and daylight (Track E), structure (Track B), clash and IDS. Results are keyed by
+  state hash and shared with the desktop app, so nothing runs twice; required checks block a combine like failing
+  tests block a merge. GPU and simulation runners, metered, on the hosted service or a studio's own machines.
+- **Deliverables pipelines.** A milestone produces its permit or tender set (sheets, schedules, IFC, IDS report) as
+  immutable artifacts with a transmittal, and the client signs off in the browser.
+- **Everyone at the table.** Clients review in the browser; consultants work as forks (the structural engineer's
+  option comes back as a proposal); authorities receive a permit as a verifiable state hash with its check results.
+- **Agents on the forge.** *Ask the model* about any version; an agent reviewer on every proposal ("this narrows the
+  exit on level 12 below the code width"); scheduled agents (nightly compliance, weekly cost and carbon report);
+  agents opening their own proposals, always reviewed by a person.
+- **Packages and commons.** A registry for `.nicobj` objects, office libraries, IDS and code-rule packs, personas,
+  presets and plugins; public building designs to fork (a school, a clinic, a lunar module) with history intact.
+- **Scale and live work.** Streaming geometry for 1M+ element models in the browser, live sessions on top of the
+  record merge ([08](08-future.md)), and city-scale federation across organisations.
+- **Twins after handover.** A built project keeps living on NicGit: sensor and meter data per version, maintenance
+  issues as BCF, renovations as options.
+
+## Track I — Platform
 
 - Plugin SDK with stable, versioned tool/engine/job interfaces; plugins can add engines, rules, personas and
   object families, and they appear in the agent catalogue automatically.
@@ -214,6 +247,8 @@ Today: 257 tools, tasks and options, snapshots, sessions, MCP; the assistant's d
 | 6 | `bench-1m` and streaming tiles by level | Rust decomposer, viewer | 1M objects open < 20 s, 60 fps orbit |
 | 7 | Brief-to-programme tool and a programme panel | agent catalogue, schedules | A brief PDF becomes an editable programme with sources |
 | 8 | Code rename `kimbim` → `nicbim` | — | No `kimbim` identifiers left; suites green |
+| 9 | NicGit runs the egress and model checks as a required action, sharing results by state hash | NicGit actions, items 2–3 | A proposal that breaks egress cannot be combined; the desktop app shows the same result without rerunning it |
+| 10 | NicGit browser streaming for large models | NicGit viewer (web-ifc) | The 60-storey tower opens in the browser |
 
 H2 starts with the pedestrian engine, lift traffic, the generative Compare board and the first EnergyPlus and
 Radiance bridges.

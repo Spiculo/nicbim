@@ -30,7 +30,7 @@ These documents guide development. They come from the original spec (`../doc.md`
 | 19 | [Rust Decomposer](19-rust-decomposer.md) | The C++ `ifcdump` bridge and the Rust canonical decomposer, and why cold decomposition got faster |
 | 20 | [VR Feasibility](20-vr-feasibility.md) | OpenXR availability, what a VR mode needs, cost/risk and the deferral recommendation |
 | 21 | [Final Gap Checklist](21-gap-checklist.md) | Every doc-14 item as done, deferred or blocked, with the owner-provided blockers |
-| 22 | [Moonshot Roadmap](22-moonshot-roadmap.md) | Proposed: towers, human flow, habitable systems and the agent as a design partner (H1–H4) |
+| 22 | [Moonshot Roadmap](22-moonshot-roadmap.md) | Proposed: towers, human flow, habitable systems, the agent as a design partner and NicGit as the forge (H1–H4) |
 | — | [Decision Log](decisions.md) | Every architectural decision and its status |
 | — | [Open Questions](open-questions.md) | What is still undecided |
 | — | [Glossary](glossary.md) | BIM / IFC / VCS terms |
