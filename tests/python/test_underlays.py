@@ -22,7 +22,7 @@ def call(fn, *args):
 
 @pytest.fixture(autouse=True)
 def data_dir(tmp_path):
-    """Per-test data folder (open .kim copies, the plain-IFC underlay store), cleared caches."""
+    """Per-test data folder (open .nic copies, the plain-IFC underlay store), cleared caches."""
     call("set_app_paths", str(tmp_path / "data"))
     U._segments_cache.clear()
     yield tmp_path / "data"
@@ -371,22 +371,22 @@ def test_underlay_files_are_versioned(tmp_path):
     assert json.loads(meta)["count"] == len(coords) // 16 > 0
 
 
-def test_kim_round_trip_keeps_the_underlay(tmp_path, data_dir):
+def test_nic_round_trip_keeps_the_underlay(tmp_path, data_dir):
     assert call("new_project", "Under")["ok"]
     storey = call("storeys")["storeys"][0]["guid"]
     png = tiny_png(tmp_path / "scan.png")
     r = call("add_underlay", str(png), json.dumps({"storey": storey, "x": 3.0, "rotation": 15.0, "opacity": 0.3}))
     assert r["ok"], r
     u = r["underlay"]
-    kim = tmp_path / "p.kim"
-    assert call("save_as_kim", str(kim), "First")["ok"]
-    with zipfile.ZipFile(kim) as z:
+    nic = tmp_path / "p.nic"
+    assert call("save_as_nic", str(nic), "First")["ok"]
+    with zipfile.ZipFile(nic) as z:
         names = z.namelist()
     assert f".kimbim/underlays/{u['file']}" in names
     assert call("close_document")["ok"]
     assert call("new_project", "Other")["ok"]
     assert call("underlays")["underlays"] == []
-    r = call("open_kim", str(kim))
+    r = call("open_nic", str(nic))
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
     got = call("underlays", storey)["underlays"]

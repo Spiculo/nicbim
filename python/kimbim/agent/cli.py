@@ -101,7 +101,7 @@ def _add_globals(p: argparse.ArgumentParser, top: bool, skip: frozenset = frozen
     for flag, kw in (
             ("project", dict(dest="g_project", default=d(None), metavar="P",
                              help=project_help or
-                             "the project: a folder, .kim or .ifc (default: the current folder)")),
+                             "the project: a folder, .nic or .ifc (default: the current folder)")),
             ("json", dict(dest="g_json", action="store_true", default=d(False), help="print the result as JSON")),
             ("no-worker", dict(dest="g_no_worker", action="store_true", default=d(False),
                                help="run in this process instead of the project's background worker")),
@@ -200,15 +200,15 @@ class UsageError(Exception):
 
 
 def discover(project: str | None) -> str:
-    """--project, else the current folder when it has `.kimbim` or exactly one `.kim`."""
+    """--project, else the current folder when it has `.kimbim` or exactly one `.nic`."""
     if project:
         return str(pathlib.Path(project))
     here = pathlib.Path.cwd()
     if (here / ".kimbim").is_dir():
         return str(here)
-    kims = sorted(here.glob("*.kim"))
-    if len(kims) == 1:
-        return str(kims[0])
+    nics = sorted(here.glob("*.nic"))
+    if len(nics) == 1:
+        return str(nics[0])
     raise UsageError(messages.text("cli_no_project"))
 
 
@@ -539,11 +539,11 @@ def _people(group, top) -> None:
     mp = top.add_parser("mcp", help=GROUP_HELP["mcp"], description=GROUP_HELP["mcp"] + " (stdio). Without --project, "
                         "every tool call names its project.")
     _add_globals(mp, False, only_project,
-                 project_help="the project: a folder, .kim or .ifc (default: none; every tool call names it)")
+                 project_help="the project: a folder, .nic or .ifc (default: none; every tool call names it)")
     mp.add_argument("--session", default="", metavar="ID", help="a stored session to work in")
     mp.set_defaults(handler=_mcp)
     st = top.add_parser("setup", help=GROUP_HELP["setup"],
-                        description="Write the AI client's configuration for `kimbim mcp`, or open .kim/.ifc "
+                        description="Write the AI client's configuration for `kimbim mcp`, or open .nic/.ifc "
                                     "files with the app (associations).")
     st.add_argument("client", choices=("claude-desktop", "claude-code", "opencode", "associations"))
     st.add_argument("--print", dest="print_only", action="store_true",
@@ -554,12 +554,12 @@ def _people(group, top) -> None:
     st.set_defaults(handler=_setup)
     ins = top.add_parser("install", help="install the portable KimBim build for this user",
                          description="Copy dist/KimBim to the user's application folder, write an install marker "
-                                     "and associate .kim/.ifc. No administrator is needed.")
+                                     "and associate .nic/.ifc. No administrator is needed.")
     ins.add_argument("--source", default="", help="the packaged build (default: dist/KimBim)")
     ins.add_argument("--dest", default="", help="where to install (default: the user's application folder)")
     ins.add_argument("--force", action="store_true", help="replace an existing KimBim installation")
     ins.add_argument("--dry-run", action="store_true", help="print the actions without changing anything")
-    ins.add_argument("--no-associations", action="store_true", help="do not change .kim/.ifc associations")
+    ins.add_argument("--no-associations", action="store_true", help="do not change .nic/.ifc associations")
     ins.set_defaults(handler=_install)
     uni = top.add_parser("uninstall", help="remove a KimBim installation and its associations",
                          description="Remove an installation this tool made (a folder without its marker is refused).")
@@ -1068,7 +1068,7 @@ def _setup(ns) -> int:
             return 1
         for path in written:
             print(f"wrote {path}")
-        print(f".kim and .ifc now open with {exe}")
+        print(f".nic and .ifc now open with {exe}")
         return 0
 
     from . import clients

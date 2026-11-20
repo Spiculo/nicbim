@@ -57,7 +57,7 @@ geometry/<aa>/<hash>.json                # heavy geometry records
 - **Record blobs are packed without deltas** (`repack --window=0`). Deep delta chains made random reads about 30× slower and saved under 2% of space for small records. Without deltas, 100k records read back in 1.7 s sequentially and 0.2 s on 16 threads.
 - **Commit cost does not depend on model size.** A one-record commit takes about 90 ms at 1M records.
 - Records are never checked out as files, so Windows/Linux filesystems never see a million JSON files. `kimbim export-tree <dir>` materializes them for debugging. Opening a project normally reads the local model cache (`.kimbim/cache`, keyed by tree hash), not every record.
-- The working **decomposition** is also cached on disk under `.kimbim/cache/decompose`, keyed by the IFC file bytes and HEAD (the three newest files per project). A repeated `status`/`commit`/compare of the same file loads the records instead of running the Python decomposer again: on the 100k-object benchmark, 3.5 s warm vs 244 s cold (`pixi run bench-100k`). `.kim` packing skips this cache; bump `DECOMPOSE_CACHE_VERSION` when the record format changes.
+- The working **decomposition** is also cached on disk under `.kimbim/cache/decompose`, keyed by the IFC file bytes and HEAD (the three newest files per project). A repeated `status`/`commit`/compare of the same file loads the records instead of running the Python decomposer again: on the 100k-object benchmark, 3.5 s warm vs 244 s cold (`pixi run bench-100k`). `.nic` packing skips this cache; bump `DECOMPOSE_CACHE_VERSION` when the record format changes.
 
 ## Project modes: versioning is optional
 
@@ -67,9 +67,9 @@ geometry/<aa>/<hash>.json                # heavy geometry records
 |------|---------|--------------|
 | **Plain** | A single `.ifc` file | Open → edit → save IFC. Undo/redo only. Works like any IFC editor. |
 | **Versioned** | A project folder (Git repo + `kimbim.toml`) | Full history, design options, compare, combine, object history. |
-| **`.kim` file** (D72) | One zip of the versioned project folder (plus `kimbim-file.json`) | The same as a project folder, as one file to email or archive. Unpacked to a local working folder while open, packed back on Ctrl+S. |
+| **`.nic` file** (D72) | One zip of the versioned project folder (plus `kimbim-file.json`) | The same as a project folder, as one file to email or archive. Unpacked to a local working folder while open, packed back on Ctrl+S. |
 
-**Since D72:** every `.kim` is versioned. Ctrl+S saves the file (the working copy and the project settings) without making a version; *Save version* adds one. Opening an `.ifc` makes a `.kim` beside it with a first version "Imported from …" (a preference keeps the old Plain mode). Building that first version with the Python decomposer takes minutes on large files (the Clinic, 13 MB: about 6 min), so an IFC over the `large_ifc_mb` preference (default 5 MB) asks first, offering to edit the IFC directly instead; the conversion runs on a worker thread behind a progress window. Project settings are `settings.json` in each version's tree. A `.kim` or project folder is locked (`<file>.kim.lock`, or `.kimbim/lock`) while someone edits it; others open it read-only.
+**Since D72:** every `.nic` is versioned. Ctrl+S saves the file (the working copy and the project settings) without making a version; *Save version* adds one. Opening an `.ifc` makes a `.nic` beside it with a first version "Imported from …" (a preference keeps the old Plain mode). Building that first version with the Python decomposer takes minutes on large files (the Clinic, 13 MB: about 6 min), so an IFC over the `large_ifc_mb` preference (default 5 MB) asks first, offering to edit the IFC directly instead; the conversion runs on a worker thread behind a progress window. Project settings are `settings.json` in each version's tree. A `.nic` or project folder is locked (`<file>.nic.lock`, or `.kimbim/lock`) while someone edits it; others open it read-only.
 
 - **Pre-commit checks (M6, D103):** the project setting `precommit_checks` picks the schema, IDS, clash or model checks that run on *Save version*, each `warn` or `block`. A `block` check with any issue stops the save and lists its elements; a `warn` check lets the save through and its result is stored as `checks.json` in that version's tree (never in the model, never part of a diff).
 - **Enable versioning:** creates the repository from the current model. The first commit is "Initial import".
@@ -182,7 +182,7 @@ For any object or property, walk the commits that changed its record. Each step 
 ## CLI
 
 The engine is fully usable without the GUI. Since D102 the versioning commands are under `versions`, next to the
-agent tools ([17](17-agent-tools.md)); every command takes `--project P` (a folder, `.kim` or `.ifc`):
+agent tools ([17](17-agent-tools.md)); every command takes `--project P` (a folder, `.nic` or `.ifc`):
 
 ```bash
 kimbim project init [DIR]                       # make a folder a project

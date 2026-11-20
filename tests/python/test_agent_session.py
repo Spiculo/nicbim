@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Agent sessions open .kim, folders and IFC the way the app does (D102)."""
+"""Agent sessions open .nic, folders and IFC the way the app does (D102)."""
 import json
 
 import ifcopenshell
@@ -7,18 +7,18 @@ import pytest
 
 from kimbim import app_bridge as B
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim.agent.catalogue import AgentError
 from kimbim.agent.session import Session
 
 
 @pytest.fixture
-def kim(model, tmp_path, monkeypatch):
+def nic(model, tmp_path, monkeypatch):
     monkeypatch.setattr(D, "_data_dir", tmp_path / "data")
     monkeypatch.setattr(K, "display_user", "")
     ifc = tmp_path / "src.ifc"
     model.write(str(ifc))
-    path = tmp_path / "proj.kim"
+    path = tmp_path / "proj.nic"
     out = json.loads(D.import_ifc(str(ifc), str(path)))
     assert out["ok"]
     assert json.loads(B.open_model(out["path"]))["ok"]
@@ -31,15 +31,15 @@ def _walls():
     return [w.GlobalId for w in B._model.by_type("IfcWall")]
 
 
-def test_open_kim_and_save(kim):
-    s = Session.open(str(kim))
-    assert s.kind == "kim" and s.source == str(kim) and s.work and s.unit == "m"
+def test_open_nic_and_save(nic):
+    s = Session.open(str(nic))
+    assert s.kind == "nic" and s.source == str(nic) and s.work and s.unit == "m"
     assert K.display_user == "KimBim agent"
     assert json.loads(B.set_name(json.dumps(_walls()[:1]), "Renamed"))["ok"]
     s.save()
     s.close()
     assert K.display_user == ""
-    s = Session.open(str(kim))
+    s = Session.open(str(nic))
     assert "Renamed" in [w.Name for w in B._model.by_type("IfcWall")]
     s.close()
 
@@ -59,8 +59,8 @@ def test_open_plain_ifc(model, tmp_path, monkeypatch):
     assert "Saved" in [w.Name for w in ifcopenshell.open(str(ifc)).by_type("IfcWall")]
 
 
-def test_open_folder(kim, tmp_path):
-    s = Session.open(str(kim))
+def test_open_folder(nic, tmp_path):
+    s = Session.open(str(nic))
     folder = tmp_path / "folder"
     assert json.loads(D.save_as_folder(str(folder)))["ok"]
     s.close()
@@ -69,34 +69,34 @@ def test_open_folder(kim, tmp_path):
     s.close()
 
 
-def test_locked_kim(kim):
+def test_locked_nic(nic):
     holder = {"user": "Ana", "account": "other", "machine": "other-pc", "pid": 1, "since": "2026-01-01T00:00"}
-    K.lock_path(kim).write_text(json.dumps(holder), encoding="utf-8")
+    K.lock_path(nic).write_text(json.dumps(holder), encoding="utf-8")
     with pytest.raises(AgentError) as ex:
-        Session.open(str(kim))
+        Session.open(str(nic))
     assert ex.value.code == "project_locked"
     assert ex.value.extra["holder"]["user"] == "Ana"
     assert K.display_user == ""
 
 
-def test_open_model_failure_cleans_up(kim, monkeypatch):
+def test_open_model_failure_cleans_up(nic, monkeypatch):
     monkeypatch.setattr(B, "open_model", lambda path: json.dumps({"ok": False, "error": "x"}))
     with pytest.raises(AgentError):
-        Session.open(str(kim))
-    assert not K.lock_path(kim).exists()
+        Session.open(str(nic))
+    assert not K.lock_path(nic).exists()
     assert K.display_user == ""
     assert D._pending is None
 
 
-def test_resolve_unknown(kim):
-    s = Session.open(str(kim))
+def test_resolve_unknown(nic):
+    s = Session.open(str(nic))
     with pytest.raises(AgentError) as ex:
         s.resolve(["nope"])
     assert ex.value.code == "not_found"
     s.close()
 
 
-def test_label(kim):
-    s = Session.open(str(kim))
+def test_label(nic):
+    s = Session.open(str(nic))
     assert s.label(_walls()[0]) == "Wall Wall 0, Level 1"
     s.close()

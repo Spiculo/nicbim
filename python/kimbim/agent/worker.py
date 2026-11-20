@@ -34,7 +34,7 @@ from multiprocessing.connection import Client, Listener
 from pathlib import Path
 
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .catalogue import AgentError, call_tool
 
 IDLE_DEFAULT = 600.0
@@ -71,7 +71,7 @@ def discovery_path(project, session: str = "") -> Path:
 
 def live_discovery_path(project) -> Path:
     """The live app's entry, in the project itself (D102 phase 2), so the app and the CLI agree on it even when
-    they use different data folders. Next to the lock: `<file>.kim.agent-live.json` or
+    they use different data folders. Next to the lock: `<file>.nic.agent-live.json` or
     `<folder>/.kimbim/agent-live.json`."""
     p = Path(project)
     if p.is_dir():
@@ -271,7 +271,7 @@ def _handle(session, request) -> dict:
     sid = str(request.get("session") or "")
     rebound = bool(sid and session.stored_id != sid)
     before = (session.store, session.stored, session.stored_id)
-    if rebound:  # a .kim/IFC session: it shares this worker, but owns its task
+    if rebound:  # a .nic/IFC session: it shares this worker, but owns its task
         session.bind_stored(sid)
     try:
         return call_tool(session, str(name or ""), request.get("args") or {},
@@ -296,7 +296,7 @@ def serve(project: str, idle: float, session_id: str = "") -> int:
     found = discovery_path(project, session_id)
     other = read_discovery(found)
     # A session with a worktree does not conflict with the app's own working copy; one without a worktree
-    # (.kim/IFC) does, so it must not start beside the live host.
+    # (.nic/IFC) does, so it must not start beside the live host.
     worktree = bool(session_id) and Path(project).is_dir()
     live = None if worktree else read_discovery(live_discovery_path(project))
     if (entry_alive(other) and not other.get("stopping")) or (entry_alive(live) and not live.get("stopping")):

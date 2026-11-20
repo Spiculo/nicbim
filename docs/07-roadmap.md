@@ -80,7 +80,7 @@ Library browser and bundled library, copy/paste/duplicate/array/mirror/copy-to-s
 **Exit:** the M3 house produces a plan, a section and an elevation on a sheet with a title block, exported to PDF. CI checks this automatically, as it checks M3.
 
 Slices (numbering continues after the architect-feedback track, Slices 9–13): **14 ✅ sections and elevations** → **15 ✅ plan drawings and annotation on drawings** ([plan](superpowers/plans/2026-10-07-slice15-plan-drawings-annotation.md)) → **16 ✅ sheets and PDF export (= M4 exit)** ([plan](superpowers/plans/2026-10-07-slice16-sheets-pdf.md)) → **17 ✅ everyday editing** (copy/paste, duplicate, Ctrl+drag copy, mirror, arrays, offset; [plan](superpowers/plans/2026-10-07-slice17-everyday-editing.md)).
-Libraries: the Library panel, Object tool and a bundled parametric library (D86); authoring objects without code is done: the `.kimobj` engine (D99), saved versions (D100) and the Object Editor (D101) ([16](16-parametric-objects.md)).
+Libraries: the Library panel, Object tool and a bundled parametric library (D86); authoring objects without code is done: the `.nicobj` engine (D99), saved versions (D100) and the Object Editor (D101) ([16](16-parametric-objects.md)).
 M4 comes before the end of M5 (owner plan, 2026-10-07): drawings are what an architect hands to a client, and Combine options (Slice 22) needs the R4 merge engine, which is easier to judge once real projects with drawings exist.
 
 ### After M4: modeling gaps
@@ -91,8 +91,8 @@ Slices **18 ✅ rooms and areas** (`IfcSpace` from the surrounding walls, room s
 ### R0 — Workspace ✅
 Cargo workspace, crates skeleton, `kimbim` CLI skeleton, CI. Done in Slice 1 ([plan](superpowers/plans/2026-10-04-slice1-cli-versioning.md)).
 
-### R1 — Canonical records ✅ (Python)
-Done in Slice 1 in Python (`kimbim.records`), byte-identical to the spike golden hashes. A Rust port waits until speed demands it.
+### R1 — Canonical records ✅
+Done in Slice 1 in Python (`kimbim.records`), byte-identical to the spike golden hashes. The Rust decomposer (C++ IfcOpenShell bridge) is now used when available, with the Python reference as the fallback ([19](19-rust-decomposer.md)).
 
 Record decomposition, canonical JSON, BLAKE3 references, records → IFC export with deterministic step IDs.
 **Exit:** corpus round-trip is a fixed point; golden hashes match on Windows and Linux.
@@ -138,9 +138,9 @@ and version (`test_ifc4x3_corpus`, in `pixi run golden`), `test_schemas` runs in
 `pixi run test`) ([02](02-data-model-and-format.md#ifc-schema-version)). Infrastructure entities
 (alignment, road, rail, bridge) are kept on save but have no authoring tools.
 
-## Next (2026-11-13)
+## Next (2026-11-19)
 Every row of the tool inventory is now built or blocked on the owner ([21](21-gap-checklist.md)); the decisions
-from D100 to D250 are listed in [decisions.md](decisions.md). What is left:
+from D100 to D251 are listed in [decisions.md](decisions.md). What is left:
 
 1. **Owner checks and assets.** The M3 manual check in a commercial viewer and Bonsai ([12](12-m3-exit.md)), a
    signing certificate, the SketchUp SDK and a VR headset ([open questions](open-questions.md)).

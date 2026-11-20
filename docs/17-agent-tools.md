@@ -42,8 +42,8 @@ other servers and settings. In development, run it as `pixi run kimbim ...`.
 | Agent | Command | What it writes |
 |-------|---------|----------------|
 | Claude Desktop | `kimbim setup claude-desktop` | `claude_desktop_config.json` (in `%APPDATA%\Claude` on Windows) |
-| Claude Code | `kimbim setup claude-code --project house.kim` | `.mcp.json` and a short NicBim section in `CLAUDE.md`, in the project's folder |
-| opencode | `kimbim setup opencode --project house.kim` | `opencode.json` and a short NicBim section in `AGENTS.md`, in the project's folder |
+| Claude Code | `kimbim setup claude-code --project house.nic` | `.mcp.json` and a short NicBim section in `CLAUDE.md`, in the project's folder |
+| opencode | `kimbim setup opencode --project house.nic` | `opencode.json` and a short NicBim section in `AGENTS.md`, in the project's folder |
 
 - With `--project`, the server always works on that project. Without it, the agent names the project in every call.
 - `--print` shows the configuration instead of writing it. For Claude Code it prints the `claude mcp add` line.
@@ -144,7 +144,7 @@ The conversation is a **stored session** (D111, [18](18-agent-tools-and-sessions
 the top lists the project's sessions with *New*, *Rename...*, *Fork*, *Archive* and *Delete...*. *Clear* starts a
 new session; the old one stays in the list. The transcript lives in the app's data folder, not in the project. A
 versioned folder project gets its own worktree per session, so the Assistant and the architect never write the same
-working state; a `.kim`/IFC session uses the app's live document (one at a time). The agent's task and design
+working state; a `.nic`/IFC session uses the app's live document (one at a time). The agent's task and design
 option stay in the project, and accepting or rejecting the proposal ends the session.
 
 From the command line, `kimbim sessions list|new|show|rename|archive|delete|fork` manages them, and
@@ -447,13 +447,13 @@ These commands are on the command line only. Agents don't get them.
 | `kimbim setup CLIENT` | Connects an agent (above) |
 | `kimbim help [--markdown]` | The help, or the tool table above |
 
-Every command takes `--project P` (a project folder, a `.kim` or an `.ifc`). Without it, `kimbim` uses the current
-folder when it is a project or holds exactly one `.kim`.
+Every command takes `--project P` (a project folder, a `.nic` or an `.ifc`). Without it, `kimbim` uses the current
+folder when it is a project or holds exactly one `.nic`.
 
 ## How it runs
 
 When the project is open in NicBim, the app hosts the **live** session: it writes its discovery file next to the
-project (`.kim` files get `<name>.kim.agent-live.json`; folders get `.kimbim/agent-live.json`) and runs each call
+project (`.nic` files get `<name>.nic.agent-live.json`; folders get `.kimbim/agent-live.json`) and runs each call
 on its own thread. The CLI and MCP server find it there first, so the same commands work with no worker. The
 status bar shows *Agent: live* and a *Disconnect* button.
 
@@ -477,7 +477,7 @@ limits below).
 | `snapshot_take`, 3D, first picture (starts the renderer) | 6.6 s with `changes: "task"` | 37 s | under 3 s |
 | `snapshot_take`, 3D, next pictures | | 3.9 s | under 3 s |
 | `snapshot_take`, 3D, `changes: "task"` | | 227 s (the compare alone: 204 s) | under 3 s |
-| `task_finish` (saves the version and the .kim) | 3.6 s | 247 s | |
+| `task_finish` (saves the version and the .nic) | 3.6 s | 247 s | |
 
 What these show:
 
@@ -498,7 +498,7 @@ What these show:
   offline.
 - **One open task per client.** A second `task_start` from the same client answers `task_busy`; another client may
   have its own task and option. A stored session on a **versioned folder** project works in its own worktree, so the
-  architect's view stays on their option; a `.kim`/IFC session (and every older ad-hoc CLI/MCP call) still shares
+  architect's view stays on their option; a `.nic`/IFC session (and every older ad-hoc CLI/MCP call) still shares
   the app's one working model, so each call switches to its task's option and the architect's view follows it.
 - **Review is a bar, not a dialog.** A proposal with conflicting property edits opens the existing Combine dialog;
   otherwise Accept combines and saves in one step.

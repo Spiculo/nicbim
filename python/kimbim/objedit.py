@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The Object Editor's drafts (D101, doc 16 §6): the Python side of the dialog that makes library objects.
 
-The draft protocol. A draft is the object's `.kimobj` JSON as text, held by the dialog; every function
+The draft protocol. A draft is the object's `.nicobj` JSON as text, held by the dialog; every function
 here takes it as a string and answers JSON (the bridge protocol: strings in, JSON out, never raising,
 failures as {"ok": false, "error": ...}). A draft is never registered: nothing here touches
 library.OBJECTS, library._office or the open model (the preview builds in a scratch model).
@@ -13,7 +13,7 @@ library.OBJECTS, library._office or the open model (the preview builds in a scra
   object_symbol, object_preview and object_preview_error for the draft, at the dialog's trial values.
 - `object_part_template(shape)`, `object_symbol_template(kind)`: a part or a plan symbol item to add that
   builds as it is.
-- `save_draft(draft, target, replace)`: the draft kept in the office library (a `.kimobj` file; with the
+- `save_draft(draft, target, replace)`: the draft kept in the office library (a `.nicobj` file; with the
   count and GUIDs of this object's placements it left outdated) or in the project (its types, one undo step,
   with the geometry of their placements). An object the target has is replaced only when `replace` is its
   id; otherwise the answer is {"ok": false, "exists": id}."""
@@ -424,7 +424,7 @@ def _save_office(obj, draft_json: str, replace: str) -> str:
     if not folder:
         return _fail("no office library folder (Preferences › Office library)")
     ref = f"office:{obj.key}"
-    path = os.path.join(folder, f"{obj.key}.kimobj")
+    path = os.path.join(folder, f"{obj.key}.nicobj")
     known = library._office.get(ref)  # an object loaded from a file with another name is replaced in place
     if isinstance(known, objects.ObjectDef) and known.library:
         path = known.library

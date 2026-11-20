@@ -8,7 +8,7 @@ import pytest
 
 from kimbim import app_bridge as B
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim.agent import catalogue
 from kimbim.agent.catalogue import call_tool
 from kimbim.agent.session import Session
@@ -24,10 +24,10 @@ def s(tmp_path, monkeypatch):
     monkeypatch.setattr(K, "display_user", "")
     ifc = tmp_path / "house.ifc"
     make_house.build(str(ifc))
-    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.kim")))
+    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.nic")))
     assert out["ok"]
     D.close_document()
-    session = Session.open(str(tmp_path / "house.kim"))
+    session = Session.open(str(tmp_path / "house.nic"))
     yield session
     session.close()
 
@@ -49,7 +49,7 @@ def test_info_counts(s):
     walls = len(B._model.by_type("IfcWall"))
     assert info["counts"]["walls"] == walls == 8
     assert len(info["levels"]) >= 2 and {"Level 1", "Level 2"} <= {l["name"] for l in info["levels"]}
-    assert info["kind"] == "kim" and info["unit"] == "m" and info["mode"] == "offline"
+    assert info["kind"] == "nic" and info["unit"] == "m" and info["mode"] == "offline"
     assert info["versioned"] in (True, False) and "unsaved" in info and "options" in info
 
 

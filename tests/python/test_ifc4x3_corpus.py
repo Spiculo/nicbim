@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """IFC4X3 in the app's own workflow (D241, docs/02): every buildingSMART IFC 4.3 ADD2 sample in the corpus opens
-as a .kim, its products mesh, an edit is saved as a version, and the reopened project is still IFC4X3_ADD2 with
+as a .nic, its products mesh, an edit is saved as a version, and the reopened project is still IFC4X3_ADD2 with
 the edit in it. Needs the corpus (pixi run fetch-corpus)."""
 import json
 import pathlib
@@ -10,7 +10,7 @@ import pytest
 
 from kimbim import app_bridge as B
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import versioning as V
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -28,12 +28,12 @@ def test_ifc4x3_sample_opens_edits_and_versions(path, tmp_path, monkeypatch):
     monkeypatch.setattr(D, "_data_dir", tmp_path / "data")
     monkeypatch.setattr(K, "display_user", "")
     assert ifcopenshell.open(str(path)).schema_identifier == "IFC4X3_ADD2"
-    kim = tmp_path / f"{path.stem}.kim"
-    made = call(D.import_ifc, str(path), str(kim))
+    nic = tmp_path / f"{path.stem}.nic"
+    made = call(D.import_ifc, str(path), str(nic))
     assert made["ok"], made
     D.close_document()
     try:
-        opened = call(D.open_kim, str(kim))
+        opened = call(D.open_nic, str(nic))
         assert opened["ok"], opened
         assert call(B.open_model, opened["path"])["ok"]
         assert B._model.schema_identifier == "IFC4X3_ADD2"
@@ -47,7 +47,7 @@ def test_ifc4x3_sample_opens_edits_and_versions(path, tmp_path, monkeypatch):
         saved = call(V.save_version, "Rename one element")
         assert saved["ok"], saved
         D.close_document()
-        again = call(D.open_kim, str(kim))
+        again = call(D.open_nic, str(nic))
         assert again["ok"], again
         assert call(B.open_model, again["path"])["ok"]
         assert B._model.schema_identifier == "IFC4X3_ADD2"

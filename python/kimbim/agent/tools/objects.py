@@ -166,7 +166,7 @@ def update_from_library(session, elements=None):
 
 # ---------------------------------------------------------------- object drafts (D101)
 
-_DRAFT = {"type": "object", "description": "A .kimobj object definition (doc 16): id, name, parameters, parts. "
+_DRAFT = {"type": "object", "description": "A .nicobj object definition (doc 16): id, name, parameters, parts. "
                                            "objects.library and an object's definition show the format."}
 
 

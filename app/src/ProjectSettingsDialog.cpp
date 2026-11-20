@@ -206,7 +206,7 @@ ProjectSettingsDialog::ProjectSettingsDialog(const QJsonObject& settings, bool k
     form->addRow(QString(), m_planSymbols);
     scroll->setWidget(page);
     layout->addWidget(scroll, 1);
-    auto* note = new QLabel(tr("These settings aren't kept with a plain IFC file. Save as .kim to keep them."), this);
+    auto* note = new QLabel(tr("These settings aren't kept with a plain IFC file. Save as .nic to keep them."), this);
     note->setObjectName(QStringLiteral("notKeptNote"));
     note->setWordWrap(true);
     note->setVisible(!kept);

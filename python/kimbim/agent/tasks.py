@@ -8,7 +8,7 @@ Direct mode: the edits are saved in place on `finish`, with a way back made at s
 unsaved work as a version, or for a plain IFC `<stem>.before-agent.ifc`).
 
 Project setting `agent_changes`: option, direct, or agent_decides (the task's mode, default option). Task
-state is a JSON file per task in `<work>/.kimbim/agent/tasks/` (it travels in the .kim), or for a plain IFC in
+state is a JSON file per task in `<work>/.kimbim/agent/tasks/` (it travels in the .nic), or for a plain IFC in
 `<data dir>/agent/tasks/<path hash>/`, so it survives the worker's exit.
 
 Each client has at most one open task; different clients may have tasks open on the same project (D102 phase 2).
@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 from .. import app_bridge as B
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .. import settings as S
 from .. import versioning as V
 from . import messages
@@ -48,7 +48,7 @@ class Task:
     base_option: str = ""
     base_version: str = ""
     option: str = ""
-    session: str = ""  # the stored session it belongs to (D111), also for a .kim served by a shared worker
+    session: str = ""  # the stored session it belongs to (D111), also for a .nic served by a shared worker
     created: str = ""
     summary: str = ""
     changes: dict = field(default_factory=dict)  # accumulated: {"added", "modified", "removed", "labels"}
@@ -240,7 +240,7 @@ class Tasks:
             task.base_option, task.base_version = state["option"], state["head"] or ""
         if task.mode == "option":
             task.option = self._session_branch(slug(title))
-            self._write(task)  # before the option: creating it packs the .kim, task file included
+            self._write(task)  # before the option: creating it packs the .nic, task file included
             try:
                 if task.option in json.loads(V.options())["options"]:
                     bridge(V.switch_option, task.option)  # a stored session resumes its own branch
@@ -299,7 +299,7 @@ class Tasks:
         self._current = ""
         self._start_steps.pop(task.id, None)
         if task.mode == "option":
-            bridge(V.delete_option, task.option)  # packs the .kim without the task file
+            bridge(V.delete_option, task.option)  # packs the .nic without the task file
 
     def resume(self, client: str, task_id: str = "") -> None:
         """Before any command (catalogue.call_tool): a parked task, or one whose option isn't current (the
@@ -370,7 +370,7 @@ class Tasks:
         elif V._project is not None:
             version = self._save_version(f"{task.title} (agent)", task.client)
         task.status, task.summary = "ready", summary
-        self._write(task)  # before saving: a .kim packs it
+        self._write(task)  # before saving: a .nic packs it
         self._save_document()
         if hasattr(self.session, "task_status"):
             self.session.task_status(task, "ready")
@@ -397,7 +397,7 @@ class Tasks:
         self._write(task)
         if hasattr(self.session, "task_status"):
             self.session.task_status(task, "open")
-        D.history_changed()  # a .kim packs the task's new state
+        D.history_changed()  # a .nic packs the task's new state
         self._current = ""
         return task
 

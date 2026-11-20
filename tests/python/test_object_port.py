@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""D99 port (doc 16 §8): every bundled .kimobj builds the same geometry and plan symbol as the
+"""D99 port (doc 16 §8): every bundled .nicobj builds the same geometry and plan symbol as the
 Python object it replaces, at its defaults and at two other value sets (tests/golden/library_objects.json)."""
 import json
 import pathlib
@@ -20,7 +20,7 @@ def cases():
 @pytest.mark.parametrize("key, name", cases())
 def test_port_matches_the_python_object(key, name):
     want = GOLDEN[key][name]
-    d = objects.load_file(str(BUNDLED / f"{key}.kimobj"), "bundled")
+    d = objects.load_file(str(BUNDLED / f"{key}.nicobj"), "bundled")
     assert d.key == key
     values = d.values(want["values"])
     for k, v in want["values"].items():
@@ -33,4 +33,4 @@ def test_port_matches_the_python_object(key, name):
 
 
 def test_every_bundled_file_is_a_golden_object():
-    assert sorted(p.stem for p in BUNDLED.glob("*.kimobj")) == sorted(GOLDEN)
+    assert sorted(p.stem for p in BUNDLED.glob("*.nicobj")) == sorted(GOLDEN)

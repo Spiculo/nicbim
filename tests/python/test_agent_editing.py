@@ -10,7 +10,7 @@ from kimbim import app_bridge as B
 from kimbim import authoring as A
 from kimbim import documents as D
 from kimbim import editing as E
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import settings as S
 from kimbim.agent.catalogue import call_tool
 from kimbim.agent.session import Session
@@ -26,10 +26,10 @@ def s(tmp_path, monkeypatch):
     monkeypatch.setattr(K, "display_user", "")
     ifc = tmp_path / "house.ifc"
     make_house.build(str(ifc))
-    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.kim")))
+    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.nic")))
     assert out["ok"]
     D.close_document()
-    session = Session.open(str(tmp_path / "house.kim"))
+    session = Session.open(str(tmp_path / "house.nic"))
     assert json.loads(S.set_project_settings(json.dumps({"agent_changes": "direct"})))["ok"]
     yield session
     session.close()

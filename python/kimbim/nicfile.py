@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The .kim file (step 2, D72): a zip of the project folder plus a small manifest.
+"""The .nic file (step 2, D72): a zip of the project folder plus a small manifest.
 
 Saving never touches the old file until the new one is complete: the zip is written beside the
-target as <name>.kim.saving and swapped in with one os.replace (retried while OneDrive or an
+target as <name>.nic.saving and swapped in with one os.replace (retried while OneDrive or an
 antivirus holds the file for a moment). Unpacking refuses entries that would land outside the folder.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ REPLACE_WAIT = 0.2  # seconds between tries
 SKIP = (".kimbim/cache/", ".kimbim/index.db", ".kimbim/lock", ".kimbim/recovery/")
 
 
-class KimError(Exception):
+class NicError(Exception):
     pass
 
 
@@ -72,7 +72,7 @@ WORKING = (".kimbim/working.ifc", ".kimbim/settings.json", ".kimbim/working.json
 
 def _write_entries(z: zipfile.ZipFile, folder: pathlib.Path, kind: str, keep=None) -> None:
     """`keep`: an open zip whose saved work (WORKING) is carried over instead of the folder's."""
-    z.writestr(MANIFEST, json.dumps({"format": "kim", "version": VERSION, "kind": kind, "app": _app_version()}, indent=1))
+    z.writestr(MANIFEST, json.dumps({"format": "nic", "version": VERSION, "kind": kind, "app": _app_version()}, indent=1))
     kept = set(keep.namelist()) & set(WORKING) if keep is not None else set()
     for name in sorted(kept):
         z.writestr(name, keep.read(name), compress_type=zipfile.ZIP_DEFLATED)
@@ -83,15 +83,15 @@ def _write_entries(z: zipfile.ZipFile, folder: pathlib.Path, kind: str, keep=Non
         z.write(p, name, compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
 
 
-def pack(folder, kim, kind: str = "project", keep_saved_work: bool = False) -> None:
-    """Zip `folder` into `kim`. keep_saved_work: the history changed but the open model has unsaved edits,
+def pack(folder, nic, kind: str = "project", keep_saved_work: bool = False) -> None:
+    """Zip `folder` into `nic`. keep_saved_work: the history changed but the open model has unsaved edits,
     so the model and settings the file already holds are carried over unchanged."""
-    folder, kim = pathlib.Path(folder), pathlib.Path(kim)
-    tmp = kim.with_name(kim.name + ".saving")
+    folder, nic = pathlib.Path(folder), pathlib.Path(nic)
+    tmp = nic.with_name(nic.name + ".saving")
     try:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
-            if keep_saved_work and kim.exists():
-                with zipfile.ZipFile(kim) as old:
+            if keep_saved_work and nic.exists():
+                with zipfile.ZipFile(nic) as old:
                     _write_entries(z, folder, kind, keep=old)
             else:
                 _write_entries(z, folder, kind)
@@ -99,28 +99,28 @@ def pack(folder, kim, kind: str = "project", keep_saved_work: bool = False) -> N
             os.fsync(f.fileno())
     except OSError as ex:
         tmp.unlink(missing_ok=True)
-        raise KimError(f"could not write {kim.name}: {ex.strerror or ex}") from None
+        raise NicError(f"could not write {nic.name}: {ex.strerror or ex}") from None
     for attempt in range(REPLACE_TRIES):
         try:
-            os.replace(tmp, kim)
+            os.replace(tmp, nic)
             return
         except PermissionError as ex:
             error = ex
             time.sleep(REPLACE_WAIT)
-    raise KimError(f"could not replace {kim.name}: {error.strerror or error} (the new version is in {tmp.name})")
+    raise NicError(f"could not replace {nic.name}: {error.strerror or error} (the new version is in {tmp.name})")
 
 
-def read_manifest(kim) -> dict:
-    kim = pathlib.Path(kim)
+def read_manifest(nic) -> dict:
+    nic = pathlib.Path(nic)
     try:
-        with zipfile.ZipFile(kim) as z:
+        with zipfile.ZipFile(nic) as z:
             manifest = json.loads(z.read(MANIFEST))
     except (zipfile.BadZipFile, KeyError, ValueError, OSError):
-        raise KimError(f"{kim.name} is not a KimBim file, or it is damaged") from None
-    if not isinstance(manifest, dict) or manifest.get("format") != "kim":
-        raise KimError(f"{kim.name} is not a KimBim file, or it is damaged")
+        raise NicError(f"{nic.name} is not a KimBim file, or it is damaged") from None
+    if not isinstance(manifest, dict) or manifest.get("format") != "nic":
+        raise NicError(f"{nic.name} is not a KimBim file, or it is damaged")
     if int(manifest.get("version", 0)) > VERSION:
-        raise KimError(f"{kim.name} was made by a newer KimBim; update KimBim to open it")
+        raise NicError(f"{nic.name} was made by a newer KimBim; update KimBim to open it")
     return manifest
 
 
@@ -131,18 +131,18 @@ def _safe(name: str) -> bool:
     return ":" not in parts[0] and ".." not in parts
 
 
-def unpack(kim, folder) -> dict:
-    kim, folder = pathlib.Path(kim), pathlib.Path(folder)
-    manifest = read_manifest(kim)
-    with zipfile.ZipFile(kim) as z:
+def unpack(nic, folder) -> dict:
+    nic, folder = pathlib.Path(nic), pathlib.Path(folder)
+    manifest = read_manifest(nic)
+    with zipfile.ZipFile(nic) as z:
         names = [n for n in z.namelist() if n != MANIFEST]
         bad = [n for n in names if not _safe(n.replace("\\", "/"))]
         if bad:
-            raise KimError(f"{kim.name} has unsafe entries ({bad[0]}); it was not opened")
+            raise NicError(f"{nic.name} has unsafe entries ({bad[0]}); it was not opened")
         if folder.exists():
             remove_tree(folder)
             if folder.exists():
-                raise KimError(f"could not clear {folder}: a file in it is in use")
+                raise NicError(f"could not clear {folder}: a file in it is in use")
         folder.mkdir(parents=True)
         for n in names:
             if n.endswith("/"):
@@ -159,9 +159,9 @@ def unpack(kim, folder) -> dict:
 display_user = ""  # the name others see in the lock (the author name from preferences)
 
 
-def lock_path(kim) -> pathlib.Path:
-    kim = pathlib.Path(kim)
-    return kim.with_name(kim.name + ".lock")
+def lock_path(nic) -> pathlib.Path:
+    nic = pathlib.Path(nic)
+    return nic.with_name(nic.name + ".lock")
 
 
 def pid_alive(pid: int) -> bool:

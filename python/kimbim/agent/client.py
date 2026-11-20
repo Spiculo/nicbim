@@ -19,7 +19,7 @@ from pathlib import Path
 
 
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .catalogue import AgentError
 from .worker import (FAMILY, discovery_path, entry_alive, error_path, live_discovery_path, read_discovery,
                      same_entry, unlink_if)
@@ -224,7 +224,7 @@ def _spawn_and_wait(project: str, session: str = "") -> dict:
 def request(project: str, tool: str, args: dict | None = None, *, client: str = "cli", task: str = "",
             start: bool = True, timeout: float = 120, session: str = "") -> dict:
     """Run `tool` with `args` in the project's worker (started if needed and `start`) and return the envelope.
-    With `session`, a folder project's session worker and worktree are used (D111); a `.kim`/IFC session is
+    With `session`, a folder project's session worker and worktree are used (D111); a `.nic`/IFC session is
     sent to the project's live/worker session, which binds the stored record."""
     project = os.path.abspath(str(project))
     # Only a versioned folder has somewhere to check out a second working copy.

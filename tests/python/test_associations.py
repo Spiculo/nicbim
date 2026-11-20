@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Per-user file associations for .kim and .ifc (D139): the Windows registry plan and apply (with a
+"""Per-user file associations for .nic and .ifc (D139): the Windows registry plan and apply (with a
 fake registry), the Linux desktop/MIME files, `--print` and `--remove`."""
 import json
 
@@ -46,9 +46,9 @@ class FakeRegistry:
 def test_windows_plan_associates_both_extensions():
     exe = r"C:\Program Files\KimBim\kimbim-app.exe"
     actions = A.windows_actions(exe)
-    assert {a["key"] for a in actions} >= {r"Software\Classes\.kim", r"Software\Classes\.ifc"}
-    kim = next(a for a in actions if a["key"] == r"Software\Classes\.kim")
-    assert kim["value"] == "KimBim.Project"
+    assert {a["key"] for a in actions} >= {r"Software\Classes\.nic", r"Software\Classes\.ifc"}
+    nic = next(a for a in actions if a["key"] == r"Software\Classes\.nic")
+    assert nic["value"] == "KimBim.Project"
     ifc = next(a for a in actions if a["key"] == r"Software\Classes\.ifc")
     assert ifc["value"] == "KimBim.Ifc"
     command = next(a for a in actions if a["key"].endswith(r"KimBim.Project\shell\open\command"))
@@ -59,8 +59,8 @@ def test_windows_plan_associates_both_extensions():
 def test_windows_apply_and_remove_with_a_fake_registry():
     reg = FakeRegistry()
     removed = A._windows_apply(A.windows_actions(r"C:\KimBim\kimbim-app.exe"), registry=reg)
-    assert removed and (r"Software\Classes\.kim", "") in reg.values
-    assert reg.values[(r"Software\Classes\.kim", "")] == "KimBim.Project"
+    assert removed and (r"Software\Classes\.nic", "") in reg.values
+    assert reg.values[(r"Software\Classes\.nic", "")] == "KimBim.Project"
     assert reg.values[(r"Software\Classes\KimBim.Ifc\shell\open\command", "")] == \
         r'"C:\KimBim\kimbim-app.exe" "%1"'
     A._windows_apply(A.windows_actions(""), remove=True, registry=reg)
@@ -73,7 +73,7 @@ def test_linux_desktop_and_mime_files(tmp_path):
     assert 'Exec="/opt/kimbim/kimbim-app" %f' in desktop
     assert "application/x-kimbim-project" in desktop and "application/x-ifc" in desktop
     xml = A.linux_mime_xml()
-    assert 'glob pattern="*.kim"' in xml and 'glob pattern="*.ifc"' in xml
+    assert 'glob pattern="*.nic"' in xml and 'glob pattern="*.ifc"' in xml
     actions = A.linux_actions(exe, str(tmp_path))
     paths = [action["path"].replace("\\", "/") for action in actions]
     assert paths[0].endswith("applications/kimbim.desktop")

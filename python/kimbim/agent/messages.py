@@ -72,8 +72,8 @@ MESSAGES = {
     # CLI output (D102)
     "cli_error": {"en": "kimbim: error: {message}", "es": "kimbim: error: {message}"},
     "cli_warning": {"en": "kimbim: warning: {message}", "es": "kimbim: aviso: {message}"},
-    "cli_no_project": {"en": "No project here (no .kimbim folder, and not exactly one .kim file): give --project.",
-                       "es": "No hay ningún proyecto aquí (ni carpeta .kimbim ni un único archivo .kim): indica --project."},
+    "cli_no_project": {"en": "No project here (no .kimbim folder, and not exactly one .nic file): give --project.",
+                       "es": "No hay ningún proyecto aquí (ni carpeta .kimbim ni un único archivo .nic): indica --project."},
     "cli_no_versions": {"en": "no versions yet", "es": "aún no hay versiones"},
     "cli_no_sessions": {"en": "no stored sessions for this project", "es": "no hay sesiones guardadas para este proyecto"},
     "setup_wrote": {"en": "wrote {path}", "es": "escrito {path}"},

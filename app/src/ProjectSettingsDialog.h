@@ -13,7 +13,7 @@ class QSpinBox;
 
 namespace kimbim {
 
-// File > Project settings (D72): the settings kept with the project (.kim or folder) and versioned.
+// File > Project settings (D72): the settings kept with the project (.nic or folder) and versioned.
 class ProjectSettingsDialog : public QDialog {
     Q_OBJECT
 public:

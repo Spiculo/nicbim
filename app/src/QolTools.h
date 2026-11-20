@@ -119,7 +119,7 @@ struct PointPick {
 // The face of a box a picked normal points out of: "+x", "-x", "+y", "-y", "+z" or "-z" (push/pull).
 QString faceFromNormal(double nx, double ny, double nz);
 
-// What a dropped file does: "open" (.kim, .ifc, a folder), "underlay" (DXF, DWG, PDF, pictures),
+// What a dropped file does: "open" (.nic, .ifc, a folder), "underlay" (DXF, DWG, PDF, pictures),
 // "mesh", "cloud" (point clouds), or "" (not something NicBim takes).
 QString dropKind(const QString& path);
 

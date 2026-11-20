@@ -9,7 +9,7 @@ import pytest
 
 from kimbim import app_bridge as B
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import settings as S
 from kimbim import versioning as V
 from kimbim.agent import catalogue, tasks
@@ -37,25 +37,25 @@ def rename_tool():
     catalogue.TOOLS.pop("test.rename", None)
 
 
-def _house_kim(tmp_path) -> Path:
+def _house_nic(tmp_path) -> Path:
     ifc = tmp_path / "house.ifc"
     make_house.build(str(ifc))
-    kim = tmp_path / "house.kim"
-    out = json.loads(D.import_ifc(str(ifc), str(kim)))
+    nic = tmp_path / "house.nic"
+    out = json.loads(D.import_ifc(str(ifc), str(nic)))
     assert out["ok"], out
     assert json.loads(B.open_model(out["path"]))["ok"]
     D.close_document()
-    return kim
+    return nic
 
 
 @pytest.fixture
 def house(tmp_path, monkeypatch):
     monkeypatch.setattr(D, "_data_dir", tmp_path / "data")
     monkeypatch.setattr(K, "display_user", "")
-    kim = _house_kim(tmp_path)
+    nic = _house_nic(tmp_path)
     opened = []
 
-    def open_(path=kim):
+    def open_(path=nic):
         s = Session.open(str(path))
         opened.append(s)
         return s
@@ -262,17 +262,17 @@ def test_reserved_settings(house):
     assert not json.loads(S.set_project_settings(json.dumps({"agent_scripts": "yes"})))["ok"]
 
 
-def test_task_file_in_kim(house, tmp_path, monkeypatch):
+def test_task_file_in_nic(house, tmp_path, monkeypatch):
     s = house()
     task = run(s, "task.start", title="Travel")["result"]
     assert run(s, "test.rename", guids=[walls()[0].GlobalId], name="T")["ok"]
     assert run(s, "task.finish", summary="ok")["ok"]
     s.close()
-    kim = tmp_path / "house.kim"
+    nic = tmp_path / "house.nic"
     import zipfile
-    assert f".kimbim/agent/tasks/{task['id']}.json" in zipfile.ZipFile(kim).namelist()
+    assert f".kimbim/agent/tasks/{task['id']}.json" in zipfile.ZipFile(nic).namelist()
     monkeypatch.setattr(D, "_data_dir", tmp_path / "fresh")
-    s2 = house(kim)
+    s2 = house(nic)
     listed = run(s2, "task.status")["result"]["tasks"]
     assert [(t["id"], t["status"]) for t in listed] == [(task["id"], "ready")]
 
@@ -391,7 +391,7 @@ def test_read_after_restart_resumes(house, tmp_path):
     assert run(s, "test.rename", guids=[walls()[0].GlobalId], name="Night")["ok"]
     s.tasks.park()
     s.close()
-    s2 = house(tmp_path / "house.kim")
+    s2 = house(tmp_path / "house.nic")
     assert option() == "main"
     info = run(s2, "project.info")["result"]  # any command unparks, a read too
     assert info["option"] == task["option"]

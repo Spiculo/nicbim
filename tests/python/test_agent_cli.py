@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim.agent import cli, client
 from kimbim.agent.catalogue import TOOLS
 from kimbim.cli import main
@@ -21,23 +21,23 @@ import make_house  # noqa: E402
 
 
 @pytest.fixture(scope="module")
-def house_kim(tmp_path_factory) -> Path:
+def house_nic(tmp_path_factory) -> Path:
     folder = tmp_path_factory.mktemp("house")
     saved = D._data_dir
     D._data_dir = folder / "data"
     try:
         ifc = folder / "house.ifc"
         make_house.build(str(ifc))
-        kim = folder / "house.kim"
-        assert json.loads(D.import_ifc(str(ifc), str(kim)))["ok"]
+        nic = folder / "house.nic"
+        assert json.loads(D.import_ifc(str(ifc), str(nic)))["ok"]
         D.close_document()
     finally:
         D._data_dir = saved
-    return kim
+    return nic
 
 
 @pytest.fixture
-def house(house_kim, tmp_path, monkeypatch):
+def house(house_nic, tmp_path, monkeypatch):
     data = tmp_path / "data"
     monkeypatch.setenv("KIMBIM_DATA_DIR", str(data))
     monkeypatch.setenv("KIMBIM_AGENT_IDLE", "3")
@@ -45,9 +45,9 @@ def house(house_kim, tmp_path, monkeypatch):
     monkeypatch.setattr(D, "_data_dir", None)
     monkeypatch.setattr(K, "display_user", "")
     monkeypatch.setattr(client, "spawned", [])
-    kim = tmp_path / "house.kim"
-    shutil.copyfile(house_kim, kim)
-    yield kim
+    nic = tmp_path / "house.nic"
+    shutil.copyfile(house_nic, nic)
+    yield nic
     pids = list(client.spawned)
     sessions = data / "agent" / "sessions"
     for p in sessions.glob("*.json") if sessions.is_dir() else ():
@@ -63,15 +63,15 @@ def house(house_kim, tmp_path, monkeypatch):
                 pass
 
 
-def run(capsys, kim, *argv):
+def run(capsys, nic, *argv):
     """Run in this process (`--no-worker`)."""
-    code = main(["--project", str(kim), "--no-worker", *argv])
+    code = main(["--project", str(nic), "--no-worker", *argv])
     out = capsys.readouterr()
     return code, out.out, out.err
 
 
-def envelope(capsys, kim, *argv):
-    code, out, err = run(capsys, kim, *argv, "--json")
+def envelope(capsys, nic, *argv):
+    code, out, err = run(capsys, nic, *argv, "--json")
     return code, json.loads(out), err
 
 

@@ -13,7 +13,7 @@ import pytest
 from kimbim import app_bridge as B
 from kimbim import authoring as A
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import schemas as SC
 from kimbim import versioning as V
 
@@ -84,10 +84,10 @@ def test_plain_ifc_changes_schema_into_a_new_file(clean):
 def test_versioned_project_changes_schema_as_a_version(clean):
     src = clean / "house.ifc"
     make_house.build(str(src))
-    kim = clean / "house.kim"
-    assert call(D.import_ifc, str(src), str(kim))["ok"]
+    nic = clean / "house.nic"
+    assert call(D.import_ifc, str(src), str(nic))["ok"]
     D.close_document()
-    opened = call(D.open_kim, str(kim))
+    opened = call(D.open_nic, str(nic))
     assert opened["ok"]
     assert call(B.open_model, opened["path"])["ok"]
     guid = B._model.by_type("IfcWall")[0].GlobalId
@@ -152,10 +152,10 @@ def test_entities_with_no_ifc4_equivalent_are_refused(clean):
 def test_versioned_ifc4x3_project_goes_back_to_ifc4(clean):
     src = clean / "house4x3.ifc"
     make_house.build(str(src), schema="IFC4X3")
-    kim = clean / "house4x3.kim"
-    assert call(D.import_ifc, str(src), str(kim))["ok"]
+    nic = clean / "house4x3.nic"
+    assert call(D.import_ifc, str(src), str(nic))["ok"]
     D.close_document()
-    opened = call(D.open_kim, str(kim))
+    opened = call(D.open_nic, str(nic))
     assert call(B.open_model, opened["path"])["ok"]
     assert V._project.schema() == "IFC4X3_ADD2"
     r = call(SC.change_schema, "IFC4")
@@ -166,12 +166,12 @@ def test_versioned_ifc4x3_project_goes_back_to_ifc4(clean):
 def _versioned_house(clean, schema="IFC4"):
     src = clean / f"house-{schema}.ifc"
     make_house.build(str(src), schema=schema)
-    kim = clean / f"house-{schema}.kim"
-    assert call(D.import_ifc, str(src), str(kim))["ok"]
+    nic = clean / f"house-{schema}.nic"
+    assert call(D.import_ifc, str(src), str(nic))["ok"]
     D.close_document()
-    opened = call(D.open_kim, str(kim))
+    opened = call(D.open_nic, str(nic))
     assert call(B.open_model, opened["path"])["ok"]
-    return kim
+    return nic
 
 
 def test_options_of_two_schemas_are_not_combined(clean):

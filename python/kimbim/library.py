@@ -3,9 +3,9 @@
 Archicad's GDL library objects are: each object has parameters (width, depth, height and a few of its
 own), a 3D body made of swept solids and a 2D plan symbol.
 
-Objects are `.kimobj` definitions (D99, objects.py and objbuild.py): JSON the app reads, nothing in it
+Objects are `.nicobj` definitions (D99, objects.py and objbuild.py): JSON the app reads, nothing in it
 runs. The bundled ones are in bundled_objects/; the office library (a folder set in the preferences)
-adds `.kimobj` files and IFC files, whose types (with their representation maps) are copied into the
+adds `.nicobj` files and IFC files, whose types (with their representation maps) are copied into the
 model when placed.
 
 Objects become IFC types (IfcFurnitureType, IfcSanitaryTerminalType, IfcElectricApplianceType,
@@ -49,7 +49,7 @@ OBJECTS: dict = {}  # ref -> objects.ObjectDef (bundled)
 
 def _load_bundled() -> None:
     OBJECTS.clear()
-    for path in sorted(BUNDLED.glob("*.kimobj")):
+    for path in sorted(BUNDLED.glob("*.nicobj")):
         d = objects.load_file(str(path), "bundled")
         OBJECTS[d.ref] = d
 
@@ -216,7 +216,7 @@ def _load_ifc_types(path: str, category: str):
 
 
 def load_office(folder: str = "", files=()) -> None:
-    """(Re)load the office library: *.kimobj definitions (D99) and *.ifc files' types. A file that does
+    """(Re)load the office library: *.nicobj definitions (D99) and *.ifc files' types. A file that does
     not load or build is listed in the errors and left out; the rest load."""
     _office.clear()
     _office_versions.clear()
@@ -224,12 +224,12 @@ def load_office(folder: str = "", files=()) -> None:
     _office_paths["folder"], _office_paths["files"] = folder or "", list(files or ())
     paths = []
     if folder and os.path.isdir(folder):
-        paths += sorted(str(p) for p in pathlib.Path(folder).iterdir() if p.suffix.lower() in (".kimobj", ".ifc"))
+        paths += sorted(str(p) for p in pathlib.Path(folder).iterdir() if p.suffix.lower() in (".nicobj", ".ifc"))
     paths += [p for p in files or () if p not in paths]
     parsed = []
     for path in paths:
         try:
-            if path.lower().endswith(".kimobj"):
+            if path.lower().endswith(".nicobj"):
                 d = objects.load_file(path, "office", check=False)
                 d.category = "office"
                 _office[d.ref] = d
@@ -264,7 +264,7 @@ MAX_DOWNLOAD = 5 * 1024 * 1024  # bytes; D216
 
 
 def download_object(url: str, folder: str = "") -> str:
-    """D216: download a `.kimobj` or `.ifc` object file from a web link into the office library."""
+    """D216: download a `.nicobj` or `.ifc` object file from a web link into the office library."""
     from urllib.parse import unquote, urlparse
     import urllib.request
 
@@ -277,10 +277,10 @@ def download_object(url: str, folder: str = "") -> str:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https", "file"):
         return B._dump({"ok": False, "error": "the link must start with http://, https:// or file://"})
-    name = pathlib.Path(unquote(parsed.path)).name or "object.kimobj"
+    name = pathlib.Path(unquote(parsed.path)).name or "object.nicobj"
     suffix = pathlib.Path(name).suffix.lower()
-    if suffix not in (".kimobj", ".ifc"):
-        return B._dump({"ok": False, "error": "only .kimobj or .ifc object files can be downloaded"})
+    if suffix not in (".nicobj", ".ifc"):
+        return B._dump({"ok": False, "error": "only .nicobj or .ifc object files can be downloaded"})
     destination = folder or _office_paths.get("folder") or str(documents.data_dir() / "library")
     try:
         os.makedirs(destination, exist_ok=True)
@@ -298,7 +298,7 @@ def download_object(url: str, folder: str = "") -> str:
         n += 1
     try:
         target.write_bytes(data)
-        if suffix == ".kimobj":
+        if suffix == ".nicobj":
             definition = objects.load_file(str(target), "office", check=True)
             ref, label = definition.ref, definition.name
         else:
@@ -465,7 +465,7 @@ def form_json(obj, values: dict) -> dict:
 
 
 def set_library_paths(data: str) -> str:
-    """The office library: {"folder": path, "files": [IFC or .kimobj files]} (from the preferences)."""
+    """The office library: {"folder": path, "files": [IFC or .nicobj files]} (from the preferences)."""
     from . import app_bridge as B
 
     try:

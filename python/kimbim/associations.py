@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Open `.kim` and `.ifc` files with KimBim: per-user file associations (D139).
+"""Open `.nic` and `.ifc` files with KimBim: per-user file associations (D139).
 
-Windows: `HKEY_CURRENT_USER\\Software\\Classes`, no administrator needed. `.kim` maps to
+Windows: `HKEY_CURRENT_USER\\Software\\Classes`, no administrator needed. `.nic` maps to
 `KimBim.Project` and `.ifc` to `KimBim.Ifc`; each class holds the `open` command and the app icon.
 Linux: a `kimbim.desktop` file in `$XDG_DATA_HOME/applications` (or `~/.local/share/applications`) and
 `xdg-mime default` for the two MIME types. `associations.plan()` returns the actions without changing
@@ -22,7 +22,7 @@ PROJECT_CLASS = "KimBim.Project"
 IFC_CLASS = "KimBim.Ifc"
 PROJECT_MIME = "application/x-kimbim-project"
 IFC_MIME = "application/x-ifc"
-EXTENSIONS = {".kim": PROJECT_CLASS, ".ifc": IFC_CLASS}
+EXTENSIONS = {".nic": PROJECT_CLASS, ".ifc": IFC_CLASS}
 ICON = "kimbim"
 
 
@@ -43,7 +43,7 @@ def open_command(exe: str, arg: str = "%1") -> str:
 
 
 def windows_actions(exe: str) -> list[dict]:
-    """The registry writes that associate .kim and .ifc with `exe` (HKCU, no admin)."""
+    """The registry writes that associate .nic and .ifc with `exe` (HKCU, no admin)."""
     actions = []
     for extension, class_name in EXTENSIONS.items():
         actions.append({"root": "HKCU", "key": rf"Software\Classes\{extension}", "name": "", "value": class_name})
@@ -111,7 +111,7 @@ def linux_mime_xml() -> str:
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="{PROJECT_MIME}">
     <comment>KimBim project</comment>
-    <glob pattern="*.kim"/>
+    <glob pattern="*.nic"/>
   </mime-type>
   <mime-type type="{IFC_MIME}">
     <comment>Industry Foundation Classes model</comment>
@@ -153,7 +153,7 @@ def plan(exe: str, home: str | None = None) -> dict:
 
 
 def apply(exe: str, home: str | None = None) -> list[str]:
-    """Associate .kim and .ifc with `exe` for this user; returns what was written."""
+    """Associate .nic and .ifc with `exe` for this user; returns what was written."""
     if not exe:
         raise ValueError("no KimBim executable: pass --exe (or set KIMBIM_APP)")
     if sys.platform.startswith("win"):

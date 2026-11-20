@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The open document (step 2, D72): a .kim, a project folder, a template being edited, or a plain IFC.
+"""The open document (step 2, D72): a .nic, a project folder, a template being edited, or a plain IFC.
 
-A .kim is unpacked to a working folder (<data>/open/<hash>/) while it is open; Ctrl+S writes the
+A .nic is unpacked to a working folder (<data>/open/<hash>/) while it is open; Ctrl+S writes the
 model and settings there and packs it back. A project folder is used in place. Opening prepares the
 working copy and leaves a "pending" note; the app's loader then opens it (B.open_model), and
 on_model_opened() attaches the history, the settings and the document state.
@@ -23,7 +23,7 @@ import ifcopenshell.guid
 
 from . import _core
 from . import app_bridge as B
-from . import kimfile as K
+from . import nicfile as K
 from . import project as P
 from . import settings as S
 from . import underlays as U
@@ -97,7 +97,7 @@ def state_fields() -> dict:
     source = d["source"] or ("" if untitled else B._path)
     return {"mode": d["mode"], "path": source, "name": pathlib.Path(source).name if source else "",
             "read_only": d["read_only"], "untitled": untitled, "template": d["template"],
-            "kept": S.kept or untitled}  # an untitled project becomes a .kim on its first save
+            "kept": S.kept or untitled}  # an untitled project becomes a .nic on its first save
 
 
 def document_state() -> str:
@@ -138,7 +138,7 @@ def _close(keep: dict | None = None) -> None:
     keep = keep or {}
     if d["lock"] and not _same(d["lock"], keep.get("lock")):
         K.release(d["lock"])
-    if d["mode"] in ("kim", "template") and d["work"] and not _same(d["work"], keep.get("work")):
+    if d["mode"] in ("nic", "template") and d["work"] and not _same(d["work"], keep.get("work")):
         K.remove_tree(d["work"])
 
 
@@ -245,8 +245,8 @@ def open_worktree(project_path: str, work: str, branch: str = "") -> str:
 
 
 def discard_pending() -> None:
-    """Undo an open_kim/open_folder/import_ifc whose model never opened: release its lock and drop the note
-    (and the working folder of a .kim; a project folder is the user's own and stays)."""
+    """Undo an open_nic/open_folder/import_ifc whose model never opened: release its lock and drop the note
+    (and the working folder of a .nic; a project folder is the user's own and stays)."""
     global _pending
     p, _pending = _pending, None
     if p is None:
@@ -254,28 +254,28 @@ def discard_pending() -> None:
     doc = p["doc"]
     if doc["lock"]:
         K.release(doc["lock"])
-    if doc["mode"] in ("kim", "template") and doc["work"]:
+    if doc["mode"] in ("nic", "template") and doc["work"]:
         K.remove_tree(doc["work"])
 
 
-def open_kim(path: str, read_only: str = "") -> str:
-    kim = pathlib.Path(path)
+def open_nic(path: str, read_only: str = "") -> str:
+    nic = pathlib.Path(path)
     try:
-        manifest = K.read_manifest(kim)
-    except K.KimError as ex:
+        manifest = K.read_manifest(nic)
+    except K.NicError as ex:
         return _fail(str(ex))
     ro = bool(read_only)
-    lock = K.lock_path(kim)
+    lock = K.lock_path(nic)
     if not ro and (holder := K.acquire(lock)) is not None:
-        return _locked(kim.name, holder)
-    work = data_dir() / "open" / (K.path_hash(kim) + (f"-ro-{os.getpid()}" if ro else ""))
-    mode = "template" if manifest.get("kind") == "template" else "kim"
-    doc = {"mode": mode, "source": str(kim), "work": str(work), "lock": "" if ro else str(lock),
+        return _locked(nic.name, holder)
+    work = data_dir() / "open" / (K.path_hash(nic) + (f"-ro-{os.getpid()}" if ro else ""))
+    mode = "template" if manifest.get("kind") == "template" else "nic"
+    doc = {"mode": mode, "source": str(nic), "work": str(work), "lock": "" if ro else str(lock),
            "read_only": ro, "template": ""}
     try:
-        K.unpack(kim, work)
-        working = _prepare(work, work, doc, attach=not ro and mode == "kim")
-    except (K.KimError, KimbimError, OSError) as ex:
+        K.unpack(nic, work)
+        working = _prepare(work, work, doc, attach=not ro and mode == "nic")
+    except (K.NicError, KimbimError, OSError) as ex:
         if not ro:
             K.release(lock)
         K.remove_tree(work)
@@ -307,26 +307,26 @@ def open_folder(folder: str, read_only: str = "") -> str:
     return B._dump({"ok": True, "path": str(working), "read_only": ro})
 
 
-def kim_beside(ifc_path: str) -> str:
+def nic_beside(ifc_path: str) -> str:
     ifc = pathlib.Path(ifc_path)
-    kim = ifc.with_suffix(".kim")
-    free, n = kim, 2
+    nic = ifc.with_suffix(".nic")
+    free, n = nic, 2
     while free.exists():
-        free = ifc.with_name(f"{ifc.stem} ({n}).kim")
+        free = ifc.with_name(f"{ifc.stem} ({n}).nic")
         n += 1
-    return B._dump({"kim": str(kim), "exists": kim.exists(), "free": str(free)})
+    return B._dump({"nic": str(nic), "exists": nic.exists(), "free": str(free)})
 
 
-def import_ifc(ifc_path: str, kim_path: str) -> str:
-    """A new .kim beside an IFC: its first version is the IFC as it is. The IFC is never modified."""
+def import_ifc(ifc_path: str, nic_path: str) -> str:
+    """A new .nic beside an IFC: its first version is the IFC as it is. The IFC is never modified."""
     global _pending
-    ifc, kim = pathlib.Path(ifc_path), pathlib.Path(kim_path)
-    if kim.exists():
-        return _fail(f"{kim.name} already exists")
-    lock = K.lock_path(kim)
+    ifc, nic = pathlib.Path(ifc_path), pathlib.Path(nic_path)
+    if nic.exists():
+        return _fail(f"{nic.name} already exists")
+    lock = K.lock_path(nic)
     if (holder := K.acquire(lock)) is not None:
-        return _locked(kim.name, holder)
-    work = data_dir() / "open" / K.path_hash(kim)
+        return _locked(nic.name, holder)
+    work = data_dir() / "open" / K.path_hash(nic)
     defaults = S.from_bytes(None)
     try:
         K.remove_tree(work)
@@ -338,14 +338,14 @@ def import_ifc(ifc_path: str, kim_path: str) -> str:
         (work / ".kimbim" / "settings.json").write_bytes(S.to_bytes(defaults))
         (work / ".kimbim" / "working.json").write_text(
             json.dumps({"head": project.repo.head(), "option": project.current_branch(), "unversioned": False}))
-        K.pack(work, kim)
-    except (KimbimError, K.KimError, OSError) as ex:
+        K.pack(work, nic)
+    except (KimbimError, K.NicError, OSError) as ex:
         K.release(lock)
         K.remove_tree(work)
         return _fail(str(ex))
-    doc = {"mode": "kim", "source": str(kim), "work": str(work), "lock": str(lock), "read_only": False, "template": ""}
+    doc = {"mode": "nic", "source": str(nic), "work": str(work), "lock": str(lock), "read_only": False, "template": ""}
     _pending = {"path": str(working), "doc": doc, "project": project, "settings": defaults, "unversioned": False}
-    return B._dump({"ok": True, "path": str(working), "kim": str(kim)})
+    return B._dump({"ok": True, "path": str(working), "nic": str(nic)})
 
 
 # ---------------------------------------------------------------- saving
@@ -385,9 +385,9 @@ def save_document() -> str:
     work = pathlib.Path(d["work"])
     try:
         _write_files(work)
-        if d["mode"] in ("kim", "template"):
+        if d["mode"] in ("nic", "template"):
             K.pack(work, d["source"], "template" if d["mode"] == "template" else "project")
-    except (K.KimError, OSError) as ex:
+    except (K.NicError, OSError) as ex:
         return _fail(str(ex))
     _saved()
     if d["mode"] == "worktree":  # a session's checkout: the version is committed, there is no file to pack
@@ -396,11 +396,11 @@ def save_document() -> str:
 
 
 def history_changed() -> None:
-    """Versioning changed the history (a version, an option, a milestone, a switch): a .kim packs it now,
+    """Versioning changed the history (a version, an option, a milestone, a switch): a .nic packs it now,
     so closing without Ctrl+S can't lose it. Unsaved model edits stay unsaved: the file keeps the model
     it already holds. Project folders are changed in place and need nothing."""
     d = _doc
-    if d["mode"] != "kim" or d["read_only"] or B._model is None:
+    if d["mode"] != "nic" or d["read_only"] or B._model is None:
         return
     work = pathlib.Path(d["work"])
     try:
@@ -410,7 +410,7 @@ def history_changed() -> None:
             _write_files(work)
             K.pack(work, d["source"])
             _saved()
-    except (K.KimError, OSError):
+    except (K.NicError, OSError):
         pass  # the next Ctrl+S tries again; the history is safe in the working folder meanwhile
 
 
@@ -433,11 +433,11 @@ def _make_history(work: pathlib.Path, message: str) -> None:
 
 
 def _history_origin() -> pathlib.Path | None:
-    """Where the open document's project content is, to copy into a new .kim or folder (None: no history,
-    e.g. a plain IFC, an untitled model or a template). A read-only .kim has its private unpacked copy;
+    """Where the open document's project content is, to copy into a new .nic or folder (None: no history,
+    e.g. a plain IFC, an untitled model or a template). A read-only .nic has its private unpacked copy;
     a read-only folder is read where it is."""
     d = _doc
-    if d["mode"] == "kim" and d["work"]:
+    if d["mode"] == "nic" and d["work"]:
         return pathlib.Path(d["work"])
     if d["mode"] == "folder":
         return pathlib.Path(d["work"] or d["source"])
@@ -451,7 +451,7 @@ def _switch_to(doc: dict, work: pathlib.Path) -> None:
     old = _doc
     if old["lock"] and old["lock"] != doc["lock"]:
         K.release(old["lock"])
-    if old["mode"] in ("kim", "template") and old["work"] and not _same(old["work"], work):
+    if old["mode"] in ("nic", "template") and old["work"] and not _same(old["work"], work):
         K.remove_tree(old["work"])
     _doc = doc
     V._project = Project.open(work) if (work / ".git" / "HEAD").is_file() else None
@@ -459,16 +459,16 @@ def _switch_to(doc: dict, work: pathlib.Path) -> None:
     S.kept = True
 
 
-def save_as_kim(path: str, message: str = "") -> str:
+def save_as_nic(path: str, message: str = "") -> str:
     if B._model is None:
         return _fail("no model open")
-    kim = pathlib.Path(path)
-    if _doc["mode"] == "kim" and _same(kim, _doc["source"]) and not _doc["read_only"]:
+    nic = pathlib.Path(path)
+    if _doc["mode"] == "nic" and _same(nic, _doc["source"]) and not _doc["read_only"]:
         return save_document()
-    lock = K.lock_path(kim)
+    lock = K.lock_path(nic)
     if (holder := K.acquire(lock)) is not None:
-        return _locked(kim.name, holder)
-    work = data_dir() / "open" / K.path_hash(kim)
+        return _locked(nic.name, holder)
+    work = data_dir() / "open" / K.path_hash(nic)
     try:
         K.remove_tree(work)
         if (origin := _history_origin()) is not None:
@@ -478,17 +478,17 @@ def save_as_kim(path: str, message: str = "") -> str:
         if not (work / ".git" / "HEAD").is_file():
             _make_history(work, message)
         unversioned = V._unversioned() or _doc["read_only"]  # read-only work was never versioned
-        _switch_to({"mode": "kim", "source": str(kim), "work": str(work), "lock": str(lock), "read_only": False,
+        _switch_to({"mode": "nic", "source": str(nic), "work": str(work), "lock": str(lock), "read_only": False,
                     "template": ""}, work)
         if unversioned:
             V.mark_versioned(unversioned=True)
         _write_files(work)
-        K.pack(work, kim)
-    except (KimbimError, K.KimError, OSError) as ex:
+        K.pack(work, nic)
+    except (KimbimError, K.NicError, OSError) as ex:
         K.release(lock)
         return _fail(str(ex))
     _saved()
-    return B._dump({"ok": True, "path": str(kim)})
+    return B._dump({"ok": True, "path": str(nic)})
 
 
 def save_as_folder(folder: str, message: str = "") -> str:
@@ -599,7 +599,7 @@ def discard_recovery(id: str) -> str:
 
 
 def recover(id: str) -> str:
-    """Reopen a recovered copy: a .kim or folder opens normally with the copy as its unsaved work; an IFC
+    """Reopen a recovered copy: a .nic or folder opens normally with the copy as its unsaved work; an IFC
     or untitled model opens the copy as unsaved work (Save writes the original IFC)."""
     global _pending
     folder = data_dir() / "recovery" / pathlib.Path(id).name
@@ -625,8 +625,8 @@ def recover(id: str) -> str:
             if replayed["settings"] is not None:
                 (folder / "settings.json").write_bytes(S.to_bytes(replayed["settings"]))
     settings = S.from_bytes(_read(folder / "settings.json"))
-    if mode in ("kim", "folder", "template") and source and os.path.exists(source):
-        r = json.loads(open_folder(source) if mode == "folder" else open_kim(source))
+    if mode in ("nic", "folder", "template") and source and os.path.exists(source):
+        r = json.loads(open_folder(source) if mode == "folder" else open_nic(source))
         if not r.get("ok"):
             return B._dump(r)
         shutil.copyfile(folder / "model.ifc", r["path"])
@@ -656,11 +656,11 @@ def templates(folder: str) -> str:
     out = [{"name": BUILTIN_NAME, "path": BUILTIN, "builtin": True, "modified": ""}]
     root = pathlib.Path(folder) if folder else None
     ok = root is not None and root.is_dir()
-    for p in sorted(root.glob("*.kim")) if ok else ():
+    for p in sorted(root.glob("*.nic")) if ok else ():
         try:
             if K.read_manifest(p).get("kind") != "template":
                 continue
-        except K.KimError:
+        except K.NicError:
             continue
         out.append({"name": p.stem, "path": str(p), "builtin": False,
                     "modified": time.strftime("%Y-%m-%d %H:%M", time.localtime(p.stat().st_mtime))})
@@ -673,7 +673,7 @@ def save_template(folder: str, name: str, replace: str = "") -> str:
     name = (name or "").strip()
     if not name or _BAD_NAME.search(name):
         return _fail('a template name can\'t be empty or use \\ / : * ? " < > |')
-    target = pathlib.Path(folder) / f"{name}.kim"
+    target = pathlib.Path(folder) / f"{name}.nic"
     if target.exists() and not replace:
         return _fail(f"a template called {name} exists", exists=True)
     tmp = data_dir() / "tmp" / uuid.uuid4().hex
@@ -683,7 +683,7 @@ def save_template(folder: str, name: str, replace: str = "") -> str:
         (tmp / ".kimbim" / "settings.json").write_bytes(S.to_bytes())
         target.parent.mkdir(parents=True, exist_ok=True)
         K.pack(tmp, target, "template")
-    except (K.KimError, OSError) as ex:
+    except (K.NicError, OSError) as ex:
         return _fail(str(ex))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -728,12 +728,12 @@ def new_from_template(path: str, schema: str = "") -> str:
             return B._dump(r)
         _doc = {**_plain(), "template": BUILTIN_NAME}
         return B._dump({"ok": True, "path": ""})
-    kim = pathlib.Path(path)
+    nic = pathlib.Path(path)
     tmp = data_dir() / "tmp" / uuid.uuid4().hex
     try:
-        if K.read_manifest(kim).get("kind") != "template":
-            return _fail(f"{kim.name} is not a template")
-        K.unpack(kim, tmp)
+        if K.read_manifest(nic).get("kind") != "template":
+            return _fail(f"{nic.name} is not a template")
+        K.unpack(nic, tmp)
         f = ifcopenshell.open(str(tmp / ".kimbim" / "working.ifc"))
         regenerate_ids(f)
         for project in f.by_type("IfcProject"):
@@ -742,10 +742,10 @@ def new_from_template(path: str, schema: str = "") -> str:
         target.parent.mkdir(parents=True, exist_ok=True)
         f.write(str(target))
         settings = S.from_bytes(_read(tmp / ".kimbim" / "settings.json"))
-    except (K.KimError, OSError, RuntimeError) as ex:
+    except (K.NicError, OSError, RuntimeError) as ex:
         return _fail(str(ex))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    _pending = {"path": str(target), "doc": {**_plain(), "template": kim.stem}, "project": None,
+    _pending = {"path": str(target), "doc": {**_plain(), "template": nic.stem}, "project": None,
                 "settings": settings, "unversioned": False, "untitled": True}
     return B._dump({"ok": True, "path": str(target)})

@@ -312,7 +312,7 @@ QString dropKind(const QString& path)
     if (info.isDir())
         return QStringLiteral("open");
     const QString suffix = info.suffix().toLower();
-    if (suffix == QLatin1String("kim") || suffix == QLatin1String("ifc"))
+    if (suffix == QLatin1String("nic") || suffix == QLatin1String("ifc"))
         return QStringLiteral("open");
     static const QStringList underlays{"dxf", "dwg", "pdf", "png", "jpg", "jpeg"};
     static const QStringList meshes{"obj", "stl", "ply", "dae", "gltf", "glb", "fbx"};
@@ -1021,7 +1021,7 @@ bool MainWindow::loadModelFromLibrary(const QString& path)
             file = paths.first();
         }
         if (file.isEmpty() && !m_quiet)
-            file = QFileDialog::getOpenFileName(this, tr("Load model from library"), folder, tr("Library models (*.kimmodel.ifc)"));
+            file = QFileDialog::getOpenFileName(this, tr("Load model from library"), folder, tr("Library models (*.nicmodel.ifc)"));
     }
     if (file.isEmpty())
         return false;

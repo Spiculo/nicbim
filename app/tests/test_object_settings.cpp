@@ -61,7 +61,7 @@ void writeBlock(const QTemporaryDir& dir, const QString& id, const QJsonArray& e
     const QJsonObject block{{"format", "kimbim-object/1"}, {"id", id}, {"name", "Block"}, {"category", "furniture"},
         {"ifc", QJsonObject{{"IFC4", QJsonArray{"IfcFurnitureType", "NOTDEFINED", QJsonValue()}}}}, {"params", params},
         {"parts", QJsonArray{QJsonObject{{"id", "body"}, {"box", QJsonObject{{"dx", "width"}, {"dy", "depth"}, {"dz", "height"}}}}}}};
-    QFile file(dir.filePath(id + QStringLiteral(".kimobj")));
+    QFile file(dir.filePath(id + QStringLiteral(".nicobj")));
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write(QJsonDocument(block).toJson());
 }

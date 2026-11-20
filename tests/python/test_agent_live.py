@@ -20,45 +20,45 @@ import make_house  # noqa: E402
 
 
 @pytest.fixture(scope="module")
-def house_kim(tmp_path_factory) -> Path:
+def house_nic(tmp_path_factory) -> Path:
     folder = tmp_path_factory.mktemp("house")
     saved = D._data_dir
     D._data_dir = folder / "data"
     try:
         ifc = folder / "house.ifc"
         make_house.build(str(ifc))
-        kim = folder / "house.kim"
-        assert json.loads(D.import_ifc(str(ifc), str(kim)))["ok"]
+        nic = folder / "house.nic"
+        assert json.loads(D.import_ifc(str(ifc), str(nic)))["ok"]
         D.close_document()
     finally:
         D._data_dir = saved
-    return kim
+    return nic
 
 
 @pytest.fixture
-def app_house(house_kim, tmp_path, monkeypatch):
-    """A .kim opened the way the app opens it: the document is attached, the lock is held by this process."""
+def app_house(house_nic, tmp_path, monkeypatch):
+    """A .nic opened the way the app opens it: the document is attached, the lock is held by this process."""
     data = tmp_path / "data"
     monkeypatch.setenv("KIMBIM_DATA_DIR", str(data))
     monkeypatch.setattr(D, "_data_dir", None)
-    kim = tmp_path / "house.kim"
-    shutil.copyfile(house_kim, kim)
-    opened = json.loads(D.open_kim(str(kim)))
+    nic = tmp_path / "house.nic"
+    shutil.copyfile(house_nic, nic)
+    opened = json.loads(D.open_nic(str(nic)))
     assert opened["ok"], opened
     assert json.loads(B.open_model(opened["path"]))["ok"]
     started = json.loads(B.agent_live_start())
     assert started["ok"], started
-    yield kim
+    yield nic
     B.agent_live_stop()
     D.close_document()
 
 
-def call_live(kim: Path, tool: str, args: dict, client_id: str = "live-test", task: str = "") -> dict:
+def call_live(nic: Path, tool: str, args: dict, client_id: str = "live-test", task: str = "") -> dict:
     """A CLI/MCP call while the app drains its request queue on this (the test's) thread."""
     out: dict = {}
 
     def request():
-        out["envelope"] = client.request(str(kim), tool, args, client=client_id, task=task)
+        out["envelope"] = client.request(str(nic), tool, args, client=client_id, task=task)
 
     thread = threading.Thread(target=request, daemon=True)
     thread.start()

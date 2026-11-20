@@ -3,7 +3,7 @@
 
 `dist/KimBim` is a relocatable folder (app, embedded Python and runtime). This module copies it to
 the user's per-user application folder (no administrator), writes a marker so a later uninstall only
-removes a folder this installer owns, and wires the `.kim`/`.ifc` associations from D139. Uninstall
+removes a folder this installer owns, and wires the `.nic`/`.ifc` associations from D139. Uninstall
 calls `associations.remove()` and deletes the installed tree.
 
 No code signing and no OS-level package: this is a portable wrapper, and `--dry-run` reports the
@@ -74,7 +74,7 @@ def status(dest: pathlib.Path | None = None) -> dict:
 def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None, *,
             force: bool = False, dry_run: bool = False, associations: bool = True,
             associate=None) -> dict:
-    """Copy the packaged build to `dest`, write the marker and associate `.kim`/`.ifc`.
+    """Copy the packaged build to `dest`, write the marker and associate `.nic`/`.ifc`.
 
     `force` replaces a destination this installer owns (or, with no marker, refuses: never delete an
     arbitrary folder). `associate(exe)` defaults to `associations.apply`. `dry_run` changes nothing.
@@ -91,7 +91,7 @@ def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None
     if exists and marker is not None and not force:
         raise ValueError(f"{dst} is already installed; use --force to replace it")
     actions = [f"copy {src} -> {dst}", f"write {dst / MARKER}",
-               f"associate .kim/.ifc with {exe}" if associations else "skip file associations"]
+               f"associate .nic/.ifc with {exe}" if associations else "skip file associations"]
     if dry_run:
         return {"ok": True, "dry_run": True, "actions": actions, "path": str(dst), "exe": str(exe)}
     if exists:

@@ -75,7 +75,7 @@ Spec §36–38 still applies:
 - Cross-model references use (repository ID, NicBim ID).
 - Owner request (2026-10-07), out of scope for now: open several separate models together (site, building, structure), each with its own history, and switch between them. Show one model inside another as a reference, and copy, model or modify elements across models, as with Revit links or Archicad hotlinks.
 - Open questions for research:
-  - One `.kim` per model, linked by path and pinned version? Or one project `.kim` that holds all models?
+  - One `.nic` per model, linked by path and pinned version? Or one project `.nic` that holds all models?
   - Is a referenced model read-only, or can it be edited in place?
   - What happens to copied elements' identity and history when they are copied between models?
   - How are references to a model's newer versions offered: automatically, or when the user chooses?

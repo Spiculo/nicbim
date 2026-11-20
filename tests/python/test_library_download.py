@@ -22,7 +22,7 @@ OBJECT = {
 
 
 def test_download_an_object_from_a_link(tmp_path):
-    source = tmp_path / "downloaded_lamp.kimobj"
+    source = tmp_path / "downloaded_lamp.nicobj"
     source.write_text(json.dumps(OBJECT), encoding="utf-8")
     destination = tmp_path / "office"
     r = json.loads(library.download_object(source.as_uri(), str(destination)))
@@ -30,13 +30,13 @@ def test_download_an_object_from_a_link(tmp_path):
     assert Path(r["path"]).is_file() and r["ref"] == "office:downloaded_lamp"
     # a second download gets its own name
     again = json.loads(library.download_object(source.as_uri(), str(destination)))
-    assert again["ok"] and Path(again["path"]).name == "downloaded_lamp-1.kimobj"
+    assert again["ok"] and Path(again["path"]).name == "downloaded_lamp-1.nicobj"
 
-    bad = tmp_path / "bad.kimobj"
+    bad = tmp_path / "bad.nicobj"
     bad.write_text("{", encoding="utf-8")
     r = json.loads(library.download_object(bad.as_uri(), str(destination)))
-    assert not r["ok"] and not (destination / "bad.kimobj").exists()
-    assert not json.loads(library.download_object("ftp://example.com/x.kimobj", str(destination)))["ok"]
+    assert not r["ok"] and not (destination / "bad.nicobj").exists()
+    assert not json.loads(library.download_object("ftp://example.com/x.nicobj", str(destination)))["ok"]
     assert not json.loads(library.download_object(str(tmp_path / "nope.txt"), str(destination)))["ok"]
 
     saved = dict(library._office_paths)

@@ -10,7 +10,7 @@ import pytest
 from kimbim import app_bridge as B
 from kimbim import configure as CF
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import layers as LY
 from kimbim import settings as S
 from kimbim.agent.catalogue import call_tool
@@ -27,10 +27,10 @@ def s(tmp_path, monkeypatch):
     monkeypatch.setattr(K, "display_user", "")
     ifc = tmp_path / "house.ifc"
     make_house.build(str(ifc))
-    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.kim")))
+    out = json.loads(D.import_ifc(str(ifc), str(tmp_path / "house.nic")))
     assert out["ok"]
     D.close_document()
-    session = Session.open(str(tmp_path / "house.kim"))
+    session = Session.open(str(tmp_path / "house.nic"))
     assert json.loads(S.set_project_settings(json.dumps({"agent_changes": "direct"})))["ok"]
     yield session
     session.close()
@@ -305,7 +305,7 @@ def test_worksheets_and_splines(s):
 # ---------------------------------------------------------------- objects: gravity and drafts
 
 def test_object_draft_check_save_and_place(s):
-    draft = json.loads((ROOT / "python" / "kimbim" / "bundled_objects" / "base_cabinets.kimobj").read_text(
+    draft = json.loads((ROOT / "python" / "kimbim" / "bundled_objects" / "base_cabinets.nicobj").read_text(
         encoding="utf-8"))
     draft["id"], draft["name"] = "agent_cabinet", "Agent cabinet"
     assert ok(s, "objects.check_draft", draft=draft) == {"ok": True, "errors": []}

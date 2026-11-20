@@ -162,7 +162,7 @@ def _outdated_version(t):
       and hash); a local edit of the copy is not outdated. The new values are the office version's. Only
       the office version, never the live definition too: the two could disagree and the copy would never
       settle;
-    - any other follows its object's live definition (bundled or office .kimobj): outdated when its
+    - any other follows its object's live definition (bundled or office .nicobj): outdated when its
       DefinitionHash differs; values are kept as for unsaved placements (library._kept_values).
     The new values are not built: update_from_library checks they build."""
     data = _pset(t)

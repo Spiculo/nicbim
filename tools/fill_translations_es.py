@@ -1145,7 +1145,7 @@ ES = {
     'Search objects': 'Buscar objetos',
     'Place': 'Colocar',
     'Click in the view to place the object; Tab turns it 90 degrees, a typed number sets its angle': 'Haga clic en la vista para colocar el objeto; Tab lo gira 90 grados, un número escrito fija su ángulo',
-    'Choose the office library folder: object files (.kimobj) and IFC type libraries (.ifc)': 'Elija la carpeta de la biblioteca de la oficina: archivos de objetos (.kimobj) y bibliotecas de tipos IFC (.ifc)',
+    'Choose the office library folder: object files (.nicobj) and IFC type libraries (.ifc)': 'Elija la carpeta de la biblioteca de la oficina: archivos de objetos (.nicobj) y bibliotecas de tipos IFC (.ifc)',
     'Load IFC types...': 'Cargar tipos IFC...',
     'Load IFC types': 'Cargar tipos IFC',
     'Add the types of an IFC file (e.g. IfcFurnitureType definitions) to the office library': 'Añade los tipos de un archivo IFC (p. ej. definiciones IfcFurnitureType) a la biblioteca de la oficina',
@@ -1159,7 +1159,7 @@ ES = {
     'Object angle: %1 degrees': 'Ángulo del objeto: %1 grados',
     'Pick an object in the Library panel first': 'Elija primero un objeto en el panel Biblioteca',
     '%1 placed': '%1 colocado',
-    'A shared folder of object files (.kimobj) and IFC type libraries (.ifc)': 'Una carpeta compartida de archivos de objetos (.kimobj) y bibliotecas de tipos IFC (.ifc)',
+    'A shared folder of object files (.nicobj) and IFC type libraries (.ifc)': 'Una carpeta compartida de archivos de objetos (.nicobj) y bibliotecas de tipos IFC (.ifc)',
     # D89: input aids
     "intersection": "intersección",
     "guide crossing": "cruce de guías",
@@ -2084,7 +2084,7 @@ ES = {
 # Words that mean something else in another context ("Back" is the view cube's "Posterior"): by
 # (context, source), tried before ES.
 ES_IN = {
-    # D100: the bundled objects' parameter group headings (plain text in their .kimobj files)
+    # D100: the bundled objects' parameter group headings (plain text in their .nicobj files)
     ("LibraryPanel", "Seat"): "Asiento",
     ("LibraryPanel", "Legs"): "Patas",
     ("LibraryPanel", "Back"): "Respaldo",

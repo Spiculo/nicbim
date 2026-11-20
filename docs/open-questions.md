@@ -107,23 +107,21 @@ menu with pinned scripts: with P2 plugins · `kimbim run script.py model.ifc` fo
 Permit looks, stair code values, layer naming, marker styles, patterns and scales ship as editable presets (default
 region Uruguay); the agent picks the defaults. Nothing here is waiting on anyone.
 
-## Needs a spike
+## Spikes (done)
 
-These are listed in [07-roadmap.md](07-roadmap.md#spikes-do-first-each-is-small-throwaway-and-documented).
+S1–S5 ran in October 2026; the results are in [11-spike-results.md](11-spike-results.md).
 
-- S1: shared in-memory IFC between C++ and Python.
-- S2: OCCT viewer performance at 100k objects.
-- S3: lossless record decomposition on the corpus.
-- S4: cross-platform hash equality.
-- S5: gitoxide performance at 1M blobs.
+## Design details
 
-## Design details to settle during implementation
+Most of these were settled while building; the remaining ones are marked open.
 
-- The exact canonical JSON schema: attribute naming, how SELECT types and typed values (`IfcLabel("x")`) are encoded, aggregates of aggregates.
-- The size threshold that moves geometry into separate records.
-- Ownership rules for non-rooted entities that are referenced by several roots without a clear owner.
-- Representing IFC2X3 files: convert to IFC4 on import, or store natively by schema?
-- Where saved views, drawing definitions and library references live (in-model IFC entities vs `kimbim.toml`).
-- Undo across "Save version": can you undo past a commit, or does a commit reset the undo stack?
-- Spanish terminology for UI and IFC display labels: pick one regional variant (neutral Latin American vs. Spain) or ship both?
-- Community: where the project lives (Codeberg/GitHub), communication channel, and its relationship with the OSArch / IfcOpenShell communities. Upstreaming fixes to IfcOpenShell is strongly encouraged.
+| Question | Status |
+|----------|--------|
+| Canonical JSON schema (attribute naming, SELECT and typed values, nested aggregates) | Settled by the decomposer (spike S3, then the Rust port): [02](02-data-model-and-format.md), [19](19-rust-decomposer.md) |
+| Size threshold that moves geometry into separate records | Settled: heavy representation items become geometry records ([02](02-data-model-and-format.md) rule 7) |
+| Ownership of non-rooted entities shared by several roots | Settled: content classes, shared nodes with a stable ID ([02](02-data-model-and-format.md), [11](11-spike-results.md)) |
+| IFC2X3: convert on import or store by schema? | Settled: a project keeps its file's schema; changing it is an explicit, checked step (D241). New projects are IFC4 or IFC4X3 |
+| Where saved views, drawings and library references live | Settled: in the model (`KIMBIM_Views` on `IfcProject`, D57; drawings as `IfcAnnotation`, D60) and in the versioned project settings (D72) |
+| Undo across *Save version* | Open: not decided; restoring a saved version is the documented way back past one ([04](04-app-features.md)) |
+| Spanish variant | Open: one Spanish translation (`kimbim_es`); presets default to Uruguay (D93) |
+| Community: channel, relationship with OSArch / IfcOpenShell | Partly settled: code on GitHub (D226); channel and upstreaming plan still open |

@@ -9,7 +9,7 @@ ids), one append-only `transcript.jsonl`, and content-addressed `attachments/`, 
 
 The branch is the session's design option (`agent/<slug>`); a session works in its own worktree of a
 **folder** project (`<data dir>/agent/worktrees/<project hash>/<session id>/`), so two sessions and the
-architect never write the same working folder. A `.kim` or a plain IFC is a single file with nowhere to
+architect never write the same working folder. A `.nic` or a plain IFC is a single file with nowhere to
 check out a second copy: those sessions record `worktree: ""` and use the existing open/lock/worker path
 (the D102 fallback), so only one of them can be open at a time.
 """
@@ -26,7 +26,7 @@ import uuid
 from datetime import datetime, timezone
 
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .. import versioning as V
 from ..project import NotAProject, Project
 from .catalogue import AgentError
@@ -51,8 +51,8 @@ def project_kind(path: str) -> str:
     p = pathlib.Path(path)
     if p.is_dir():
         return "folder"
-    if p.suffix.lower() == ".kim":
-        return "kim"
+    if p.suffix.lower() == ".nic":
+        return "nic"
     return "ifc"
 
 
@@ -318,7 +318,7 @@ class Store:
         return D.data_dir() / "agent" / "worktrees" / (record.project_hash or "unknown") / record.id
 
     def ensure_worktree(self, record: StoredSession) -> str:
-        """The session's own working folder (D111), or "" for a `.kim`/IFC (no second checkout is possible).
+        """The session's own working folder (D111), or "" for a `.nic`/IFC (no second checkout is possible).
         The worktree starts on the session's branch, else the base option, else `main`."""
         if record.project_kind != "folder" or not record.project:
             return ""

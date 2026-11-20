@@ -102,12 +102,12 @@ def test_validation_names_the_field(change, message):
 
 
 def test_load_file_limits_size(tmp_path):
-    p = tmp_path / "big.kimobj"
+    p = tmp_path / "big.nicobj"
     p.write_text(" " * (objects.MAX_FILE_BYTES + 1), encoding="utf-8")
     with pytest.raises(ObjectError, match="too large"):
         objects.load_file(str(p), "office")
     p.write_text("{not json", encoding="utf-8")
-    with pytest.raises(ObjectError, match="big.kimobj"):
+    with pytest.raises(ObjectError, match="big.nicobj"):
         objects.load_file(str(p), "office")
 
 

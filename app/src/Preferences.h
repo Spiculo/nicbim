@@ -24,7 +24,7 @@ public:
     QString authorName() const;
     QString authorEmail() const;
     QString newViews() const;           // "tab" or "window"
-    QString openIfc() const;            // "make_kim" or "edit_ifc"
+    QString openIfc() const;            // "make_nic" or "edit_ifc"
     QString newProjectSchema() const;   // D241: "IFC4" (default) or "IFC4X3", the built-in template's schema
     QString autoVersion() const;        // "off", "saves" or "minutes"
     int autoVersionEvery() const;
@@ -56,7 +56,7 @@ public:
     bool splitJoin() const;             // D92: split/trim pieces are joined (Ctrl inverts)
     QString mergeProps() const;         // D92: merging keeps the first's properties ("keep") or refuses ("refuse")
     double largeIfcMb() const;
-    bool askImportStatus() const;       // D74: opening an IFC offers to mark elements without a renovation status          // an IFC this large asks before making a .kim; 0: never asks
+    bool askImportStatus() const;       // D74: opening an IFC offers to mark elements without a renovation status          // an IFC this large asks before making a .nic; 0: never asks
     // Drawing generation: how long to wait before giving up (seconds; 0 = no limit) and the
     // hidden-line mode ("exact" is faster on BREP-heavy models, "poly" on curved ones).
     int drawingTimeout() const;

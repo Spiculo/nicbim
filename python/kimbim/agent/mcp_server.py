@@ -27,7 +27,7 @@ from .catalogue import TOOLS, AgentError
 
 NAME = "kimbim"
 RESOURCE = "kimbim://project/info"
-_PROJECT = {"type": "string", "description": "The KimBim project: a folder, .kim or .ifc path."}
+_PROJECT = {"type": "string", "description": "The KimBim project: a folder, .nic or .ifc path."}
 _STALE = ("no_task", "unknown_task")  # the task we remembered is gone (finished or abandoned in the app)
 
 INSTRUCTIONS = """\

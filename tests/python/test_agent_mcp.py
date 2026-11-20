@@ -16,7 +16,7 @@ import pytest
 from mcp import Client
 
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim.agent import client, mcp_server, render
 from kimbim.agent.catalogue import TOOLS
 
@@ -77,7 +77,7 @@ def test_tools_are_the_catalogue(tmp_path):
 
 
 def test_project_optional_with_server_project(tmp_path):
-    server = mcp_server.build_server(str(tmp_path / "house.kim"), request=Recorder())
+    server = mcp_server.build_server(str(tmp_path / "house.nic"), request=Recorder())
 
     async def go(c):
         return (await c.list_tools()).tools
@@ -89,10 +89,10 @@ def test_project_optional_with_server_project(tmp_path):
 
 
 def test_calls_go_to_the_worker_with_the_client_and_task(tmp_path):
-    kim = str(tmp_path / "house.kim")
+    nic = str(tmp_path / "house.nic")
     rec = Recorder({"task.start": {"ok": True, "result": {"id": "t1", "title": "Widen"}},
                     "task.finish": {"ok": True, "result": {"task": {"id": "t1"}}}})
-    server = mcp_server.build_server(kim, request=rec)
+    server = mcp_server.build_server(nic, request=rec)
 
     async def go(c):
         await c.call_tool("project_info", {})
@@ -100,7 +100,7 @@ def test_calls_go_to_the_worker_with_the_client_and_task(tmp_path):
         r = await c.call_tool("elements_set_dimensions",
                               {"elements": {"kind": "window"}, "width": "+50cm", "dry_run": True})
         await c.call_tool("task_finish", {"summary": "done"})
-        await c.call_tool("project_info", {"project": str(tmp_path / "other.kim")})
+        await c.call_tool("project_info", {"project": str(tmp_path / "other.nic")})
         return r
 
     r = session(server, go)
@@ -110,8 +110,8 @@ def test_calls_go_to_the_worker_with_the_client_and_task(tmp_path):
     assert {c["client"] for c in rec.calls} == {"mcp-tester"}
     assert [c["task"] for c in rec.calls] == ["", "", "t1", "t1", ""]  # remembered after start, forgotten after finish
     assert rec.calls[2]["args"] == {"elements": {"kind": "window"}, "width": "+50cm", "dry_run": True}
-    assert rec.calls[0]["project"] == kim
-    assert rec.calls[4]["project"] == str(tmp_path / "other.kim")  # `project` overrides the server's, and is not passed on
+    assert rec.calls[0]["project"] == nic
+    assert rec.calls[4]["project"] == str(tmp_path / "other.nic")  # `project` overrides the server's, and is not passed on
     assert "project" not in rec.calls[4]["args"]
 
 
@@ -121,7 +121,7 @@ def test_stale_task_is_forgotten(tmp_path):
             return {"ok": False, "error": {"code": "no_task", "message": "There is no open task."}}
         return {"ok": True, "result": {}}
     rec = Recorder({"task.start": {"ok": True, "result": {"id": "t1"}}, "elements.find": status})
-    server = mcp_server.build_server(str(tmp_path / "p.kim"), request=rec)
+    server = mcp_server.build_server(str(tmp_path / "p.nic"), request=rec)
 
     async def go(c):
         await c.call_tool("task_start", {"title": "x"})
@@ -136,7 +136,7 @@ def test_stale_task_is_forgotten(tmp_path):
 
 def test_error_envelope_is_an_error_result(tmp_path):
     bad = {"ok": False, "error": {"code": "bad_input", "message": "Invalid input."}}
-    server = mcp_server.build_server(str(tmp_path / "p.kim"), request=Recorder({"elements.get": bad}))
+    server = mcp_server.build_server(str(tmp_path / "p.nic"), request=Recorder({"elements.get": bad}))
 
     async def go(c):
         return await c.call_tool("elements_get", {"elements": ["x"]})
@@ -163,7 +163,7 @@ def test_snapshot_adds_the_image(tmp_path):
     png = tmp_path / "shot.png"
     png.write_bytes(PNG)
     rec = Recorder({"snapshot.take": {"ok": True, "result": {"path": str(png), "width": 1, "height": 1}}})
-    server = mcp_server.build_server(str(tmp_path / "p.kim"), request=rec)
+    server = mcp_server.build_server(str(tmp_path / "p.nic"), request=rec)
 
     async def go(c):
         return await c.call_tool("snapshot_take", {"view": "3d"})
@@ -177,7 +177,7 @@ def test_snapshot_adds_the_image(tmp_path):
 
 def test_project_info_resource(tmp_path):
     rec = Recorder({"project.info": {"ok": True, "result": {"name": "House", "levels": 2}}})
-    server = mcp_server.build_server(str(tmp_path / "p.kim"), request=rec)
+    server = mcp_server.build_server(str(tmp_path / "p.nic"), request=rec)
 
     async def go(c):
         listed = [str(r.uri) for r in (await c.list_resources()).resources]
@@ -193,32 +193,32 @@ def test_project_info_resource(tmp_path):
 # ---------------------------------------------------------------- the real worker on the sample house
 
 @pytest.fixture(scope="module")
-def house_kim(tmp_path_factory) -> Path:
+def house_nic(tmp_path_factory) -> Path:
     folder = tmp_path_factory.mktemp("house")
     saved = D._data_dir
     D._data_dir = folder / "data"
     try:
         ifc = folder / "house.ifc"
         make_house.build(str(ifc))
-        kim = folder / "house.kim"
-        assert json.loads(D.import_ifc(str(ifc), str(kim)))["ok"]
+        nic = folder / "house.nic"
+        assert json.loads(D.import_ifc(str(ifc), str(nic)))["ok"]
         D.close_document()
     finally:
         D._data_dir = saved
-    return kim
+    return nic
 
 
 @pytest.fixture
-def house(house_kim, tmp_path, monkeypatch):
+def house(house_nic, tmp_path, monkeypatch):
     data = tmp_path / "data"
     monkeypatch.setenv("KIMBIM_DATA_DIR", str(data))
     monkeypatch.setenv("KIMBIM_AGENT_IDLE", "3")
     monkeypatch.setattr(D, "_data_dir", None)
     monkeypatch.setattr(K, "display_user", "")
     monkeypatch.setattr(client, "spawned", [])
-    kim = tmp_path / "house.kim"
-    shutil.copyfile(house_kim, kim)
-    yield kim
+    nic = tmp_path / "house.nic"
+    shutil.copyfile(house_nic, nic)
+    yield nic
     pids = list(client.spawned)
     sessions = data / "agent" / "sessions"
     for p in sessions.glob("*.json") if sessions.is_dir() else ():

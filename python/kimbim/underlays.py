@@ -4,7 +4,7 @@ the model in plan views, to trace over (Archicad's placed drawing with Trace & R
 linked CAD / import underlay).
 
 The file itself is copied into the project: the working folder's `.kimbim/underlays/`, named by its
-Git blob id (`<sha1>.<ext>`), so it travels inside the .kim and is stored once in the version history
+Git blob id (`<sha1>.<ext>`), so it travels inside the .nic and is stored once in the version history
 however many versions or underlays use it (the `files/` folder of each version's tree, layout.py). Its
 placement and display (level, insertion point, rotation, scale, page, opacity, greyscale/tint, shown,
 locked, layer) are an entry of the project setting `underlays` (D72): versioned and merged with the
@@ -64,7 +64,7 @@ _segments_cache: dict = {}  # file name -> (coords float32 (n, 4), colours uint8
 # ---------------------------------------------------------------- where the files are
 
 def _work() -> pathlib.Path | None:
-    """The open document's working folder: a .kim's unpacked copy, a project folder, or the folder of a
+    """The open document's working folder: a .nic's unpacked copy, a project folder, or the folder of a
     model versioned in place (enable_versioning)."""
     from . import documents
     from . import versioning as V
@@ -76,7 +76,7 @@ def _work() -> pathlib.Path | None:
 
 
 def store_dir() -> pathlib.Path:
-    """Where the open document keeps its underlay files: its working folder (packed into the .kim), or,
+    """Where the open document keeps its underlay files: its working folder (packed into the .nic), or,
     for an IFC edited directly (no project settings are kept), a per-computer folder."""
     from . import documents
     from .layout import WORK_FILES_DIR
@@ -148,7 +148,7 @@ def referenced(settings: dict) -> list[str]:
 
 
 def write_files(work: pathlib.Path) -> None:
-    """Every underlay file the settings use, into a project folder (a new .kim or folder; saving):
+    """Every underlay file the settings use, into a project folder (a new .nic or folder; saving):
     what the settings no longer use goes (older versions keep theirs in the history)."""
     from . import settings as S
     from .layout import WORK_FILES_DIR

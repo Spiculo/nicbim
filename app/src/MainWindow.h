@@ -231,14 +231,14 @@ public:
     void editWorkPlaneTilt();
     // Versioned projects (Slice 8, docs/03).
     bool enableVersioning(const QString& folder, const QString& message = QString());
-    // D72: files. openPath picks by kind: a folder (project folder), .kim, or .ifc (per preference).
+    // D72: files. openPath picks by kind: a folder (project folder), .nic, or .ifc (per preference).
     bool openPath(const QString& path);
-    bool openKim(const QString& path, bool readOnly = false);
+    bool openNic(const QString& path, bool readOnly = false);
     bool openIfc(const QString& path);
-    // An IFC over the large_ifc_mb preference asks before making a .kim (minutes with the Python
+    // An IFC over the large_ifc_mb preference asks before making a .nic (minutes with the Python
     // decomposer): make it, edit the IFC directly, or cancel. Quiet mode (tests) asks this instead;
-    // without it, quiet mode makes the .kim.
-    enum class LargeIfc { MakeKim, EditIfc, Cancel };
+    // without it, quiet mode makes the .nic.
+    enum class LargeIfc { MakeNic, EditIfc, Cancel };
     void setLargeIfcAnswer(std::function<LargeIfc(const QString& file, double mb)> answer)
     {
         m_largeIfcAnswer = std::move(answer);
@@ -249,7 +249,7 @@ public:
     bool closeDocument(); // after the unsaved-work question: releases the file's lock
     QJsonObject documentState();
     bool hasUnversionedWork(); // work no version holds yet (Ctrl+S saves the file, not a version)
-    // D72: project settings (kept with the .kim / folder, versioned).
+    // D72: project settings (kept with the .nic / folder, versioned).
     QJsonObject projectSettings() const { return m_settings; }
     // D98: the construction grid's geometry (a project setting); the view and snapping follow.
     bool setConstructionGrid(double spacing, int subdivisions, double angleDegrees, QPointF origin);
@@ -651,7 +651,7 @@ private:
     void afterEdit(const QJsonObject& result = {});
     bool maybeSave();
     QJsonObject bridge(const char* fn, const QStringList& args = {});
-    // The same call on a worker thread, behind a progress dialog (slow work such as making a .kim).
+    // The same call on a worker thread, behind a progress dialog (slow work such as making a .nic).
     QJsonObject bridgeInBackground(const char* fn, const QStringList& args, const QString& label);
     void saveAsDialog();
     void addPropertyDialog(const QString& pset);

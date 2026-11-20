@@ -29,19 +29,19 @@ The owner's UI notes after Slices 14–22 ([spec](superpowers/specs/2026-10-07-m
 | A bottom bar with ink set, zoom, layers | Bottom bar: pen (placeholder until pen sets, step 3), active and visible layers, zoom, selection, messages | Look at the bottom |
 | 3D and plan views as tabs that pop out | 3D tab plus a plan tab per level, drawings and sheets; drag a tab out to its own window and back | P, then drag the plan tab out |
 
-Next: **step 2**, the `.kim` file (one file, or open as a folder) with project and user preferences and office templates; **step 3**, pen sets. Several models open together is future research ([08](08-future.md#federation-and-linked-models)).
+Next: **step 2**, the `.nic` file (one file, or open as a folder) with project and user preferences and office templates; **step 3**, pen sets. Several models open together is future research ([08](08-future.md#federation-and-linked-models)).
 
-## 2026-10-08: `.kim` file, preferences and templates (step 2 of 3)
+## 2026-10-08: `.nic` file, preferences and templates (step 2 of 3)
 
 ([spec](superpowers/specs/2026-10-08-kim-file-and-preferences-design.md), D72)
 
 | Note | What NicBim does now | Try it |
 |------|----------------------|--------|
-| A file format beyond plain IFC | A `.kim` holds the model, the project settings and the whole version history in one file | File › Save As… › `.kim` |
+| A file format beyond plain IFC | A `.nic` holds the model, the project settings and the whole version history in one file | File › Save As… › `.nic` |
 | Saving | Ctrl+S saves the file; Save version… (Ctrl+Alt+S) adds a history entry; optional automatic versions | Edit › Preferences › Automatic versions |
-| Opening an IFC | Makes a `.kim` beside it (the IFC is left untouched); a preference edits the IFC directly. An IFC over 5 MB asks first (the Clinic takes about 6 minutes to convert): make a `.kim`, edit the IFC directly, or cancel. The conversion runs behind a progress window | File › Open… an `.ifc` |
+| Opening an IFC | Makes a `.nic` beside it (the IFC is left untouched); a preference edits the IFC directly. An IFC over 5 MB asks first (the Clinic takes about 6 minutes to convert): make a `.nic`, edit the IFC directly, or cancel. The conversion runs behind a progress window | File › Open… an `.ifc` |
 | Open as folder | File › Open project folder… / Save as project folder… | |
-| One person at a time | A second person (or window) opens the file read-only, with who has it and since when | Open a `.kim` that's open elsewhere |
+| One person at a time | A second person (or window) opens the file read-only, with who has it and since when | Open a `.nic` that's open elsewhere |
 | User preferences | Edit › Preferences: language, templates folder, your name, new views as tabs or free windows, IFC opening, automatic versions, recovery copy | |
 | Project settings | File › Project settings: plan cut height, drawing scale on sheets, sheet paper, length units; layer show/lock states are kept too | |
 | Office templates | File › Save as template… saves into the templates folder; File › New project… lists them | |

@@ -13,7 +13,7 @@ namespace kimbim {
 
 namespace {
 const QStringList kViews{QStringLiteral("tab"), QStringLiteral("window")};
-const QStringList kOpenIfc{QStringLiteral("make_kim"), QStringLiteral("edit_ifc")};
+const QStringList kOpenIfc{QStringLiteral("make_nic"), QStringLiteral("edit_ifc")};
 const QStringList kNewSchema{QStringLiteral("IFC4"), QStringLiteral("IFC4X3")};
 const QStringList kAutoVersion{QStringLiteral("off"), QStringLiteral("saves"), QStringLiteral("minutes")};
 const QStringList kLanguages{QStringLiteral("auto"), QStringLiteral("en"), QStringLiteral("es")};
@@ -44,7 +44,7 @@ QJsonObject Preferences::defaults()
         {"author_name", ""},
         {"author_email", ""},
         {"new_views", "tab"},
-        {"open_ifc", "make_kim"},
+        {"open_ifc", "make_nic"},
         {"new_project_schema", "IFC4"},
         {"auto_version", "off"},
         {"auto_version_every", 10},

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Project settings (step 2, D72): values that belong to the project, not the computer. They live in
-the `.kim` / project folder and in every version's tree (settings.json), so going back to a version
+the `.nic` / project folder and in every version's tree (settings.json), so going back to a version
 brings back its settings. Unknown keys are kept, so an older KimBim never drops a newer one's settings.
 
 Same protocol as app_bridge for the bridge functions (strings in, JSON out, never raise).
@@ -58,7 +58,7 @@ DEFAULTS = {
     "clash_sets": {},  # clash detection sets by name (D81)
     "precommit_checks": [],  # M6: [{"check", "mode" ("warn"|"block"), "options"}] run on Save version
     "underlays": [],  # DXF, PDF and image underlays on levels: file, placement, display (D85)
-    "sheet_files": [],  # D98: the picture files placed on sheets (so versions and .kim files keep them)
+    "sheet_files": [],  # D98: the picture files placed on sheets (so versions and .nic files keep them)
     "texture_files": [],  # D96: the surfaces' texture pictures (likewise)
     "tag_styles": {},  # tag styles by id: the project's own and its edited built-ins (D87)
     "title_block_templates": {},  # reusable title blocks / master layouts by id (D116)
@@ -109,7 +109,7 @@ AREA_UNITS = {"m²": 1.0, "cm²": 10000.0, "mm²": 1000000.0,
 
 _current: dict = copy.deepcopy(DEFAULTS)
 _saved: dict = copy.deepcopy(DEFAULTS)
-kept = False  # set by documents: the settings are saved with the open document (.kim or folder)
+kept = False  # set by documents: the settings are saved with the open document (.nic or folder)
 
 
 def current() -> dict:

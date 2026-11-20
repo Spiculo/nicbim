@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The object library (D86): every object makes a valid IFC type with a body and a plan symbol,
 placements share their type (mapped items), parameters re-generate it, plans draw the symbol, IFC2X3
-gets its own classes, and the office library adds .kimobj definitions and IFC types (D99). Types carry
+gets its own classes, and the office library adds .nicobj definitions and IFC types (D99). Types carry
 their definition, so a project edits its objects without the library that made them."""
 import json
 import math
@@ -143,7 +143,7 @@ def test_an_object_can_have_its_own_origin(project, tmp_path):
                       {"key": "height", "kind": "length", "label": "Height", "default": 0.5}],
            "parts": [{"id": "body", "box": {"dx": "width", "dy": "depth", "dz": "height"}}],
            "symbol": [{"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}]}
-    write_office(tmp_path / "office", box, "origin_box.kimobj")
+    write_office(tmp_path / "office", box, "origin_box.nicobj")
     assert call("set_library_paths", json.dumps({"folder": str(tmp_path / "office")}))["errors"] == []
     r = call("place_object", project, "office:origin_box", "", 1.0, 2.0, 0)
     assert r["ok"], r
@@ -238,12 +238,12 @@ STOOL = {
 }
 
 
-def write_office(folder, data=STOOL, name="stool.kimobj"):
+def write_office(folder, data=STOOL, name="stool.nicobj"):
     folder.mkdir(exist_ok=True)
     (folder / name).write_text(json.dumps(data), encoding="utf-8")
 
 
-def test_office_library_kimobj_and_ifc_types(project, tmp_path):
+def test_office_library_nicobj_and_ifc_types(project, tmp_path):
     folder = tmp_path / "office"
     write_office(folder)
     (folder / "old.py").write_text("raise SystemExit('must never run')\n", encoding="utf-8")
@@ -258,7 +258,7 @@ def test_office_library_kimobj_and_ifc_types(project, tmp_path):
     listed = {o["id"]: o for o in call("library_objects")["objects"]}
     assert "office:stool" in listed and listed["office:stool"]["category"] == "office"
     assert listed["office:stool"]["name_es"] == "Taburete" and listed["office:stool"]["symbol"]
-    assert listed["office:stool"]["library"] == str(folder / "stool.kimobj")
+    assert listed["office:stool"]["library"] == str(folder / "stool.nicobj")
     assert listed["chair"]["library"] == "bundled"
     assert not any("old" in key for key in listed)  # .py files are not read
     assert call("place_object", storey, "office:stool", "", 0, 0, 0)["ok"]
@@ -327,13 +327,13 @@ def test_bad_value_keeps_the_old_type(project, tmp_path):
 def test_broken_office_files_are_listed_not_loaded(tmp_path):
     folder = tmp_path / "office"
     write_office(folder)
-    (folder / "big.kimobj").write_text(json.dumps({**STOOL, "id": "big", "parts": [
+    (folder / "big.nicobj").write_text(json.dumps({**STOOL, "id": "big", "parts": [
         {"id": "b", "repeat": {"count": 1e9}, "box": {"dx": 1, "dy": 1, "dz": 1}}]}), encoding="utf-8")
-    (folder / "cycle.kimobj").write_text(json.dumps({**STOOL, "id": "cyc", "parts": [{"id": "a", "use": "x"}],
+    (folder / "cycle.nicobj").write_text(json.dumps({**STOOL, "id": "cyc", "parts": [{"id": "a", "use": "x"}],
                                                      "components": {"x": {"parts": [{"id": "b", "use": "x"}]}}}), encoding="utf-8")
-    (folder / "junk.kimobj").write_text("{", encoding="utf-8")
+    (folder / "junk.nicobj").write_text("{", encoding="utf-8")
     r = call("set_library_paths", json.dumps({"folder": str(folder)}))
-    assert sorted(pathlib.Path(e["file"]).name for e in r["errors"]) == ["big.kimobj", "cycle.kimobj", "junk.kimobj"]
+    assert sorted(pathlib.Path(e["file"]).name for e in r["errors"]) == ["big.nicobj", "cycle.nicobj", "junk.nicobj"]
     assert r["objects"] == 1
     library.load_office()
 
@@ -395,8 +395,8 @@ def test_types_keep_the_objects_they_use(project, tmp_path):
     """D99: a type stores the library objects its definition uses (Uses), so the project edits without
     the library, and a changed library object does not change the project (until Update)."""
     folder = tmp_path / "office"
-    write_office(folder, LEG, "leg.kimobj")
-    write_office(folder, TOP, "top.kimobj")
+    write_office(folder, LEG, "leg.nicobj")
+    write_office(folder, TOP, "top.nicobj")
     assert call("set_library_paths", json.dumps({"folder": str(folder)}))["errors"] == []
     r = call("place_object", project, "office:top", "", 0, 0, 0)
     assert r["ok"], r
@@ -409,7 +409,7 @@ def test_types_keep_the_objects_they_use(project, tmp_path):
     edit = call("set_object_parameter", json.dumps([r["guid"]]), "Height", "0.9", "")
     assert edit["ok"], edit
     # The office changes its leg: the project's top keeps the leg it was made with.
-    write_office(folder, {**LEG, "parts": [{"id": "p", "box": {"dx": 0.5, "dy": 0.05, "dz": "h"}}]}, "leg.kimobj")
+    write_office(folder, {**LEG, "parts": [{"id": "p", "box": {"dx": 0.5, "dy": 0.05, "dz": "h"}}]}, "leg.nicobj")
     call("set_library_paths", json.dumps({"folder": str(folder)}))
     assert call("set_object_parameter", json.dumps([r["guid"]]), "Height", "0.8", "")["ok"]
     assert _width(r["guid"]) == pytest.approx(0.05, abs=1e-6)
@@ -440,10 +440,10 @@ def test_objects_using_a_broken_office_object_go_too(tmp_path):
     """The office checks repeat until nothing more goes: a uses b, b (later in the order) fails."""
     folder = tmp_path / "office"
     write_office(folder)
-    write_office(folder, {**TOP, "id": "a", "parts": [{"id": "l", "use": "office:b", "with": {"h": "height"}}]}, "a.kimobj")
-    write_office(folder, {**LEG, "id": "b", "symbol": [{"circle": {"cx": "nosuchname", "cy": 0, "r": 1}}]}, "b.kimobj")
+    write_office(folder, {**TOP, "id": "a", "parts": [{"id": "l", "use": "office:b", "with": {"h": "height"}}]}, "a.nicobj")
+    write_office(folder, {**LEG, "id": "b", "symbol": [{"circle": {"cx": "nosuchname", "cy": 0, "r": 1}}]}, "b.nicobj")
     r = call("set_library_paths", json.dumps({"folder": str(folder)}))
-    assert sorted(pathlib.Path(e["file"]).name for e in r["errors"]) == ["a.kimobj", "b.kimobj"]
+    assert sorted(pathlib.Path(e["file"]).name for e in r["errors"]) == ["a.nicobj", "b.nicobj"]
     assert r["objects"] == 1
     library.load_office()
 
@@ -489,14 +489,14 @@ def test_update_from_library_keeps_values_and_is_one_undo_step(project, tmp_path
 
 def test_a_changed_used_object_makes_the_user_outdated(project, tmp_path):
     folder = tmp_path / "office"
-    write_office(folder, LEG, "leg.kimobj")
-    write_office(folder, TOP, "top.kimobj")
+    write_office(folder, LEG, "leg.nicobj")
+    write_office(folder, TOP, "top.nicobj")
     call("set_library_paths", json.dumps({"folder": str(folder)}))
     guid = call("place_object", project, "office:top", "", 0, 0, 0)["guid"]
     assert call("library_updates", "")["outdated"] == 0
     wider = json.loads(json.dumps(LEG))
     wider["parts"][0]["box"]["dx"] = 0.08
-    write_office(folder, wider, "leg.kimobj")
+    write_office(folder, wider, "leg.nicobj")
     call("set_library_paths", json.dumps({"folder": str(folder)}))
     assert call("library_updates", json.dumps([guid]))["outdated"] == 1
     assert call("update_from_library", json.dumps([guid]))["ok"]
@@ -586,8 +586,8 @@ def test_geometry_that_goes_degenerate_fails_the_edit_not_the_model(project, tmp
     lean = {**LEG, "id": "lean", "params": [{"key": "up", "kind": "count", "label": "Up", "default": 1, "min": 0, "max": 5}],
             "parts": [{"id": "a", "box": {"dx": 0.1, "dy": 0.1, "dz": 0.1}, "anchors": {"p": {"z": 0.1, "dir": [0, 0, "up"]}}},
                       {"id": "b", "attach": "a.p", "box": {"dx": 0.1, "dy": 0.1, "dz": 0.1}}]}
-    write_office(folder, rail, "rail.kimobj")
-    write_office(folder, lean, "lean.kimobj")
+    write_office(folder, rail, "rail.nicobj")
+    write_office(folder, lean, "lean.nicobj")
     assert call("set_library_paths", json.dumps({"folder": str(folder)}))["errors"] == []
     for key, label, field in (("office:rail", "Gap", "parts.r.sweep.path"), ("office:lean", "Up", "parts.a.anchors.p.dir")):
         r = call("place_object", project, key, "", 0, 0, 0)
@@ -609,7 +609,7 @@ def test_an_office_object_named_like_a_template_leaves_the_chair_alone(project, 
     chair = library.OBJECTS["chair"]
     before = library._hash_of(chair)
     guid = call("place_object", project, "chair", "", 0, 0, 0)["guid"]
-    write_office(tmp_path / "office", {**LEG, "id": "leg_rest"}, "leg_rest.kimobj")
+    write_office(tmp_path / "office", {**LEG, "id": "leg_rest"}, "leg_rest.nicobj")
     assert call("set_library_paths", json.dumps({"folder": str(tmp_path / "office")}))["errors"] == []
     assert library._hash_of(chair) == before == chair.hash
     assert call("library_updates", "")["outdated"] == 0
@@ -622,8 +622,8 @@ def test_an_office_object_named_like_a_template_leaves_the_chair_alone(project, 
         *TOP["params"], {"key": "which", "kind": "choice", "label": "Which", "default": "leg",
                          "options": [{"id": "leg", "label": "Leg"}]}],
         "parts": [{"id": "l", "use": "office:{which}", "with": {"h": "height"}}]}
-    write_office(tmp_path / "office", LEG, "leg.kimobj")
-    write_office(tmp_path / "office", picker, "picker.kimobj")
+    write_office(tmp_path / "office", LEG, "leg.nicobj")
+    write_office(tmp_path / "office", picker, "picker.nicobj")
     assert call("set_library_paths", json.dumps({"folder": str(tmp_path / "office")}))["errors"] == []
     assert list(library._uses_of(library.get("office:picker"))) == ["office:leg"]
     library.load_office()
@@ -678,7 +678,7 @@ def test_a_parameter_labelled_type_keeps_the_summary_type_row(project, tmp_path)
                     "options": [{"id": "a", "label": "Plain"}, {"id": "b", "label": "Fancy"}]}],
         "parts": [{"id": "body", "box": {"dx": "width", "dy": 0.4, "dz": 0.4}}],
     }
-    (tmp_path / "typed.kimobj").write_text(json.dumps(block), encoding="utf-8")
+    (tmp_path / "typed.nicobj").write_text(json.dumps(block), encoding="utf-8")
     library.load_office(str(tmp_path))
     assert library.get("office:typed") is not None, library._office_errors
     p = call("place_object", project, "office:typed", "", 0, 0, 0)

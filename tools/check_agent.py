@@ -2,20 +2,20 @@
 """Agent tools exit test (D102 phase 1, spec §11): an AI agent widens the sample house's first-floor windows
 through MCP only, and the architect's model is untouched until they accept.
 
-The house is imported into a versioned .kim; an in-process MCP client (the SDK's, as an AI client would connect)
+The house is imported into a versioned .nic; an in-process MCP client (the SDK's, as an AI client would connect)
 finds the windows on Level 1, starts the task "Widen first-floor windows", makes them 50 cm wider, takes a
-snapshot coloured by the task's changes and finishes the task. The worker is then shut down (it saves the .kim)
+snapshot coloured by the task's changes and finishes the task. The worker is then shut down (it saves the .nic)
 and the history is read with `Project`: the option agent/widen-first-floor-windows holds one new version whose
 difference from main is exactly those 4 windows at 1.7 m wide (only their openings and host walls may also
 appear), main's head has not moved, and the snapshot is a real picture (a PNG with at least 100 colours).
 
-Timing run on a big model (the numbers go in docs/17-agent-tools.md): `--project P.kim` works on that .kim (made
+Timing run on a big model (the numbers go in docs/17-agent-tools.md): `--project P.nic` works on that .nic (made
 from IFC on the first run, then reused) and `--windows N` widens any N windows instead of Level 1's. When fewer
 than N fit their wall 50 cm wider (none of the Clinic's Revit windows do: their openings aren't where KimBim's own
 are), the write is timed as renaming N windows and the JSON line says so (`"write": "rename"`). On the Clinic the
 run stops at the `changes: "task"` snapshot: its compare takes minutes, longer than the client's 120 s wait.
 
-Usage: python tools/check_agent.py IFC OUT_DIR [--project P.kim] [--windows N]   (one JSON line; exit 1 on failure)
+Usage: python tools/check_agent.py IFC OUT_DIR [--project P.nic] [--windows N]   (one JSON line; exit 1 on failure)
 """
 from __future__ import annotations
 
@@ -91,7 +91,7 @@ def png_colours(path: Path, limit: int = 100_000) -> int:
 
 # ---------------------------------------------------------------- the agent's side: MCP only
 
-def agent_flow(kim: Path, windows: int | None, out: dict) -> None:
+def agent_flow(nic: Path, windows: int | None, out: dict) -> None:
     """What an AI client does, through the SDK's in-process MCP client. Fills `out` with what it got and the
     timings as it goes (so a failure still reports how far it came)."""
     import anyio
@@ -100,7 +100,7 @@ def agent_flow(kim: Path, windows: int | None, out: dict) -> None:
 
     from kimbim.agent import mcp_server
 
-    server = mcp_server.build_server(str(kim))
+    server = mcp_server.build_server(str(nic))
 
     async def call(c, tool: str, args: dict, timed: str = "", fail: bool = True) -> dict:
         t0 = time.perf_counter()
@@ -137,7 +137,7 @@ def agent_flow(kim: Path, windows: int | None, out: dict) -> None:
             started = await call(c, "task_start", {"title": TITLE}, fail=False)
             left = (started.get("error") or {}).get("details") or {}
             if not started["ok"] and started["error"]["code"] == "task_busy" and left.get("title") == TITLE:
-                await call(c, "task_abandon", {"task": left["task"]})  # a reused .kim: an earlier run's, cut short
+                await call(c, "task_abandon", {"task": left["task"]})  # a reused .nic: an earlier run's, cut short
                 started = await call(c, "task_start", {"title": TITLE})
             if not started["ok"]:
                 raise RuntimeError(f"task_start failed: {json.dumps(started)}")
@@ -175,26 +175,26 @@ def _first_error(ex: BaseException) -> BaseException:
     return ex
 
 
-def shut_down(kim: Path) -> None:
-    """Stop the project's worker (it parks, saves the .kim and releases the lock) and wait for it to go."""
-    from kimbim import kimfile as K
+def shut_down(nic: Path) -> None:
+    """Stop the project's worker (it parks, saves the .nic and releases the lock) and wait for it to go."""
+    from kimbim import nicfile as K
     from kimbim.agent import client
 
-    bye = client.request(str(kim), "_shutdown", {}, start=False)
+    bye = client.request(str(nic), "_shutdown", {}, start=False)
     pid = (bye.get("result") or {}).get("pid", 0)
     deadline = time.monotonic() + 300
-    while time.monotonic() < deadline and (K.lock_path(kim).exists() or (pid and K.pid_alive(pid))):
+    while time.monotonic() < deadline and (K.lock_path(nic).exists() or (pid and K.pid_alive(pid))):
         time.sleep(0.1)
 
 
 # ---------------------------------------------------------------- the architect's side: the history
 
-def history(kim: Path, folder: Path):
-    from kimbim import kimfile as K
+def history(nic: Path, folder: Path):
+    from kimbim import nicfile as K
     from kimbim.project import Project
 
     K.remove_tree(folder)
-    K.unpack(kim, folder)
+    K.unpack(nic, folder)
     return Project.open(folder)
 
 
@@ -208,7 +208,7 @@ def main(argv) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("ifc")
     ap.add_argument("out")
-    ap.add_argument("--project", default="", help="work on this .kim (made from IFC if missing, else reused)")
+    ap.add_argument("--project", default="", help="work on this .nic (made from IFC if missing, else reused)")
     ap.add_argument("--windows", type=int, default=0, help="widen any N windows (default: Level 1's)")
     a = ap.parse_args(argv[1:])
     out = Path(a.out).resolve()
@@ -228,11 +228,11 @@ def main(argv) -> int:
 
     report: dict = {"model": Path(a.ifc).name}
     problems: list[str] = []
-    kim = Path(a.project).resolve() if a.project else out / (Path(a.ifc).stem + ".kim")
-    if not kim.exists():
+    nic = Path(a.project).resolve() if a.project else out / (Path(a.ifc).stem + ".nic")
+    if not nic.exists():
         t0 = time.perf_counter()
-        made = json.loads(D.import_ifc(str(Path(a.ifc).resolve()), str(kim)))
-        if made.get("ok"):  # opened and closed the way the app does: the .kim's lock is released
+        made = json.loads(D.import_ifc(str(Path(a.ifc).resolve()), str(nic)))
+        if made.get("ok"):  # opened and closed the way the app does: the .nic's lock is released
             made = json.loads(B.open_model(made["path"]))
         D.close_document()
         report["import_ms"] = round((time.perf_counter() - t0) * 1000)
@@ -240,20 +240,20 @@ def main(argv) -> int:
             print(json.dumps({**report, "ok": False, "problems": [f"import failed: {made}"]}))
             return 1
 
-    before = history(kim, out / "before")
+    before = history(nic, out / "before")
     main_head = before.repo.resolve("main")
     options_before = set(before.branches())
 
     flow: dict = {"ms": {}}
     report["ms"] = flow["ms"]
     try:
-        agent_flow(kim, a.windows or None, flow)
+        agent_flow(nic, a.windows or None, flow)
     except Exception as ex:  # noqa: BLE001  (one JSON line, also on failure)
         report.update(ok=False, problems=[f"{type(_first_error(ex)).__name__}: {_first_error(ex)}"])
         print(json.dumps(report, default=str))
         return 1
     finally:
-        shut_down(kim)
+        shut_down(nic)
     guids = flow["guids"]
     report["windows"] = len(guids)
     report["write"] = flow["write"]
@@ -263,7 +263,7 @@ def main(argv) -> int:
     report["option"] = option
     report["task"] = flow["finish"]["task"].get("status")
 
-    after = history(kim, out / "after")
+    after = history(nic, out / "after")
     branch = V._encode(option)
     if house and (len(guids) != 4 or option != OPTION):
         problems.append(f"expected 4 Level 1 windows in {OPTION}, got {len(guids)} in {option!r}")

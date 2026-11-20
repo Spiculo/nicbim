@@ -91,10 +91,10 @@ private slots:
         QString error;
         QVERIFY2(kimbim::PythonEngine::instance().start(&error), qPrintable(error));
         m_ifc = m_tmp.filePath(QStringLiteral("house.ifc"));
-        m_kim = m_tmp.filePath(QStringLiteral("house.kim"));
+        m_nic = m_tmp.filePath(QStringLiteral("house.nic"));
         QVERIFY(kimbim::PythonEngine::instance().callJson("_write_sample_house", {m_ifc}, &error)
                     .object().value("ok").toBool());
-        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, m_kim}, &error)
+        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, m_nic}, &error)
                                          .object();
         QVERIFY2(imported.value("ok").toBool(), qPrintable(imported.value("error").toString() + error));
         kimbim::PythonEngine::instance().callJson("close_document", {});
@@ -106,7 +106,7 @@ private slots:
         w.resize(1280, 800);
         w.show();
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
-        QVERIFY(w.openPath(m_kim));
+        QVERIFY(w.openPath(m_nic));
         QVERIFY(loaded.wait(120000));
         QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>(QStringLiteral("agentStatus"))->isVisible(), 30000);
         auto* assistantDock = w.dockLayout()->manager()->findDockWidget(QStringLiteral("assistant"));
@@ -123,19 +123,19 @@ private slots:
         }
         QVERIFY(!wall.isEmpty());
 
-        const QJsonObject started = runKimbim(m_kim, {QStringLiteral("task"), QStringLiteral("start"),
+        const QJsonObject started = runKimbim(m_nic, {QStringLiteral("task"), QStringLiteral("start"),
                                                       QStringLiteral("--title"), QStringLiteral("Live walls")});
         QVERIFY2(started.value("ok").toBool(), qPrintable(QJsonDocument(started).toJson()));
         const QString task = started.value("result").toObject().value("id").toString();
         QVERIFY(!task.isEmpty());
 
-        const QJsonObject renamed = runKimbim(m_kim, {QStringLiteral("elements"), QStringLiteral("rename"),
+        const QJsonObject renamed = runKimbim(m_nic, {QStringLiteral("elements"), QStringLiteral("rename"),
                                                       QStringLiteral("--elements"), QStringLiteral("{\"kind\":\"wall\"}"),
                                                       QStringLiteral("--name"), QStringLiteral("Live wall"),
                                                       QStringLiteral("--task"), task});
         QVERIFY2(renamed.value("ok").toBool(), qPrintable(QJsonDocument(renamed).toJson()));
 
-        const QJsonObject finished = runKimbim(m_kim, {QStringLiteral("task"), QStringLiteral("finish"),
+        const QJsonObject finished = runKimbim(m_nic, {QStringLiteral("task"), QStringLiteral("finish"),
                                                        QStringLiteral("--summary"), QStringLiteral("renamed"),
                                                        QStringLiteral("--task"), task});
         QVERIFY2(finished.value("ok").toBool(), qPrintable(QJsonDocument(finished).toJson()));
@@ -186,10 +186,10 @@ private slots:
     void viewToolsChangeTheWindowNotTheModel()
     {
         // D240: view.isolate / view.show_all from the CLI reach the live app's viewport after the call.
-        // Its own project: the test before leaves an accepted proposal (and its window's state) in m_kim.
-        const QString kim = m_tmp.filePath(QStringLiteral("view.kim"));
+        // Its own project: the test before leaves an accepted proposal (and its window's state) in m_nic.
+        const QString nic = m_tmp.filePath(QStringLiteral("view.nic"));
         QString error;
-        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, kim}, &error)
+        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, nic}, &error)
                                          .object();
         QVERIFY2(imported.value("ok").toBool(), qPrintable(imported.value("error").toString() + error));
         kimbim::PythonEngine::instance().callJson("close_document", {});
@@ -197,20 +197,20 @@ private slots:
         w.resize(1280, 800);
         w.show();
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
-        QVERIFY(w.openPath(kim));
+        QVERIFY(w.openPath(nic));
         QVERIFY(loaded.wait(120000));
         QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>(QStringLiteral("agentStatus"))->isVisible(), 30000);
         const int all = w.viewport()->visibleElementCount();
         QVERIFY(all > 8);
 
-        const QJsonObject isolated = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("isolate"),
+        const QJsonObject isolated = runKimbim(nic, {QStringLiteral("view"), QStringLiteral("isolate"),
                                                        QStringLiteral("--elements"), QStringLiteral("{\"kind\":\"wall\"}")});
         QVERIFY2(isolated.value("ok").toBool(), qPrintable(QJsonDocument(isolated).toJson()));
         QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), 8, 30000); // the house's 8 walls
         const QJsonObject afterIsolate = kimbim::PythonEngine::instance().callJson("state", {}).object();
         QVERIFY(!afterIsolate.value("dirty").toBool()); // display only: the model and its history are unchanged
 
-        const QJsonObject shown = runKimbim(kim, {QStringLiteral("view"), QStringLiteral("show-all")});
+        const QJsonObject shown = runKimbim(nic, {QStringLiteral("view"), QStringLiteral("show-all")});
         QVERIFY2(shown.value("ok").toBool(), qPrintable(QJsonDocument(shown).toJson()));
         QTRY_COMPARE_WITH_TIMEOUT(w.viewport()->visibleElementCount(), all, 30000);
 
@@ -218,22 +218,22 @@ private slots:
         QAction* white = w.findChild<QAction*>(QStringLiteral("actionWhiteModel"));
         QAction* box = w.findChild<QAction*>(QStringLiteral("actionSectionBox"));
         QVERIFY(white && box && !white->isChecked() && !box->isChecked());
-        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("style"), QStringLiteral("--white-model")})
+        QVERIFY(runKimbim(nic, {QStringLiteral("view"), QStringLiteral("style"), QStringLiteral("--white-model")})
                     .value("ok").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(white->isChecked() && w.viewport()->whiteModel(), 30000);
-        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("camera"), QStringLiteral("--eye"),
+        QVERIFY(runKimbim(nic, {QStringLiteral("view"), QStringLiteral("camera"), QStringLiteral("--eye"),
                                    QStringLiteral("[3,-12,1.7]"), QStringLiteral("--target"), QStringLiteral("[3,0,1.5]")})
                     .value("ok").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(std::abs(w.viewport()->view()->Camera()->Eye().Y() + 12.0) < 1e-6, 30000);
         QVERIFY(w.viewport()->isPerspective());
-        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--box"),
+        QVERIFY(runKimbim(nic, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--box"),
                                    QStringLiteral("{\"min\":[0,0,0],\"max\":[5,4,3]}")})
                     .value("ok").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(box->isChecked(), 30000);
-        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--off")})
+        QVERIFY(runKimbim(nic, {QStringLiteral("view"), QStringLiteral("section-box"), QStringLiteral("--off")})
                     .value("ok").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(!box->isChecked(), 30000);
-        QVERIFY(runKimbim(kim, {QStringLiteral("view"), QStringLiteral("trace"), QStringLiteral("--mode"),
+        QVERIFY(runKimbim(nic, {QStringLiteral("view"), QStringLiteral("trace"), QStringLiteral("--mode"),
                                    QStringLiteral("below")})
                     .value("ok").toBool());
         QTRY_COMPARE_WITH_TIMEOUT(w.traceMode(), QStringLiteral("below"), 30000);
@@ -302,7 +302,7 @@ private slots:
 
 private:
     QTemporaryDir m_tmp;
-    QString m_ifc, m_kim;
+    QString m_ifc, m_nic;
 };
 
 QTEST_MAIN(TestAgentLive)

@@ -138,7 +138,7 @@ def _session_worker(session: str) -> str:
     """The project whose session worker should run this conversation's tools (D111), or "".
 
     A versioned **folder** session has its own worktree: the app keeps the architect's working copy and the
-    session writes through its worker, so the two never touch the same state. A `.kim`/IFC session has no
+    session writes through its worker, so the two never touch the same state. A `.nic`/IFC session has no
     second checkout and stays on the live host, as D102 phase 2 did."""
     if not session:
         return ""

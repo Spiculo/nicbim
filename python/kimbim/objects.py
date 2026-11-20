@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Library objects as data (D99, doc 16): the `.kimobj` format (`kimbim-object/1`), its parameters
+"""Library objects as data (D99, doc 16): the `.nicobj` format (`kimbim-object/1`), its parameters
 and definitions. A definition is JSON the app reads; nothing in it runs. Geometry: objbuild.py."""
 from __future__ import annotations
 

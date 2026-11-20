@@ -2625,11 +2625,11 @@ private slots:
         QVERIFY(w.close());
     }
 
-    // D72: a new project saved as .kim, edited, saved (no version), reopened; Save version packs too.
-    void kimFileFlow()
+    // D72: a new project saved as .nic, edited, saved (no version), reopened; Save version packs too.
+    void nicFileFlow()
     {
         QTemporaryDir tmp;
-        const QString kim = tmp.filePath(QStringLiteral("Casa ñ.kim"));
+        const QString nic = tmp.filePath(QStringLiteral("Casa ñ.nic"));
         {
             kimbim::MainWindow w(nullptr, /*quiet=*/true);
             QVERIFY(w.newProject());
@@ -2638,9 +2638,9 @@ private slots:
             w.wallTool()->click({5, 0});
             w.wallTool()->finish();
             w.setTool(kimbim::MainWindow::Tool::None);
-            QVERIFY(w.saveAs(kim));
-            QVERIFY(QFile::exists(kim) && QFile::exists(kim + ".lock"));
-            QVERIFY(w.windowTitle().contains(QStringLiteral("Casa ñ.kim")));
+            QVERIFY(w.saveAs(nic));
+            QVERIFY(QFile::exists(nic) && QFile::exists(nic + ".lock"));
+            QVERIFY(w.windowTitle().contains(QStringLiteral("Casa ñ.nic")));
             QCOMPARE(w.history().size(), 1);
             w.setSelection(w.viewport()->guids());
             QVERIFY(w.applyName(QStringLiteral("Muro")));
@@ -2651,18 +2651,18 @@ private slots:
             QVERIFY(!w.hasUnversionedWork());
             QVERIFY(w.close());
         }
-        QVERIFY(!QFile::exists(kim + ".lock"));
+        QVERIFY(!QFile::exists(nic + ".lock"));
         kimbim::MainWindow w(nullptr, /*quiet=*/true);
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
-        QVERIFY(w.openPath(kim));
+        QVERIFY(w.openPath(nic));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(w.viewport()->elementCount(), 1);
         QCOMPARE(w.history().size(), 2);
-        QCOMPARE(w.preferences().recent().first(), QDir::toNativeSeparators(kim));
+        QCOMPARE(w.preferences().recent().first(), QDir::toNativeSeparators(nic));
         QVERIFY(w.close());
     }
 
-    // D72: opening an IFC makes a .kim beside it (default) or edits the IFC (preference).
+    // D72: opening an IFC makes a .nic beside it (default) or edits the IFC (preference).
     void openingAnIfcFollowsThePreference()
     {
         QTemporaryDir tmp;
@@ -2677,8 +2677,8 @@ private slots:
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
-        QVERIFY(QFile::exists(tmp.filePath(QStringLiteral("House.kim"))));
-        QCOMPARE(w.documentState().value("mode").toString(), QString("kim"));
+        QVERIFY(QFile::exists(tmp.filePath(QStringLiteral("House.nic"))));
+        QCOMPARE(w.documentState().value("mode").toString(), QString("nic"));
         w.preferences().setValue("open_ifc", "edit_ifc");
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
@@ -2687,9 +2687,9 @@ private slots:
         QVERIFY(w.close());
     }
 
-    // Making a .kim from a large IFC takes minutes with the Python decomposer (the Clinic: ~6 min):
+    // Making a .nic from a large IFC takes minutes with the Python decomposer (the Clinic: ~6 min):
     // it runs on a worker thread so the window keeps repainting meanwhile.
-    void makingAKimKeepsTheWindowResponsive()
+    void makingANicKeepsTheWindowResponsive()
     {
         QTemporaryDir tmp;
         const QString ifc = tmp.filePath(QStringLiteral("House.ifc"));
@@ -2706,18 +2706,18 @@ private slots:
         QVERIFY(w.openPath(ifc));
         QVERIFY(ranMeanwhile);
         QVERIFY(loaded.wait(60000));
-        QVERIFY(QFile::exists(tmp.filePath(QStringLiteral("House.kim"))));
-        QCOMPARE(w.documentState().value("mode").toString(), QString("kim"));
+        QVERIFY(QFile::exists(tmp.filePath(QStringLiteral("House.nic"))));
+        QCOMPARE(w.documentState().value("mode").toString(), QString("nic"));
         QVERIFY(w.close());
     }
 
-    // A large IFC asks first: make a .kim (minutes), edit the IFC directly, or cancel. Small files, a
-    // .kim already beside it and the "edit the IFC directly" preference don't ask.
-    void aLargeIfcAsksBeforeMakingAKim()
+    // A large IFC asks first: make a .nic (minutes), edit the IFC directly, or cancel. Small files, a
+    // .nic already beside it and the "edit the IFC directly" preference don't ask.
+    void aLargeIfcAsksBeforeMakingANic()
     {
         QTemporaryDir tmp;
         const QString ifc = tmp.filePath(QStringLiteral("House.ifc"));
-        const QString kim = tmp.filePath(QStringLiteral("House.kim"));
+        const QString nic = tmp.filePath(QStringLiteral("House.nic"));
         {
             kimbim::MainWindow w(nullptr, /*quiet=*/true);
             QVERIFY(w.newProject());
@@ -2734,36 +2734,36 @@ private slots:
             return answer;
         });
 
-        // below the limit (default 5 MB): no question, a .kim as the preference says
+        // below the limit (default 5 MB): no question, a .nic as the preference says
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(asked, 0);
-        QVERIFY(QFile::exists(kim));
+        QVERIFY(QFile::exists(nic));
         QVERIFY(w.closeDocument());
-        QVERIFY(QFile::remove(kim));
+        QVERIFY(QFile::remove(nic));
 
         w.preferences().setValue("large_ifc_mb", 0.001); // House.ifc is larger than 1 kB
-        // Cancel: nothing opens, no .kim
+        // Cancel: nothing opens, no .nic
         QVERIFY(!w.openPath(ifc));
         QCOMPARE(asked, 1);
-        QVERIFY(!QFile::exists(kim));
+        QVERIFY(!QFile::exists(nic));
 
         // Edit the IFC directly: opens at once as a plain IFC
         answer = kimbim::MainWindow::LargeIfc::EditIfc;
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(asked, 2);
-        QVERIFY(!QFile::exists(kim));
+        QVERIFY(!QFile::exists(nic));
         QCOMPARE(w.documentState().value("mode").toString(), QString("plain"));
 
-        // Make a .kim
-        answer = kimbim::MainWindow::LargeIfc::MakeKim;
+        // Make a .nic
+        answer = kimbim::MainWindow::LargeIfc::MakeNic;
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(asked, 3);
-        QCOMPARE(w.documentState().value("mode").toString(), QString("kim"));
+        QCOMPARE(w.documentState().value("mode").toString(), QString("nic"));
 
-        // the .kim beside it now exists: opening the IFC offers it, no conversion question
+        // the .nic beside it now exists: opening the IFC offers it, no conversion question
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(asked, 3);
@@ -2777,13 +2777,13 @@ private slots:
 
         // 0 turns the question off
         QVERIFY(w.closeDocument());
-        QVERIFY(QFile::remove(kim));
-        w.preferences().setValue("open_ifc", "make_kim");
+        QVERIFY(QFile::remove(nic));
+        w.preferences().setValue("open_ifc", "make_nic");
         w.preferences().setValue("large_ifc_mb", 0);
         QVERIFY(w.openPath(ifc));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(asked, 3);
-        QVERIFY(QFile::exists(kim));
+        QVERIFY(QFile::exists(nic));
         QVERIFY(w.close());
     }
 
@@ -3046,36 +3046,36 @@ private slots:
     }
 
     // D72: someone else's lock opens the file read-only (quiet mode answers "read-only").
-    void aLockedKimOpensReadOnly()
+    void aLockedNicOpensReadOnly()
     {
         QTemporaryDir tmp;
-        const QString kim = tmp.filePath(QStringLiteral("a.kim"));
+        const QString nic = tmp.filePath(QStringLiteral("a.nic"));
         {
             kimbim::MainWindow w(nullptr, /*quiet=*/true);
             QVERIFY(w.newProject());
-            QVERIFY(w.saveAs(kim));
+            QVERIFY(w.saveAs(nic));
             QVERIFY(w.close());
         }
-        QFile lock(kim + ".lock");
+        QFile lock(nic + ".lock");
         QVERIFY(lock.open(QIODevice::WriteOnly));
         lock.write(R"({"user": "Ana", "account": "ana", "machine": "OTHER-PC", "pid": 4, "since": "2026-10-08T10:42"})");
         lock.close();
         kimbim::MainWindow w(nullptr, /*quiet=*/true);
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
-        QVERIFY(w.openPath(kim));
+        QVERIFY(w.openPath(nic));
         QVERIFY(loaded.wait(60000));
         QVERIFY(w.documentState().value("read_only").toBool());
         QVERIFY(w.windowTitle().contains(QStringLiteral("read-only")));
         QVERIFY(!w.save());
         QVERIFY(w.close());
-        QVERIFY(QFile::exists(kim + ".lock")); // Ana's lock is left alone
+        QVERIFY(QFile::exists(nic + ".lock")); // Ana's lock is left alone
     }
 
-    // D72: project settings are applied on open and saved with the .kim (layers, cut, scale, paper, units).
-    void projectSettingsTravelWithTheKim()
+    // D72: project settings are applied on open and saved with the .nic (layers, cut, scale, paper, units).
+    void projectSettingsTravelWithTheNic()
     {
         QTemporaryDir tmp;
-        const QString kim = tmp.filePath(QStringLiteral("ajustes.kim"));
+        const QString nic = tmp.filePath(QStringLiteral("ajustes.nic"));
         {
             kimbim::MainWindow w(nullptr, /*quiet=*/true);
             QVERIFY(w.newProject());
@@ -3086,12 +3086,12 @@ private slots:
             QCOMPARE(w.formatLength(3.5), QLocale().toString(3500.0, 'f', 0) + QStringLiteral(" mm"));
             QVERIFY(!w.setProjectSettings({{"drawing_scale", 0}})); // refused, nothing changes
             w.setLayerVisible(QStringLiteral("A-WALL"), false);
-            QVERIFY(w.saveAs(kim));
+            QVERIFY(w.saveAs(nic));
             QVERIFY(w.close());
         }
         kimbim::MainWindow w(nullptr, /*quiet=*/true);
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
-        QVERIFY(w.openPath(kim));
+        QVERIFY(w.openPath(nic));
         QVERIFY(loaded.wait(60000));
         QCOMPARE(w.planCutHeight(), 1.0);
         QCOMPARE(w.projectSettings().value("hidden_layers").toArray(), QJsonArray({"A-WALL"}));
@@ -3200,7 +3200,7 @@ private slots:
         w.wallTool()->click({5, 0});
         w.wallTool()->finish();
         w.setTool(kimbim::MainWindow::Tool::None);
-        QVERIFY(w.saveAs(tmp.filePath(QStringLiteral("auto.kim"))));
+        QVERIFY(w.saveAs(tmp.filePath(QStringLiteral("auto.nic"))));
         w.preferences().setValue("auto_version", "saves");
         w.preferences().setValue("auto_version_every", 2);
         w.setSelection(w.viewport()->guids());
@@ -3260,7 +3260,7 @@ private slots:
         QVERIFY(w.saveAsTemplate(QStringLiteral("Oficina")));
         QVERIFY(!w.saveAsTemplate(QStringLiteral("Oficina"))); // exists; quiet mode doesn't replace
         QVERIFY(w.saveAsTemplate(QStringLiteral("Oficina"), /*replace=*/true));
-        const QString path = tmp.filePath(QStringLiteral("Plantillas/Oficina.kim"));
+        const QString path = tmp.filePath(QStringLiteral("Plantillas/Oficina.nic"));
         QVERIFY(QFile::exists(path));
 
         QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
@@ -3270,27 +3270,27 @@ private slots:
         QVERIFY(!w.viewport()->guids().contains(original)); // new ids
         QVERIFY(w.windowTitle().contains(QStringLiteral("Untitled")));
         QVERIFY(!w.save()); // untitled: quiet mode can't ask where
-        QVERIFY(w.saveAs(tmp.filePath(QStringLiteral("nuevo.kim"))));
+        QVERIFY(w.saveAs(tmp.filePath(QStringLiteral("nuevo.nic"))));
         QCOMPARE(w.history().first().toObject().value("message").toString(), QString("Created from Oficina"));
         QVERIFY(w.close());
     }
 
-    // Final review: a file that fails to open leaves the open .kim as it was (lock held, still saves).
-    void aFailedOpenLeavesTheOpenKimAttached()
+    // Final review: a file that fails to open leaves the open .nic as it was (lock held, still saves).
+    void aFailedOpenLeavesTheOpenNicAttached()
     {
         QTemporaryDir tmp;
-        const QString kim = tmp.filePath(QStringLiteral("a.kim"));
-        const QString junk = tmp.filePath(QStringLiteral("junk.kim"));
+        const QString nic = tmp.filePath(QStringLiteral("a.nic"));
+        const QString junk = tmp.filePath(QStringLiteral("junk.nic"));
         QFile bad(junk);
         QVERIFY(bad.open(QIODevice::WriteOnly));
         bad.write("not a zip");
         bad.close();
         kimbim::MainWindow w(nullptr, /*quiet=*/true);
         QVERIFY(w.newProject());
-        QVERIFY(w.saveAs(kim));
+        QVERIFY(w.saveAs(nic));
         QVERIFY(!w.openPath(junk));
-        QVERIFY(QFile::exists(kim + ".lock"));
-        QCOMPARE(w.documentState().value("name").toString(), QString("a.kim"));
+        QVERIFY(QFile::exists(nic + ".lock"));
+        QCOMPARE(w.documentState().value("name").toString(), QString("a.nic"));
         QVERIFY(w.save());
         QVERIFY(w.close());
     }

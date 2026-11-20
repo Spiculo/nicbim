@@ -26,7 +26,7 @@ private slots:
         QVERIFY(p.load());
         QCOMPARE(p.language(), QString("auto"));
         QCOMPARE(p.newViews(), QString("tab"));
-        QCOMPARE(p.openIfc(), QString("make_kim"));
+        QCOMPARE(p.openIfc(), QString("make_nic"));
         QCOMPARE(p.autoVersion(), QString("off"));
         QCOMPARE(p.autoVersionEvery(), 10);
         QCOMPARE(p.recoveryMinutes(), 5);
@@ -77,12 +77,12 @@ private slots:
     {
         kimbim::Preferences p;
         for (int i = 0; i < 12; ++i)
-            p.addRecent(QStringLiteral("C:/p/%1.kim").arg(i));
-        p.addRecent("C:/p/5.kim");
+            p.addRecent(QStringLiteral("C:/p/%1.nic").arg(i));
+        p.addRecent("C:/p/5.nic");
         const QStringList r = p.recent();
         QCOMPARE(r.size(), 10);
-        QCOMPARE(r.first(), QString("C:/p/5.kim"));
-        QCOMPARE(r.count("C:/p/5.kim"), 1);
+        QCOMPARE(r.first(), QString("C:/p/5.nic"));
+        QCOMPARE(r.count("C:/p/5.nic"), 1);
         QVERIFY(!p.save()); // in memory only
     }
 

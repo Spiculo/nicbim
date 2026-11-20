@@ -520,7 +520,7 @@ private slots:
             const QJsonObject block{{"format", "kimbim-object/1"}, {"id", "block"}, {"name", "Block"}, {"category", "furniture"},
                 {"ifc", QJsonObject{{"IFC4", QJsonArray{"IfcFurnitureType", "NOTDEFINED", QJsonValue()}}}}, {"params", params},
                 {"parts", QJsonArray{QJsonObject{{"id", "body"}, {"box", QJsonObject{{"dx", "width"}, {"dy", 0.4}, {"dz", 0.4}}}}}}};
-            QFile file(dir.filePath(QStringLiteral("block.kimobj")));
+            QFile file(dir.filePath(QStringLiteral("block.nicobj")));
             QVERIFY(file.open(QIODevice::WriteOnly));
             file.write(QJsonDocument(block).toJson());
             file.close();
@@ -675,7 +675,7 @@ private slots:
                 {"ifc", QJsonObject{{"IFC4", QJsonArray{"IfcFurnitureType", "NOTDEFINED", QJsonValue()}}}},
                 {"params", QJsonArray{QJsonObject{{"key", "width"}, {"kind", "length"}, {"label", "Width"}, {"default", width}}}},
                 {"parts", QJsonArray{QJsonObject{{"id", "body"}, {"box", QJsonObject{{"dx", "width"}, {"dy", 0.4}, {"dz", 0.4}}}}}}};
-            QFile file(dir.filePath(QStringLiteral("block.kimobj")));
+            QFile file(dir.filePath(QStringLiteral("block.nicobj")));
             QVERIFY(file.open(QIODevice::WriteOnly));
             file.write(QJsonDocument(block).toJson());
             file.close();

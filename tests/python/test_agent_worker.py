@@ -18,7 +18,7 @@ import pytest
 
 from kimbim import app_bridge as B
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 from kimbim import versioning as V
 from kimbim.agent import client, worker
 from kimbim.agent.session import Session
@@ -47,35 +47,35 @@ def _kill(pid):
 
 
 @pytest.fixture(scope="module")
-def house_kim(tmp_path_factory) -> Path:
-    """The sample house as a .kim, built once (each test works on a copy)."""
+def house_nic(tmp_path_factory) -> Path:
+    """The sample house as a .nic, built once (each test works on a copy)."""
     folder = tmp_path_factory.mktemp("house")
     saved = D._data_dir
     D._data_dir = folder / "data"
     try:
         ifc = folder / "house.ifc"
         make_house.build(str(ifc))
-        kim = folder / "house.kim"
-        out = json.loads(D.import_ifc(str(ifc), str(kim)))
+        nic = folder / "house.nic"
+        out = json.loads(D.import_ifc(str(ifc), str(nic)))
         assert out["ok"], out
         assert json.loads(B.open_model(out["path"]))["ok"]
         D.close_document()
     finally:
         D._data_dir = saved
-    return kim
+    return nic
 
 
 @pytest.fixture
-def house(house_kim, tmp_path, monkeypatch):
+def house(house_nic, tmp_path, monkeypatch):
     data = tmp_path / "data"
     monkeypatch.setenv("KIMBIM_DATA_DIR", str(data))
     monkeypatch.setenv("KIMBIM_AGENT_IDLE", "3")
     monkeypatch.setattr(D, "_data_dir", None)
     monkeypatch.setattr(K, "display_user", "")
     monkeypatch.setattr(client, "spawned", [])
-    kim = tmp_path / "house.kim"
-    shutil.copyfile(house_kim, kim)
-    yield kim
+    nic = tmp_path / "house.nic"
+    shutil.copyfile(house_nic, nic)
+    yield nic
     pids = list(client.spawned)
     sessions = data / "agent" / "sessions"
     for p in sessions.glob("*.json") if sessions.is_dir() else ():
@@ -87,8 +87,8 @@ def house(house_kim, tmp_path, monkeypatch):
         _kill(pid)
 
 
-def _discovery(kim) -> Path:
-    return D.data_dir() / "agent" / "sessions" / f"{K.path_hash(kim)}.json"
+def _discovery(nic) -> Path:
+    return D.data_dir() / "agent" / "sessions" / f"{K.path_hash(nic)}.json"
 
 
 def test_request_starts_worker(house):

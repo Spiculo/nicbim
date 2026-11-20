@@ -248,7 +248,7 @@ private slots:
     void droppedFilesGoWhereTheyBelong()
     {
         QCOMPARE(kimbim::dropKind(QStringLiteral("a/House.IFC")), QStringLiteral("open"));
-        QCOMPARE(kimbim::dropKind(QStringLiteral("a/House.kim")), QStringLiteral("open"));
+        QCOMPARE(kimbim::dropKind(QStringLiteral("a/House.nic")), QStringLiteral("open"));
         QCOMPARE(kimbim::dropKind(QStringLiteral("survey.dwg")), QStringLiteral("underlay"));
         QCOMPARE(kimbim::dropKind(QStringLiteral("scan.jpg")), QStringLiteral("underlay"));
         QCOMPARE(kimbim::dropKind(QStringLiteral("chair.glb")), QStringLiteral("mesh"));
@@ -458,9 +458,9 @@ private slots:
         QVERIFY(w.editInstanceInPlace(false));
         QTemporaryDir dir;
         QVERIFY(w.saveModelToLibrary(dir.path()));
-        QVERIFY(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).size() == 1);
+        QVERIFY(QDir(dir.path()).entryList({QStringLiteral("*.nicmodel.ifc")}).size() == 1);
         QVERIFY(w.newProject());
-        QVERIFY(w.loadModelFromLibrary(dir.filePath(QDir(dir.path()).entryList({QStringLiteral("*.kimmodel.ifc")}).first())));
+        QVERIFY(w.loadModelFromLibrary(dir.filePath(QDir(dir.path()).entryList({QStringLiteral("*.nicmodel.ifc")}).first())));
     }
 
     void nodeGraphBuildsWiresAndRuns()

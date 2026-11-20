@@ -198,7 +198,7 @@ def save_model_to_library(model_guid: str, folder: str) -> str:
             m[2][3] -= base
             ifcopenshell.api.geometry.edit_object_placement(out, product=c, matrix=m, is_si=False)
         ifcopenshell.api.spatial.assign_container(out, products=[c], relating_structure=storey)
-    path = pathlib.Path(folder) / f"{safe}.kimmodel.ifc"
+    path = pathlib.Path(folder) / f"{safe}.nicmodel.ifc"
     out.write(str(path))
     return B._dump({"ok": True, "path": str(path), "elements": len(elements)})
 
@@ -207,8 +207,8 @@ def library_models(folder: str) -> str:
     """The models saved in a library folder: [{name, path}]."""
     items = []
     if folder and os.path.isdir(folder):
-        for p in sorted(pathlib.Path(folder).glob("*.kimmodel.ifc")):
-            items.append({"name": p.name[: -len(".kimmodel.ifc")], "path": str(p)})
+        for p in sorted(pathlib.Path(folder).glob("*.nicmodel.ifc")):
+            items.append({"name": p.name[: -len(".nicmodel.ifc")], "path": str(p)})
     return B._dump({"ok": True, "models": items})
 
 

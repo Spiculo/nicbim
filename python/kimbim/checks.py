@@ -9,7 +9,7 @@ specification, a clash set, a model check), then the issue; clicking one selects
   (tools/check_interop.py). A problem in a geometry or property entity is reported on the element
   that uses it.
 - **IDS**: IfcTester (LGPL-3.0). The IDS files are stored *in* the project settings (`ids_files`:
-  {name: XML}), so they are versioned, merged and travel with the .kim like the other tables (D72).
+  {name: XML}), so they are versioned, merged and travel with the .nic like the other tables (D72).
   The last run's results export to IfcTester's HTML or JSON report.
 - **Clash**: IfcOpenShell's geometry tree (`ifcopenshell.geom.tree`, the same calls ifcclash makes:
   hard clashes = `clash_intersection_many` with a tolerance, clearance = `clash_clearance_many`)

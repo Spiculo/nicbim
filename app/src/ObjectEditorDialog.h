@@ -23,7 +23,7 @@ class ParameterForm;
 class PlanSymbolView;
 class Viewport;
 
-// The Object Editor (D101, doc 16 §6): makes and edits a library object's definition, the `.kimobj` JSON
+// The Object Editor (D101, doc 16 §6): makes and edits a library object's definition, the `.nicobj` JSON
 // (a draft, objedit.py). Left: the object's id, names, category and IFC class; its parameters and its
 // material slots as tables. Middle: the draft drawn by the app's own 3D view in a scratch scene, or its
 // plan symbol. Right: Try values, a parameter form that changes the preview, never the defaults. Any edit
@@ -40,7 +40,7 @@ public:
     QJsonObject draft() const; // the definition as the fields have it
     void setDraft(const QJsonObject& draft); // fills the fields; the draft as it is now counts as unchanged
     QStringList errorPaths() const { return m_errorPaths; } // the last check's field paths
-    // Saves the draft to "office" (a .kimobj file in the office folder) or "project" (one undo step). An
+    // Saves the draft to "office" (a .nicobj file in the office folder) or "project" (one undo step). An
     // object the target has asks to replace it, unless `replace` or it is the object the dialog opened from
     // that target, its id unchanged. On success the dialog accepts.
     bool saveTo(const QString& target, bool replace = false);

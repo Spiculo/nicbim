@@ -36,7 +36,7 @@ only formulas.
 
 ## 1. The format
 
-One JSON file per object, extension `.kimobj`, format id `kimbim-object/1` (no older format is kept: NicBim is
+One JSON file per object, extension `.nicobj`, format id `kimbim-object/1` (no older format is kept: NicBim is
 unreleased, so formats change outright). JSON because the store diffs and hashes it like settings, and the
 Object Editor writes it, so nobody needs to type it by hand.
 
@@ -218,7 +218,7 @@ Unchanged from D86 except the geometry:
   untapered at its mean size there.
 - `KIMBIM_LibraryObject` on the type: `Object` (source and id, `office:chair`), `Parameters` (JSON, metres and
   degrees), `Library`, **`DefinitionHash`** (BLAKE3 of the definition's canonical JSON) and **`Definition`**
-  (the full JSON as IfcText). So a plain IFC or a shared `.kim` holds everything needed to edit its objects
+  (the full JSON as IfcText). So a plain IFC or a shared `.nic` holds everything needed to edit its objects
   again; the store keeps identical text once (records are content-addressed).
 - Each type also stores **`Uses`**: every library definition reached through `use`, transitively. The
   `DefinitionHash` covers the definition plus its Uses. A project definition resolves `use` only from its own
@@ -232,8 +232,8 @@ Unchanged from D86 except the geometry:
 
 | Source | Where | Notes |
 |--------|-------|-------|
-| **bundled** | `python/kimbim/bundled_objects/*.kimobj`, shipped | the 21 objects of D86, ported (§8) |
-| **office** | the office library folder (preference, D86) | `.kimobj` files and IFC type files; **`.py` files are no longer read** |
+| **bundled** | `python/kimbim/bundled_objects/*.nicobj`, shipped | the 21 objects of D86, ported (§8) |
+| **office** | the office library folder (preference, D86) | `.nicobj` files and IFC type files; **`.py` files are no longer read** |
 | **project** | the definitions carried by the model's types (§4) | what placed objects were made from |
 
 - A placed object's parameters always regenerate from **its own definition** (the one on its type), so
@@ -284,7 +284,7 @@ dialog above, and **Customise a copy...** beside it, which opens the Object Edit
 
 ### Object Editor (D101)
 
-One modal dialog makes and edits a library object's definition, the `.kimobj` JSON (a *draft*). It opens from:
+One modal dialog makes and edits a library object's definition, the `.nicobj` JSON (a *draft*). It opens from:
 
 - the Library panel: **New object...** (an empty draft), or the right-click menu on an object, which holds
   *Settings...* and then **Edit object...** for office and project objects or **Customise a copy...** for bundled
@@ -318,7 +318,7 @@ The dialog:
   and placing it builds only from what its types store. Saving a project object again regenerates every type
   of that ref from the new definition, keeping values whose key and kind still exist. Undo takes the object
   away again, listing included.
-- **Save to office library**: writes `<office folder>/<id>.kimobj` (disabled without an office folder). An
+- **Save to office library**: writes `<office folder>/<id>.nicobj` (disabled without an office folder). An
   office object opened for editing saves over its own file without asking; another id that the office has asks
   before replacing it. When placements of this object now use an older version, the app asks *N placed objects
   use an older version of this object. Update them now?*; yes updates just those placements (`save_draft` gives
@@ -347,12 +347,12 @@ The dialog:
 - `define()`, `Obj.build`, the build functions and loading `.py` files from the office folder are **removed**
   (no compatibility kept). `library.py` keeps the type, placement and parameter-editing code; the format and
   evaluator go to `kimbim/objects.py` and `kimbim/objexpr.py`.
-- All 21 bundled objects are ported to `.kimobj` first. A test builds each one both ways at its defaults and at
+- All 21 bundled objects are ported to `.nicobj` first. A test builds each one both ways at its defaults and at
   two other value sets, and compares bounding box, volume (±0.5 %) and plan symbol; the Python builders are
   deleted only when every object matches.
 - The **chair** is then extended as the showcase: 1–8 legs, corners or a circle, splay 0–20°, straight, tapered
   or sled legs, a slat, panel or upholstered back or none, arms on or off, round or square seat.
-- The Python console (doc [15](15-scripting.md)) still automates everything, including writing `.kimobj` files,
+- The Python console (doc [15](15-scripting.md)) still automates everything, including writing `.nicobj` files,
   but cannot define a live object any other way.
 
 ## 9. Testing
@@ -382,5 +382,5 @@ authorable by architects.
 - Editable hotspots/grips on placed objects (Archicad's graphical hotspots, Revit's shape handles).
 - Mesh import (OBJ, glTF) as a shape; free-form objects wait for it.
 - A node editor (Grasshopper, Dynamo, Marionette).
-- Doors and windows as `.kimobj` (they stay D97's parametric types for now).
+- Doors and windows as `.nicobj` (they stay D97's parametric types for now).
 - Online catalogues (🔮, doc [14](14-tool-inventory.md)).

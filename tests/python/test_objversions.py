@@ -88,7 +88,7 @@ def test_values_that_do_not_build_save_nothing(project, tmp_path):
     folder.mkdir()
     fragile = {**BLOCK, "id": "fragile", "parts": [{"id": "body", "box": {"dx": "width", "dy": "depth",
                                                                          "dz": "0.1 / (height - 0.5)"}}]}
-    (folder / "fragile.kimobj").write_text(json.dumps(fragile), encoding="utf-8")
+    (folder / "fragile.nicobj").write_text(json.dumps(fragile), encoding="utf-8")
     library.load_office(str(folder))
     r = call("save_object_version", "office:fragile", "Bad", json.dumps({"height": 0.5}))  # divides by zero
     assert r["ok"] is False and "division by zero" in r["error"]
@@ -163,7 +163,7 @@ def test_versions_survive_save_and_reopen(tmp_path, schema):    # Review Focus 2
 def test_a_version_of_an_object_gone_from_the_library_still_works(project, tmp_path):  # Review Focus 4
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     v = call("save_object_version", "office:block", "Low", json.dumps({"height": 0.3}))
     assert v["ok"], v
@@ -443,7 +443,7 @@ def _ps(guid):
 def test_an_outdated_saved_version_updates_in_place(project, tmp_path):
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     x1 = call("save_object_version", "office:block", "X1", json.dumps({"width": 0.5}))           # unused
     x2 = call("save_object_version", "office:block", "X2", json.dumps({"height": 0.7}))          # placed
@@ -452,7 +452,7 @@ def test_an_outdated_saved_version_updates_in_place(project, tmp_path):
     assert call("library_updates", "") == {"ok": True, "outdated": 0, "versions": 0}
     v2 = json.loads(json.dumps(BLOCK))
     v2["params"][0]["default"] = 0.6                     # the office edits its block
-    (folder / "block.kimobj").write_text(json.dumps(v2), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(v2), encoding="utf-8")
     library.load_office(str(folder))
     u = call("library_updates", "")
     assert u["ok"] and u["versions"] == 2 and u["outdated"] == 2   # both placements count, as today
@@ -479,14 +479,14 @@ def test_an_outdated_saved_version_updates_in_place(project, tmp_path):
 def test_a_selection_updates_only_its_types(project, tmp_path):
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     x1 = call("save_object_version", "office:block", "X1", "")
     x2 = call("save_object_version", "office:block", "X2", json.dumps({"height": 0.7}))
     p = call("place_object", project, "office:block", "", 0, 0, 0, "", x2["id"])
     v2 = json.loads(json.dumps(BLOCK))
     v2["params"][0]["default"] = 0.6
-    (folder / "block.kimobj").write_text(json.dumps(v2), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(v2), encoding="utf-8")
     library.load_office(str(folder))
     assert call("update_from_library", json.dumps([p["guid"]]))["ok"]
     assert call("library_updates", "")["versions"] == 1          # X1 is still outdated
@@ -602,11 +602,11 @@ def test_group_headings_have_a_spanish_form():
 def test_form_and_symbol_of_a_version_use_its_own_definition(project, tmp_path):
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     v = call("save_object_version", "office:block", "Low", json.dumps({"height": 0.3}))
     newer = {**BLOCK, "params": BLOCK["params"] + [{"key": "top", "kind": "length", "label": "Top", "default": 0.02}]}
-    (folder / "block.kimobj").write_text(json.dumps(newer), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(newer), encoding="utf-8")
     library.load_office(str(folder))                          # the library's definition moved on
     keys = lambda form: [p["key"] for p in form["params"]]  # noqa: E731
     assert "top" in keys(call("object_form", "office:block", ""))
@@ -652,11 +652,11 @@ def test_settings_of_an_outdated_unnamed_placement_use_its_type(project, tmp_pat
     preview use the definition stored on the type, as apply_object_settings does."""
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     p = call("place_object", project, "office:block", json.dumps({"height": 0.3}), 0, 0, 0)
     newer = {**BLOCK, "params": BLOCK["params"] + [{"key": "top", "kind": "length", "label": "Top", "default": 0.02}]}
-    (folder / "block.kimobj").write_text(json.dumps(newer), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(newer), encoding="utf-8")
     library.load_office(str(folder))                       # the office definition moved on: outdated
     s = call("object_settings_of", json.dumps([p["guid"]]))
     assert s["source"] == "type:" + p["type"]
@@ -677,12 +677,12 @@ def test_settings_of_an_outdated_unnamed_placement_use_its_type(project, tmp_pat
 def test_replacing_a_version_keeps_its_own_definition(project, tmp_path):
     folder = tmp_path / "office"
     folder.mkdir()
-    (folder / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(folder))
     v = call("save_object_version", "office:block", "Low", json.dumps({"height": 0.3}))
     old_hash = _ps(v["type"])["DefinitionHash"]
     newer = {**BLOCK, "params": BLOCK["params"] + [{"key": "top", "kind": "length", "label": "Top", "default": 0.02}]}
-    (folder / "block.kimobj").write_text(json.dumps(newer), encoding="utf-8")
+    (folder / "block.nicobj").write_text(json.dumps(newer), encoding="utf-8")
     library.load_office(str(folder))
     r = call("save_object_version", "office:block", "Low", json.dumps({"height": 0.35}), "1")
     assert r["ok"] and r["id"] == v["id"]

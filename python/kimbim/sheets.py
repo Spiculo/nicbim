@@ -862,7 +862,7 @@ def _image_svg(data: dict, x: float, y: float) -> str:
 
 
 def _sheet_files(skip=()) -> list:
-    """Every picture file the sheets use (D98), kept in the settings so versions and .kim files carry them.
+    """Every picture file the sheets use (D98), kept in the settings so versions and .nic files carry them.
     `skip`: symbol ids being removed (inverse references can still list them inside the transaction)."""
     names = set()
     for sheet in _sheets():

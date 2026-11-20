@@ -141,7 +141,7 @@ LibraryPanel* MainWindow::libraryPanel()
     connect(m_library, &LibraryPanel::downloadRequested, this, [this] { // D216
         bool ok = false;
         const QString url = QInputDialog::getText(this, tr("Download object"),
-            tr("Link (.kimobj or .ifc):"), QLineEdit::Normal, QString(), &ok).trimmed();
+            tr("Link (.nicobj or .ifc):"), QLineEdit::Normal, QString(), &ok).trimmed();
         if (!ok || url.isEmpty())
             return;
         const QString folder = QFileDialog::getExistingDirectory(this, tr("Save the object in"),

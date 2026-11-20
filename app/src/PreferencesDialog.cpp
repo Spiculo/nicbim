@@ -70,11 +70,11 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
     templatesRow->addWidget(browse);
     form->addRow(tr("Templates folder:"), templatesRow);
 
-    // D86: the office library, another category of the Library panel (.kimobj objects and IFC types).
+    // D86: the office library, another category of the Library panel (.nicobj objects and IFC types).
     auto* officeRow = new QHBoxLayout;
     m_officeLibrary = new QLineEdit(prefs.value(QStringLiteral("office_library")).toString(), this);
     m_officeLibrary->setObjectName(QStringLiteral("officeLibrary"));
-    m_officeLibrary->setPlaceholderText(tr("A shared folder of object files (.kimobj) and IFC type libraries (.ifc)"));
+    m_officeLibrary->setPlaceholderText(tr("A shared folder of object files (.nicobj) and IFC type libraries (.ifc)"));
     auto* browseOffice = new QPushButton(tr("Browse..."), this);
     connect(browseOffice, &QPushButton::clicked, this, [this] {
         const QString folder = QFileDialog::getExistingDirectory(this, tr("Office library"), m_officeLibrary->text());
@@ -95,7 +95,7 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
 
     m_newViews = choice(this, "newViews", {{tr("Tabs"), "tab"}, {tr("Free windows"), "window"}}, prefs.newViews());
     form->addRow(tr("New views open as:"), m_newViews);
-    m_openIfc = choice(this, "openIfc", {{tr("Make a .kim beside it"), "make_kim"}, {tr("Edit the IFC directly"), "edit_ifc"}},
+    m_openIfc = choice(this, "openIfc", {{tr("Make a .nic beside it"), "make_nic"}, {tr("Edit the IFC directly"), "edit_ifc"}},
         prefs.openIfc());
     form->addRow(tr("Opening an IFC file:"), m_openIfc);
     m_newSchema = choice(this, "newProjectSchema", {{tr("IFC4 (widest support)"), "IFC4"},
@@ -109,7 +109,7 @@ PreferencesDialog::PreferencesDialog(Preferences& prefs, QWidget* parent)
     m_largeIfc->setSuffix(tr(" MB"));
     m_largeIfc->setSpecialValueText(tr("Never"));
     m_largeIfc->setValue(qRound(prefs.largeIfcMb()));
-    m_largeIfc->setToolTip(tr("Making a .kim from a large IFC can take minutes; above this size KimBim asks first"));
+    m_largeIfc->setToolTip(tr("Making a .nic from a large IFC can take minutes; above this size KimBim asks first"));
     form->addRow(tr("Ask before converting IFC files over:"), m_largeIfc);
 
     auto* autoRow = new QHBoxLayout;

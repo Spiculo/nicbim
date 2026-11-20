@@ -248,7 +248,7 @@ def start() -> str:
         fields = json.loads(D.document_state())
         if not fields.get("ok") or not fields.get("path") or fields.get("read_only"):
             return B._dump({"ok": False, "error": "the document has no path to serve"})
-        kind = {"kim": "kim", "folder": "folder"}.get(fields.get("mode"), "ifc")
+        kind = {"nic": "nic", "folder": "folder"}.get(fields.get("mode"), "ifc")
         _host = LiveHost(fields["path"], fields["path"], kind)
         try:
             out = _host.start()

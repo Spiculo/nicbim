@@ -30,16 +30,16 @@ def home(tmp_path, monkeypatch):
 def project(tmp_path):
     folder = tmp_path / "proj"
     folder.mkdir()
-    kim = folder / "house.kim"
-    kim.write_bytes(b"")
-    return kim
+    nic = folder / "house.nic"
+    nic.write_bytes(b"")
+    return nic
 
 
-def _command_ok(command: list[str], kim: Path | None):
+def _command_ok(command: list[str], nic: Path | None):
     assert command[0] == str(Path(sys.executable).resolve()) and Path(command[0]).is_absolute()
     assert command[1:4] == ["-m", "kimbim", "mcp"]
-    if kim is not None:
-        assert command[4:] == ["--project", str(kim.resolve())]
+    if nic is not None:
+        assert command[4:] == ["--project", str(nic.resolve())]
 
 
 def _env_ok(env: dict):

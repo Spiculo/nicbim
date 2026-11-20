@@ -27,7 +27,7 @@ def data_dir(tmp_path, monkeypatch):
 
 @pytest.fixture
 def folder(tmp_path):
-    """A versioned folder project (a worktree needs a repository outside a .kim archive)."""
+    """A versioned folder project (a worktree needs a repository outside a .nic archive)."""
     folder = tmp_path / "house"
     folder.mkdir()
     ifc = tmp_path / "house.ifc"
@@ -221,29 +221,29 @@ def test_the_cli_lists_and_renames_sessions(folder, capsys):
     assert sessions.Store().get(session_id).status == "archived"
 
 
-def test_a_kim_session_uses_the_shared_worker(tmp_path):
-    from kimbim import kimfile as K
+def test_a_nic_session_uses_the_shared_worker(tmp_path):
+    from kimbim import nicfile as K
     from kimbim.agent import client, worker
 
     ifc = tmp_path / "house.ifc"
     make_house.build(str(ifc))
-    kim = tmp_path / "house.kim"
-    out = json.loads(D.import_ifc(str(ifc), str(kim)))
+    nic = tmp_path / "house.nic"
+    out = json.loads(D.import_ifc(str(ifc), str(nic)))
     assert out["ok"], out
     json.loads(B.open_model(out["path"]))
     D.close_document()
 
     store = sessions.Store()
-    record = store.create(str(kim), "Kim session")
-    started = client.request(str(kim), "task.start", {"title": "Kim"}, client="test", session=record.id)
+    record = store.create(str(nic), "Nic session")
+    started = client.request(str(nic), "task.start", {"title": "Nic"}, client="test", session=record.id)
     assert started["ok"], started
     assert started["result"]["option"].startswith("agent/")
     assert store.get(record.id).tasks == [started["result"]["id"]]
     assert store.get(record.id).branch == started["result"]["option"]
-    pid = client.request(str(kim), "_ping", {}, session=record.id)["result"]["pid"]
-    assert worker.discovery_path(str(kim), record.id).exists() is False  # no separate worker for a .kim
-    assert worker.discovery_path(str(kim)).is_file()
-    assert client.request(str(kim), "_shutdown", {}, session=record.id)["ok"]
+    pid = client.request(str(nic), "_ping", {}, session=record.id)["result"]["pid"]
+    assert worker.discovery_path(str(nic), record.id).exists() is False  # no separate worker for a .nic
+    assert worker.discovery_path(str(nic)).is_file()
+    assert client.request(str(nic), "_shutdown", {}, session=record.id)["ok"]
     import time
 
     end = time.monotonic() + 20
@@ -256,7 +256,7 @@ def test_a_kim_session_uses_the_shared_worker(tmp_path):
 def test_the_session_worker_keeps_its_own_worktree(folder):
     import time
 
-    from kimbim import kimfile as K
+    from kimbim import nicfile as K
     from kimbim.agent import client, worker
 
     store = sessions.Store()

@@ -20,7 +20,7 @@ import threading
 
 from .. import app_bridge as B
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .. import settings as S
 from .. import underlays
 from . import messages

@@ -188,7 +188,7 @@ def _write_texture(f, style, look: dict):
 
 
 def texture_files(f=None) -> list:
-    """Every texture file the model's surfaces use (kept in the settings, so versions and .kim files carry them)."""
+    """Every texture file the model's surfaces use (kept in the settings, so versions and .nic files carry them)."""
     f = B._model if f is None else f
     names = set()
     for st in f.by_type("IfcSurfaceStyle"):

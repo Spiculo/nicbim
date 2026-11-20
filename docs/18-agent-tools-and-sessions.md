@@ -122,7 +122,7 @@ If the goal is the smallest set that lets an agent do almost anything an archite
    and hide/isolate/show all/zoom in the running app (D240).
 7. **Context and sessions**: ✅ built 2026-10-30 (D111): the state delta below, stored sessions with
    branches/worktrees, and the Assistant's session picker. Still pending: remote sync and worktree isolation for
-   `.kim`/IFC sessions (§6).
+   `.nic`/IFC sessions (§6).
 
 Gated (owner-only) by design: accepting/rejecting/combining an agent's work, deleting options, the agent settings
 (`agent_changes`, `agent_scripts`), remotes/credentials, opening another project, and anything that changes the
@@ -168,7 +168,7 @@ session; `kimbim mcp --session ID` does the same for MCP.
 ```
 
 - One session is one conversation and one task/design option (`agent/<slug>`); its task file stays in the project
-  so it travels with the `.kim`. The transcript stays in app data, so it is not versioned with the model.
+  so it travels with the `.nic`. The transcript stays in app data, so it is not versioned with the model.
 - The Assistant panel gets a **session picker** (new, resume, rename, archive, delete, fork). `Clear` starts a new
   session instead of losing the old one.
 - Sessions are listed per project (path hash) and per user. A session can be resumed after the app restarts; its
@@ -177,7 +177,7 @@ session; `kimbim mcp --session ID` does the same for MCP.
   repository, under the data dir (not OneDrive), checked out on its branch. The app's project window stays on the
   owner's option; a session's worktree is opened by its background worker or the live host on demand. Built: the
   Rust `Repo::open_worktree` keeps a per-worktree `.kimbim/HEAD` over the project's object store, and a stored
-  **folder** session gets `<data dir>/agent/worktrees/<project hash>/<session id>/`. A `.kim` or a plain IFC has
+  **folder** session gets `<data dir>/agent/worktrees/<project hash>/<session id>/`. A `.nic` or a plain IFC has
   nowhere to check out a second copy; those sessions record `worktree: ""` and use the D102 open/lock/worker path
   (one at a time). The Assistant routes a folder session's tool calls to its background worker, so the app's
   model and the session's worktree never touch; it saves the architect's unsaved work as "Before agent: <title>"
@@ -227,7 +227,7 @@ session; `kimbim mcp --session ID` does the same for MCP.
 
 ### Limits (now)
 
-- Worktree isolation is for **versioned folder** projects. A `.kim`/IFC session falls back to the shared
+- Worktree isolation is for **versioned folder** projects. A `.nic`/IFC session falls back to the shared
   open/lock path, so two of them cannot write at once; the app's live document is still the only model for those.
 - The Assistant in a folder session gets the session's view (its worktree/base), not the architect's unsaved
   model; "Before agent" saves that unsaved work first, and the review bar shows the finished proposal.
@@ -291,7 +291,7 @@ no task: like the app's Views menu it makes the view's purpose and layer states 
   open/parked/ready/merged/rejected/archived lifecycle.
 - Pending: remote session sync, encryption at rest on a server, and resuming a session on another machine (§4,
   *Remote (future, opt-in)*).
-- Pending: worktree isolation for `.kim`/IFC projects. Those sessions still share the app's one working document and
+- Pending: worktree isolation for `.nic`/IFC projects. Those sessions still share the app's one working document and
   fall back to the open/lock path, so two such sessions cannot write at once.
 
 ### In-app settings and operational limits

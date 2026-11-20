@@ -283,7 +283,7 @@ private slots:
         QVERIFY(d.saveTo(QStringLiteral("office")));
         QCOMPARE(d.result(), int(QDialog::Accepted));
         QVERIFY(d.outdatedAfterSave().isEmpty());
-        QVERIFY(QFile::exists(dir.filePath(QStringLiteral("chair_copy.kimobj"))));
+        QVERIFY(QFile::exists(dir.filePath(QStringLiteral("chair_copy.nicobj"))));
         bool listed = false;
         for (const auto& o : kimbim::PythonEngine::instance().callJson("library_objects", {}).object().value("objects").toArray())
             listed = listed || o.toObject().value("id").toString() == QLatin1String("office:chair_copy");
@@ -438,7 +438,7 @@ private slots:
         });
         QVERIFY(w.openObjectEditor(QStringLiteral("chair")));
         QVERIFY(edited);
-        QVERIFY(QFile::exists(dir.filePath(QStringLiteral("chair_copy.kimobj"))));
+        QVERIFY(QFile::exists(dir.filePath(QStringLiteral("chair_copy.nicobj"))));
         QVERIFY(panel->objectIds().contains(QStringLiteral("office:chair_copy"))); // the listing follows
 
         QVERIFY(panel->selectObject(QStringLiteral("office:chair_copy")));
@@ -496,7 +496,7 @@ private slots:
         QCOMPARE(runs, 3);
 
         // The office edits the file (width 0.5): the placed chair is outdated; Update library objects updates it.
-        QFile file(dir.filePath(QStringLiteral("chair_copy.kimobj")));
+        QFile file(dir.filePath(QStringLiteral("chair_copy.nicobj")));
         QVERIFY(file.open(QIODevice::ReadOnly));
         QJsonObject def = QJsonDocument::fromJson(file.readAll()).object();
         file.close();
@@ -560,7 +560,7 @@ private slots:
                 .value("outdated").toInt();
         };
         // The bench's file changes on disk: outdated.
-        QFile file(dir.filePath(QStringLiteral("bench.kimobj")));
+        QFile file(dir.filePath(QStringLiteral("bench.nicobj")));
         QVERIFY(file.open(QIODevice::ReadOnly));
         QJsonObject def = QJsonDocument::fromJson(file.readAll()).object();
         file.close();

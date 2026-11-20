@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Step 2: the open document — .kim, project folder or plain IFC (D72)."""
+"""Step 2: the open document — .nic, project folder or plain IFC (D72)."""
 import json
 
 import pytest
 
 from kimbim import app_bridge as b
 from kimbim import documents as D
-from kimbim import kimfile as K
+from kimbim import nicfile as K
 
 
 def call(fn, *args):
@@ -27,26 +27,26 @@ def house():
     return call("create_wall", level, t, 0, 0, 5, 0, 3.0, "", "")["guid"]
 
 
-def open_kim(path, read_only=""):
-    r = call("open_kim", str(path), read_only)
+def open_nic(path, read_only=""):
+    r = call("open_nic", str(path), read_only)
     if r["ok"]:
         assert call("open_model", r["path"])["ok"]  # what the app's loader does next
     return r
 
 
-def test_a_new_project_saved_as_kim_has_history_and_reopens(tmp_path, data):
+def test_a_new_project_saved_as_nic_has_history_and_reopens(tmp_path, data):
     wall = house()
     assert call("set_project_settings", json.dumps({"plan_cut_height": 1.1}))["ok"]
-    kim = tmp_path / "Casa ñ.kim"
-    r = call("save_as_kim", str(kim), "")
+    nic = tmp_path / "Casa ñ.nic"
+    r = call("save_as_nic", str(nic), "")
     assert r["ok"], r
     assert [v["message"] for v in call("history", 10)["versions"]] == ["First version"]
     st = call("document_state")
-    assert st["mode"] == "kim" and st["name"] == "Casa ñ.kim" and not st["untitled"] and st["kept"]
-    assert K.lock_path(kim).exists() and call("state")["dirty"] is False
+    assert st["mode"] == "nic" and st["name"] == "Casa ñ.nic" and not st["untitled"] and st["kept"]
+    assert K.lock_path(nic).exists() and call("state")["dirty"] is False
     assert call("close_document")["ok"]
-    assert not K.lock_path(kim).exists() and not (data / "open" / K.path_hash(kim)).exists()
-    assert open_kim(kim)["ok"]
+    assert not K.lock_path(nic).exists() and not (data / "open" / K.path_hash(nic)).exists()
+    assert open_nic(nic)["ok"]
     assert b._model.by_guid(wall) is not None
     assert call("project_settings")["settings"]["plan_cut_height"] == 1.1
     assert call("project_state")["versioned"] is True and call("state")["dirty"] is False
@@ -54,14 +54,14 @@ def test_a_new_project_saved_as_kim_has_history_and_reopens(tmp_path, data):
 
 def test_ctrl_s_saves_without_a_version_and_reopening_keeps_unversioned_work(tmp_path):
     wall = house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     call("set_name", json.dumps([wall]), "Muro guardado")
     assert call("save_document")["ok"]
     assert len(call("history", 10)["versions"]) == 1
     assert call("state")["dirty"] is False and call("project_state")["unversioned"] is True
     assert call("close_document")["ok"]
-    assert open_kim(kim)["ok"]
+    assert open_nic(nic)["ok"]
     assert b._model.by_guid(wall).Name == "Muro guardado"
     assert call("state")["dirty"] is False and call("project_state")["unversioned"] is True
     assert call("create_option", "B")["ok"]
@@ -70,69 +70,69 @@ def test_ctrl_s_saves_without_a_version_and_reopening_keeps_unversioned_work(tmp
     assert call("project_state")["unversioned"] is False
 
 
-def test_a_locked_kim_opens_read_only(tmp_path):
+def test_a_locked_nic_opens_read_only(tmp_path):
     house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     assert call("close_document")["ok"]
     foreign = {"user": "Ana", "account": "ana", "machine": "OTHER-PC", "pid": 4, "since": "2026-10-08T10:42"}
-    K.lock_path(kim).write_text(json.dumps(foreign))
-    r = call("open_kim", str(kim), "")
+    K.lock_path(nic).write_text(json.dumps(foreign))
+    r = call("open_nic", str(nic), "")
     assert not r["ok"] and r["locked"]["user"] == "Ana" and "Ana" in r["error"]
-    before = kim.read_bytes()
-    assert open_kim(kim, "1")["ok"]
+    before = nic.read_bytes()
+    assert open_nic(nic, "1")["ok"]
     assert call("document_state")["read_only"] is True
     assert call("project_state")["versioned"] is False
     assert not call("save_document")["ok"]
     assert call("close_document")["ok"]
-    assert json.loads(K.lock_path(kim).read_text())["user"] == "Ana" and kim.read_bytes() == before
+    assert json.loads(K.lock_path(nic).read_text())["user"] == "Ana" and nic.read_bytes() == before
 
 
-def test_opening_an_ifc_makes_a_kim_beside_it(tmp_path):
+def test_opening_an_ifc_makes_a_nic_beside_it(tmp_path):
     house()
     ifc = tmp_path / "House.ifc"
     assert call("save", str(ifc))["ok"]
     before = ifc.read_bytes()
-    beside = call("kim_beside", str(ifc))
-    assert beside["kim"] == str(tmp_path / "House.kim") and beside["exists"] is False
-    r = call("import_ifc", str(ifc), beside["kim"])
+    beside = call("nic_beside", str(ifc))
+    assert beside["nic"] == str(tmp_path / "House.nic") and beside["exists"] is False
+    r = call("import_ifc", str(ifc), beside["nic"])
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
-    assert (tmp_path / "House.kim").exists() and ifc.read_bytes() == before
+    assert (tmp_path / "House.nic").exists() and ifc.read_bytes() == before
     assert [v["message"] for v in call("history", 5)["versions"]] == ["Imported from House.ifc"]
-    assert call("document_state")["mode"] == "kim"
-    again = call("kim_beside", str(ifc))
-    assert again["exists"] is True and again["free"] == str(tmp_path / "House (2).kim")
-    assert not call("import_ifc", str(ifc), again["kim"])["ok"]
+    assert call("document_state")["mode"] == "nic"
+    again = call("nic_beside", str(ifc))
+    assert again["exists"] is True and again["free"] == str(tmp_path / "House (2).nic")
+    assert not call("import_ifc", str(ifc), again["nic"])["ok"]
 
 
-def test_save_as_folder_and_back_to_a_kim(tmp_path):
+def test_save_as_folder_and_back_to_a_nic(tmp_path):
     house()
-    assert call("save_as_kim", str(tmp_path / "a.kim"), "")["ok"]
+    assert call("save_as_nic", str(tmp_path / "a.nic"), "")["ok"]
     folder = tmp_path / "carpeta"
     r = call("save_as_folder", str(folder), "")
     assert r["ok"], r
     assert (folder / ".git").is_dir() and (folder / ".kimbim" / "lock").exists()
-    assert not K.lock_path(tmp_path / "a.kim").exists()
+    assert not K.lock_path(tmp_path / "a.nic").exists()
     assert call("document_state")["mode"] == "folder"
     assert call("set_project_settings", json.dumps({"sheet_paper": "A3"}))["ok"]
     assert call("save_document")["ok"]
     assert json.loads((folder / ".kimbim" / "settings.json").read_text())["sheet_paper"] == "A3"
-    assert call("save_as_kim", str(tmp_path / "b.kim"), "")["ok"]
+    assert call("save_as_nic", str(tmp_path / "b.nic"), "")["ok"]
     assert not (folder / ".kimbim" / "lock").exists()
     assert call("close_document")["ok"]
-    assert open_kim(tmp_path / "b.kim")["ok"]
+    assert open_nic(tmp_path / "b.nic")["ok"]
     assert len(call("history", 10)["versions"]) == 1
     assert call("project_settings")["settings"]["sheet_paper"] == "A3"
 
 
 def test_export_ifc_leaves_the_document_as_it_is(tmp_path):
     wall = house()
-    assert call("save_as_kim", str(tmp_path / "a.kim"), "")["ok"]
+    assert call("save_as_nic", str(tmp_path / "a.nic"), "")["ok"]
     call("set_name", json.dumps([wall]), "Exportado")
     assert call("export_ifc", str(tmp_path / "out.ifc"))["ok"]
     assert b"Exportado" in (tmp_path / "out.ifc").read_bytes()
-    assert call("document_state")["mode"] == "kim" and call("state")["dirty"] is True
+    assert call("document_state")["mode"] == "nic" and call("state")["dirty"] is True
 
 
 def test_existing_project_folders_open_with_default_settings(tmp_path):
@@ -150,12 +150,12 @@ def test_existing_project_folders_open_with_default_settings(tmp_path):
     assert call("document_state")["mode"] == "folder" and call("project_state")["unversioned"] is False
 
 
-def test_opening_another_model_releases_the_kim(tmp_path):
+def test_opening_another_model_releases_the_nic(tmp_path):
     house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     assert call("new_project", "otra")["ok"]
-    assert not K.lock_path(kim).exists()
+    assert not K.lock_path(nic).exists()
     assert call("document_state")["mode"] == "plain" and call("document_state")["untitled"] is True
 
 
@@ -163,10 +163,10 @@ def test_the_author_from_preferences_signs_versions_and_the_lock(tmp_path):
     assert call("set_author", "Felipe Lecot", "felipe@example.com")["ok"]
     try:
         house()
-        kim = tmp_path / "a.kim"
-        assert call("save_as_kim", str(kim), "")["ok"]
+        nic = tmp_path / "a.nic"
+        assert call("save_as_nic", str(nic), "")["ok"]
         assert call("history", 1)["versions"][0]["author"] == "Felipe Lecot"
-        assert json.loads(K.lock_path(kim).read_text())["user"] == "Felipe Lecot"
+        assert json.loads(K.lock_path(nic).read_text())["user"] == "Felipe Lecot"
     finally:
         call("set_author", "", "")
 
@@ -189,26 +189,26 @@ def test_a_recovery_copy_is_offered_after_a_crash_and_cleared_by_saving(tmp_path
     assert call("recoveries")["items"] == []
 
 
-def test_a_recovered_kim_reopens_the_kim_with_the_recovered_work(tmp_path):
+def test_a_recovered_nic_reopens_the_nic_with_the_recovered_work(tmp_path):
     wall = house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     call("set_name", json.dumps([wall]), "Recuperado")
     assert call("write_recovery")["written"] is True
     D._doc = D._plain()  # a crash: nothing was closed; the lock, working folder and copy are left behind
     item = call("recoveries")["items"][0]
-    assert item["source"] == str(kim) and item["name"] == "a.kim"
+    assert item["source"] == str(nic) and item["name"] == "a.nic"
     r = call("recover", item["id"])
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
-    assert b._model.by_guid(wall).Name == "Recuperado" and call("document_state")["mode"] == "kim"
+    assert b._model.by_guid(wall).Name == "Recuperado" and call("document_state")["mode"] == "nic"
     assert call("state")["dirty"] is True and call("project_state")["unversioned"] is True
     assert call("save_document")["ok"] and call("recoveries")["items"] == []
 
 
 def test_nothing_is_written_without_unsaved_work(tmp_path):
     house()
-    assert call("save_as_kim", str(tmp_path / "a.kim"), "")["ok"]
+    assert call("save_as_nic", str(tmp_path / "a.nic"), "")["ok"]
     assert call("write_recovery")["written"] is False
 
 
@@ -225,14 +225,14 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
     old_ids = {e.GlobalId for e in b._model.by_type("IfcRoot")}
     r = call("save_template", str(folder), "Oficina")
     assert r["ok"], r
-    assert K.read_manifest(folder / "Oficina.kim")["kind"] == "template"
+    assert K.read_manifest(folder / "Oficina.nic")["kind"] == "template"
     assert not call("save_template", str(folder), "Oficina")["ok"]
     assert call("save_template", str(folder), "Oficina", "1")["ok"]
     assert not call("save_template", str(folder), "a/b")["ok"]
     listed = call("templates", str(folder))
     assert listed["folder_ok"] and [t["name"] for t in listed["templates"]] == ["KimBim default", "Oficina"]
 
-    r = call("new_from_template", str(folder / "Oficina.kim"))
+    r = call("new_from_template", str(folder / "Oficina.nic"))
     assert r["ok"], r
     assert call("open_model", r["path"])["ok"]
     new_ids = {e.GlobalId for e in b._model.by_type("IfcRoot")}
@@ -242,7 +242,7 @@ def test_templates_list_save_and_make_new_projects(tmp_path):
     assert call("project_info")["number"] == "" and call("project_settings")["settings"]["drawing_scale"] == 50
     st = call("document_state")
     assert st["untitled"] is True and st["template"] == "Oficina" and call("state")["dirty"] is False
-    assert call("save_as_kim", str(tmp_path / "nuevo.kim"), "")["ok"]
+    assert call("save_as_nic", str(tmp_path / "nuevo.nic"), "")["ok"]
     assert [v["message"] for v in call("history", 5)["versions"]] == ["Created from Oficina"]
 
 
@@ -256,83 +256,83 @@ def test_an_opened_template_saves_back_as_a_template(tmp_path):
     folder = tmp_path / "t"
     house()
     assert call("save_template", str(folder), "Base")["ok"]
-    assert open_kim(folder / "Base.kim")["ok"]
+    assert open_nic(folder / "Base.nic")["ok"]
     assert call("document_state")["mode"] == "template" and call("project_state")["versioned"] is False
     assert call("set_project_settings", json.dumps({"sheet_paper": "A3"}))["ok"]
     assert call("save_document")["ok"]
-    assert K.read_manifest(folder / "Base.kim")["kind"] == "template"
+    assert K.read_manifest(folder / "Base.nic")["kind"] == "template"
 
 
 def test_save_as_ifc_turns_the_document_into_that_ifc(tmp_path):
     house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     r = call("save_as_ifc", str(tmp_path / "b.ifc"))
     assert r["ok"], r
-    assert not K.lock_path(kim).exists() and (tmp_path / "b.ifc").exists()
+    assert not K.lock_path(nic).exists() and (tmp_path / "b.ifc").exists()
     st = call("document_state")
     assert st["mode"] == "plain" and st["name"] == "b.ifc" and call("project_state")["versioned"] is False
 
 
 # ---------------------------------------------------------------- final review fixes
 
-def test_options_and_milestones_reach_the_kim_without_ctrl_s(tmp_path):
-    """Creating an option or a milestone, or switching options, changes the history: the .kim must hold it
+def test_options_and_milestones_reach_the_nic_without_ctrl_s(tmp_path):
+    """Creating an option or a milestone, or switching options, changes the history: the .nic must hold it
     even if the user closes without saving (the model itself has nothing unsaved)."""
     house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     assert call("create_milestone", "Permit", "")["ok"]
     assert call("create_option", "B")["ok"]
     assert call("switch_option", "main")["ok"]
     assert call("close_document")["ok"]
-    assert open_kim(kim)["ok"]
+    assert open_nic(nic)["ok"]
     assert "B" in call("options")["options"] and call("project_state")["option"] == "main"
     assert [m["name"] for m in call("milestones")["milestones"]] == ["Permit"]
 
 
 def test_an_option_made_with_unsaved_edits_keeps_the_last_saved_model(tmp_path):
     wall = house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     call("set_name", json.dumps([wall]), "Sin guardar")
     assert call("create_option", "B")["ok"]  # carries the unsaved edit; the file keeps the saved model
     assert call("close_document")["ok"]
-    assert open_kim(kim)["ok"]
+    assert open_nic(nic)["ok"]
     assert "B" in call("options")["options"]
     assert b._model.by_guid(wall).Name != "Sin guardar"
 
 
-def test_a_failed_open_leaves_the_open_kim_attached(tmp_path):
+def test_a_failed_open_leaves_the_open_nic_attached(tmp_path):
     house()
-    a, other = tmp_path / "a.kim", tmp_path / "b.kim"
-    assert call("save_as_kim", str(other), "")["ok"]
-    assert call("save_as_kim", str(a), "")["ok"]
+    a, other = tmp_path / "a.nic", tmp_path / "b.nic"
+    assert call("save_as_nic", str(other), "")["ok"]
+    assert call("save_as_nic", str(a), "")["ok"]
     K.lock_path(other).write_text(json.dumps({"user": "Ana", "account": "ana", "machine": "OTHER", "pid": 4, "since": "x"}))
-    assert not call("open_kim", str(other), "")["ok"]  # locked: the app asks, the user cancels
-    assert K.lock_path(a).exists() and call("document_state")["name"] == "a.kim"
+    assert not call("open_nic", str(other), "")["ok"]  # locked: the app asks, the user cancels
+    assert K.lock_path(a).exists() and call("document_state")["name"] == "a.nic"
     assert call("save_document")["ok"]
 
 
-def test_opening_another_kim_releases_the_previous_one(tmp_path):
+def test_opening_another_nic_releases_the_previous_one(tmp_path):
     house()
-    a, other = tmp_path / "a.kim", tmp_path / "b.kim"
-    assert call("save_as_kim", str(other), "")["ok"]
-    assert call("save_as_kim", str(a), "")["ok"]
-    assert open_kim(other)["ok"]
+    a, other = tmp_path / "a.nic", tmp_path / "b.nic"
+    assert call("save_as_nic", str(other), "")["ok"]
+    assert call("save_as_nic", str(a), "")["ok"]
+    assert open_nic(other)["ok"]
     assert not K.lock_path(a).exists() and K.lock_path(other).exists()
-    assert call("document_state")["name"] == "b.kim"
+    assert call("document_state")["name"] == "b.nic"
 
 
-def test_save_as_from_a_read_only_kim_keeps_the_history(tmp_path):
+def test_save_as_from_a_read_only_nic_keeps_the_history(tmp_path):
     house()
-    kim = tmp_path / "a.kim"
-    assert call("save_as_kim", str(kim), "")["ok"]
+    nic = tmp_path / "a.nic"
+    assert call("save_as_nic", str(nic), "")["ok"]
     assert call("save_version", "nothing new")["ok"] is False  # still one version
     assert call("set_project_settings", json.dumps({"drawing_scale": 50}))["ok"]
     assert call("save_version", "Second")["ok"] and call("save_document")["ok"]
     assert call("close_document")["ok"]
-    K.lock_path(kim).write_text(json.dumps({"user": "Ana", "account": "ana", "machine": "OTHER", "pid": 4, "since": "x"}))
-    assert open_kim(kim, "1")["ok"]
-    assert call("save_as_kim", str(tmp_path / "copia.kim"), "")["ok"]
+    K.lock_path(nic).write_text(json.dumps({"user": "Ana", "account": "ana", "machine": "OTHER", "pid": 4, "since": "x"}))
+    assert open_nic(nic, "1")["ok"]
+    assert call("save_as_nic", str(tmp_path / "copia.nic"), "")["ok"]
     assert [v["message"] for v in call("history", 10)["versions"]] == ["Second", "First version"]

@@ -2345,7 +2345,7 @@ void MainWindow::showError(const QString& title, const QString& message)
 void MainWindow::openDialog()
 {
     const QString path = QFileDialog::getOpenFileName(this, tr("Open"), QString(),
-        tr("KimBim and IFC files (*.kim *.ifc);;KimBim projects (*.kim);;IFC files (*.ifc)"));
+        tr("KimBim and IFC files (*.nic *.ifc);;KimBim projects (*.nic);;IFC files (*.ifc)"));
     if (!path.isEmpty())
         openPath(path);
 }
@@ -5173,7 +5173,7 @@ void MainWindow::buildVersions()
     m_versionsMenu = menu;
     QAction* enable = menu->addAction(tr("&Enable versioning..."));
     enable->setObjectName(QStringLiteral("actionEnableVersioning"));
-    enable->setToolTip(tr("Save the project as a .kim file, which keeps its versions and design options"));
+    enable->setToolTip(tr("Save the project as a .nic file, which keeps its versions and design options"));
     connect(enable, &QAction::triggered, this, &MainWindow::enableVersioningDialog);
     m_unversionedActions << enable;
     m_projectActions << menu->addSection(tr("Design options"));
@@ -5276,12 +5276,12 @@ void MainWindow::enableVersioningDialog()
     if (m_versioned || m_quiet)
         return;
     QString path = QFileDialog::getSaveFileName(this, tr("Enable versioning"), m_document.value("path").toString(),
-        tr("KimBim project (*.kim)"));
+        tr("KimBim project (*.nic)"));
     if (path.isEmpty())
         return;
-    if (QFileInfo(path).suffix().compare(QLatin1String("kim"), Qt::CaseInsensitive) != 0)
-        path += QStringLiteral(".kim");
-    saveAs(path); // a .kim keeps the history: its first version is the model as it is
+    if (QFileInfo(path).suffix().compare(QLatin1String("nic"), Qt::CaseInsensitive) != 0)
+        path += QStringLiteral(".nic");
+    saveAs(path); // a .nic keeps the history: its first version is the model as it is
 }
 
 void MainWindow::buildPalette()
@@ -5470,8 +5470,8 @@ bool MainWindow::openPath(const QString& path)
     const QFileInfo info(path);
     if (info.isDir())
         return openProject(path);
-    if (info.suffix().compare(QLatin1String("kim"), Qt::CaseInsensitive) == 0)
-        return openKim(path);
+    if (info.suffix().compare(QLatin1String("nic"), Qt::CaseInsensitive) == 0)
+        return openNic(path);
     return openIfc(path);
 }
 
@@ -5510,13 +5510,13 @@ bool MainWindow::askReadOnly(const QJsonObject& r)
                QMessageBox::Open | QMessageBox::Cancel, QMessageBox::Open) == QMessageBox::Open;
 }
 
-bool MainWindow::openKim(const QString& path, bool readOnly)
+bool MainWindow::openNic(const QString& path, bool readOnly)
 {
     if (!prepareToOpen())
         return false;
-    QJsonObject r = bridge("open_kim", {path, readOnly ? QStringLiteral("1") : QString()});
+    QJsonObject r = bridge("open_nic", {path, readOnly ? QStringLiteral("1") : QString()});
     if (!r.value("ok").toBool() && askReadOnly(r))
-        r = bridge("open_kim", {path, QStringLiteral("1")});
+        r = bridge("open_nic", {path, QStringLiteral("1")});
     if (!r.value("ok").toBool()) {
         if (!r.contains("locked"))
             showError(tr("Could not open the file"), r.value("error").toString());
@@ -5532,18 +5532,18 @@ MainWindow::LargeIfc MainWindow::askLargeIfc(const QString& path, double mb)
 {
     const QString file = QFileInfo(path).fileName();
     if (m_quiet)
-        return m_largeIfcAnswer ? m_largeIfcAnswer(file, mb) : LargeIfc::MakeKim;
+        return m_largeIfcAnswer ? m_largeIfcAnswer(file, mb) : LargeIfc::MakeNic;
     QMessageBox box(QMessageBox::Question, tr("Open IFC"),
         tr("%1 is a large model (%2 MB).").arg(file, QLocale().toString(mb, 'f', mb < 10.0 ? 1 : 0)), QMessageBox::Cancel, this);
     box.setInformativeText(tr("Making a KimBim project from it can take several minutes.\n\n"
         "Editing the IFC directly opens it at once, without version history, options, compare or "
         "combine, and project settings (cut height, layer states, drawing scale, units) aren't kept. "
-        "You can make a .kim later with File > Save As."));
-    QPushButton* make = box.addButton(tr("Make a .kim project"), QMessageBox::AcceptRole);
+        "You can make a .nic later with File > Save As."));
+    QPushButton* make = box.addButton(tr("Make a .nic project"), QMessageBox::AcceptRole);
     QPushButton* direct = box.addButton(tr("Edit the IFC directly"), QMessageBox::AcceptRole);
     box.setDefaultButton(make);
     box.exec();
-    return box.clickedButton() == make ? LargeIfc::MakeKim
+    return box.clickedButton() == make ? LargeIfc::MakeNic
         : box.clickedButton() == direct ? LargeIfc::EditIfc : LargeIfc::Cancel;
 }
 
@@ -5553,7 +5553,7 @@ bool MainWindow::openIfc(const QString& path)
     QJsonObject beside;
     if (!direct) {
         // asked before anything changes, so Cancel leaves the open document as it was
-        beside = bridge("kim_beside", {path});
+        beside = bridge("nic_beside", {path});
         const double mb = QFileInfo(path).size() / 1e6, limit = m_prefs.largeIfcMb();
         if (!beside.value("exists").toBool() && limit > 0.0 && mb > limit) {
             const LargeIfc answer = askLargeIfc(path, mb);
@@ -5570,12 +5570,12 @@ bool MainWindow::openIfc(const QString& path)
         m_askImportStatus = true; // once it has loaded
         return true;
     }
-    QString kim = beside.value("kim").toString();
+    QString nic = beside.value("nic").toString();
     if (beside.value("exists").toBool()) {
         auto answer = QMessageBox::Open;
         if (!m_quiet) {
             QMessageBox box(QMessageBox::Question, tr("Open IFC"),
-                tr("%1 already exists next to %2.").arg(QFileInfo(kim).fileName(), QFileInfo(path).fileName()),
+                tr("%1 already exists next to %2.").arg(QFileInfo(nic).fileName(), QFileInfo(path).fileName()),
                 QMessageBox::Open | QMessageBox::Cancel, this);
             QPushButton* make = box.addButton(tr("Make a new one"), QMessageBox::AcceptRole);
             box.setDefaultButton(QMessageBox::Open);
@@ -5584,14 +5584,14 @@ bool MainWindow::openIfc(const QString& path)
                 : box.clickedButton() == box.button(QMessageBox::Open) ? QMessageBox::Open : QMessageBox::Cancel;
         }
         if (answer == QMessageBox::Open)
-            return openKim(kim);
+            return openNic(nic);
         if (answer == QMessageBox::Cancel)
             return false;
-        kim = beside.value("free").toString();
+        nic = beside.value("free").toString();
     }
-    const QString label = tr("Making %1...").arg(QFileInfo(kim).fileName());
+    const QString label = tr("Making %1...").arg(QFileInfo(nic).fileName());
     m_status->showMessage(label);
-    const QJsonObject r = bridgeInBackground("import_ifc", {path, kim},
+    const QJsonObject r = bridgeInBackground("import_ifc", {path, nic},
         label + QLatin1Char('\n') + tr("Large models can take several minutes."));
     if (!r.value("ok").toBool()) {
         showError(tr("Could not make the project file"), r.value("error").toString());
@@ -5599,8 +5599,8 @@ bool MainWindow::openIfc(const QString& path)
     }
     endCompare();
     openFile(r.value("path").toString());
-    rememberRecent(kim);
-    m_askImportStatus = true; // once loaded; the .kim's first version stays the IFC as it was
+    rememberRecent(nic);
+    m_askImportStatus = true; // once loaded; the .nic's first version stays the IFC as it was
     return true;
 }
 
@@ -5647,7 +5647,7 @@ void MainWindow::openProjectDialog()
 bool MainWindow::saveVersion(const QString& message)
 {
     if (!commitVersion(message))
-        return false; // (the bridge packs a .kim when its history changes)
+        return false; // (the bridge packs a .nic when its history changes)
     refreshProject();
     return true;
 }
@@ -11704,9 +11704,9 @@ void MainWindow::afterSave()
 bool MainWindow::saveAs(const QString& path)
 {
     const bool ifc = QFileInfo(path).suffix().compare(QLatin1String("ifc"), Qt::CaseInsensitive) == 0;
-    // Saving a model as a .kim for the first time makes its first version: minutes on large models.
+    // Saving a model as a .nic for the first time makes its first version: minutes on large models.
     const QJsonObject r = ifc ? bridge("save_as_ifc", {path})
-        : bridgeInBackground("save_as_kim", {path}, tr("Saving %1...").arg(QFileInfo(path).fileName()));
+        : bridgeInBackground("save_as_nic", {path}, tr("Saving %1...").arg(QFileInfo(path).fileName()));
     if (!r.value("ok").toBool()) {
         showError(tr("Could not save"), r.value("error").toString());
         return false;
@@ -11721,7 +11721,7 @@ void MainWindow::saveAsDialog()
 {
     QString selected;
     const QString path = QFileDialog::getSaveFileName(this, tr("Save As"), m_document.value("path").toString(),
-        tr("KimBim project (*.kim);;IFC file (*.ifc)"), &selected);
+        tr("KimBim project (*.nic);;IFC file (*.ifc)"), &selected);
     if (!path.isEmpty())
         saveAs(path);
 }

@@ -5,7 +5,7 @@ NicBim never converts a schema silently: a file is saved in the schema it was op
 IFC4 and IFC4X3 is this explicit command, done with IfcOpenShell's own `Migrator` (what ifcpatch's Migrate
 recipe runs), element by element into a new file of the target schema.
 
-- A versioned project (a .kim, a project folder, or a model versioned in place) changes schema as **a version of
+- A versioned project (a .nic, a project folder, or a model versioned in place) changes schema as **a version of
   its own**: the migrated model is committed at once with the message given, and later versions are in the new
   schema. Unsaved edits must be saved as a version first, so the change is never mixed with other work.
 - A plain IFC file is written to a new path (never over the file opened, which keeps its schema); the app

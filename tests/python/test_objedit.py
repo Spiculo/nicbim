@@ -32,7 +32,7 @@ BLOCK = {
 
 
 def test_a_project_object_lists_and_places(project):
-    data = json.loads((library.BUNDLED / "table.kimobj").read_text(encoding="utf-8"))
+    data = json.loads((library.BUNDLED / "table.nicobj").read_text(encoding="utf-8"))
     defn = objects.load({**data, "id": "stool"}, "project")
     assert defn.ref == "project:stool" and library.get("project:stool") is None
     b._run(lambda: (library._make_type(defn, defn.values()), 1)[1])
@@ -48,7 +48,7 @@ def test_a_project_object_lists_and_places(project):
 
 
 def test_an_object_gone_from_the_library_still_places(project, tmp_path):
-    (tmp_path / "block.kimobj").write_text(json.dumps(BLOCK), encoding="utf-8")
+    (tmp_path / "block.nicobj").write_text(json.dumps(BLOCK), encoding="utf-8")
     library.load_office(str(tmp_path))
     assert call("place_object", project, "office:block", "", 0, 0)["ok"]
     library.load_office()
@@ -84,7 +84,7 @@ def test_a_bundled_object_opens_as_a_copy(project, tmp_path):
     r = call("object_draft", "chair")
     assert r["copy"] is True and r["target"] == "" and r["draft"]["id"] == "chair_copy"
     assert r["draft"]["name"] == {"en": "Chair (copy)", "es": "Silla (copia)"}
-    (tmp_path / "chair_copy.kimobj").write_text(json.dumps(r["draft"]), encoding="utf-8")
+    (tmp_path / "chair_copy.nicobj").write_text(json.dumps(r["draft"]), encoding="utf-8")
     library.load_office(str(tmp_path))
     assert "office:chair_copy" in library._office
     assert call("object_draft", "chair")["draft"]["id"] == "chair_copy2"
@@ -106,7 +106,7 @@ def test_customise_a_copy_takes_the_type_values(project):
 
 
 def test_a_project_object_opens_for_editing(project):
-    data = json.loads((library.BUNDLED / "table.kimobj").read_text(encoding="utf-8"))
+    data = json.loads((library.BUNDLED / "table.nicobj").read_text(encoding="utf-8"))
     defn = objects.load({**data, "id": "stool"}, "project")
     b._run(lambda: (library._make_type(defn, defn.values()), 1)[1])
     r = call("object_draft", "project:stool")
@@ -183,7 +183,7 @@ def test_a_hostile_draft_fails_fast(project):
 
 
 def test_every_bundled_object_checks_ok(project):
-    for path in sorted(library.BUNDLED.glob("*.kimobj")):
+    for path in sorted(library.BUNDLED.glob("*.nicobj")):
         r = call("check_draft", path.read_text(encoding="utf-8"))
         assert r["ok"], (path.name, r["errors"])
 
@@ -235,18 +235,18 @@ def test_save_to_office_writes_and_lists(project, tmp_path):
     library.load_office(str(tmp_path))
     r = call("save_draft", _text(d), "office")
     assert r["ok"] and r["ref"] == "office:chair_copy" and r["outdated"] == 0, r
-    path = tmp_path / "chair_copy.kimobj"
+    path = tmp_path / "chair_copy.nicobj"
     assert r["path"] == str(path) and path.read_text(encoding="utf-8").endswith("}\n")
     assert json.loads(path.read_text(encoding="utf-8")) == d and list(json.loads(path.read_text(encoding="utf-8"))) == list(d)
     assert library.get("office:chair_copy").values()["legs"] == 3
     assert call("save_draft", _text(d), "office") == {"ok": False, "exists": "chair_copy"}
     assert call("save_draft", _text(d), "office", "chair_copy")["ok"]
     other = {**d, "id": "other"}  # a file with another name holding the same id is replaced in place
-    (tmp_path / "elsewhere.kimobj").write_text(json.dumps({**d, "id": "stool_x"}), encoding="utf-8")
+    (tmp_path / "elsewhere.nicobj").write_text(json.dumps({**d, "id": "stool_x"}), encoding="utf-8")
     library.load_office(str(tmp_path))
     assert call("save_draft", _text({**d, "id": "stool_x"}), "office")["exists"] == "stool_x"
-    assert call("save_draft", _text({**d, "id": "stool_x"}), "office", "stool_x")["path"] == str(tmp_path / "elsewhere.kimobj")
-    assert not (tmp_path / "stool_x.kimobj").exists() and call("save_draft", _text(other), "office")["ok"]
+    assert call("save_draft", _text({**d, "id": "stool_x"}), "office", "stool_x")["path"] == str(tmp_path / "elsewhere.nicobj")
+    assert not (tmp_path / "stool_x.nicobj").exists() and call("save_draft", _text(other), "office")["ok"]
     assert call("save_draft", _text(d), "elsewhere")["ok"] is False
 
 
@@ -420,7 +420,7 @@ def test_an_office_file_keeps_the_definition_order(project, tmp_path):
                                     "params": [{"default": 0.1, "label": "P", "kind": "length", "key": "p"}]}}
     r = call("save_draft", _text(shuffled), "office")
     assert r["ok"], r
-    saved = json.loads((tmp_path / "new_object.kimobj").read_text(encoding="utf-8"))
+    saved = json.loads((tmp_path / "new_object.nicobj").read_text(encoding="utf-8"))
     assert list(saved) == ["format", "id", "name", "category", "ifc", "params", "materials", "parts",
                            "components"]
     assert list(saved["parts"][0])[0] == "id"
@@ -441,6 +441,6 @@ def test_an_office_save_that_does_not_load_says_so(project, tmp_path):
     assert call("check_draft", _text(d))["ok"]
     r = call("save_draft", _text(d), "office", "new_object")
     assert r["ok"] is False and "use cycle" in r["error"], r
-    assert str(tmp_path / "new_object.kimobj") in r["error"]
+    assert str(tmp_path / "new_object.nicobj") in r["error"]
     assert "office:new_object" not in library._office
-    assert json.loads((tmp_path / "new_object.kimobj").read_text(encoding="utf-8"))["parts"][1]["id"] == "again"
+    assert json.loads((tmp_path / "new_object.nicobj").read_text(encoding="utf-8"))["parts"][1]["id"] == "again"

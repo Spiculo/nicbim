@@ -11,7 +11,7 @@ from .. import authoring as A
 from .. import graphics as G
 from .. import queries as Q
 from .. import documents as D
-from .. import kimfile as K
+from .. import nicfile as K
 from .. import settings as S
 from .. import versioning as V
 from . import sessions as stored
@@ -43,11 +43,11 @@ class Session:
 
     @property
     def project_path(self) -> str:
-        """Where the project's task files live: the folder's own `.kimbim`, the .kim's unpacked copy, or the
+        """Where the project's task files live: the folder's own `.kimbim`, the .nic's unpacked copy, or the
         data folder for a plain IFC. A session's worktree does not hide the task from the app."""
         if self.kind == "folder":
             return self.source
-        if self.kind == "kim":
+        if self.kind == "nic":
             return D._doc.get("work") or self.source
         return self.source
 
@@ -73,8 +73,8 @@ class Session:
         p = pathlib.Path(path)
         if p.is_dir():
             kind = "folder"
-        elif p.suffix.lower() == ".kim":
-            kind = "kim"
+        elif p.suffix.lower() == ".nic":
+            kind = "nic"
         elif p.suffix.lower() == ".ifc":
             kind = "ifc"
         else:
@@ -95,7 +95,7 @@ class Session:
     @classmethod
     def open_stored(cls, session_id: str, client: str = "cli") -> "Session":
         """Open a stored session (D111): a folder project gets its own worktree, so the app's working copy
-        stays where it is; a `.kim`/IFC falls back to the existing open/lock path."""
+        stays where it is; a `.nic`/IFC falls back to the existing open/lock path."""
         store = stored.Store()
         record = store.get(session_id)
         if record.status == "archived":
@@ -114,7 +114,7 @@ class Session:
                 # ensure_worktree already put the worktree on the session's branch
                 out = json.loads(D.open_worktree(record.project, worktree))
             else:
-                out = json.loads(D.open_kim(str(p)) if kind == "kim" else
+                out = json.loads(D.open_nic(str(p)) if kind == "nic" else
                                  (D.open_folder(str(p)) if kind == "folder" else B.open_model(str(p))))
             if out.get("locked"):
                 raise AgentError("project_locked", holder=out["locked"])
@@ -190,7 +190,7 @@ class Session:
         self.stored = self.store.get(self.stored_id)
 
     def task_status(self, task, status: str) -> None:
-        """A task changed state. A shared `.kim` worker restores its unbound session after each request, so the
+        """A task changed state. A shared `.nic` worker restores its unbound session after each request, so the
         task remembers its session id; the store is opened again here."""
         session_id = self.stored_id or getattr(task, "session", "")
         if not session_id:
@@ -207,7 +207,7 @@ class Session:
         if self.kind == "ifc":
             out = json.loads(B.open_model(str(p)))
         else:
-            out = json.loads(D.open_kim(str(p)) if self.kind == "kim" else D.open_folder(str(p)))
+            out = json.loads(D.open_nic(str(p)) if self.kind == "nic" else D.open_folder(str(p)))
             if out.get("locked"):
                 raise AgentError("project_locked", holder=out["locked"])
             if out.get("ok"):
