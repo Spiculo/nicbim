@@ -33,6 +33,7 @@ GROUP_HELP = {
     "selection": "the app's selection", "script": "run Python scripts", "snapshot": "pictures of the model",
     "serve": "keep a project open for agent commands", "mcp": "MCP server for AI agents",
     "setup": "configure an AI client or the file associations", "sessions": "stored conversations, branches and worktrees (D111)",
+    "studio": "long-running studio agents you steer while they work (D252)",
     "help": "this help, or the agent tools as a Markdown table",
 }
 
@@ -429,6 +430,27 @@ def _people(group, top) -> None:
 
     s = leaf("project", "init", _init, help="make a folder a NicBim project", description="Make a folder a NicBim project.")
     s.add_argument("dir", nargs="?")
+    s = leaf("project", "new", _project_new, help="create a new project from scratch, optionally on the map",
+             description="Create a new NicBim project (D253): a versioned folder, or a .nic file when PATH ends in "
+                         ".nic, with site, building and a first level. With --lat/--lon it is georeferenced (IfcSite "
+                         "reference, map conversion in a projected CRS, true north).")
+    s.add_argument("path", help="a new or empty folder, or a .nic file")
+    s.add_argument("--name", default="", help="the project's name (title blocks)")
+    s.add_argument("--number", default="", help="the project number (title blocks)")
+    s.add_argument("--client-name", default="", help="the client (title blocks)")
+    s.add_argument("--address", default="", help="street and number")
+    s.add_argument("--town", default="")
+    s.add_argument("--country", default="")
+    s.add_argument("--schema", default="IFC4", choices=("IFC4", "IFC4X3"))
+    s.add_argument("--lat", type=float, help="latitude, decimal degrees (south negative)")
+    s.add_argument("--lon", type=float, help="longitude, decimal degrees (west negative)")
+    s.add_argument("--elevation", type=float, default=0.0, help="metres above sea level of the project's zero")
+    s.add_argument("--north", type=float, default=0.0,
+                   help="degrees the building's +Y axis is turned clockwise from true north")
+    s.add_argument("--crs", default="auto", help="auto (UTM of the longitude), EPSG:5382 (Uruguay), EPSG:327zz...")
+    s.add_argument("--level", action="append", default=[], metavar="NAME=ELEVATION",
+                   help="levels to add, e.g. \"Planta alta=3\" (repeatable; metres). The first level is renamed "
+                        "to the first NAME when its elevation is 0")
     s = leaf("versions", "save", _save, help="save a new version (of an IFC file, or of the open project)",
              description="Save a new version. With FILE, that IFC file becomes the version; without, the project's "
                          "working model (the project must not be open in a worker or the app).")
@@ -530,6 +552,40 @@ def _people(group, top) -> None:
     s = leaf("sessions", "fork", _sessions_fork, help="copy a session to try another answer")
     s.add_argument("id")
     s.add_argument("--title", default="")
+    s = leaf("studio", "start", _studio_start, help="start a studio agent on a brief",
+             description="Start a long-running studio agent (D252) on the project: it plans, builds, draws and "
+                         "delivers while you work in the app, and keeps running (waiting for you) when it has done "
+                         "what it was asked. Prints the session id. Detached unless --foreground.")
+    s.add_argument("brief", nargs="?", default="", help="the brief as text, or @FILE to read it from a file")
+    s.add_argument("--title", default="")
+    s.add_argument("--provider", default="", help="anthropic or openai (default: the app's Assistant preference)")
+    s.add_argument("--model", default="")
+    s.add_argument("--effort", default="high", choices=("low", "medium", "high", "xhigh", "max"))
+    s.add_argument("--base-url", default="")
+    s.add_argument("--foreground", action="store_true", help="run in this terminal (Ctrl+C stops it)")
+    s.add_argument("--exit-when-done", action="store_true", help="end when the agent stops asking for tools")
+    for verb, text_help in (("say", "tell the agent something (it reads it before its next step)"),
+                            ("task", "a small task; a helper does it while the agent carries on")):
+        s = leaf("studio", verb, _studio_send, help=text_help)
+        s.add_argument("id")
+        s.add_argument("text", nargs="+")
+        s.set_defaults(kind=verb)
+    for verb, help_text in (("pause", "pause the agent after its current step"),
+                            ("stop", "stop the agent after its current step")):
+        s = leaf("studio", verb, _studio_send, help=help_text)
+        s.add_argument("id")
+        s.set_defaults(kind=verb, text=[])
+    s = leaf("studio", "resume", _studio_resume, help="resume a paused agent, or restart a stopped one",
+             description="A paused agent continues; a stopped one is started again from its plan, notes and summary.")
+    s.add_argument("id")
+    s.add_argument("--foreground", action="store_true")
+    s = leaf("studio", "status", _studio_status, help="show a studio agent's state, plan and notes")
+    s.add_argument("id")
+    s = leaf("studio", "log", _studio_log, help="print a studio agent's transcript")
+    s.add_argument("id")
+    s.add_argument("--follow", "-f", action="store_true", help="keep printing as it works (Ctrl+C to leave)")
+    s.add_argument("--last", type=int, default=40, help="how many entries to show first (default 40)")
+    leaf("studio", "list", _studio_list, help="list studio agents of the project")
     sp = top.add_parser("serve", help=GROUP_HELP["serve"], description=GROUP_HELP["serve"])
     sp.add_argument("project")
     sp.add_argument("--session", default="", help="a stored session: keep its worktree open")
@@ -1147,3 +1203,188 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, _core.RepoError) as e:
         print(_t("cli_error", message=e), file=sys.stderr)
         return 1
+
+
+# ---------------------------------------------------------------- studio agents (D252)
+
+def _studio_text(value: str) -> str:
+    if value.startswith("@"):
+        return pathlib.Path(value[1:]).read_text(encoding="utf-8")
+    return value
+
+
+def _studio_start(ns) -> int:
+    from . import studio
+    project = ns.g_project or discover(None)
+    out = studio.start(project, _studio_text(ns.brief or ""), title=ns.title, provider=ns.provider, model=ns.model,
+                       effort=ns.effort, base_url=ns.base_url, foreground=ns.foreground,
+                       exit_when_done=ns.exit_when_done)
+    if ns.g_json:
+        print(json.dumps(out, ensure_ascii=False, indent=1))
+    else:
+        print(out["session"])
+        if not ns.foreground:
+            print(f"  follow it:  kimbim studio log {out['session']} -f", file=sys.stderr)
+            print(f"  steer it:   kimbim studio say {out['session']} \"...\"", file=sys.stderr)
+    return 0
+
+
+def _studio_send(ns) -> int:
+    from . import studio
+    current = studio.status(ns.id)
+    if ns.kind in ("say", "task") and current.get("state") not in studio.LIVE_STATES:
+        print(f"note: session {ns.id} is {current.get('state') or 'not running'}; the message waits until "
+              f"`kimbim studio resume {ns.id}`", file=sys.stderr)
+    entry = studio.send(ns.id, ns.kind, " ".join(ns.text))
+    if ns.g_json:
+        print(json.dumps(entry, ensure_ascii=False, indent=1))
+    return 0
+
+
+def _studio_resume(ns) -> int:
+    from . import studio
+    current = studio.status(ns.id)
+    if current.get("state") == "paused":
+        studio.send(ns.id, "resume")
+        print(f"{ns.id} resumed")
+        return 0
+    out = studio.resume(ns.id, foreground=ns.foreground)
+    print(json.dumps(out, ensure_ascii=False, indent=1) if ns.g_json else f"{out['session']} restarted")
+    return 0
+
+
+def _studio_status(ns) -> int:
+    from . import studio
+    state = studio.status(ns.id)
+    plan = studio.read_file(ns.id, studio.PLAN)
+    notes = studio.read_file(ns.id, studio.NOTES)
+    if ns.g_json:
+        print(json.dumps({"state": state, "plan": plan, "notes": notes}, ensure_ascii=False, indent=1))
+        return 0
+    print(f"{ns.id}: {state.get('state', 'unknown')}  {state.get('provider', '')} {state.get('model', '')}  "
+          f"{state.get('calls', 0)} tool calls")
+    if state.get("error"):
+        print(f"  last error: {state['error']}")
+    if plan:
+        print("\nPlan:\n" + plan.strip())
+    if notes:
+        print("\nLatest notes:\n" + "\n".join(notes.strip().splitlines()[-15:]))
+    return 0
+
+
+def _studio_line(entry: dict) -> str:
+    agent = entry.get("agent") or "main"
+    who = "" if agent == "main" else f"[{agent}] "
+    role = entry.get("role")
+    when = str(entry.get("time", ""))[11:19]
+    if role == "tool":
+        mark = "ok " if entry.get("ok") else "ERR"
+        return f"{when} {who}  {mark} {entry.get('summary', '')}"
+    if role == "tool_result":
+        return ""
+    if role == "user":
+        return f"{when} >> {entry.get('source', 'architect')}: {entry.get('text', '')}"
+    if role == "thinking":
+        text = " ".join(str(entry.get("text", "")).split())
+        return f"{when} {who}  (thinking) {text[:300]}"
+    label = {"assistant": "", "note": "note: ", "question": "QUESTION: ", "status": "-- "}.get(role, f"{role}: ")
+    return f"{when} {who}{label}{entry.get('text', '')}"
+
+
+def _studio_log(ns) -> int:
+    import time as _time
+    from . import studio
+    out = studio.feed(ns.id, 0)
+    entries = out["entries"]
+    for entry in entries[-ns.last:] if ns.last else entries:
+        line = _studio_line(entry)
+        if line:
+            print(line, flush=True)
+    since = out["next"]
+    if not ns.follow:
+        return 0
+    try:
+        while True:
+            _time.sleep(1.0)
+            out = studio.feed(ns.id, since)
+            for entry in out["entries"]:
+                line = _studio_line(entry)
+                if line:
+                    print(line, flush=True)
+            since = out["next"]
+            if out["state"].get("state") in ("stopped", "failed", "done") and not out["entries"]:
+                print(f"-- the agent is {out['state'].get('state')}", flush=True)
+                return 0
+    except KeyboardInterrupt:
+        return 0
+
+
+def _studio_list(ns) -> int:
+    from . import studio
+    rows = studio.running(ns.g_project or "")
+    if ns.g_json:
+        print(json.dumps(rows, ensure_ascii=False, indent=1))
+        return 0
+    for row in rows:
+        print(f"{row['session']}  {row['state']:<8} {row['calls']:>5} calls  {row['title']}")
+    return 0
+
+
+def _project_new(ns) -> int:
+    from .. import app_bridge as B
+    from .. import authoring as A
+    from .. import documents as D
+    from .. import levels as L
+    from .. import sheets as SH
+    from .. import site as SITE
+
+    target = pathlib.Path(ns.path).resolve()
+    nic = target.suffix.lower() == ".nic"
+    if nic and target.exists():
+        print(f"error: {target} exists", file=sys.stderr)
+        return 1
+    if not nic and target.exists() and any(target.iterdir()):
+        print(f"error: {target} is not empty", file=sys.stderr)
+        return 1
+
+    def check(out: str) -> dict:
+        data = json.loads(out)
+        if data.get("ok") is False or ("ok" not in data and data.get("error")):
+            raise SystemExit(f"error: {data.get('error')}")
+        return data
+
+    check(A.new_project(ns.name or target.stem, ns.schema))
+    info = {k: v for k, v in (("number", ns.number), ("name", ns.name), ("client", ns.client_name),
+                              ("address", ns.address)) if v}
+    if info:
+        check(SH.set_project_info(json.dumps(info)))
+    located = None
+    if ns.lat is not None or ns.lon is not None:
+        if ns.lat is None or ns.lon is None:
+            print("error: give both --lat and --lon", file=sys.stderr)
+            return 1
+        located = check(SITE.locate(json.dumps({
+            "latitude": ns.lat, "longitude": ns.lon, "elevation": ns.elevation, "north": ns.north, "crs": ns.crs,
+            "address": ns.address, "town": ns.town, "country": ns.country})))
+    for i, spec in enumerate(ns.level):
+        name, _, elevation = spec.partition("=")
+        z = float(elevation or 0)
+        first = B._model.by_type("IfcBuildingStorey")[0]
+        if i == 0 and abs(z) < 1e-9:
+            check(L.rename_storey(first.GlobalId, name.strip()))
+        else:
+            import ifcopenshell.util.unit
+            check(A.add_storey(name.strip(), z / ifcopenshell.util.unit.calculate_unit_scale(B._model)))
+    if nic:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        check(D.save_as_nic(str(target), "New project"))
+    else:
+        target.mkdir(parents=True, exist_ok=True)
+        check(D.save_as_folder(str(target), "New project"))
+    out = {"project": str(target), "schema": ns.schema, "levels": [s.Name for s in B._model.by_type("IfcBuildingStorey")]}
+    if located:
+        out.update({"crs": located.get("crs"), "eastings": located.get("eastings"),
+                    "northings": located.get("northings")})
+    print(json.dumps(out, ensure_ascii=False, indent=1) if ns.g_json else
+          f"created {target}" + (f" at {out['crs']} E {out['eastings']} N {out['northings']}" if located else ""))
+    return 0

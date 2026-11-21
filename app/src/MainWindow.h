@@ -73,6 +73,7 @@ class ObjectSettingsDialog;
 class ChecksPanel;
 class ConsolePanel;
 class AssistantPanel;
+class StudioPanel;
 class ProposalBar;
 class SheetsPanel;
 class SchedulesDialog;
@@ -859,6 +860,7 @@ private:
     ConsolePanel* m_console = nullptr;
     QJsonObject assistantConfig(); // D102 phase 3: provider and context for the Assistant panel
     AssistantPanel* m_assistant = nullptr;
+    StudioPanel* m_studio = nullptr;
 
     // D102 phase 2: the live agent session, the status indicator and the proposal review bar.
     void startAgentLive();

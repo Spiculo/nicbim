@@ -17,6 +17,7 @@
 #include "ProposalBar.h"
 #include "ProposalDialog.h"
 #include "AssistantPanel.h"
+#include "StudioPanel.h"
 #include "ViewCube.h"
 #include "TitleBar.h"
 #include "ViewHost.h"
@@ -1548,6 +1549,8 @@ void MainWindow::buildDocks()
     m_dock->addPanel(QStringLiteral("drawings"), tr("Drawings"), m_drawingsPanel);
     m_dock->addPanel(QStringLiteral("sheets"), tr("Sheets"), m_sheetsPanel);
     m_dock->addPanel(QStringLiteral("assistant"), tr("Assistant"), m_assistant);
+    m_studio = new StudioPanel(this); // D252: long-running studio agents
+    m_dock->addPanel(QStringLiteral("studio"), tr("Studio"), m_studio);
     m_undoPanel = new UndoHistoryPanel(this);
     m_dock->addPanel(QStringLiteral("undo"), tr("Undo history"), m_undoPanel);
     connect(m_undoPanel, &UndoHistoryPanel::jumpRequested, this, &MainWindow::jumpInHistory);
@@ -5463,6 +5466,8 @@ void MainWindow::applyProjectState(const QJsonObject& s, const QJsonObject& hist
     setWindowModified(isDirty());
     if (m_assistant)
         m_assistant->refreshSessions(); // D111: the picker follows the project that is open
+    if (m_studio)
+        m_studio->refreshSessions();
 }
 
 bool MainWindow::openPath(const QString& path)

@@ -51,6 +51,7 @@ qt_add_library(kimbim_core STATIC
     src/ProposalBar.cpp src/ProposalBar.h
     src/ProposalDialog.cpp src/ProposalDialog.h
     src/AssistantPanel.cpp src/AssistantPanel.h
+    src/StudioPanel.cpp src/StudioPanel.h
     src/TitleBar.cpp src/TitleBar.h
     src/ShortcutsDialog.cpp src/ShortcutsDialog.h
     src/Graphics.cpp src/Graphics.h

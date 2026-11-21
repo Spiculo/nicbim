@@ -1881,6 +1881,46 @@ def agent_sessions(project: str = "", include_archived: str = "true") -> str:
         return _dump({"ok": False, "error": {"code": "bridge_error", "message": str(ex)}})
 
 
+def _open_source() -> str:
+    from . import documents
+
+    return str((documents._doc or {}).get("source") or "")
+
+
+def studio_list(project: str = "") -> str:
+    """D252: the open project's studio agents for the Studio panel."""
+    from .agent import studio
+
+    return studio.ui_list(project or _open_source())
+
+
+def studio_feed(session_id: str, since: str = "0") -> str:
+    from .agent import studio
+
+    return studio.ui_feed(session_id, int(since or 0))
+
+
+def studio_send(session_id: str, kind: str, text: str = "") -> str:
+    from .agent import studio
+
+    return studio.ui_send(session_id, kind, text)
+
+
+def studio_start(brief: str, effort: str = "high") -> str:
+    from .agent import studio
+
+    source = _open_source()
+    if not source:
+        return _dump({"ok": False, "error": {"code": "needs_app", "message": "Open a project first."}})
+    return studio.ui_start(source, brief, effort or "high")
+
+
+def studio_resume(session_id: str) -> str:
+    from .agent import studio
+
+    return studio.ui_resume(session_id)
+
+
 def agent_session_new(project: str = "", title: str = "", provider: str = "", model: str = "") -> str:
     from .agent import sessions
 

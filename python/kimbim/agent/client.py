@@ -222,7 +222,7 @@ def _spawn_and_wait(project: str, session: str = "") -> dict:
 
 
 def request(project: str, tool: str, args: dict | None = None, *, client: str = "cli", task: str = "",
-            start: bool = True, timeout: float = 120, session: str = "") -> dict:
+            start: bool = True, timeout: float = 600, session: str = "") -> dict:
     """Run `tool` with `args` in the project's worker (started if needed and `start`) and return the envelope.
     With `session`, a folder project's session worker and worktree are used (D111); a `.nic`/IFC session is
     sent to the project's live/worker session, which binds the stored record."""
