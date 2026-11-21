@@ -225,3 +225,43 @@ def test_status_of_a_dead_runner_reads_stopped(store):
     record = store.create("", "x")
     studio.write_state(record.id, store, state="working", pid=999999)
     assert studio.status(record.id, store)["state"] == "stopped"
+
+
+class Failing(Scripted):
+    def step(self):
+        from kimbim.agent.providers import ProviderError
+        raise ProviderError("the provider answered 401: expired key")
+
+
+def test_provider_failure_fails_cleanly_when_unattended(store):
+    record = store.create("", "x")
+    runner = studio.Runner(record.id, "", tool_fn=lambda n, a: {"ok": True}, store=store, exit_when_done=True,
+                           provider_factory=lambda s, t, e: Failing([]), poll=0.01)
+    assert runner.run("brief") == "failed"
+    assert "expired key" in studio.read_state(record.id, store)["error"]
+
+
+def test_provider_failure_waits_and_a_message_starts_a_fresh_provider(store):
+    record = store.create("", "x")
+    made = []
+
+    def factory(s, t, e):
+        made.append(1)
+        return Failing([]) if len(made) == 1 else Scripted([Turn(text="back")])
+
+    runner = studio.Runner(record.id, "", tool_fn=lambda n, a: {"ok": True}, store=store, provider_factory=factory,
+                           poll=0.01)
+    thread = threading.Thread(target=runner.run, args=("brief",))
+    thread.start()
+    for _ in range(300):
+        if studio.read_state(record.id, store).get("error"):
+            break
+        time.sleep(0.01)
+    studio.send(record.id, "say", "new key set, go on", store=store)
+    for _ in range(300):
+        if len(made) >= 2 and any(e.get("text") == "back" for e in store.transcript(record.id)):
+            break
+        time.sleep(0.01)
+    studio.send(record.id, "stop", store=store)
+    thread.join(5)
+    assert len(made) == 2 and any(e.get("text") == "back" for e in store.transcript(record.id))

@@ -539,11 +539,24 @@ class Runner:
                 try:
                     turn = self._step(provider)
                 except ProviderError as ex:
-                    self._log({"role": "status", "text": f"The provider failed: {ex.message}. Send a message to try "
-                                                         "again."})
+                    if self.exit_when_done:
+                        raise
+                    self._log({"role": "status", "text": f"The provider failed: {ex.message}. Fix it (a new key in "
+                                                         "Preferences › Assistant) and send a message to go on."})
                     self._state("waiting", error=ex.message)
                     self._idle = True
-                    provider.reset(self._opening(brief))
+                    pending = None
+                    # the next message starts a fresh provider (it reads the key again) from plan, notes and brief
+                    texts = self._messages(block=True)
+                    try:
+                        provider = self.provider_factory(SYSTEM, tools, self.effort)
+                    except ProviderError as again:
+                        self._log({"role": "status", "text": f"Still failing: {again.message}"})
+                        continue
+                    provider.add_user(self._opening(brief))
+                    with self._lock:
+                        self._helper_reports[:0] = texts
+                    self._idle = False
                     continue
                 if not turn.calls:
                     self._idle = True
@@ -566,8 +579,9 @@ class Runner:
         except KeyboardInterrupt:
             final = "stopped"
         except Exception as ex:  # noqa: BLE001
-            self._log({"role": "status", "text": f"The runner failed: {type(ex).__name__}: {ex}"})
-            self._state("failed", error=f"{type(ex).__name__}: {ex}")
+            message = ex.message if isinstance(ex, ProviderError) else f"{type(ex).__name__}: {ex}"
+            self._log({"role": "status", "text": f"The runner failed: {message}"})
+            self._state("failed", error=message)
             self._stop.set()
             self._helpers.shutdown(wait=False, cancel_futures=True)
             return "failed"
@@ -583,14 +597,29 @@ class Runner:
 # ---------------------------------------------------------------- starting a runner
 
 def _app_preferences() -> dict:
-    """The app's Assistant preferences (provider, model, base URL), so the CLI uses what the app uses."""
+    """The app's Assistant preferences (provider, model, base URL), so the CLI uses what the app uses. Qt keeps
+    them in its config folder (<LOCALAPPDATA>/NicBim/NicBim on Windows); KIMBIM_PREFERENCES overrides."""
+    candidates = []
+    if os.environ.get("KIMBIM_PREFERENCES"):
+        candidates.append(pathlib.Path(os.environ["KIMBIM_PREFERENCES"]))
     try:
         from .. import documents as D
-        path = pathlib.Path(D.data_dir()) / "preferences.json"
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, ImportError, AttributeError):
-        return {}
-    return {k: str(data.get(f"assistant_{k}") or "") for k in ("provider", "model", "base_url")}
+        base = pathlib.Path(D.data_dir())
+        candidates += [base / "NicBim" / "preferences.json", base / "preferences.json"]
+    except (ImportError, AttributeError):
+        pass
+    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+        candidates.append(pathlib.Path(os.environ["LOCALAPPDATA"]) / "NicBim" / "NicBim" / "preferences.json")
+    else:
+        candidates.append(pathlib.Path.home() / ".config" / "NicBim" / "NicBim" / "preferences.json")
+    for path in candidates:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, dict):
+            return {k: str(data.get(f"assistant_{k}") or "") for k in ("provider", "model", "base_url")}
+    return {}
 
 
 def start(project: str, brief: str = "", *, title: str = "", session_id: str = "", provider: str = "",

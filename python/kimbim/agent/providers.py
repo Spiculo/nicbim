@@ -87,6 +87,10 @@ class AnthropicProvider:
         import anthropic  # the SDK is only needed when this provider is chosen
         self._anthropic = anthropic
         key = _key("anthropic")
+        if not key and not any(os.environ.get(v) for v in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+                                                            "ANTHROPIC_PROFILE", "ANTHROPIC_FEDERATION_RULE_ID"))                 and not os.path.isdir(os.path.join(os.path.expanduser("~"), ".config", "anthropic")):
+            raise ProviderError("no Anthropic credentials: set the key in Preferences › Assistant, set "
+                                "ANTHROPIC_API_KEY, or log in with `ant auth login`.")
         kwargs = {"max_retries": 4}
         if key:
             kwargs["api_key"] = key
@@ -150,6 +154,8 @@ class AnthropicProvider:
                                 retry=ex.status_code >= 500) from None
         except a.APIConnectionError as ex:
             raise ProviderError(f"cannot reach the provider: {ex}", retry=True) from None
+        except TypeError as ex:  # the SDK found no credentials at request time
+            raise ProviderError(f"the Anthropic client is not configured: {ex}") from None
         blocks = [b.model_dump(exclude_none=True) for b in response.content]
         # compaction, thinking and fallback blocks go back unchanged: the API needs them on the next request
         self.messages.append({"role": "assistant", "content": blocks})
