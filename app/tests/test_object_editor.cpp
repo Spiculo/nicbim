@@ -300,13 +300,13 @@ private slots:
         kimbim::MainWindow w(nullptr, true);
         QVERIFY(w.newProject());
         setOfficeFolder(dir.path());
-        for (const char* id : {"stool", "bench"}) {
+        for (const char* id : {"stool", "pew"}) {
             kimbim::ObjectEditorDialog d(&w, QStringLiteral("new"));
             d.findChild<QLineEdit*>(QStringLiteral("editorId"))->setText(QLatin1String(id));
             QVERIFY(d.saveTo(QStringLiteral("office")));
         }
         kimbim::ObjectEditorDialog d(&w, QStringLiteral("office:stool"));
-        d.findChild<QLineEdit*>(QStringLiteral("editorId"))->setText(QStringLiteral("bench"));
+        d.findChild<QLineEdit*>(QStringLiteral("editorId"))->setText(QStringLiteral("pew"));
         QVERIFY(!d.saveTo(QStringLiteral("office"))); // another object's file: asks (quiet: no)
         QVERIFY(d.saveTo(QStringLiteral("office"), true));
         setOfficeFolder(QString());
@@ -537,14 +537,14 @@ private slots:
         QVERIFY(w.newProject());
         kimbim::LibraryPanel* panel = w.libraryPanel();
         setOfficeFolder(dir.path());
-        for (const char* id : {"stool", "bench"}) {
+        for (const char* id : {"stool", "pew"}) {
             kimbim::ObjectEditorDialog d(&w, QStringLiteral("new"));
             d.findChild<QLineEdit*>(QStringLiteral("editorId"))->setText(QLatin1String(id));
             QVERIFY(d.saveTo(QStringLiteral("office")));
         }
         panel->setListing(kimbim::PythonEngine::instance().callJson("library_objects", {}).object()); // saved without the window
         QStringList placed;
-        for (const char* id : {"office:stool", "office:bench"}) {
+        for (const char* id : {"office:stool", "office:pew"}) {
             QVERIFY(panel->selectObject(QLatin1String(id)));
             w.setTool(kimbim::MainWindow::Tool::Object);
             const QStringList before = w.viewport()->guids();
@@ -559,8 +559,8 @@ private slots:
             return kimbim::PythonEngine::instance().callJson("library_updates", {QStringLiteral("[\"%1\"]").arg(guid)}).object()
                 .value("outdated").toInt();
         };
-        // The bench's file changes on disk: outdated.
-        QFile file(dir.filePath(QStringLiteral("bench.nicobj")));
+        // The pew's file changes on disk: outdated.
+        QFile file(dir.filePath(QStringLiteral("pew.nicobj")));
         QVERIFY(file.open(QIODevice::ReadOnly));
         QJsonObject def = QJsonDocument::fromJson(file.readAll()).object();
         file.close();
@@ -591,7 +591,7 @@ private slots:
         });
         QVERIFY(w.openObjectEditor(QStringLiteral("office:stool")));
         QCOMPARE(outdated(placed[0]), 0); // updated
-        QCOMPARE(outdated(placed[1]), 1); // the bench: not named, not updated
+        QCOMPARE(outdated(placed[1]), 1); // the pew: not named, not updated
         setOfficeFolder(QString());
     }
 
