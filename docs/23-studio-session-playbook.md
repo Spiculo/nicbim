@@ -12,6 +12,9 @@ sheets and delivering. The five benchmark briefs are in [briefs/](briefs/).
    Anthropic the default model is `claude-opus-5-5` with adaptive reasoning. Check the key works: a 401
    `expired_secret_key` in the agent's feed means the key must be replaced.
 2. The app is built (`pixi run app-build`) so sheet PDFs can be rendered.
+3. To rehearse the plumbing without a model (no key, no cost): `KIMBIM_STUDIO_PROVIDER=scripted` and
+   `KIMBIM_STUDIO_SCRIPT=<file.json>` (a list of turns `{"text", "calls": [{"name": "create_wall", "args": {...}}]}`)
+   make the agent replay a script; the app test `studioPanelShowsAStudioAgentAndItsFeed` does exactly that.
 
 ## 1. Create the project on the map
 
