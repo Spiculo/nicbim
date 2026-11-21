@@ -18,7 +18,7 @@ from ... import schedules as SC
 from ... import sheets as SH
 from .. import messages
 from ..catalogue import AgentError, bridge, tool
-from ..render import app_binary
+from ..render import app_binary, app_env
 from .common import level_guid, point
 
 _OUT = {"type": "string", "description": "Path of the file to write."}
@@ -173,7 +173,7 @@ def _pdf(number: str, out: str) -> None:
         bridge(D.export_ifc, ifc)
         try:
             done = subprocess.run([str(app), "--export-sheet", number, ifc, out], capture_output=True, text=True,
-                                  timeout=300)
+                                  timeout=300, env=app_env())
         except (OSError, subprocess.SubprocessError) as ex:
             raise AgentError("render_failed", hint=str(ex)) from None
     if done.returncode != 0 or not pathlib.Path(out).exists():

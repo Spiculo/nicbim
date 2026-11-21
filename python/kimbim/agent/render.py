@@ -46,6 +46,13 @@ def app_binary() -> pathlib.Path | None:
     return next((f / n for f in folders for n in names if (f / n).is_file()), None)
 
 
+def app_env() -> dict:
+    """The environment for a one-off app run (sheet PDFs): it must import this same kimbim package."""
+    env = dict(os.environ)
+    env.setdefault("KIMBIM_PYTHON_PATH", str(pathlib.Path(__file__).resolve().parents[2]))
+    return env
+
+
 def _no_app() -> AgentError:
     return AgentError("render_failed", hint=messages.text("hint_no_app"))
 
