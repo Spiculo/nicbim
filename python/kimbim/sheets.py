@@ -326,7 +326,10 @@ def _cached_size(guid: str):
         return known[1]
     svg = next((s for k, s in D._cache.get(guid, {}).items() if k[:2] == state), None)
     if svg is not None:
-        size = _svg_size(svg)
+        try:  # the cache holds the hidden-line result; the drawing grows with its marks (level marks beside it)
+            size = _svg_size(D._drafted(svg, D._drawing(guid)))
+        except Exception:  # noqa: BLE001 (a size is better than none)
+            size = _svg_size(svg)
     elif known is not None:
         return known[1]
     else:
