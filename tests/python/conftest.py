@@ -17,6 +17,9 @@ def pytest_configure(config):
     test_records round-trips IFC4X3 records itself. Unset, projects are IFC4 as the app makes them."""
     import os
 
+    # Messages are asserted in English: the user's app language (the real preferences file) must not leak in;
+    # a test that wants Spanish sets KIMBIM_LANG itself.
+    os.environ.setdefault("KIMBIM_LANG", "en")
     schema = os.environ.get("KIMBIM_TEST_SCHEMA", "")
     if not schema:
         return
