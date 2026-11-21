@@ -1884,7 +1884,7 @@ def agent_sessions(project: str = "", include_archived: str = "true") -> str:
 def _open_source() -> str:
     from . import documents
 
-    return str((documents._doc or {}).get("source") or "")
+    return str(documents.state_fields().get("path") or "")  # the open .nic, folder or IFC
 
 
 def studio_list(project: str = "") -> str:

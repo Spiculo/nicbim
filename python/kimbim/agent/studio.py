@@ -654,9 +654,7 @@ def _app_preferences() -> dict:
         candidates += [base / "NicBim" / "preferences.json", base / "preferences.json"]
     except (ImportError, AttributeError):
         pass
-    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
-        candidates.append(pathlib.Path(os.environ["LOCALAPPDATA"]) / "NicBim" / "NicBim" / "preferences.json")
-    else:
+    if os.name != "nt" and not os.environ.get("KIMBIM_DATA_DIR"):
         candidates.append(pathlib.Path.home() / ".config" / "NicBim" / "NicBim" / "preferences.json")
     for path in candidates:
         try:
@@ -674,7 +672,7 @@ def start(project: str, brief: str = "", *, title: str = "", session_id: str = "
     """Create (or reuse) a stored session and run its studio agent, detached unless `foreground`."""
     store = store or _store()
     prefs = _app_preferences()
-    provider = provider or prefs.get("provider") or "anthropic"
+    provider = provider or os.environ.get("KIMBIM_STUDIO_PROVIDER", "") or prefs.get("provider") or "anthropic"
     if not model and provider == prefs.get("provider"):
         model = prefs.get("model", "")
     if not base_url and provider == prefs.get("provider"):

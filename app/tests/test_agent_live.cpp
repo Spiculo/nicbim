@@ -6,11 +6,13 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QPushButton>
@@ -18,6 +20,7 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTableWidget>
+#include <QTextBrowser>
 #include <QThread>
 #include <QTimer>
 #include <QTreeWidget>
@@ -27,6 +30,7 @@
 #include <DockWidget.h>
 
 #include "AssistantPanel.h"
+#include "StudioPanel.h"
 #include "MainWindow.h"
 #include "ProposalBar.h"
 #include <Graphic3d_Camera.hxx>
@@ -88,6 +92,16 @@ private slots:
         QStandardPaths::setTestModeEnabled(true);
         QVERIFY(m_tmp.isValid());
         qputenv("KIMBIM_DATA_DIR", m_tmp.filePath(QStringLiteral("data")).toUtf8());
+        // D252: studio agents in this test replay a script instead of calling a model (set before Python starts:
+        // the runner process inherits the embedded interpreter's environment)
+        const QString script = m_tmp.filePath(QStringLiteral("studio-script.json"));
+        QFile file(script);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(R"([{"text": "Adding a garden wall", "calls": [{"name": "create_wall", "args": {"level": "Level 1",
+            "start": [20, 0], "end": [24, 0], "height": 1.5}}]}, {"text": "Done: one garden wall."}])");
+        file.close();
+        qputenv("KIMBIM_STUDIO_PROVIDER", "scripted");
+        qputenv("KIMBIM_STUDIO_SCRIPT", script.toUtf8());
         QString error;
         QVERIFY2(kimbim::PythonEngine::instance().start(&error), qPrintable(error));
         m_ifc = m_tmp.filePath(QStringLiteral("house.ifc"));
@@ -181,6 +195,48 @@ private slots:
                         .object().value("proposals").toArray().isEmpty(), 30000);
         QTRY_VERIFY_WITH_TIMEOUT(kimbim::PythonEngine::instance().callJson("properties", {wall})
                         .object().value("name").toString() == QLatin1String("Live wall"), 30000);
+    }
+
+    void studioPanelShowsAStudioAgentAndItsFeed()
+    {
+        // D252: the Studio panel starts an agent on the open project and shows its feed. The test has no
+        // provider key, so the runner fails at once with a message the architect can read.
+        const QString nic = m_tmp.filePath(QStringLiteral("studio.nic"));
+        QString error;
+        const QJsonObject imported = kimbim::PythonEngine::instance().callJson("import_ifc", {m_ifc, nic}, &error)
+                                         .object();
+        QVERIFY2(imported.value("ok").toBool(), qPrintable(imported.value("error").toString() + error));
+        kimbim::PythonEngine::instance().callJson("close_document", {});
+        kimbim::MainWindow w(nullptr, /*quiet=*/true);
+        w.resize(1280, 800);
+        w.show();
+        QSignalSpy loaded(&w, &kimbim::MainWindow::loadFinished);
+        QVERIFY(w.openPath(nic));
+        QVERIFY(loaded.wait(120000));
+        auto* dock = w.dockLayout()->manager()->findDockWidget(QStringLiteral("studio"));
+        QVERIFY(dock);
+        auto* panel = qobject_cast<kimbim::StudioPanel*>(dock->widget());
+        QVERIFY(panel);
+        qInfo("studio: loaded");
+        const int before = w.viewport()->guids().size();
+        // as the architect does: the brief in the box, then Start
+        panel->findChild<QPlainTextEdit*>(QStringLiteral("studioInput"))->setPlainText(QStringLiteral("Design a small shed"));
+        panel->findChild<QPushButton*>(QStringLiteral("studioStart"))->click();
+        const QString id = panel->sessionId();
+        QVERIFY2(!id.isEmpty(), qPrintable(panel->findChild<QLabel*>(QStringLiteral("studioState"))->text()));
+        auto* feed = panel->findChild<QTextBrowser*>(QStringLiteral("studioFeed"));
+        auto* state = panel->findChild<QLabel*>(QStringLiteral("studioState"));
+        // the agent runs in its own process; its wall reaches this window through the live session
+        QTRY_VERIFY_WITH_TIMEOUT(w.viewport()->guids().size() > before, 120000);
+        QTRY_VERIFY_WITH_TIMEOUT(feed->toPlainText().contains(QStringLiteral("Done: one garden wall.")), 60000);
+        QVERIFY(feed->toPlainText().contains(QStringLiteral("Design a small shed")));
+        QTRY_VERIFY_WITH_TIMEOUT(state->text().contains(QStringLiteral("Waiting")), 30000);
+        const QJsonObject said = kimbim::PythonEngine::instance().callJson(
+            "studio_send", {id, QStringLiteral("say"), QStringLiteral("Make it 3 by 4 metres")}).object();
+        QVERIFY(said.value("ok").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(feed->toPlainText().contains(QStringLiteral("Make it 3 by 4 metres")), 15000);
+        kimbim::PythonEngine::instance().callJson("studio_send", {id, QStringLiteral("stop"), QString()});
+        QTRY_VERIFY_WITH_TIMEOUT(state->text().contains(QStringLiteral("Stopped")), 30000);
     }
 
     void viewToolsChangeTheWindowNotTheModel()

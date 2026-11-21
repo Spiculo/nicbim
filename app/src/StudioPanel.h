@@ -40,6 +40,7 @@ private:
     void startSession();
     void control(const QString& kind);
     void updateState(const QJsonObject& state);
+    void showProblem(const QJsonObject& answer);
 
     QComboBox* m_sessions = nullptr;
     QPushButton* m_start = nullptr;

@@ -317,11 +317,51 @@ class OpenAIProvider:
         return turn
 
 
+class ScriptedProvider:
+    """Replays a script instead of calling a model (app tests, rehearsals without a key): `KIMBIM_STUDIO_SCRIPT`
+    names a JSON file, a list of turns {"text": "...", "calls": [{"name": "create_wall", "args": {...}}]}.
+    Helpers get the same script from its start."""
+    name = "scripted"
+
+    def __init__(self, system: str, tools: list[dict], model: str = "", effort: str = "", base_url: str = ""):
+        path = os.environ.get("KIMBIM_STUDIO_SCRIPT", "")
+        try:
+            with open(path, encoding="utf-8") as f:
+                self.turns = json.load(f)
+        except (OSError, ValueError) as ex:
+            raise ProviderError(f"the scripted provider needs KIMBIM_STUDIO_SCRIPT: {ex}") from None
+        self.model = model or "script"
+        self.history: list = []
+        self.n = 0
+
+    def add_user(self, text: str) -> None:
+        self.history.append(("user", text))
+
+    def add_results(self, results: list[tuple], note: str = "") -> None:
+        self.history.append(("results", [(c.name, body) for c, body, *_ in results], note))
+
+    def size(self) -> int:
+        return len(json.dumps(self.history, default=str))
+
+    def reset(self, text: str) -> None:
+        self.history = [("user", text)]
+
+    def step(self) -> Turn:
+        if self.n >= len(self.turns):
+            return Turn(text="(end of script)")
+        t = self.turns[self.n]
+        self.n += 1
+        calls = [Call(f"s{self.n}_{k}", c["name"], c.get("args") or {}) for k, c in enumerate(t.get("calls") or [])]
+        return Turn(text=t.get("text", ""), calls=calls)
+
+
 def make(provider: str, system: str, tools: list[dict], model: str = "", effort: str = "high",
          base_url: str = ""):
     provider = (provider or "anthropic").lower()
+    if provider == "scripted":
+        return ScriptedProvider(system, tools, model, effort, base_url)
     if provider == "anthropic":
         return AnthropicProvider(system, tools, model, effort, base_url)
     if provider in ("openai", "openai-compatible"):
         return OpenAIProvider(system, tools, model, effort, base_url)
-    raise ProviderError(f"unknown provider {provider!r}: use anthropic or openai")
+    raise ProviderError(f"unknown provider {provider!r}: use anthropic, openai or scripted")

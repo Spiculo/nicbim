@@ -287,3 +287,26 @@ def test_one_task_for_the_session(store):
     assert calls[:2] == [("task.status", {}), ("task.start", {"title": "Studio: Casa", "mode": "direct"})]
     assert "Session task: t1 (direct mode)" in seen[0].history[0][1]
     assert studio.read_state(record.id, store)["task"] == "t1"
+
+
+def test_scripted_provider_replays_a_script(tmp_path, monkeypatch, store):
+    from kimbim.agent import providers
+    script = tmp_path / "s.json"
+    script.write_text(json.dumps([{"text": "go", "calls": [{"name": "project_info", "args": {}}]}, {"text": "end"}]),
+                      encoding="utf-8")
+    monkeypatch.setenv("KIMBIM_STUDIO_SCRIPT", str(script))
+    record = store.create("", "x")
+    calls = []
+    runner = studio.Runner(record.id, "", tool_fn=lambda n, a: calls.append(n) or {"ok": True}, store=store,
+                           provider_factory=lambda s, t, e: providers.make("scripted", s, t), exit_when_done=True,
+                           poll=0.01)
+    assert runner.run("") == "done" and calls == ["project.info"]
+
+
+def test_preferences_follow_the_data_dir(monkeypatch):
+    monkeypatch.delenv("KIMBIM_PREFERENCES", raising=False)
+    base = D.data_dir()  # the fixture's own folder
+    assert studio._app_preferences() == {}  # nothing of the user's real preferences leaks into a test
+    (base / "NicBim").mkdir(parents=True)
+    (base / "NicBim" / "preferences.json").write_text(json.dumps({"assistant_provider": "openai"}), encoding="utf-8")
+    assert studio._app_preferences()["provider"] == "openai"

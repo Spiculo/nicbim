@@ -13,7 +13,6 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QMap>
-#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QShowEvent>
@@ -115,8 +114,7 @@ StudioPanel::StudioPanel(QWidget* parent)
         else if (!m_session.isEmpty()) { // a stopped agent: start it again from its plan and notes
             const QJsonObject r = call("studio_resume", {m_session});
             if (!r.value(QStringLiteral("ok")).toBool())
-                QMessageBox::warning(this, tr("Studio"),
-                                     r.value(QStringLiteral("error")).toObject().value(QStringLiteral("message")).toString());
+                showProblem(r);
         }
     });
     auto* shortcut = new QAction(this);
@@ -277,6 +275,17 @@ void StudioPanel::addImage(const QString& path)
     append(QStringLiteral("<p><img src='%1' width='420'></p>").arg(uri.toString()));
 }
 
+void StudioPanel::showProblem(const QJsonObject& answer)
+{
+    // in the panel, not a modal box: the architect keeps working while the agent runs
+    const QJsonObject e = answer.value(QStringLiteral("error")).toObject();
+    QString text = e.value(QStringLiteral("message")).toString();
+    const QString hint = e.value(QStringLiteral("hint")).toString();
+    if (!hint.isEmpty())
+        text += QStringLiteral(" ") + hint;
+    m_state->setText(tr("Could not do that: %1").arg(text.isEmpty() ? tr("unknown error") : text));
+}
+
 void StudioPanel::send()
 {
     const QString text = m_input->toPlainText().trimmed();
@@ -285,8 +294,7 @@ void StudioPanel::send()
     const QJsonObject r = call("studio_send", {m_session, m_asTask->isChecked() ? QStringLiteral("task")
                                                                                  : QStringLiteral("say"), text});
     if (!r.value(QStringLiteral("ok")).toBool()) {
-        QMessageBox::warning(this, tr("Studio"),
-                             r.value(QStringLiteral("error")).toObject().value(QStringLiteral("message")).toString());
+        showProblem(r);
         return;
     }
     m_input->clear();
@@ -304,8 +312,7 @@ void StudioPanel::startSession()
     }
     const QJsonObject r = call("studio_start", {brief, m_effort->currentData().toString()});
     if (!r.value(QStringLiteral("ok")).toBool()) {
-        QMessageBox::warning(this, tr("Studio"),
-                             r.value(QStringLiteral("error")).toObject().value(QStringLiteral("message")).toString());
+        showProblem(r);
         return;
     }
     m_session = r.value(QStringLiteral("result")).toObject().value(QStringLiteral("session")).toString();

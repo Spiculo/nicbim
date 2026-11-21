@@ -173,7 +173,7 @@ def test_section_shows_cut_walls_and_slabs_filled_and_the_rest_in_projection(hou
     assert 'class="projection' in svg
     assert "IfcOpeningElement" not in svg  # openings are voids, not cut fill
     w, h = (float(v) for v in re.search(r'width="([\d.]+)mm" height="([\d.]+)mm"', svg).groups())
-    assert 100 < w < 140 and 60 < h < 110  # 1:100, cropped to the 10 m x ~7 m house section
+    assert 100 < w < 175 and 60 < h < 110  # 1:100, cropped to the 10 m x ~7 m house section and its level marks beside it
     assert not drawing(guid)["stale"]
     again = call("generate_drawing", guid, "")
     assert again["cached"] and again["svg"] == svg
@@ -206,7 +206,7 @@ def test_template_elevations_follow_the_model_and_show_the_facade():
     projection = r["svg"].split('class="projection IfcWall"', 1)[1]  # D73: projection grouped per element
     assert projection.count("<path") >= 1  # the wall's face
     w = float(re.search(r'width="([\d.]+)mm"', r["svg"]).group(1))
-    assert 95 < w < 125  # the 10 m wall at 1:100, cropped
+    assert 95 < w < 160  # the 10 m wall at 1:100, cropped, with the level marks beside it (D255)
 
 
 def test_depth_and_delete(house):
