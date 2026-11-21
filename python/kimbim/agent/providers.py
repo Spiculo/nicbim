@@ -265,7 +265,7 @@ class OpenAIProvider:
     def _responses(self) -> Turn:
         tools = [{"type": "function", "name": t["name"], "description": t["description"],
                   "parameters": t["input_schema"]} for t in self.tools]
-        body = {"model": self.model, "instructions": self.system, "input": self.items, "tools": tools,
+        body = {"model": self.model, "instructions": self.system, "input": list(self.items), "tools": tools,
                 "reasoning": {"effort": self.effort, "summary": "auto"}, "store": False,
                 "include": ["reasoning.encrypted_content"]}
         try:
