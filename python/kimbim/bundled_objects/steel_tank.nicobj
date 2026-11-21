@@ -1,0 +1,22 @@
+{
+ "format": "kimbim-object/1",
+ "id": "steel_tank",
+ "name": {"en": "Stainless steel tank", "es": "Tanque de acero inoxidable"},
+ "category": "industrial",
+ "ifc": {"IFC4": ["IfcTankType", "VESSEL", null], "IFC2X3": ["IfcTankType", "VESSEL", null]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Diameter", "es": "Diámetro"}, "default": 1.8},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 3.2},
+  {"key": "legs_height", "kind": "length", "label": {"en": "Leg height", "es": "Altura de patas"}, "default": 0.5}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "leg", "material": "body", "repeat": {"count": 4}, "cylinder": {"cx": "width / 2 + width * 0.38 * cos(90 * i + 45)", "cy": "width / 2 + width * 0.38 * sin(90 * i + 45)", "r": 0.04, "h": "legs_height + 0.1"}},
+  {"id": "shell", "material": "body", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2", "width / 2"], "n": 16}], "z": "legs_height", "h": "height - legs_height"}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width / 2"}},
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width * 0.15"}}
+ ],
+ "views": {"front": [{"line": {"points": [[0, "legs_height + width * 0.15"], [0, "height - width * 0.15"], ["width * 0.35", "height"], ["width * 0.65", "height"], ["width", "height - width * 0.15"], ["width", "legs_height + width * 0.15"], ["width * 0.62", "legs_height"], ["width * 0.38", "legs_height"]], "closed": true}}, {"line": {"points": [["width * 0.12", 0], ["width * 0.12", "legs_height + width * 0.08"]]}}, {"line": {"points": [["width * 0.88", 0], ["width * 0.88", "legs_height + width * 0.08"]]}}, {"rect": {"x": "width * 0.4", "y": "legs_height + 0.4", "dx": "width * 0.2", "dy": 0.45}}, {"line": {"points": [[0, "height * 0.45"], ["width", "height * 0.45"]]}}, {"line": {"points": [[0, "height * 0.75"], ["width", "height * 0.75"]]}}]}
+}

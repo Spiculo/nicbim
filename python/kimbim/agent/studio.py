@@ -175,6 +175,23 @@ How to work:
 - Lengths are metres unless you add units ("50cm"). Answer in the language the architect writes in. Be concise
   in messages; put detail in notes.
 - Never claim a change you did not make. When a tool fails, read the error, fix the input or take another route.
+- Your changes go in one task the runner opened for this session (named below). Do not start or finish tasks
+  yourself; save a version (versions_save) at the end of each phase so there is a way back.
+
+NicBim specifics:
+- Numbers are in the project's length unit (project_info "unit", normally metres); strings may carry units.
+- A new project is placed on the map with site_locate (latitude, longitude, elevation, north angle, CRS; Uruguay:
+  EPSG:5382) and named for the title blocks with project_set_info. Check site_get first: it may be located already.
+- Before creating walls, slabs, doors or windows, list the types (create_types) and pick by name; walls are drawn
+  on their reference line between two points; doors and windows go in a wall by distance along it (create_opening).
+- Library objects: objects_library lists them (furniture, sanitary, kitchen, office, education, shops, industrial,
+  site); objects_place puts one at a point, objects_set_parameters changes its size.
+- Every level has a floor plan; the template has four elevations. Make sections with drawings_create, rooms with
+  create_room (they show name, number and area), then sheets: sheets_create (A1/A3), sheets_place_drawing with a
+  scale, schedules with sheets_place_schedule.
+- The first snapshot of a session can take a minute (the renderer starts); later ones take seconds.
+- Deliver with deliver_package into the folder the architect names (default: a "delivery" folder beside the
+  project); save a version first so the transmittal names it.
 """
 
 HELPER = """\
@@ -480,8 +497,31 @@ class Runner:
             write_state(self.id, self.store, usage=usage, calls=self.calls)
         return turn
 
+    def _ensure_task(self) -> str:
+        """One task for the whole session, so every step builds on the last (option mode would otherwise put
+        each implicit task in its own design option, branched from the base without the earlier work)."""
+        status = self.tool_fn("task.status", {})
+        task = ((status.get("result") or {}).get("task") or {}) if status.get("ok") else {}
+        if task.get("status") == "open" and task.get("client") == self.client_name:
+            return f"{task.get('id')} ({task.get('mode')} mode)"
+        title = self.store.get(self.id).title or "Studio session"
+        started = self.tool_fn("task.start", {"title": f"Studio: {title}"[:80], "mode": "direct"})
+        if not started.get("ok"):
+            self._log({"role": "status", "text": "Could not open the session's task: "
+                                                 + str((started.get("error") or {}).get("message", ""))})
+            return ""
+        task = started.get("result") or {}
+        if task.get("mode") == "option":
+            self._log({"role": "status", "text": f"The project keeps agent changes in a design option "
+                                                 f"({task.get('option')}): switch to it in the app to watch the work, "
+                                                 "or set Project settings › Agent changes to “agent decides”."})
+        write_state(self.id, self.store, task=task.get("id", ""), task_mode=task.get("mode", ""))
+        return f"{task.get('id')} ({task.get('mode')} mode)"
+
     def _opening(self, brief: str) -> str:
         parts = []
+        if getattr(self, "_task", ""):
+            parts.append(f"Session task: {self._task}.")
         plan, notes, summary = (read_file(self.id, n, self.store) for n in (PLAN, NOTES, SUMMARY))
         if plan or notes or summary:
             parts.append("You are resuming this session. Your plan, notes and the last summary follow; re-read the "
@@ -520,6 +560,11 @@ class Runner:
             return "failed"
         self._log({"role": "status", "text": f"Studio agent started ({provider.name} {getattr(provider, 'model', '')})"})
         self._state("working")
+        if self.project:  # tests without a project have no task protocol
+            try:
+                self._task = self._ensure_task()
+            except Exception as ex:  # noqa: BLE001 (the agent can still read; writes start implicit tasks)
+                self._log({"role": "status", "text": f"Could not open the session's task: {ex}"})
         provider.add_user(self._opening(brief))
         pending: list[tuple] | None = None
         stalled, seen = 0, set()
@@ -592,6 +637,7 @@ class Runner:
         return final
 
     _idle = False
+    _task = ""
 
 
 # ---------------------------------------------------------------- starting a runner

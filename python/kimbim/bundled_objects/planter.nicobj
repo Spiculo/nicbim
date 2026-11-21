@@ -1,0 +1,22 @@
+{
+ "format": "kimbim-object/1",
+ "id": "planter",
+ "name": {"en": "Planter", "es": "Cantero"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "PLANTER"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "PLANTER"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.2},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.5}
+ ],
+ "materials": {"body": {"label": {"en": "Planter", "es": "Cantero"}, "default": "Concrete"}, "plants": {"label": {"en": "Plants", "es": "Plantas"}, "default": "Generic"}},
+ "parts": [
+  {"id": "box", "material": "body", "box": {"dx": "width", "dy": "depth", "dz": "height"}},
+  {"id": "plants", "material": "plants", "prism": {"points": [{"ellipse": ["width / 2", "depth / 2", "width / 2 * 0.9", "depth / 2 * 0.9"], "n": 12}], "z": "height", "h": 0.35}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"circle": {"cx": "width / 2", "cy": "depth / 2", "r": "min(width, depth) / 2"}}
+ ],
+ "views": {"front": [{"rect": {"x": 0, "y": 0, "dx": "width", "dy": "height"}}, {"repeat": {"count": 24}, "line": {"points": [["width / 2 + width / 2 * 0.95 * (1 + 0.08 * sin(5 * (15.0 * i))) * cos(15.0 * i)", "height + 0.15 + 0.25 * (1 + 0.08 * sin(5 * (15.0 * i))) * sin(15.0 * i)"], ["width / 2 + width / 2 * 0.95 * (1 + 0.08 * sin(5 * (15.0 * (i + 1)))) * cos(15.0 * (i + 1))", "height + 0.15 + 0.25 * (1 + 0.08 * sin(5 * (15.0 * (i + 1)))) * sin(15.0 * (i + 1))"]]}}]}
+}

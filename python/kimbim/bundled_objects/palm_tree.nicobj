@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "palm_tree",
+ "name": {"en": "Palm tree", "es": "Palmera"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcGeographicElementType", "USERDEFINED", "PALM"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "PALM"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Crown diameter", "es": "Diámetro de copa"}, "default": 3.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 7.0}
+ ],
+ "materials": {"trunk": {"label": {"en": "Trunk", "es": "Tronco"}, "default": "Timber"}, "leaves": {"label": {"en": "Leaves", "es": "Hojas"}, "default": "Generic"}},
+ "parts": [
+  {"id": "trunk", "material": "trunk", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", 0.2, 0.2], "n": 8}], "h": "height - 0.5"}},
+  {"id": "crown", "material": "leaves", "box": {"x": "width * 0.1", "y": "width * 0.1", "z": "height - 0.9", "dx": "width * 0.8", "dy": "width * 0.8", "dz": 0.8, "taper": 0.3}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width / 2"}},
+  {"repeat": {"count": 10}, "line": {"points": [["width / 2", "width / 2"], ["width / 2 + width / 2 * cos(36 * i)", "width / 2 + width / 2 * sin(36 * i)"]]}}
+ ],
+ "views": {"front": [{"line": {"points": [["width / 2 - 0.2", 0], ["width / 2 - 0.15", "height - 0.3"]]}}, {"line": {"points": [["width / 2 + 0.2", 0], ["width / 2 + 0.15", "height - 0.3"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * 0.55", "height + 0.15"], ["width / 2 + width / 2 * 1.0", "height - 0.2 - 1.1"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * -0.55", "height + 0.15"], ["width / 2 + width / 2 * -1.0", "height - 0.2 - 1.1"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * 0.385", "height + 0.3"], ["width / 2 + width / 2 * 0.7", "height - 0.2 - 0.77"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * -0.385", "height + 0.3"], ["width / 2 + width / 2 * -0.7", "height - 0.2 - 0.77"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * 0.1925", "height + 0.45"], ["width / 2 + width / 2 * 0.35", "height - 0.2 - 0.385"]]}}, {"line": {"points": [["width / 2", "height - 0.2"], ["width / 2 + width / 2 * -0.1925", "height + 0.45"], ["width / 2 + width / 2 * -0.35", "height - 0.2 - 0.385"]]}}]}
+}

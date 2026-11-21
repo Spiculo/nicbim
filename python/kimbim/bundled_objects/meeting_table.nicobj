@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "meeting_table",
+ "name": {"en": "Meeting table", "es": "Mesa de reuniones"},
+ "category": "office",
+ "ifc": {"IFC4": ["IfcFurnitureType", "TABLE", null], "IFC2X3": ["IfcFurnitureType", null, "Table"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 2.4},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 1.1},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75},
+  {"key": "seats", "kind": "count", "label": {"en": "Seats", "es": "Puestos"}, "default": 8, "min": 2, "max": 20}
+ ],
+ "materials": {"top": {"label": {"en": "Top", "es": "Tablero"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "top", "material": "top", "rounded_box": {"z": "height - 0.03", "dx": "width", "dy": "depth", "dz": 0.03, "r": "min(0.15, depth / 4)"}},
+  {"id": "pedestal", "material": "frame", "repeat": {"count": 2}, "box": {"x": "if(i == 0, width * 0.2, width * 0.8 - 0.08)", "y": "depth / 2 - 0.25", "dx": 0.08, "dy": 0.5, "dz": "height - 0.03"}}
+ ],
+ "symbol": [
+  {"line": {"points": [{"rounded_rect": [0, 0, "width", "depth", "min(0.15, depth / 4)"], "n": 3}], "closed": true}}
+ ]
+}

@@ -62,7 +62,7 @@ def test_each_object_is_a_valid_type_with_body_and_plan_symbol(project, key, tmp
     assert ifcopenshell.util.element.get_type(element) == t
     assert t.is_a().endswith("Type") and t.Name.startswith(library.OBJECTS[key].name)
     maps = {m.MappedRepresentation.RepresentationIdentifier for m in t.RepresentationMaps}
-    assert maps == {"Body", "Annotation"}
+    assert maps - {"FrontView", "SideView"} == {"Body", "Annotation"}  # D255: optional 2D views
     reps = element.Representation.Representations
     assert all(rep.Items[0].is_a("IfcMappedItem") for rep in reps)
     assert ifcopenshell.util.element.get_container(element).GlobalId == project

@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "counter",
+ "name": {"en": "Counter", "es": "Mostrador"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "Counter"], "IFC2X3": ["IfcFurnitureType", null, "Counter"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 2.4},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.6},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.05}
+ ],
+ "materials": {"body": {"label": {"en": "Body", "es": "Cuerpo"}, "default": "Timber - finish"}, "top": {"label": {"en": "Top", "es": "Tapa"}, "default": "Stone"}},
+ "parts": [
+  {"id": "body", "material": "body", "box": {"y": 0.03, "dx": "width", "dy": "depth - 0.03", "dz": "height - 0.04"}},
+  {"id": "plinth", "material": "body", "box": {"x": 0.05, "y": 0.08, "dx": "width - 0.1", "dy": "depth - 0.1", "dz": 0.1}},
+  {"id": "top", "material": "top", "box": {"z": "height - 0.04", "dx": "width", "dy": "depth", "dz": 0.04}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

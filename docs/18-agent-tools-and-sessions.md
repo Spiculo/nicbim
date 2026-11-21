@@ -188,6 +188,15 @@ session; `kimbim mcp --session ID` does the same for MCP.
 - Deleting a session deletes its transcript and worktree; its branch only when the owner also asks for that, so a
   proposal under review is never lost silently (a `ready` session needs an explicit confirmation).
 
+### Studio sessions (D252)
+
+A stored session can also run a **studio agent**: a long-running runner process (`kimbim.agent.studio`) that plans,
+builds, draws and delivers while the architect works in the app, steered at any time from `kimbim studio say/task`
+or the app's **Studio** panel. It keeps `studio.json`, `inbox.jsonl`, `plan.md`, `notes.md` and `summary.md`
+beside the session's transcript, opens one task for the whole session, runs helper agents in parallel
+(`studio_spawn`) and sends snapshots back to the model as pictures. How to run a session:
+[23](23-studio-session-playbook.md); design: [spec](superpowers/specs/2026-11-21-studio-sessions-design.md).
+
 ### Remote (future, opt-in)
 
 - The same `session.json` + `transcript.jsonl` shape, synced to a server; the model history goes through the Git

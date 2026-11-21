@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "display_shelf",
+ "name": {"en": "Display shelving", "es": "Góndola de exhibición"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "SHELF", null], "IFC2X3": ["IfcFurnitureType", null, "Shelf"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.2},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.6},
+  {"key": "shelves", "kind": "count", "label": {"en": "Shelves", "es": "Estantes"}, "default": 5, "min": 2, "max": 8}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "back", "material": "body", "box": {"y": "depth - 0.03", "dx": "width", "dy": 0.03, "dz": "height"}},
+  {"id": "shelf", "material": "body", "repeat": {"count": "shelves"}, "box": {"z": "0.1 + (height - 0.15) * i / (shelves - 1)", "dx": "width", "dy": "depth * (1 - 0.3 * i / shelves)", "dz": 0.02}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

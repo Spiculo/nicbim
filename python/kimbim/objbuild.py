@@ -21,7 +21,7 @@ MAX_GENERATOR_POINTS = 256
 SAMPLES = 64  # circle samples for bounding boxes and outlines (Task 1's golden uses the same)
 SYMBOL_CIRCLE_POINTS = 24
 CIRCLE_POINTS = 16
-SHAPES = ("box", "cylinder", "cone", "prism", "revolve", "sweep")
+SHAPES = ("box", "cylinder", "cone", "prism", "revolve", "sweep", "ellipsoid", "rounded_box")
 _PART_KEYS = {"id", "at", "rotate", "axes", "attach", "repeat", "when", "material", "anchors", "use", "with", *SHAPES}
 _FIELDS = {  # kind: (required, optional with defaults)
     "box": (("dx", "dy", "dz"), {"x": 0, "y": 0, "z": 0, "taper": 1}),
@@ -30,6 +30,9 @@ _FIELDS = {  # kind: (required, optional with defaults)
     "prism": (("points", "h"), {"z": 0}),
     "revolve": (("profile",), {"angle": 360}),
     "sweep": (("path",), {"r": None, "profile": None}),
+    # D255: smooth solids, so drawings show their outline and not facets
+    "ellipsoid": (("r",), {"cx": 0, "cy": 0, "cz": 0, "rz": None}),  # a spheroid: radius r around z, rz up/down
+    "rounded_box": (("dx", "dy", "dz", "r"), {"x": 0, "y": 0, "z": 0}),  # vertical edges rounded by r
 }
 _POINT_FIELDS = {"points", "profile", "path"}
 _SYMBOL_KINDS = {"line": (("points",), {"closed": False}), "polygon": (("points",), {}),
@@ -192,6 +195,17 @@ def _local_points(s):
                 + [(x, y, s["z"] + s["h"]) for x, y in _circle(s["cx"], s["cy"], s["r2"])])
     if k == "prism":
         return [(x, y, zz) for x, y in s["points"] for zz in (s["z"], s["z"] + s["h"])]
+    if k == "ellipsoid":
+        r, rz = s["r"], s["rz"] if s["rz"] is not None else s["r"]
+        out = [(s["cx"], s["cy"], s["cz"] - rz), (s["cx"], s["cy"], s["cz"] + rz)]
+        for j in range(1, 8):
+            phi = -math.pi / 2 + math.pi * j / 8
+            ring = _circle(s["cx"], s["cy"], r * math.cos(phi))
+            out += [(x, y, s["cz"] + rz * math.sin(phi)) for x, y in ring]
+        return out
+    if k == "rounded_box":
+        x, y, z, dx, dy, dz = (s[f] for f in ("x", "y", "z", "dx", "dy", "dz"))
+        return [(x + a * dx, y + b * dy, z + c * dz) for a in (0, 1) for b in (0, 1) for c in (0, 1)]
     if k == "revolve":
         steps = max(2, int(SAMPLES * s["angle"] / 360))
         return [(r * math.cos(math.radians(s["angle"] * j / steps)), r * math.sin(math.radians(s["angle"] * j / steps)), z)
@@ -234,6 +248,11 @@ def solid_volume(s) -> float:
         return math.pi * s["h"] * (s["r1"] ** 2 + s["r1"] * s["r2"] + s["r2"] ** 2) / 3
     if k == "prism":
         return _area(s["points"]) * s["h"]
+    if k == "ellipsoid":
+        return 4 / 3 * math.pi * s["r"] ** 2 * (s["rz"] if s["rz"] is not None else s["r"])
+    if k == "rounded_box":
+        r = min(s["r"], s["dx"] / 2, s["dy"] / 2)
+        return (s["dx"] * s["dy"] - (4 - math.pi) * r * r) * s["dz"]
     if k == "revolve":
         return _area(s["profile"]) * 2 * math.pi * abs(_centroid_x(s["profile"])) * s["angle"] / 360
     length = sum(math.dist(p, q) for p, q in zip(s["path"], s["path"][1:]))
@@ -247,6 +266,7 @@ class Shape:
 
     def __init__(self):
         self.solids, self.curves = [], []
+        self.views = {}  # D255: "front"/"side" -> curves, as the plan symbol's
 
     def polylines(self) -> list:
         out = []
@@ -409,6 +429,10 @@ def _solid_ok(kind, s):
         return s["h"] > 1e-6 and len(s["points"]) >= 3
     if kind == "revolve":
         return len(s["profile"]) >= 3 and s["angle"] > 1e-6
+    if kind == "ellipsoid":
+        return s["r"] > 1e-6 and (s["rz"] is None or s["rz"] > 1e-6)
+    if kind == "rounded_box":
+        return min(s["dx"], s["dy"], s["dz"]) > 1e-6 and s["r"] >= 0
     return len(s["path"]) >= 2 and (s["r"] is None or s["r"] > 1e-6)
 
 
@@ -684,9 +708,13 @@ def _use(ctx, components, part, env, m, stack, where):
 
 
 def _symbol(ctx, defn, env):
+    return _symbol_items(ctx, defn.symbol, env, "symbol")
+
+
+def _symbol_items(ctx, items, env, label):
     curves = []
-    for k, item in enumerate(defn.symbol):
-        where = f"symbol[{k}]"
+    for k, item in enumerate(items):
+        where = f"{label}[{k}]"
         if not isinstance(item, dict):
             raise ObjectError(f"{where}: an object")
         kinds = [s for s in _SYMBOL_KINDS if s in item]
@@ -760,6 +788,7 @@ def build(defn, values, resolve=None, all_anchors=False) -> Shape:
     env = _parts(ctx, defn, defn.components, env, np.eye(4), [], "parts")
     shape = ctx.shape
     shape.curves = _symbol(ctx, defn, env) if defn.symbol is not None else _outline(shape)
+    shape.views = {k: _symbol_items(ctx, v, env, f"views.{k}") for k, v in (getattr(defn, "views", None) or {}).items()}
     ox, oy = getattr(defn, "origin", (0.0, 0.0))
     if abs(ox) > 1e-12 or abs(oy) > 1e-12:  # D92: the object's own origin goes to (0, 0)
         shift = _translate(-ox, -oy, 0)

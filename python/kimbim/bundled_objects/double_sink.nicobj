@@ -1,0 +1,22 @@
+{
+ "format": "kimbim-object/1",
+ "id": "double_sink",
+ "name": {"en": "Double washbasin vanity", "es": "Mueble con doble lavatorio"},
+ "category": "sanitary",
+ "ifc": {"IFC4": ["IfcSanitaryTerminalType", "WASHHANDBASIN", null]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.4},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.85}
+ ],
+ "materials": {"body": {"label": {"en": "Top and basins", "es": "Tapa y piletas"}, "default": "Porcelain"}, "cabinet": {"label": {"en": "Cabinet", "es": "Mueble"}, "default": "Timber - finish"}},
+ "parts": [
+  {"id": "cabinet", "material": "cabinet", "box": {"y": 0.03, "z": 0.15, "dx": "width", "dy": "depth - 0.03", "dz": "height - 0.17"}},
+  {"id": "top", "material": "body", "box": {"z": "height - 0.02", "dx": "width", "dy": "depth", "dz": 0.02}},
+  {"id": "basin", "material": "body", "repeat": {"count": 2}, "rounded_box": {"x": "width * (0.25 + 0.5 * i) - 0.22", "y": 0.07, "z": "height - 0.15", "dx": 0.44, "dy": 0.32, "dz": 0.13, "r": 0.1}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"repeat": {"count": 2}, "line": {"points": [{"rounded_rect": ["width * (0.25 + 0.5 * i) - 0.22", 0.07, 0.44, 0.32, 0.1], "n": 3}], "closed": true}}
+ ]
+}

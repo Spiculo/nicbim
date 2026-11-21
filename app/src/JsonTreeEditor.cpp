@@ -132,7 +132,8 @@ JsonTreeEditor::JsonTreeEditor(QWidget* parent)
     auto* componentButton = treeButton(tr("Add component"), "partsAddComponent", this);
     auto* menu = new QMenu(m_addPart);
     const QPair<QString, const char*> shapes[] = {{tr("Box"), "box"}, {tr("Cylinder"), "cylinder"}, {tr("Cone"), "cone"},
-        {tr("Prism"), "prism"}, {tr("Revolve"), "revolve"}, {tr("Sweep"), "sweep"}, {tr("Anchors only"), "anchors"}, {tr("Use"), "use"}};
+        {tr("Prism"), "prism"}, {tr("Revolve"), "revolve"}, {tr("Sweep"), "sweep"}, {tr("Ellipsoid"), "ellipsoid"}, {tr("Rounded box"), "rounded_box"},
+        {tr("Anchors only"), "anchors"}, {tr("Use"), "use"}};
     for (const auto& [text, shape] : shapes)
         connect(menu->addAction(text), &QAction::triggered, this, [this, shape = QLatin1String(shape)] { addPart(shape); });
     m_addPart->setMenu(menu);

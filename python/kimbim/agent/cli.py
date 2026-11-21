@@ -448,6 +448,9 @@ def _people(group, top) -> None:
     s.add_argument("--north", type=float, default=0.0,
                    help="degrees the building's +Y axis is turned clockwise from true north")
     s.add_argument("--crs", default="auto", help="auto (UTM of the longitude), EPSG:5382 (Uruguay), EPSG:327zz...")
+    s.add_argument("--agent-changes", default="agent_decides", choices=("agent_decides", "direct", "option"),
+                   help="where agent changes go: agent_decides (default: a studio agent works in the model, so you "
+                        "see each change at once), direct, or option (a design option to review)")
     s.add_argument("--level", action="append", default=[], metavar="NAME=ELEVATION",
                    help="levels to add, e.g. \"Planta alta=3\" (repeatable; metres). The first level is renamed "
                         "to the first NAME when its elevation is 0")
@@ -1354,6 +1357,9 @@ def _project_new(ns) -> int:
         return data
 
     check(A.new_project(ns.name or target.stem, ns.schema))
+    from .. import settings as S
+
+    check(S.set_project_settings(json.dumps({"agent_changes": ns.agent_changes})))
     info = {k: v for k, v in (("number", ns.number), ("name", ns.name), ("client", ns.client_name),
                               ("address", ns.address)) if v}
     if info:
@@ -1373,8 +1379,7 @@ def _project_new(ns) -> int:
         if i == 0 and abs(z) < 1e-9:
             check(L.rename_storey(first.GlobalId, name.strip()))
         else:
-            import ifcopenshell.util.unit
-            check(A.add_storey(name.strip(), z / ifcopenshell.util.unit.calculate_unit_scale(B._model)))
+            check(A.add_storey(name.strip(), z))  # metres
     if nic:
         target.parent.mkdir(parents=True, exist_ok=True)
         check(D.save_as_nic(str(target), "New project"))

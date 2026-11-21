@@ -40,7 +40,8 @@ from .objbuild import ObjectError, _translate
 PSET = "KIMBIM_LibraryObject"
 PARAMETERS = "Parameters"  # the Properties panel group (its edits go to set_object_parameter)
 CATEGORIES = (("furniture", "Furniture"), ("lighting", "Lighting"), ("sanitary", "Sanitary"), ("kitchen", "Kitchen"),
-              ("site", "People, plants and cars"), ("office", "Office library"),
+              ("site", "People, plants and cars"), ("education", "Education"), ("commercial", "Shops and cafés"),
+              ("industrial", "Industrial"), ("office", "Office library"),
               ("project", "Project"))
 
 BUNDLED = pathlib.Path(__file__).with_name("bundled_objects")
@@ -541,6 +542,34 @@ class _Writer:
             return [self.extrude(profile, up(s["z"]), s["h"])]
         if kind == "prism":
             return [self.extrude(self.closed(s["points"]), up(s["z"]), s["h"])]
+        if kind == "rounded_box":
+            cx, cy = s["x"] + s["dx"] / 2, s["y"] + s["dy"] / 2
+            r = min(s["r"], s["dx"] / 2 - 1e-4, s["dy"] / 2 - 1e-4)
+            if r <= 1e-6:
+                profile = f.createIfcRectangleProfileDef("AREA", None, self.a2(cx, cy), s["dx"] * self.k, s["dy"] * self.k)
+            else:
+                profile = f.createIfcRoundedRectangleProfileDef("AREA", None, self.a2(cx, cy), s["dx"] * self.k,
+                                                                s["dy"] * self.k, r * self.k)
+            return [self.extrude(profile, up(s["z"]), s["dz"])]
+        if kind == "ellipsoid":
+            # A half ellipse (x >= 0) in the x-z plane, turned a full circle about z: a smooth spheroid. The arc
+            # is a trimmed IfcEllipse, so hidden-line drawings show its outline, not facets.
+            r, rz = s["r"], s["rz"] if s["rz"] is not None else s["r"]
+            base = m @ _translate(s["cx"], s["cy"], s["cz"])
+            plane = base.copy()
+            plane[:3, 0], plane[:3, 1], plane[:3, 2] = base[:3, 0], base[:3, 2], -base[:3, 1]
+            semi1, semi2 = (r, rz) if r >= rz else (rz, r)
+            ellipse_place = self.a2(0, 0) if r >= rz else f.createIfcAxis2Placement2D(
+                self.p2(0, 0), f.createIfcDirection((0.0, 1.0)))  # the major axis along x (r) or up (rz)
+            ellipse = f.createIfcEllipse(ellipse_place, semi1 * self.k, semi2 * self.k)
+            bottom, top = self.p2(0, -rz), self.p2(0, rz)
+            arc = f.createIfcTrimmedCurve(ellipse, [bottom], [top], True, "CARTESIAN")
+            segs = [f.createIfcCompositeCurveSegment("CONTINUOUS", True, arc),
+                    f.createIfcCompositeCurveSegment("CONTINUOUS", True, f.createIfcPolyline([top, bottom]))]
+            curve = f.createIfcCompositeCurve(segs, False)
+            profile = f.createIfcArbitraryClosedProfileDef("AREA", None, curve)
+            axis = f.createIfcAxis1Placement(self.p3(0, 0, 0), self.d3((0, 1, 0)))
+            return [f.createIfcRevolvedAreaSolid(profile, self.placement(plane), axis, self.angle(360.0))]
         if kind in ("cone", "revolve"):
             if kind == "cone":
                 profile_pts = [(0, 0), (s["r1"], 0), (s["r2"], s["h"]), (0, s["h"])]
@@ -605,6 +634,30 @@ def _representations(obj, values: dict):
         curve_set = f.createIfcGeometricCurveSet([writer.curve(c) for c in shape.curves])
         plan = f.createIfcShapeRepresentation(plan_context, "Annotation", "Annotation2D", [curve_set])
     return body, plan
+
+
+VIEW_IDS = {"front": "FrontView", "side": "SideView"}  # D255: representation identifiers of the 2D views
+
+
+def _view_representations(obj, values: dict) -> list:
+    """D255: the object's front/side 2D views as Annotation2D representations (the plan context; drawings
+    project them into sections and elevations)."""
+    import ifcopenshell.util.unit
+
+    from . import app_bridge as B
+
+    if not getattr(obj, "views", None):
+        return []
+    f = B._model
+    shape = obj.shape(values)
+    writer = _Writer(f, ifcopenshell.util.unit.calculate_unit_scale(f))
+    _body, plan_context = _contexts()
+    out = []
+    for key, curves in shape.views.items():
+        if curves:
+            curve_set = f.createIfcGeometricCurveSet([writer.curve(c) for c in curves])
+            out.append(f.createIfcShapeRepresentation(plan_context, VIEW_IDS[key], "Annotation2D", [curve_set]))
+    return out
 
 
 def _style_parts(f, obj, values: dict, items, parts):
@@ -743,6 +796,8 @@ def _make_type(obj, values: dict):
     ifcopenshell.api.geometry.assign_representation(f, product=t, representation=body)
     if plan is not None:
         ifcopenshell.api.geometry.assign_representation(f, product=t, representation=plan)
+    for view in _view_representations(obj, values):
+        ifcopenshell.api.geometry.assign_representation(f, product=t, representation=view)
     _write_pset(t, obj, values)
     return t
 
@@ -1158,10 +1213,12 @@ def _regenerate_type(t, obj, values: dict) -> None:
 
     f = B._model
     body, plan = _representations(obj, values)
-    leftover = [r for r in (body, plan) if r is not None]
+    views = {r.RepresentationIdentifier: r for r in _view_representations(obj, values)}
+    leftover = [r for r in (body, plan, *views.values()) if r is not None]
     for rep_map in t.RepresentationMaps or ():
         old = rep_map.MappedRepresentation
-        new = body if old.RepresentationIdentifier == "Body" else plan
+        ident = old.RepresentationIdentifier
+        new = body if ident == "Body" else views.get(ident) if ident in VIEW_IDS.values() else plan
         if new is None or not any(new is r for r in leftover):
             continue
         old_items = list(old.Items)

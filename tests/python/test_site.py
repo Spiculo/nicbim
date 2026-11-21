@@ -82,4 +82,7 @@ def test_cli_project_new_makes_a_georeferenced_folder(tmp_path, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["crs"] == "EPSG:5382" and out["levels"] == ["Planta baja", "Planta alta"]
     assert any(target.iterdir())
+    from kimbim import authoring as A
+    from kimbim import app_bridge as B
+    assert [round(A._elevation(x), 3) for x in B._model.by_type("IfcBuildingStorey")] == [0.0, 3.0]
     assert main(["project", "new", str(target)]) == 1  # not empty: refused

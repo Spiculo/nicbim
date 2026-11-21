@@ -11,7 +11,7 @@
  ],
  "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Porcelain"}},
  "parts": [
-  {"id": "basin", "prism": {"points": [{"rounded_rect": [0, 0, "width", "depth", "min(width, depth) * 0.3"], "n": 4}], "z": "height - 0.18", "h": 0.18}},
+  {"id": "basin", "rounded_box": {"x": 0, "y": 0, "z": "height - 0.18", "dx": "width", "dy": "depth", "dz": 0.18, "r": "min(width, depth) * 0.3"}},
   {"id": "pedestal", "box": {"x": "width / 2 - 0.09", "y": "depth - 0.2", "dx": 0.18, "dy": 0.18, "dz": "height - 0.18"}}
  ],
  "symbol": [

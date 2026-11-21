@@ -320,6 +320,17 @@ def settings_of(drawing) -> dict | None:
             "crop": _crop_of(data.get("Crop"))}
 
 
+def fitted(s, bounds):
+    """An auto template elevation's marker follows the model (D61): its stored points were fitted when the
+    drawing was made (an empty new project has default bounds), so anything that shows the marker refits it."""
+    if s is not None and s.get("auto") and s.get("side") and bounds is not None:
+        s = dict(s)
+        points, look = auto_marker(s["side"], bounds)
+        s["points"] = [[float(x), float(y)] for x, y in points]  # plain numbers: the settings go to JSON
+        s["look"] = [float(v) for v in look]
+    return s
+
+
 def auto_marker(side: str, bounds):
     """Points and look point of a template elevation marker (D61) outside the model's bounds.
     `side` is where the viewer stands: north looks south, and so on."""
@@ -927,10 +938,14 @@ def dimension_chain(points, through, texts, size):
 def markers(f, to_paper, z):
     """Section and elevation markers in a plan drawing (Archicad style, as in the 3D view's plan)."""
     out = []
+    bounds = None
     for d in f.by_type("IfcAnnotation"):
         if not is_drawing(d):
             continue
         s = settings_of(d)
+        if s is not None and s.get("auto") and s.get("side"):
+            bounds = bounds if bounds is not None else model_bounds(f)
+            s = fitted(s, bounds)
         if s is None or s["kind"] not in ("section", "elevation") or len(s["points"]) != 2:
             continue
         (x1, y1), (x2, y2) = s["points"]
@@ -1036,6 +1051,82 @@ def plan_display(e, plan_symbols: bool = True) -> str:
     if value in ("symbol", "body"):
         return value
     return "symbol" if plan_symbols else "body"
+
+
+def _view_maps(t) -> dict:
+    """D255: the type's front/side 2D view representation maps by key."""
+    out = {}
+    for rep_map in getattr(t, "RepresentationMaps", None) or ():
+        ident = rep_map.MappedRepresentation.RepresentationIdentifier
+        if ident in ("FrontView", "SideView"):
+            out["front" if ident == "FrontView" else "side"] = rep_map
+    return out
+
+
+def view_objects(f, products) -> dict:
+    """Library objects among `products` whose type has 2D views (D255): GlobalId -> (element, views)."""
+    out = {}
+    wanted = {p.id() for p in products}
+    for t in f.by_type("IfcTypeProduct"):
+        maps = _view_maps(t)
+        if not maps:
+            continue
+        for e in ifcopenshell.util.element.get_types(t):
+            if e.id() in wanted and e.ObjectPlacement is not None:
+                out[e.GlobalId] = (e, maps)
+    return out
+
+
+def object_views(f, s, objects: dict, to_paper) -> list:
+    """D255: sections and elevations draw these objects from their hand-drawn front or side view (the one
+    facing the viewer), placed where the object stands, instead of their 3D bodies. An object on the near
+    side of a section's cut is left out, as the cut removes it."""
+    if not objects or len(s.get("points") or []) < 2:
+        return []
+    unit = ifcopenshell.util.unit.calculate_unit_scale(f)
+    (x1, y1), (x2, y2) = s["points"][:2]
+    look = s["look"]
+    length = math.hypot(x2 - x1, y2 - y1)
+    if length < 1e-9:
+        return []
+    nx, ny = -(y2 - y1) / length, (x2 - x1) / length
+    if (look[0] - x1) * nx + (look[1] - y1) * ny < 0:
+        nx, ny = -nx, -ny  # the viewing direction (towards what is seen)
+    depth = s.get("depth")
+    out = []
+    for guid, (e, maps) in objects.items():
+        m = ifcopenshell.util.placement.get_local_placement(e.ObjectPlacement)
+        ox, oy = m[0, 3] * unit, m[1, 3] * unit
+        ahead = (ox - x1) * nx + (oy - y1) * ny
+        if ahead < -0.05 or (depth is not None and depth >= 0 and ahead > depth + 0.05):
+            continue
+        ex, ey = m[0, :2], m[1, :2]  # the object's x and y axes in the plan
+        along_x = abs(ex[0] * nx + ex[1] * ny)
+        along_y = abs(ey[0] * nx + ey[1] * ny)
+        key = "front" if along_y >= along_x else "side"
+        rep_map = maps.get(key) or maps.get("front") or maps.get("side")
+        key = "front" if rep_map is maps.get("front") else "side"
+        mm = m
+        if rep_map.MappingOrigin is not None and rep_map.MappingOrigin.is_a("IfcAxis2Placement3D"):
+            mm = m @ ifcopenshell.util.placement.get_axis2placement(rep_map.MappingOrigin)
+
+        def paper(u, h, mm=mm, key=key):
+            local = np.array([u, 0.0, h, 1.0]) if key == "front" else np.array([0.0, u, h, 1.0])
+            w = mm @ local
+            return to_paper(w[0] * unit, w[1] * unit, w[2] * unit)
+
+        parts = []
+        for item in rep_map.MappedRepresentation.Items:
+            for c in _curves(item):
+                if c[0] == "poly" and len(c[1]) >= 2:
+                    parts.append(_path([paper(x, y) for x, y in c[1]]))
+                elif c[0] == "circle":
+                    pts = [(c[1] + c[3] * math.cos(a), c[2] + c[3] * math.sin(a))
+                           for a in np.linspace(0, 2 * math.pi, 33)]
+                    parts.append(_path([paper(x, y) for x, y in pts]))
+        if parts:
+            out += [f'<g class="projection" data-kind="object" ifc:guid="{guid}">', *parts, "</g>"]
+    return out
 
 
 def symbol_objects(f, plan_symbols: bool = True) -> dict:
@@ -1323,6 +1414,11 @@ def generate(f, drawing, include=None, bounds=None, plan_symbols: bool = True,
     if include is not None:
         wanted = set(include)
         products = [p for p in products if p.GlobalId in wanted]
+    viewed = {}
+    if s is not None and s["kind"] in ("section", "elevation"):
+        # D255: objects with hand-drawn views are drawn from them (overlay), not by the hidden-line pass
+        viewed = view_objects(f, products)
+        products = [p for p in products if p.GlobalId not in viewed]
     gs = ifcopenshell.geom.settings(ELEMENT_HIERARCHY=True)
     # A detail or a drawing at another scale is drawn at that scale, so the page grows in mm.
     page = (f"{round(1189 * SCALE / scale)}x{round(841 * SCALE / scale)}"
@@ -1357,6 +1453,13 @@ def generate(f, drawing, include=None, bounds=None, plan_symbols: bool = True,
     svg = buffer.get_value()
     if s is not None:
         svg = overlay(f, drawing, s, svg, set(include) if include is not None else None, plan_symbols)
+        if viewed:
+            to_paper = paper_mapping(svg)
+            parts = object_views(f, s, viewed, to_paper) if to_paper is not None else []
+            if parts:
+                group = ('<g class="kimbim-overlay" fill="none" stroke="#000000" stroke-width="0.18">\n'
+                         + "\n".join(parts) + "\n</g>\n")
+                svg = svg.replace("</svg>", group + "</svg>", 1)
     svg = detail_frame(f, drawing, s, svg) if detail else crop(svg)
     if not detail and s is not None and s.get("crop"):
         svg = crop_to(svg, s["crop"])

@@ -1,0 +1,24 @@
+{
+ "format": "kimbim-object/1",
+ "id": "workstation",
+ "name": {"en": "Workstation", "es": "Puesto de trabajo"},
+ "category": "office",
+ "ifc": {"IFC4": ["IfcFurnitureType", "DESK", null], "IFC2X3": ["IfcFurnitureType", null, "Desk"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.6},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.8},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75},
+  {"key": "screen", "kind": "length", "label": {"en": "Screen height", "es": "Altura de mampara"}, "default": 0.4}
+ ],
+ "materials": {"top": {"label": {"en": "Top", "es": "Tablero"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}, "screen": {"label": {"en": "Screen", "es": "Mampara"}, "default": "Fabric"}},
+ "parts": [
+  {"id": "top", "material": "top", "box": {"z": "height - 0.025", "dx": "width", "dy": "depth", "dz": 0.025}},
+  {"id": "side", "material": "frame", "repeat": {"count": 2}, "box": {"x": "if(i == 0, 0.03, width - 0.06)", "y": 0.05, "dx": 0.03, "dy": "depth - 0.1", "dz": "height - 0.025"}},
+  {"id": "screen", "material": "screen", "box": {"y": "depth - 0.03", "z": "height", "dx": "width", "dy": 0.03, "dz": "screen"}},
+  {"id": "monitor", "material": "frame", "box": {"x": "width / 2 - 0.3", "y": "depth - 0.25", "z": "height + 0.12", "dx": 0.6, "dy": 0.03, "dz": 0.35}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [["width / 2 - 0.3", "depth - 0.25"], ["width / 2 + 0.3", "depth - 0.25"]]}}
+ ]
+}

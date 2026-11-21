@@ -1,0 +1,22 @@
+{
+ "format": "kimbim-object/1",
+ "id": "student_chair",
+ "name": {"en": "Student chair", "es": "Silla escolar"},
+ "category": "education",
+ "ifc": {"IFC4": ["IfcFurnitureType", "CHAIR", null], "IFC2X3": ["IfcFurnitureType", null, "Chair"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.42},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.45},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.8}
+ ],
+ "materials": {"body": {"label": {"en": "Shell", "es": "Asiento"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "leg", "material": "frame", "repeat": {"count": 4}, "box": {"x": "if(i % 2 == 0, 0.02, width - 0.02 - 0.025)", "y": "if(i < 2, 0.02, depth - 0.02 - 0.025)", "dx": 0.025, "dy": 0.025, "dz": 0.43}},
+  {"id": "seat", "material": "body", "rounded_box": {"z": 0.43, "dx": "width", "dy": "depth", "dz": 0.02, "r": 0.04}},
+  {"id": "back", "material": "body", "rounded_box": {"y": "depth - 0.03", "z": 0.55, "dx": "width", "dy": 0.02, "dz": "height - 0.55", "r": 0.01}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [[0, "depth - 0.03"], ["width", "depth - 0.03"]]}}
+ ]
+}

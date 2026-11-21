@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "clothes_rack",
+ "name": {"en": "Clothes rail", "es": "Perchero de exhibición"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "Rail"], "IFC2X3": ["IfcFurnitureType", null, "Rail"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.5},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.6}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "upright", "material": "body", "repeat": {"count": 2}, "cylinder": {"cx": "if(i == 0, 0.03, width - 0.03)", "cy": "depth / 2", "r": 0.015, "h": "height"}},
+  {"id": "foot", "material": "body", "repeat": {"count": 2}, "box": {"x": "if(i == 0, 0, width - 0.06)", "dx": 0.06, "dy": "depth", "dz": 0.03}},
+  {"id": "rail", "material": "body", "sweep": {"path": [[0.03, "depth / 2", "height - 0.03"], ["width - 0.03", "depth / 2", "height - 0.03"]], "r": 0.015}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

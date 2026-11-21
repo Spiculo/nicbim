@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "student_desk",
+ "name": {"en": "Student desk", "es": "Pupitre"},
+ "category": "education",
+ "ifc": {"IFC4": ["IfcFurnitureType", "DESK", null], "IFC2X3": ["IfcFurnitureType", null, "Desk"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.7},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.5},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.72}
+ ],
+ "materials": {"top": {"label": {"en": "Top", "es": "Tablero"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "top", "material": "top", "box": {"z": "height - 0.02", "dx": "width", "dy": "depth", "dz": 0.02}},
+  {"id": "leg", "material": "frame", "repeat": {"count": 4}, "box": {"x": "if(i % 2 == 0, 0.03, width - 0.03 - 0.03)", "y": "if(i < 2, 0.03, depth - 0.03 - 0.03)", "dx": 0.03, "dy": 0.03, "dz": "height - 0.02"}},
+  {"id": "tray", "material": "frame", "box": {"x": 0.03, "y": 0.1, "z": "height - 0.15", "dx": "width - 0.06", "dy": "depth - 0.13", "dz": 0.01}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

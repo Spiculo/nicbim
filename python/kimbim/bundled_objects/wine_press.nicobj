@@ -1,0 +1,23 @@
+{
+ "format": "kimbim-object/1",
+ "id": "wine_press",
+ "name": {"en": "Wine press", "es": "Prensa neumática"},
+ "category": "industrial",
+ "ifc": {"IFC4": ["IfcBuildingElementProxyType", "USERDEFINED", "PRESS"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "PRESS"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.6},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 3.2},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 2.0}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "frame", "material": "body", "repeat": {"count": 2}, "box": {"y": "if(i == 0, 0.1, depth - 0.3)", "dx": "width", "dy": 0.2, "dz": "height * 0.7"}},
+  {"id": "drum", "material": "body", "axes": ["z", "x", "y"], "cylinder": {"cx": "height * 0.62", "cy": "width / 2", "z": 0.3, "r": "width * 0.45", "h": "depth - 0.6"}},
+  {"id": "tray", "material": "body", "box": {"x": 0.1, "y": 0.3, "z": 0.3, "dx": "width - 0.2", "dy": "depth - 0.6", "dz": 0.15}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [[0, 0.3], ["width", 0.3]]}},
+  {"line": {"points": [[0, "depth - 0.3"], ["width", "depth - 0.3"]]}}
+ ]
+}

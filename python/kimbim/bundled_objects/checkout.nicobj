@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "checkout",
+ "name": {"en": "Checkout counter", "es": "Caja registradora"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "Checkout"], "IFC2X3": ["IfcFurnitureType", null, "Checkout"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.6},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.8},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.9}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Timber - finish"}},
+ "parts": [
+  {"id": "body", "material": "body", "rounded_box": {"dx": "width", "dy": "depth", "dz": "height", "r": 0.05}},
+  {"id": "terminal", "material": "body", "box": {"x": "width - 0.45", "y": "depth / 2 - 0.15", "z": "height", "dx": 0.3, "dy": 0.25, "dz": 0.3}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

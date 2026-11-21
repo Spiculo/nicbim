@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "cafeteria_table",
+ "name": {"en": "Cafeteria table", "es": "Mesa de comedor escolar"},
+ "category": "education",
+ "ifc": {"IFC4": ["IfcFurnitureType", "TABLE", null], "IFC2X3": ["IfcFurnitureType", null, "Table"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.8},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.8},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.72}
+ ],
+ "materials": {"top": {"label": {"en": "Top", "es": "Tablero"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "top", "material": "top", "box": {"z": "height - 0.025", "dx": "width", "dy": "depth", "dz": 0.025}},
+  {"id": "leg", "material": "frame", "repeat": {"count": 4}, "box": {"x": "if(i % 2 == 0, 0.06, width - 0.06 - 0.04)", "y": "if(i < 2, 0.06, depth - 0.06 - 0.04)", "dx": 0.04, "dy": 0.04, "dz": "height - 0.025"}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

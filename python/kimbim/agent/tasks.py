@@ -141,12 +141,14 @@ class Tasks:
                 raise AgentError("ambiguous_task", tasks=[t.id for t in group])
         return None
 
-    def mode_for(self, mode: str = "") -> str:
+    def mode_for(self, mode: str = "", implicit: bool = False) -> str:
         setting = S.current().get("agent_changes", "option")
         if setting == "direct":
             return "direct"
         if setting == "agent_decides":
-            return mode or "option"
+            # D252: a write with no task open works in the model, like the session around it; an explicit task
+            # without a mode stays in a design option
+            return mode or ("direct" if implicit else "option")
         return "option"
 
     # ------------------------------------------------------------ helpers
@@ -217,7 +219,7 @@ class Tasks:
         busy = next((t for t in active if t.client == client), None)
         if busy is not None:  # one open task per client; other clients may have theirs
             raise AgentError("task_busy", task=busy.id, title=busy.title)
-        chosen = self.mode_for(mode)
+        chosen = self.mode_for(mode, implicit)
         if chosen == "option" and V._project is None:
             if mode != "direct" or implicit:
                 raise AgentError("not_versioned", hint=messages.text("hint_not_versioned"))

@@ -159,7 +159,9 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 <!-- tools:start -->
 | Tool (MCP) | Command line | What it does | Changes the model |
 |---|---|---|---|
+| `project_get_info` | `kimbim project get-info` | The project information the title blocks show: number, name, client, address and the like. |  |
 | `project_info` | `kimbim project info` | Describe the open project: name, schema, levels, element counts per kind, the current option and whether there are unsaved changes. |  |
+| `project_set_info` | `kimbim project set-info` | Set the project information the title blocks show (number, name, client, address); empty strings clear. | yes |
 | `project_set_settings` | `kimbim project set-settings` | Change project settings (units, decimals, display options...) as one undo step. | yes |
 | `project_settings` | `kimbim project settings` | Read the project settings (units, decimals, display options...), all or just the named keys. |  |
 | `versions_create_option` | `kimbim versions create-option` | Create a design option from the current version and switch to it. | yes |
@@ -303,6 +305,7 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `classifications_list` | `kimbim classifications list` | List the classification systems and their references. |  |
 | `classifications_of_element` | `kimbim classifications of-element` | List the classifications assigned to the given elements. |  |
 | `classifications_unassign` | `kimbim classifications unassign` | Remove classification references from elements. | yes |
+| `deliver_package` | `kimbim deliver package` | Write the delivery package: the drawing set as one PDF and per sheet, DXF sheets, the IFC model (georeferenced when the project is on the map), schedules as CSV and a transmittal listing the contents, the version it describes and open issues; optionally zipped. |  |
 | `draft_add` | `kimbim draft add` | Draw a line, polyline, arc, circle, rectangle, fill or spline on a level. | yes |
 | `draft_fill_from_shape` | `kimbim draft fill-from-shape` | Fill a closed shape (a polyline, circle or fill) with a pattern, on the same level. | yes |
 | `draft_patterns` | `kimbim draft patterns` | List the fill patterns available to draft fills. |  |
@@ -375,6 +378,8 @@ would change and changes nothing. This table is the output of `kimbim help --mar
 | `models_update` | `kimbim models update` | Apply the model's current content to every place it is used; edits already do this automatically, so this is for a project loaded with stale instances. | yes |
 | `plumbing_apply_sizes` | `kimbim plumbing apply-sizes` | Write the water system's pipe sizes and design values (one undo step). | yes |
 | `plumbing_size` | `kimbim plumbing size` | Peak flows, pipe sizes and the pressure left at each fixture for a cold or hot water system. |  |
+| `site_get` | `kimbim site get` | Where the project is: the site's latitude, longitude, elevation and address, and its map conversion (CRS, eastings, northings, height, rotation) and true north. |  |
+| `site_locate` | `kimbim site locate` | Place the project on the map: sets the site's latitude/longitude/elevation and address, an IFC map conversion from the project origin to projected coordinates (eastings/northings computed for the CRS) and true north. | yes |
 | `structure_analyse` | `kimbim structure analyse` | Analyse the structure: loads from the model, a frame solve, member utilisation and deflection checks. |  |
 | `structure_results` | `kimbim structure results` | The stored structural results on the members (from the last applied analysis). |  |
 | `structure_save_results` | `kimbim structure save-results` | Analyse and store the results on the members and the IFC analysis model (one undo step). | yes |

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""D99 port (doc 16 §8): every bundled .nicobj builds the same geometry and plan symbol as the
-Python object it replaces, at its defaults and at two other value sets (tests/golden/library_objects.json)."""
+"""Bundled objects keep their geometry (tests/golden/library_objects.json): bounding box, volume and plan symbol
+at their defaults and recorded value sets. It began as the D99 port proof; since D256 it is a regression record
+rewritten by tools/update_library_golden.py after a deliberate change."""
 import json
 import pathlib
 

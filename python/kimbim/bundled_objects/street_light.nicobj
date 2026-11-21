@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "street_light",
+ "name": {"en": "Street light", "es": "Columna de alumbrado"},
+ "category": "site",
+ "ifc": {"IFC4": ["IfcLightFixtureType", "USERDEFINED", "STREETLIGHT"], "IFC2X3": ["IfcLightFixtureType", null, "Street light"]},
+ "params": [
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 4.0},
+  {"key": "width", "kind": "length", "label": {"en": "Head size", "es": "Tamaño de luminaria"}, "default": 0.5}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "pole", "material": "body", "cylinder": {"cx": 0, "cy": 0, "r": 0.06, "h": "height"}},
+  {"id": "head", "material": "body", "cylinder": {"cx": 0, "cy": 0, "z": "height", "r": "width / 2", "h": 0.12}}
+ ],
+ "symbol": [
+  {"circle": {"cx": 0, "cy": 0, "r": 0.06}},
+  {"circle": {"cx": 0, "cy": 0, "r": "width / 2"}}
+ ]
+}

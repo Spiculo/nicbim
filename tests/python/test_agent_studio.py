@@ -265,3 +265,25 @@ def test_provider_failure_waits_and_a_message_starts_a_fresh_provider(store):
     studio.send(record.id, "stop", store=store)
     thread.join(5)
     assert len(made) == 2 and any(e.get("text") == "back" for e in store.transcript(record.id))
+
+
+def test_one_task_for_the_session(store):
+    record = store.create("", "Casa")
+    calls = []
+
+    def tool_fn(name, args):
+        calls.append((name, args))
+        if name == "task.status":
+            return {"ok": True, "result": {"task": None}}
+        if name == "task.start":
+            return {"ok": True, "result": {"id": "t1", "mode": "direct"}}
+        return {"ok": True, "result": {}}
+
+    seen = []
+    runner = studio.Runner(record.id, "C:/somewhere", tool_fn=tool_fn, store=store, exit_when_done=True,
+                           provider_factory=lambda s, t, e: seen.append(Scripted([Turn(text="ok")])) or seen[-1],
+                           poll=0.01)
+    runner.run("brief")
+    assert calls[:2] == [("task.status", {}), ("task.start", {"title": "Studio: Casa", "mode": "direct"})]
+    assert "Session task: t1 (direct mode)" in seen[0].history[0][1]
+    assert studio.read_state(record.id, store)["task"] == "t1"

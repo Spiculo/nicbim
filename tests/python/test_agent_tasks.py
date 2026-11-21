@@ -236,6 +236,10 @@ def test_agent_decides(house):
     assert run(s, "task.start", title="Small", mode="direct")["result"]["mode"] == "direct"
     assert run(s, "task.abandon")["ok"]
     assert run(s, "task.start", title="Big")["result"]["mode"] == "option"
+    assert run(s, "task.abandon")["ok"]
+    # D252: a write with no task open works in the model (the implicit task is direct)
+    assert run(s, "test.rename", guids=[walls()[0].GlobalId], name="Y")["ok"]
+    assert s.tasks.all()[-1].mode == "direct"
 
 
 def test_slug_unicode(house):

@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "cafe_table",
+ "name": {"en": "Café table", "es": "Mesa de café"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "TABLE", null], "IFC2X3": ["IfcFurnitureType", null, "Table"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Diameter", "es": "Diámetro"}, "default": 0.7},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75}
+ ],
+ "materials": {"top": {"label": {"en": "Top", "es": "Tapa"}, "default": "Stone"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "base", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "width / 2", "r": "width * 0.3", "h": 0.02}},
+  {"id": "column", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "width / 2", "z": 0.02, "r": 0.03, "h": "height - 0.05"}},
+  {"id": "top", "material": "top", "cylinder": {"cx": "width / 2", "cy": "width / 2", "z": "height - 0.03", "r": "width / 2", "h": 0.03}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width / 2"}}
+ ]
+}

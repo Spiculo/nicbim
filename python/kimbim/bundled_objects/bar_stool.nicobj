@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "bar_stool",
+ "name": {"en": "Bar stool", "es": "Taburete alto"},
+ "category": "commercial",
+ "ifc": {"IFC4": ["IfcFurnitureType", "CHAIR", null], "IFC2X3": ["IfcFurnitureType", null, "Stool"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.4},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.4},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75}
+ ],
+ "materials": {"body": {"label": {"en": "Seat", "es": "Asiento"}, "default": "Timber - finish"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "base", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "r": "width * 0.45", "h": 0.02}},
+  {"id": "column", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "z": 0.02, "r": 0.025, "h": "height - 0.07"}},
+  {"id": "seat", "material": "body", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "z": "height - 0.05", "r": "width / 2", "h": 0.05}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "depth / 2", "r": "width / 2"}}
+ ]
+}

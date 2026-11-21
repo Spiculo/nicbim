@@ -129,6 +129,8 @@ is written for NicBim (a small recursive-descent parser in `kimbim/objexpr.py`);
 | `prism` | points (polygon in x, y), z, h | IfcExtrudedAreaSolid, arbitrary closed profile |
 | `revolve` | profile (points in x, z), angle (360 default) | IfcRevolvedAreaSolid |
 | `sweep` | `r` (a tube) or profile (points), path (3D points) | IfcSweptDiskSolid for tubes; a profile becomes one extrusion per path segment |
+| `ellipsoid` | r (around z), rz (up/down, default r), cx, cy, cz | IfcRevolvedAreaSolid of a trimmed IfcEllipse half-arc: smooth, drawings show the outline (D255) |
+| `rounded_box` | x, y, z, dx, dy, dz, r (vertical edges) | IfcExtrudedAreaSolid, IfcRoundedRectangleProfileDef (D255) |
 
 Points are lists of numbers or formulas, or generators: `{"ellipse": [cx, cy, rx, ry], "n": 12}`,
 `{"rounded_rect": [x, y, dx, dy, r], "n": 4}` (`rounded_rect` needs n ≥ 1, `ellipse` n ≥ 3). Box, cylinder, cone and prism take positions in the part's
@@ -203,6 +205,17 @@ copy's index and the count (slat `k` at `x: "0.05 + i * (width - 0.1) / (n - 1)"
 - Without `symbol`, the symbol is the **outline of the parts seen from above**: each solid's plan footprint,
   unioned (the chair's seat rectangle and the splayed feet sticking out past it), drawn as the projection lines.
 - Floor plans, the Library panel's thumbnails and DXF use it exactly as D86's symbols today.
+
+### Views for sections and elevations (D255)
+
+- `views` (optional) holds hand-drawn 2D views, items like `symbol`'s: `front` in object (x, z), the object seen
+  from -y; `side` in object (y, z), seen from +x. Sections and elevations draw an object with views from the view
+  facing the viewer (the front when the view looks along the object's y, else the side; one view serves both
+  when only one is given) instead of its 3D body, like Archicad's 2D symbols. They are stored on the type as
+  `FrontView` / `SideView` Annotation2D representation maps.
+- Use them for entourage (trees, people, cars) and large equipment, whose 3D body can then stay low-poly for the
+  viewer. `ellipsoid` shapes are smooth on paper but tessellate heavily (tens of thousands of triangles at the
+  default 1 mm tolerance), so bundled objects use prisms in 3D and views on paper.
 
 ## 4. IFC
 

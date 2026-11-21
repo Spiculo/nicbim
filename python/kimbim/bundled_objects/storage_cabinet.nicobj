@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "storage_cabinet",
+ "name": {"en": "Storage cabinet", "es": "Armario de guardado"},
+ "category": "office",
+ "ifc": {"IFC4": ["IfcFurnitureType", "SHELF", null], "IFC2X3": ["IfcFurnitureType", null, "Cabinet"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.9},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.45},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.9}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Timber - finish"}},
+ "parts": [
+  {"id": "body", "material": "body", "box": {"dx": "width", "dy": "depth", "dz": "height"}},
+  {"id": "door_line", "material": "body", "box": {"x": "width / 2 - 0.002", "y": -0.005, "z": 0.05, "dx": 0.004, "dy": 0.005, "dz": "height - 0.1"}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [["width / 2", 0], ["width / 2", "depth"]]}}
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "format": "kimbim-object/1",
+ "id": "armchair",
+ "name": {"en": "Armchair", "es": "Sillón"},
+ "category": "furniture",
+ "ifc": {"IFC4": ["IfcFurnitureType", "CHAIR", null], "IFC2X3": ["IfcFurnitureType", null, "Armchair"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.85},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.85},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.8}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Fabric"}},
+ "parts": [
+  {"id": "seat", "material": "body", "rounded_box": {"x": 0.15, "dx": "width - 0.3", "dy": "depth - 0.2", "dz": 0.42, "r": 0.04}},
+  {"id": "arm", "material": "body", "repeat": {"count": 2}, "rounded_box": {"x": "if(i == 0, 0, width - 0.15)", "dx": 0.15, "dy": "depth", "dz": "height * 0.72", "r": 0.05}},
+  {"id": "back", "material": "body", "rounded_box": {"x": 0.15, "y": "depth - 0.2", "dx": "width - 0.3", "dy": 0.2, "dz": "height", "r": 0.05}}
+ ],
+ "symbol": [
+  {"line": {"points": [{"rounded_rect": [0, 0, "width", "depth", 0.05], "n": 3}], "closed": true}},
+  {"line": {"points": [[0.15, 0], [0.15, "depth"]]}},
+  {"line": {"points": [["width - 0.15", 0], ["width - 0.15", "depth"]]}},
+  {"line": {"points": [[0.15, "depth - 0.2"], ["width - 0.15", "depth - 0.2"]]}}
+ ]
+}

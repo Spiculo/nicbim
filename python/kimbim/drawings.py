@@ -147,8 +147,12 @@ def drawings() -> str:
     out = []
     if B._model is not None:
         key = _state_key()
+        bounds = None
         for d in _drawings():
             s = G.settings_of(d)
+            if s.get("auto") and s.get("side"):  # the template elevations' markers follow the model
+                bounds = bounds if bounds is not None else _bounds_json()  # cached per model state
+                s = G.fitted(s, bounds)
             storey = G._storey(d, s) if s["kind"] == "plan" else None
             if s["kind"] == "plan" and storey is None:
                 continue  # its level was deleted

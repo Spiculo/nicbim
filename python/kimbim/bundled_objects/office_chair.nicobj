@@ -1,0 +1,23 @@
+{
+ "format": "kimbim-object/1",
+ "id": "office_chair",
+ "name": {"en": "Office chair", "es": "Silla de oficina"},
+ "category": "office",
+ "ifc": {"IFC4": ["IfcFurnitureType", "CHAIR", null], "IFC2X3": ["IfcFurnitureType", null, "Chair"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 0.62},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.62},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 1.0}
+ ],
+ "materials": {"body": {"label": {"en": "Upholstery", "es": "Tapizado"}, "default": "Fabric"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "base", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "r": "width * 0.45", "h": 0.05}},
+  {"id": "column", "material": "frame", "cylinder": {"cx": "width / 2", "cy": "depth / 2", "z": 0.05, "r": 0.025, "h": 0.36}},
+  {"id": "seat", "material": "body", "rounded_box": {"x": "width * 0.1", "y": "depth * 0.1", "z": 0.41, "dx": "width * 0.8", "dy": "depth * 0.75", "dz": 0.07, "r": 0.06}},
+  {"id": "back", "material": "body", "rounded_box": {"x": "width * 0.12", "y": "depth * 0.82", "z": 0.52, "dx": "width * 0.76", "dy": 0.06, "dz": "height - 0.52", "r": 0.025}}
+ ],
+ "symbol": [
+  {"circle": {"cx": "width / 2", "cy": "depth / 2", "r": "width * 0.45"}},
+  {"rect": {"x": "width * 0.1", "y": "depth * 0.1", "dx": "width * 0.8", "dy": "depth * 0.75"}}
+ ]
+}

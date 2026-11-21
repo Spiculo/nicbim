@@ -10,15 +10,16 @@
   {"key": "trunk", "kind": "length", "label": {"en": "Trunk diameter", "es": "Diámetro del tronco"}, "default": 0.3}
  ],
  "parts": [
-  {"id": "trunk_post", "cylinder": {"cx": "width / 2", "cy": "width / 2", "r": "trunk / 2", "h": "height * 0.45"}},
-  {"id": "crown1", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.8", "width / 2 * 0.8"], "n": 10}], "z": "height * 0.3", "h": "height * 0.2"}},
-  {"id": "crown2", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2", "width / 2"], "n": 10}], "z": "height * 0.5", "h": "height * 0.2"}},
-  {"id": "crown3", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.75", "width / 2 * 0.75"], "n": 10}], "z": "height * 0.7", "h": "height * 0.2"}},
-  {"id": "crown4", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.4", "width / 2 * 0.4"], "n": 10}], "z": "height * 0.85", "h": "height * 0.15"}}
+  {"id": "trunk_post", "material": "trunk", "cylinder": {"cx": "width / 2", "cy": "width / 2", "r": "trunk / 2", "h": "height * 0.35"}},
+  {"id": "crown1", "material": "leaves", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.8", "width / 2 * 0.8"], "n": 12}], "z": "height * 0.3 + height * 0.7 * 0.0", "h": "height * 0.7 * 0.3"}},
+  {"id": "crown2", "material": "leaves", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 1.0", "width / 2 * 1.0"], "n": 12}], "z": "height * 0.3 + height * 0.7 * 0.3", "h": "height * 0.7 * 0.4"}},
+  {"id": "crown3", "material": "leaves", "prism": {"points": [{"ellipse": ["width / 2", "width / 2", "width / 2 * 0.7", "width / 2 * 0.7"], "n": 12}], "z": "height * 0.3 + height * 0.7 * 0.7", "h": "height * 0.7 * 0.3"}}
  ],
  "symbol": [
   {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "width / 2"}},
   {"circle": {"cx": "width / 2", "cy": "width / 2", "r": "trunk / 2"}},
   {"repeat": {"count": 8}, "line": {"points": [["width / 2 + trunk / 2 * cos(45 * i)", "width / 2 + trunk / 2 * sin(45 * i)"], ["width / 2 + width / 2 * 0.7 * cos(45 * i)", "width / 2 + width / 2 * 0.7 * sin(45 * i)"]]}}
- ]
+ ],
+ "materials": {"trunk": {"label": {"en": "Trunk", "es": "Tronco"}, "default": "Timber"}, "leaves": {"label": {"en": "Leaves", "es": "Hojas"}, "default": "Generic"}},
+ "views": {"front": [{"line": {"points": [["width / 2 - trunk / 2", 0], ["width / 2 - trunk / 2", "height * 0.3"]]}}, {"line": {"points": [["width / 2 + trunk / 2", 0], ["width / 2 + trunk / 2", "height * 0.3"]]}}, {"repeat": {"count": 36}, "line": {"points": [["width / 2 + width / 2 * (1 + 0.05 * sin(7 * (10.0 * i))) * cos(10.0 * i)", "height * 0.62 + height * 0.36 * (1 + 0.05 * sin(7 * (10.0 * i))) * sin(10.0 * i)"], ["width / 2 + width / 2 * (1 + 0.05 * sin(7 * (10.0 * (i + 1)))) * cos(10.0 * (i + 1))", "height * 0.62 + height * 0.36 * (1 + 0.05 * sin(7 * (10.0 * (i + 1)))) * sin(10.0 * (i + 1))"]]}}, {"line": {"points": [["width / 2", "height * 0.3"], ["width / 2 - width * 0.2", "height * 0.55"]]}}, {"line": {"points": [["width / 2", "height * 0.35"], ["width / 2 + width * 0.18", "height * 0.6"]]}}, {"line": {"points": [["width / 2", "height * 0.3"], ["width / 2", "height * 0.7"]]}}]}
 }

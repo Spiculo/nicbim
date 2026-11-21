@@ -31,6 +31,7 @@ These documents guide development. They come from the original spec (`../doc.md`
 | 20 | [VR Feasibility](20-vr-feasibility.md) | OpenXR availability, what a VR mode needs, cost/risk and the deferral recommendation |
 | 21 | [Final Gap Checklist](21-gap-checklist.md) | Every doc-14 item as done, deferred or blocked, with the owner-provided blockers |
 | 22 | [Moonshot Roadmap](22-moonshot-roadmap.md) | Proposed: towers, human flow, habitable systems, the agent as a design partner and NicGit as the forge (H1–H4) |
+| 23 | [Studio Session Playbook](23-studio-session-playbook.md) | How an architect and a studio agent design, build, draw and deliver a project together; the five benchmark briefs in [briefs/](briefs/) |
 | — | [Decision Log](decisions.md) | Every architectural decision and its status |
 | — | [Open Questions](open-questions.md) | What is still undecided |
 | — | [Glossary](glossary.md) | BIM / IFC / VCS terms |

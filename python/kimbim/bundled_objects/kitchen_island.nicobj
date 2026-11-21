@@ -1,0 +1,21 @@
+{
+ "format": "kimbim-object/1",
+ "id": "kitchen_island",
+ "name": {"en": "Kitchen island", "es": "Isla de cocina"},
+ "category": "kitchen",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "Island"], "IFC2X3": ["IfcFurnitureType", null, "Island"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.8},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.9},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.9}
+ ],
+ "materials": {"body": {"label": {"en": "Body", "es": "Cuerpo"}, "default": "Timber - finish"}, "top": {"label": {"en": "Top", "es": "Mesada"}, "default": "Stone"}},
+ "parts": [
+  {"id": "body", "material": "body", "box": {"x": 0.03, "y": 0.03, "z": 0.1, "dx": "width - 0.06", "dy": "depth - 0.06", "dz": "height - 0.14"}},
+  {"id": "plinth", "material": "body", "box": {"x": 0.08, "y": 0.08, "dx": "width - 0.16", "dy": "depth - 0.16", "dz": 0.1}},
+  {"id": "top", "material": "top", "box": {"z": "height - 0.04", "dx": "width", "dy": "depth", "dz": 0.04}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

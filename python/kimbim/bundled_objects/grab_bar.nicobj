@@ -1,0 +1,19 @@
+{
+ "format": "kimbim-object/1",
+ "id": "grab_bar",
+ "name": {"en": "Grab bar", "es": "Barra de apoyo"},
+ "category": "sanitary",
+ "ifc": {"IFC4": ["IfcFurnitureType", "USERDEFINED", "GRABBAR"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "GRABBAR"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Length", "es": "Largo"}, "default": 0.8},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75},
+  {"key": "depth", "kind": "length", "label": {"en": "Projection", "es": "Saliente"}, "default": 0.08}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Steel"}},
+ "parts": [
+  {"id": "bar", "material": "body", "sweep": {"path": [[0, 0, "height"], [0, "-depth", "height"], ["width", "-depth", "height"], ["width", 0, "height"]], "r": 0.017}}
+ ],
+ "symbol": [
+  {"line": {"points": [[0, 0], [0, "-depth"], ["width", "-depth"], ["width", 0]]}}
+ ]
+}

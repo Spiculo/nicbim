@@ -17,9 +17,10 @@ from .objexpr import FormulaError, value_of
 
 FORMAT = "kimbim-object/1"
 KINDS = ("length", "angle", "count", "bool", "choice", "material")
-CATEGORIES = ("furniture", "lighting", "sanitary", "kitchen", "site", "office")
+CATEGORIES = ("furniture", "lighting", "sanitary", "kitchen", "site", "office", "education", "commercial", "industrial")
 MAX_FILE_BYTES = 1_000_000
-_FIELDS = {"format", "id", "name", "category", "ifc", "origin", "params", "materials", "parts", "components", "symbol"}
+_FIELDS = {"format", "id", "name", "category", "ifc", "origin", "params", "materials", "parts", "components", "symbol",
+           "views"}
 _PARAM_FIELDS = {"key", "kind", "label", "default", "min", "max", "options", "show_when", "group"}
 _RESERVED = {"i", "n", "pi", "and", "or", "not", "true", "false", "if"}
 _KEY = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -253,6 +254,12 @@ class ObjectDef:
         self.components = {name: ComponentDef(name, c, f"components.{name}")
                            for name, c in (data.get("components") or {}).items()}
         self.symbol = data.get("symbol")
+        # D255: hand-drawn 2D views for sections and elevations, items like the plan symbol's: "front" in
+        # object (x, z) seen from -y, "side" in object (y, z) seen from +x
+        self.views = data.get("views") or {}
+        if not isinstance(self.views, dict) or set(self.views) - {"front", "side"} or \
+                not all(isinstance(v, list) for v in self.views.values()):
+            raise ObjectError("views: an object with \"front\" and/or \"side\" lists of symbol items")
         self.text = canonical(data)
         self.hash = digest(self.text)
         self.data = data

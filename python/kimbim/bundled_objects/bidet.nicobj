@@ -12,7 +12,7 @@
  "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Porcelain"}},
  "parts": [
   {"id": "tank", "box": {"y": "depth - 0.08", "dx": "width", "dy": 0.08, "dz": "height"}},
-  {"id": "bowl", "prism": {"points": [{"ellipse": ["width / 2", "(depth - 0.08) / 2 + 0.02", "width / 2", "(depth - 0.08) / 2 + 0.02"], "n": 12}], "z": 0, "h": "height"}}
+  {"id": "bowl", "rounded_box": {"x": 0, "y": 0, "dx": "width", "dy": "depth - 0.08 + 0.04", "dz": "height", "r": "width / 2 - 0.001"}}
  ],
  "symbol": [
   {"rect": {"x": 0, "y": "depth - 0.08", "dx": "width", "dy": 0.08}},

@@ -704,14 +704,17 @@ def level_markers(f, drawing, s, svg: str, to_paper) -> list:
         return []
     vx, vw = float(m.group(1)), float(m.group(3))
     x0, y0 = s["points"][0]
-    right = vx + vw - 2.0
+    # Beside the building, not over it: the drawing is cropped to its content, so its right edge is the
+    # building's; the marks start a little past it (the caller crops again to take them in).
+    edge = vx + vw
+    right = edge + 28.0
     out = []
     for storey in f.by_type("IfcBuildingStorey"):
         if A._is_model(storey):
             continue
         z = G.storey_elevation(storey)
         _px, py = to_paper(x0, y0, z)
-        left = right - 22.0
+        left = edge + 3.0
         out.append(f'<path d="M{left:.3f},{py:.3f} L{right:.3f},{py:.3f}" stroke-dasharray="2 1"/>')
         out.append(f'<path d="M{right - 1.5:.3f},{py - 2.0:.3f} L{right:.3f},{py:.3f} L{right + 1.5:.3f},{py - 2.0:.3f} Z"/>')
         out.append(f'<text x="{right:.3f}" y="{py - 3.0:.3f}" font-size="2.000" text-anchor="end" '

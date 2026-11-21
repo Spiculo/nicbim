@@ -1,0 +1,24 @@
+{
+ "format": "kimbim-object/1",
+ "id": "forklift",
+ "name": {"en": "Forklift", "es": "Autoelevador"},
+ "category": "industrial",
+ "ifc": {"IFC4": ["IfcBuildingElementProxyType", "USERDEFINED", "FORKLIFT"], "IFC2X3": ["IfcBuildingElementProxyType", "USERDEFINED", "FORKLIFT"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.2},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 3.2},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 2.2}
+ ],
+ "materials": {"body": {"label": {"en": "Body", "es": "Cuerpo"}, "default": "Paint - white"}, "frame": {"label": {"en": "Frame", "es": "Estructura"}, "default": "Steel"}},
+ "parts": [
+  {"id": "body", "material": "body", "rounded_box": {"y": 1.1, "z": 0.25, "dx": "width", "dy": "depth - 1.1", "dz": 0.9, "r": 0.15}},
+  {"id": "wheel", "material": "frame", "repeat": {"count": 4}, "axes": ["y", "z", "x"], "cylinder": {"cx": "if(i < 2, 1.35, depth - 0.4)", "cy": 0.28, "z": "if(i % 2 == 0, 0.0, width - 0.22)", "r": 0.28, "h": 0.22}},
+  {"id": "mast", "material": "frame", "repeat": {"count": 2}, "box": {"x": "if(i == 0, 0.15, width - 0.25)", "y": 1.0, "dx": 0.1, "dy": 0.1, "dz": "height"}},
+  {"id": "fork", "material": "frame", "repeat": {"count": 2}, "box": {"x": "if(i == 0, 0.25, width - 0.35)", "y": 0, "z": 0.05, "dx": 0.1, "dy": 1.0, "dz": 0.05}},
+  {"id": "roof", "material": "frame", "box": {"y": 1.4, "z": "height - 0.08", "dx": "width", "dy": 1.1, "dz": 0.08}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"line": {"points": [[0, 1.1], ["width", 1.1]]}}
+ ]
+}

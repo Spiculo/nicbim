@@ -1,0 +1,20 @@
+{
+ "format": "kimbim-object/1",
+ "id": "coffee_table",
+ "name": {"en": "Coffee table", "es": "Mesa ratona"},
+ "category": "furniture",
+ "ifc": {"IFC4": ["IfcFurnitureType", "TABLE", null], "IFC2X3": ["IfcFurnitureType", null, "Table"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.1},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.6},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.4}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Timber - finish"}},
+ "parts": [
+  {"id": "top", "material": "body", "rounded_box": {"z": "height - 0.03", "dx": "width", "dy": "depth", "dz": 0.03, "r": 0.05}},
+  {"id": "leg", "material": "body", "repeat": {"count": 4}, "box": {"x": "if(i % 2 == 0, 0.05, width - 0.05 - 0.035)", "y": "if(i < 2, 0.05, depth - 0.05 - 0.035)", "dx": 0.035, "dy": 0.035, "dz": "height - 0.03"}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}}
+ ]
+}

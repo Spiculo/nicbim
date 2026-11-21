@@ -1,0 +1,27 @@
+{
+ "format": "kimbim-object/1",
+ "id": "dining_set",
+ "name": {"en": "Dining table with chairs", "es": "Mesa de comedor con sillas"},
+ "category": "furniture",
+ "ifc": {"IFC4": ["IfcFurnitureType", "TABLE", null], "IFC2X3": ["IfcFurnitureType", null, "Table"]},
+ "params": [
+  {"key": "width", "kind": "length", "label": {"en": "Width", "es": "Ancho"}, "default": 1.6},
+  {"key": "depth", "kind": "length", "label": {"en": "Depth", "es": "Fondo"}, "default": 0.9},
+  {"key": "height", "kind": "length", "label": {"en": "Height", "es": "Altura"}, "default": 0.75},
+  {"key": "chairs", "kind": "count", "label": {"en": "Chairs per side", "es": "Sillas por lado"}, "default": 2, "min": 1, "max": 5}
+ ],
+ "materials": {"body": {"label": {"en": "Material", "es": "Material"}, "default": "Timber - finish"}},
+ "parts": [
+  {"id": "top", "material": "body", "box": {"z": "height - 0.03", "dx": "width", "dy": "depth", "dz": 0.03}},
+  {"id": "leg", "material": "body", "repeat": {"count": 4}, "box": {"x": "if(i % 2 == 0, 0.05, width - 0.05 - 0.05)", "y": "if(i < 2, 0.05, depth - 0.05 - 0.05)", "dx": 0.05, "dy": 0.05, "dz": "height - 0.03"}},
+  {"id": "chair_front", "material": "body", "repeat": {"count": "chairs"}, "box": {"x": "width * (i + 0.5) / chairs - 0.22", "y": -0.35, "dx": 0.44, "dy": 0.44, "dz": 0.45}},
+  {"id": "back_front", "material": "body", "repeat": {"count": "chairs"}, "box": {"x": "width * (i + 0.5) / chairs - 0.22", "y": -0.37, "z": 0.45, "dx": 0.44, "dy": 0.03, "dz": 0.45}},
+  {"id": "chair_back", "material": "body", "repeat": {"count": "chairs"}, "box": {"x": "width * (i + 0.5) / chairs - 0.22", "y": "depth - 0.09", "dx": 0.44, "dy": 0.44, "dz": 0.45}},
+  {"id": "back_back", "material": "body", "repeat": {"count": "chairs"}, "box": {"x": "width * (i + 0.5) / chairs - 0.22", "y": "depth + 0.32", "z": 0.45, "dx": 0.44, "dy": 0.03, "dz": 0.45}}
+ ],
+ "symbol": [
+  {"rect": {"x": 0, "y": 0, "dx": "width", "dy": "depth"}},
+  {"repeat": {"count": "chairs"}, "rect": {"x": "width * (i + 0.5) / chairs - 0.22", "y": -0.37, "dx": 0.44, "dy": 0.46}},
+  {"repeat": {"count": "chairs"}, "rect": {"x": "width * (i + 0.5) / chairs - 0.22", "y": "depth - 0.09", "dx": 0.44, "dy": 0.46}}
+ ]
+}
