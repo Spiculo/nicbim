@@ -289,7 +289,10 @@ class Runner:
 
     def _make_provider(self, system: str, tools: list[dict], effort: str):
         from . import providers
-        return providers.make(self.provider_name, system, tools, self.model, effort, self.base_url)
+        p = providers.make(self.provider_name, system, tools, self.model, effort, self.base_url)
+        if hasattr(p, "session"):
+            p.session = self.id  # a stable conversation id for gateways that route by it
+        return p
 
     def _log(self, entry: dict) -> None:
         try:

@@ -10,7 +10,11 @@ sheets and delivering. The five benchmark briefs are in [briefs/](briefs/).
 1. **A model provider key.** Preferences › Assistant: provider (Anthropic or OpenAI-compatible), model and key.
    The studio agent uses the same settings; `kimbim studio start --provider/--model` overrides them. For
    Anthropic the default model is `claude-opus-5-5` with adaptive reasoning. Check the key works: a 401
-   `expired_secret_key` in the agent's feed means the key must be replaced.
+   `expired_secret_key` in the agent's feed means the key must be replaced. An `OPENAI_API_KEY` in the environment
+   overrides the stored OpenAI-compatible key.
+   OpenCode Go works as an OpenAI-compatible provider: base URL `https://opencode.ai/inference/go/v1`, model e.g.
+   `deepseek-v4.1-flash`, its key as the key. The agent sends its own user agent (`nicbim-studio/1.0`) and the
+   session id as `x-opencode-session`, as Go asks of direct API clients.
 2. The app is built (`pixi run app-build`) so sheet PDFs can be rendered.
 3. To rehearse the plumbing without a model (no key, no cost): `KIMBIM_STUDIO_PROVIDER=scripted` and
    `KIMBIM_STUDIO_SCRIPT=<file.json>` (a list of turns `{"text", "calls": [{"name": "create_wall", "args": {...}}]}`)

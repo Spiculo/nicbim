@@ -180,9 +180,13 @@ class AnthropicProvider:
 
 # ---------------------------------------------------------------- OpenAI-compatible (raw HTTP)
 
-def _post(url: str, key: str, body: dict, timeout: float = 600) -> dict:
+USER_AGENT = "nicbim-studio/1.0"  # gateways ask agents to identify themselves, not as a generic HTTP library
+
+
+def _post(url: str, key: str, body: dict, timeout: float = 600, headers: dict | None = None) -> dict:
     request = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), method="POST",
-                                     headers={"Authorization": f"Bearer {key}", "content-type": "application/json"})
+                                     headers={"Authorization": f"Bearer {key}", "content-type": "application/json",
+                                              "User-Agent": USER_AGENT, **(headers or {})})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read().decode("utf-8"))
@@ -209,7 +213,7 @@ class OpenAIProvider:
 
     def __init__(self, system: str, tools: list[dict], model: str = "", effort: str = "high",
                  base_url: str = "", key_name: str = "openai", post=_post):
-        self.key = _key(key_name) or os.environ.get("OPENAI_API_KEY", "")
+        self.key = os.environ.get("OPENAI_API_KEY", "") or _key(key_name)  # the environment overrides the stored key
         if not self.key:
             raise ProviderError("no OpenAI key: set it in Preferences › Assistant or OPENAI_API_KEY.")
         self.root = _root(base_url)
@@ -220,6 +224,16 @@ class OpenAIProvider:
         self.post = post
         self.items: list[dict] = []
         self.chat = False  # switched on when the endpoint has no Responses API
+        self.session = ""  # the studio session id: some gateways route and cache by conversation
+
+    def _send(self, url: str, body: dict) -> dict:
+        headers = {}
+        if self.session and "opencode.ai" in self.root:
+            headers["x-opencode-session"] = self.session  # OpenCode Go: one stable id per conversation
+        try:
+            return self.post(url, self.key, body, headers=headers)
+        except TypeError:  # an injected post without headers (tests)
+            return self.post(url, self.key, body)
 
     def add_user(self, text: str) -> None:
         self.items.append({"role": "user", "content": text})
@@ -269,13 +283,13 @@ class OpenAIProvider:
                 "reasoning": {"effort": self.effort, "summary": "auto"}, "store": False,
                 "include": ["reasoning.encrypted_content"]}
         try:
-            data = self.post(self.root + "/responses", self.key, body)
+            data = self._send(self.root + "/responses", body)
         except ProviderError as ex:
             if "reasoning" not in ex.message.lower():
                 raise
             body.pop("reasoning")
             body.pop("include")  # a model without reasoning: ask again plainly
-            data = self.post(self.root + "/responses", self.key, body)
+            data = self._send(self.root + "/responses", body)
         output = data.get("output") or []
         self.items.extend(output)
         turn = Turn(stop=str(data.get("status") or ""), usage=data.get("usage") or {})
@@ -297,8 +311,8 @@ class OpenAIProvider:
     def _chat(self) -> Turn:
         tools = [{"type": "function", "function": {"name": t["name"], "description": t["description"],
                                                     "parameters": t["input_schema"]}} for t in self.tools]
-        data = self.post(self.root + "/chat/completions", self.key,
-                         {"model": self.model, "messages": [{"role": "system", "content": self.system}, *self.items],
+        data = self._send(self.root + "/chat/completions",
+                          {"model": self.model, "messages": [{"role": "system", "content": self.system}, *self.items],
                           "tools": tools})
         choices = data.get("choices") or []
         if not choices:
