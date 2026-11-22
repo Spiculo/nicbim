@@ -13,7 +13,8 @@ from ..catalogue import bridge, tool
 @tool("site.get", {})
 def site_get(session):
     """Where the project is: the site's latitude, longitude, elevation and address, and its map conversion
-    (CRS, eastings, northings, height, rotation) and true north."""
+    (CRS, eastings, northings, height, rotation) and true north. Angles are in degrees (georeference.units
+    says so for every number)."""
     out = bridge(SITE.site_state)
     out.pop("ok", None)
     return out

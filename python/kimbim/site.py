@@ -135,6 +135,11 @@ def site_state() -> str:
                               "postal_code": address.PostalCode or ""}
     state = json.loads(georef.georef_state())
     state.pop("ok", None)
+    # Say the units: a bare "rotation": -0.48 reads as radians to a model (it is degrees, the grid convergence).
+    state["units"] = {"eastings": "metres (map unit)", "northings": "metres (map unit)", "height": "metres",
+                      "rotation": "degrees; for a north of 0 this is minus the grid convergence at the site",
+                      "true_north": "degrees the project's +Y axis is turned clockwise from true north",
+                      "scale": "map units per model length unit (0.001 when the model is in millimetres)"}
     out["georeference"] = state
     return B._dump(out)
 

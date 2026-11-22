@@ -17,15 +17,22 @@ from .common import lengths, level_guid
 @tool("project.info", {})
 def info(session):
     """Describe the open project: name, schema, levels, element counts per kind, the current option and whether
-    there are unsaved changes."""
+    there are unsaved changes. `unit` is the display unit, `ifc_unit` the IFC file's length unit; tool numbers
+    are always metres."""
     counts: dict[str, int] = {}
     for e in G._products(B._model):
         k = G.kind_of(e)
         counts[k] = counts.get(k, 0) + 1
     state = json.loads(V.project_state())
     projects = B._model.by_type("IfcProject")
+    import ifcopenshell.util.unit
+
+    scale = ifcopenshell.util.unit.calculate_unit_scale(B._model)  # metres per IFC length unit
+    ifc_unit = {1.0: "m", 0.01: "cm", 0.001: "mm"}.get(round(scale, 6), f"{scale:g} m")
     return {"name": (projects[0].Name or "") if projects else "", "schema": B._model.schema,
-            "kind": session.kind, "source": session.source, "unit": session.unit,
+            "kind": session.kind, "source": session.source,
+            # `unit` is the display unit; tool numbers are metres; the IFC file stores lengths in `ifc_unit`
+            "unit": session.unit, "ifc_unit": ifc_unit,
             "levels": [{"guid": s["guid"], "name": s["name"], "elevation": s["elevation"]}
                        for s in json.loads(A.storeys())["storeys"]],
             "counts": counts, "option": state.get("option", ""), "options": state.get("options", []),
