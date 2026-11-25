@@ -2,6 +2,7 @@
 """Code-signing wrapper (D145): commands for signtool and osslsigncode, password masking, fake
 runner signing, verification and the CLI dry run."""
 from types import SimpleNamespace
+import sys
 
 import pytest
 
@@ -87,6 +88,7 @@ def test_verify_command_and_fake_runner(tmp_path):
     assert "signtool" in seen[0][0].lower()
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="macOS signing needs a .app bundle and codesign (D252)")
 def test_cli_dry_run_does_not_print_the_password(tmp_path, capsys):
     exe, cert = files(tmp_path)
     code = cli.main(["sign", "--exe", str(exe), "--certificate", str(cert), "--password", "s3cret",

@@ -90,6 +90,7 @@ NicBim is pre-1.0. The modeling, drawing, versioning and agent-tool workflows de
 - **Feature gaps:** every row of the tool inventory is built ([docs/21](docs/21-gap-checklist.md)) except three that need something only the owner can provide: a signing certificate, the SketchUp SDK for `.skp` import, and a headset for VR. Some rows are narrower than their name.
 - **Large-model cap:** above 20,000 visible elements the plan cut still clips the model but omits the filled cut outlines (poché), which keeps the first plan paint responsive. This is a performance guard, not a modelling rule.
 - **AI:** the Assistant and agent tools write through reviewable design options, but they are optional and use your own provider and key.
+- **Names in the code:** the product is NicBim and its files are `.nic`, but the Python package, the Rust crates and the `KIMBIM_*` property sets still use `kimbim`. The code rename is H1 item 8 in [docs/22](docs/22-moonshot-roadmap.md); it is a format-affecting change and has not run yet.
 
 - Built on [IfcOpenShell](https://ifcopenshell.org), [OpenCASCADE](https://dev.opencascade.org), [Qt](https://www.qt.io) and Rust.
 - Local-first: no server, no account, no network required.

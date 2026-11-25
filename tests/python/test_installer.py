@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Portable installer/uninstaller (D144): copy the packaged build, marker, associations and safety."""
 import json
+import sys
 
 import pytest
 
 from kimbim import installer
 from kimbim.agent import cli
+
+pytestmark = pytest.mark.skipif(sys.platform == "darwin", reason="the macOS app is not packaged yet (D252)")
 
 
 def fake_build(tmp_path):
