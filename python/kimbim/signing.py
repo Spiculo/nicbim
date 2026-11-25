@@ -41,6 +41,8 @@ def sign_command(exe: str, certificate: str, *, password: str | None = None,
                  platform: str | None = None, out: str | None = None) -> list[str]:
     """The signing command for this platform. The password is included here (it must be passed to
     the tool); use `describe()` for anything shown to a person."""
+    if platform is None and sys.platform == "darwin":
+        raise ValueError("macOS signing needs codesign and notarytool; not built yet")
     kind = _platform(platform)
     executable = tool or default_tool(kind)
     if kind == "windows":
@@ -99,11 +101,18 @@ def plan(exe: str, certificate: str, *, password: str | None = None,
     return result
 
 
+def _no_macos() -> None:
+    if sys.platform == "darwin":
+        raise ValueError("macOS signing needs a .app bundle and codesign/notarytool; not built yet")
+
+
 def sign(exe: str, certificate: str, *, password: str | None = None,
          timestamp: str = DEFAULT_TIMESTAMP, tool: str | None = None,
          platform: str | None = None, runner=None) -> dict:
     """Sign `exe` with the owner's certificate. Linux needs a temporary output that replaces the
     input after a successful signing; Windows signs in place."""
+    if platform is None and sys.platform == "darwin":
+        raise ValueError("macOS signing needs codesign and notarytool; not built yet")
     exe_path, cert_path = pathlib.Path(exe), pathlib.Path(certificate)
     if not exe_path.is_file():
         raise ValueError(f"the executable does not exist: {exe}")

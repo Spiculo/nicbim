@@ -35,6 +35,10 @@
 #include <gp_Trsf.hxx>
 #ifdef _WIN32
 #include <WNT_Window.hxx>
+#elif defined(__APPLE__)
+#include <Aspect_NeutralWindow.hxx>
+#include <OpenGl_Context.hxx>
+#include <Image_AlienPixMap.hxx>
 #else
 #include <Xw_Window.hxx>
 #endif
@@ -47,6 +51,12 @@
 #include <QTimer>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#ifdef __APPLE__
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+#include <QPainter>
+#include <QSurfaceFormat>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -122,9 +132,13 @@ Viewport::Viewport(Scene* scene, QWidget* parent)
     , m_scene(scene)
     , m_context(scene->context())
 {
+#ifndef __APPLE__
+    // Windows/Linux: OCCT draws straight into the native window. On macOS the view is rendered
+    // offscreen and painted by Qt, so QPainter needs the normal backing store.
     setAttribute(Qt::WA_PaintOnScreen);
-    setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_NativeWindow);
+#endif
+    setAttribute(Qt::WA_NoSystemBackground);
     setMouseTracking(true);
     m_hoverTimer = new QTimer(this);
     m_hoverTimer->setSingleShot(true);
@@ -983,12 +997,26 @@ Viewport::~Viewport()
     removeUnderlays();
     if (m_scene)
         m_scene->removeView(m_view);
+#ifdef __APPLE__
+    delete m_glSurface;
+    delete m_gl;
+#endif
 }
 
 bool Viewport::ensureWindow()
 {
     if (!m_view->Window().IsNull())
         return true;
+#ifdef __APPLE__
+    return ensureOffscreen();
+#else
+    return attachWindow();
+#endif
+}
+
+#ifndef __APPLE__
+bool Viewport::attachWindow()
+{
     // Headless platforms have no native window for OpenGL: degrade instead of throwing.
     const QString platform = QGuiApplication::platformName();
     if (platform == QLatin1String("offscreen") || platform == QLatin1String("minimal"))
@@ -1010,11 +1038,98 @@ bool Viewport::ensureWindow()
         return false;
     }
 }
+#endif
+
+#ifdef __APPLE__
+bool Viewport::ensureOffscreen()
+{
+    if (!m_view->Window().IsNull())
+        return true;
+    if (!m_gl) {
+        QSurfaceFormat format;
+        format.setDepthBufferSize(24);
+        format.setStencilBufferSize(8);
+        format.setVersion(4, 1); // macOS exposes 4.1 at most, and OCCT needs 3.3+
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        m_gl = new QOpenGLContext(this);
+        m_gl->setFormat(format);
+        if (!m_gl->create()) {
+            qWarning("NicBim: macOS could not create the offscreen OpenGL context");
+            return false;
+        }
+        m_glSurface = new QOffscreenSurface(nullptr, this);
+        m_glSurface->setFormat(m_gl->format());
+        m_glSurface->create();
+        if (!m_glSurface->isValid()) {
+            qWarning("NicBim: macOS could not create the offscreen OpenGL surface");
+            return false;
+        }
+    }
+    if (!m_gl->makeCurrent(m_glSurface)) {
+        qWarning("NicBim: macOS could not make the offscreen context current");
+        return false;
+    }
+    Handle(OpenGl_Context) context = new OpenGl_Context();
+    if (!context->Init(true)) {
+        qWarning("NicBim: macOS could not wrap the OpenGL context");
+        m_gl->doneCurrent();
+        return false;
+    }
+    Handle(Aspect_NeutralWindow) window = new Aspect_NeutralWindow();
+    const double dpr = devicePixelRatioF();
+    window->SetSize(std::max(1, int(width() * dpr)), std::max(1, int(height() * dpr)));
+    m_view->SetWindow(window, context->RenderingContext());
+    m_view->SetImmediateUpdate(false);
+    m_view->View()->Activate();
+    m_gl->doneCurrent();
+    return !m_view->Window().IsNull();
+}
+
+void Viewport::renderOffscreen()
+{
+    if (!m_gl || !m_glSurface || m_view->Window().IsNull())
+        return;
+    if (!m_gl->makeCurrent(m_glSurface))
+        return;
+    Handle(Aspect_NeutralWindow) window = Handle(Aspect_NeutralWindow)::DownCast(m_view->Window());
+    const double dpr = devicePixelRatioF();
+    const int w = std::max(1, int(width() * dpr));
+    const int h = std::max(1, int(height() * dpr));
+    int ww = 0, hh = 0;
+    if (!window.IsNull())
+        window->Size(ww, hh);
+    if (!window.IsNull() && (ww != w || hh != h))
+        window->SetSize(w, h);
+    Image_AlienPixMap image;
+    if (m_view->ToPixMap(image, w, h)) {
+        QImage frame(image.Data(), int(image.SizeX()), int(image.SizeY()), int(image.SizeRowBytes()), QImage::Format_RGB888);
+        if (!frame.isNull()) {
+            m_frame = frame.copy();
+            m_frame.setDevicePixelRatio(dpr);
+        }
+    }
+    m_gl->doneCurrent();
+}
+#endif
 
 void Viewport::paintEvent(QPaintEvent*)
 {
     if (!ensureWindow())
         return;
+#ifdef __APPLE__
+    // macOS: Qt 6's layer-backed NSView cannot host OCCT's NSOpenGLContext directly. Render the view
+    // offscreen with OCCT and paint the frame into the widget instead.
+    ensureViewCube();
+    ensureNorthArrow();
+    m_view->Invalidate();
+    FlushViewEvents(m_context, m_view, false);
+    renderOffscreen();
+    QPainter painter(this);
+    if (m_frame.isNull())
+        painter.fillRect(rect(), QColor(238, 240, 242));
+    else
+        painter.drawImage(QPoint(0, 0), m_frame);
+#else
     // One full redraw per paint (one buffer swap). Invalidating the immediate layer here as well
     // made every paint swap twice, waiting two vsyncs, so tool previews lagged behind the mouse;
     // not invalidating at all left the window blank after it was shown or uncovered.
@@ -1022,6 +1137,7 @@ void Viewport::paintEvent(QPaintEvent*)
     ensureNorthArrow();
     m_view->Invalidate();
     FlushViewEvents(m_context, m_view, true);
+#endif
     // Wheel zoom is applied while flushing the view events: report it after.
     if (const double zoom = zoomPercent(); std::abs(zoom - m_lastZoom) > 0.5) {
         m_lastZoom = zoom;
@@ -1034,15 +1150,29 @@ void Viewport::recreateWindow()
 {
     if (m_view->Window().IsNull())
         return;
-    m_view->SetWindow(Handle(Aspect_Window)());
-    ensureWindow();
+#ifdef __APPLE__
+    m_frame = QImage();
     update();
+#else
+    // Replace the native window in one step. Detaching first (SetWindow with a null handle) crashes
+    // OCCT's Cocoa backend, which dereferences the size window during init.
+    attachWindow();
+    update();
+#endif
 }
 
 void Viewport::ensureWindowSize()
 {
-    if (m_view->Window().IsNull())
+    if (m_view->Window().IsNull() || !isVisible())
         return;
+#ifdef __APPLE__
+    Handle(Aspect_NeutralWindow) window = Handle(Aspect_NeutralWindow)::DownCast(m_view->Window());
+    const double dpr = devicePixelRatioF();
+    if (!window.IsNull())
+        window->SetSize(std::max(1, int(width() * dpr)), std::max(1, int(height() * dpr)));
+    update();
+    return;
+#else
     m_view->MustBeResized();
     // A tab hidden while the window was resized can keep the old native window size; when shown again
     // the model is drawn off-centre with a black gap above it and clicks no longer line up. If the size
@@ -1052,22 +1182,31 @@ void Viewport::ensureWindowSize()
     const double dpr = devicePixelRatioF();
     if (ww != int(std::lround(width() * dpr)) || hh != int(std::lround(height() * dpr)))
         recreateWindow();
+#endif
 }
 
 void Viewport::resizeEvent(QResizeEvent*)
 {
+#ifdef __APPLE__
+    QTimer::singleShot(0, this, [this] { update(); });
+#else
     if (!m_view->Window().IsNull())
         m_view->MustBeResized();
     // After the layout settles, check that the native window took the new size.
     QTimer::singleShot(0, this, [this] { ensureWindowSize(); });
+#endif
 }
 
 void Viewport::showEvent(QShowEvent* event)
 {
     QWidget::showEvent(event);
+#ifdef __APPLE__
+    QTimer::singleShot(0, this, [this] { update(); });
+#else
     if (!m_view->Window().IsNull())
         m_view->MustBeResized(); // a tab hidden while the window was resized kept the old viewport
     QTimer::singleShot(0, this, [this] { ensureWindowSize(); });
+#endif
 }
 
 NCollection_Vec2<int> Viewport::toPixels(const QPointF& p) const

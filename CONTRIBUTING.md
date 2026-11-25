@@ -4,7 +4,7 @@ Thank you for helping. NicBim is GPL-3.0-or-later. By contributing you agree you
 
 ## Setup
 
-NicBim uses [pixi](https://pixi.sh) and conda-forge for every dependency, on Windows and Linux. The conda-forge build of IfcOpenShell is required, because it is the one that ships shared libraries ([docs/11](docs/11-spike-results.md#s1--shared-in-memory-model-c--python)).
+NicBim uses [pixi](https://pixi.sh) and conda-forge for every dependency, on Windows, Linux and macOS (Apple Silicon). The conda-forge build of IfcOpenShell is required, because it is the one that ships shared libraries ([docs/11](docs/11-spike-results.md#s1--shared-in-memory-model-c--python)).
 
 ```bash
 pixi install            # create the environment

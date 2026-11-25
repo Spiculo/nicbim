@@ -260,7 +260,7 @@ def test_office_library_nicobj_and_ifc_types(project, tmp_path):
     assert listed["office:stool"]["name_es"] == "Taburete" and listed["office:stool"]["symbol"]
     assert listed["office:stool"]["library"] == str(folder / "stool.nicobj")
     assert listed["chair"]["library"] == "bundled"
-    assert not any("old" in key for key in listed)  # .py files are not read
+    assert not any(key.startswith("office:old") for key in listed)  # .py files are not read
     assert call("place_object", storey, "office:stool", "", 0, 0, 0)["ok"]
     ifc_key = next(k for k in listed if k.startswith("ifc:") and k.endswith(desk_type))
     first = call("place_object", storey, ifc_key, "", 2, 0, 0)

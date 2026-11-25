@@ -20,14 +20,14 @@ Large files are stored with Git LFS or downloaded by a script, so they are not c
 | Suite | What it checks | Blocks release |
 |-------|----------------|:--------------:|
 | **Round-trip** | IFC → records → IFC is semantically equal; records → IFC → records is a fixed point (identical hashes) | Yes |
-| **Determinism** | Golden record and tree hashes are identical on Windows and Linux CI | Yes |
+| **Determinism** | Golden record and tree hashes are identical on Windows and Linux CI; macOS uses the Python decomposer until the C++ bridge loads | Yes |
 | **Canonical format** | JSON canonicalization rules: key sorting, SET ordering, numbers (INTEGER vs REAL), exact strings, unset omission | Yes |
 | **Merge** | Three-way merge scenarios, including ported `ifcmerge` cases; merge is deterministic and commutative where expected | Yes |
 | **Reconciliation** | Match rates and no false matches on the reconciliation pairs | Yes |
 | **Commands** | Each authoring command: apply → expected change set → undo restores identical records | Yes |
 | **Export validity** | Exported IFC passes `ifcopenshell.validate`, opens in web-ifc and in xBIM (independent parsers; `pixi run interop`, `pixi run interop-xbim`) | Yes |
 | **100k release gate** | First frame under 15 s and warm decomposition under 15 s on a 100k-object model (`pixi run bench-100k`); full load and cold decomposition are reported and gated at 240 s/150 s | Yes (tags and manual runs) |
-| **GUI smoke** | App launches, opens a corpus file, selects, cuts, saves (Qt Test) | Yes |
+| **GUI smoke** | App launches, opens a corpus file, selects, cuts, saves (Qt Test) | Yes (Windows); macOS CI runs the non-GUI suites |
 | **Portable package** | `dist/NicBim` starts with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet to PDF (`tools/check_package.py`) | Yes (Windows CI) |
 | **Benchmarks** | Open time, frame rate, memory, commit time, diff time, merge time by model size | Tracks regressions |
 

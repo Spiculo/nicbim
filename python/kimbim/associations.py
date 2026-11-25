@@ -149,6 +149,8 @@ def plan(exe: str, home: str | None = None) -> dict:
         raise ValueError("no NicBim executable: pass --exe (or set KIMBIM_APP)")
     if sys.platform.startswith("win"):
         return {"platform": "windows", "actions": windows_actions(exe), "exe": exe}
+    if sys.platform == "darwin":
+        raise ValueError("macOS file associations need a signed .app bundle and LaunchServices; not built yet")
     return {"platform": "linux", "actions": linux_actions(exe, home), "exe": exe}
 
 
@@ -158,6 +160,8 @@ def apply(exe: str, home: str | None = None) -> list[str]:
         raise ValueError("no NicBim executable: pass --exe (or set KIMBIM_APP)")
     if sys.platform.startswith("win"):
         return _windows_apply(windows_actions(exe))
+    if sys.platform == "darwin":
+        raise ValueError("macOS file associations need a signed .app bundle and LaunchServices; not built yet")
     return _linux_apply(linux_actions(exe, home))
 
 
@@ -165,6 +169,8 @@ def remove(home: str | None = None) -> list[str]:
     """Remove the associations this user added (other file associations are left alone)."""
     if sys.platform.startswith("win"):
         return _windows_apply(windows_actions(""), remove=True)
+    if sys.platform == "darwin":
+        return []
     removed = []
     for path in linux_paths(home):
         try:

@@ -71,6 +71,11 @@ def status(dest: pathlib.Path | None = None) -> dict:
             **({"marker": marker} if marker else {})}
 
 
+def _no_macos() -> None:
+    if sys.platform == "darwin":
+        raise ValueError("the macOS app is not packaged yet; run it with `pixi run app`")
+
+
 def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None, *,
             force: bool = False, dry_run: bool = False, associations: bool = True,
             associate=None) -> dict:
@@ -79,6 +84,7 @@ def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None
     `force` replaces a destination this installer owns (or, with no marker, refuses: never delete an
     arbitrary folder). `associate(exe)` defaults to `associations.apply`. `dry_run` changes nothing.
     """
+    _no_macos()
     src = pathlib.Path(source or default_source()).resolve()
     dst = pathlib.Path(dest or default_dest()).resolve()
     if not src.is_dir():
@@ -115,6 +121,7 @@ def install(source: pathlib.Path | None = None, dest: pathlib.Path | None = None
 def uninstall(dest: pathlib.Path | None = None, *, dry_run: bool = False, unassociate=None) -> dict:
     """Remove an installation this installer made and its file associations.
     A folder without the marker is refused."""
+    _no_macos()
     folder = pathlib.Path(dest or default_dest()).resolve()
     marker = _marker(folder)
     if marker is None:

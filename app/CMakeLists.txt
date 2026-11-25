@@ -1,4 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Put the app, the test binaries and the launcher in build/app/ (docs, pixi tasks and tools all use
+# that path). Without this, Ninja writes them to build/app/app/.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 # kimbim_core: everything except main(), so tests link the same code as the app.
 qt_add_library(kimbim_core STATIC
     src/MainWindow.cpp src/MainWindow.h

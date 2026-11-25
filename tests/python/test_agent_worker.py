@@ -40,7 +40,7 @@ def _wait(cond, timeout=30.0):
 def _kill(pid):
     if K.pid_alive(pid):
         try:
-            os.kill(pid, signal.SIGTERM)  # TerminateProcess on Windows
+            os.kill(pid, signal.SIGKILL if hasattr(signal, "SIGKILL") else signal.SIGTERM)  # TerminateProcess on Windows
         except OSError:
             pass
         _wait(lambda: not K.pid_alive(pid), 10)

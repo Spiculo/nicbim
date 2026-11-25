@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QPointer>
+#include <QImage>
 
 #include <AIS_AnimationCamera.hxx>
 #include <AIS_InteractiveContext.hxx>
@@ -45,8 +46,11 @@ class QShowEvent;
 #include "Scene.h"
 #include "Underlay.h"
 
-class QImage;
 class QTimer;
+#ifdef __APPLE__
+class QOpenGLContext;
+class QOffscreenSurface;
+#endif
 class QWheelEvent;
 
 namespace kimbim {
@@ -461,11 +465,21 @@ protected:
 
 private:
     bool ensureWindow();
+    bool attachWindow(); // make a native window and give it to OCCT, replacing any previous one
+#ifdef __APPLE__
+    bool ensureOffscreen();  // macOS: an OCCT view backed by a Qt offscreen context
+    void renderOffscreen();  // render one frame into m_frame (called from paintEvent)
+#endif
     void applyNavigationPreset();
     void redisplay(const std::vector<int>& batches);
     bool retire(const QString& guid, std::vector<int>* touched); // true if it was selected
     NCollection_Vec2<int> toPixels(const QPointF& p) const;
 
+#ifdef __APPLE__
+    QOpenGLContext* m_gl = nullptr;
+    QOffscreenSurface* m_glSurface = nullptr;
+    QImage m_frame;
+#endif
     QPointer<Scene> m_scene;                  // shared with the other views of the model (a closed tab's view
                                               // can be deleted late: never touch a scene that is gone)
     Handle(AIS_InteractiveContext) m_context; // == m_scene->context()

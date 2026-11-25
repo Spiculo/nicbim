@@ -184,6 +184,14 @@ def pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
+    # A killed child stays a zombie until its parent reaps it; it is not running.
+    try:
+        import subprocess
+        r = subprocess.run(["ps", "-p", str(pid), "-o", "stat="], capture_output=True, text=True, timeout=5)
+        if r.returncode == 0 and r.stdout.strip().startswith("Z"):
+            return False
+    except (OSError, subprocess.SubprocessError):
+        pass
     return True
 
 

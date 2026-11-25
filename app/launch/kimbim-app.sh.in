@@ -9,4 +9,6 @@ if [ ! -d "$KIMBIM_ENV" ] && [ -n "$CONDA_PREFIX" ]; then KIMBIM_ENV=$CONDA_PREF
 : "${KIMBIM_PYTHON_PATH:=@KIMBIM_LAUNCH_ROOT@/python}"
 export CONDA_PREFIX KIMBIM_PYTHON_PATH
 export LD_LIBRARY_PATH="$KIMBIM_ENV/lib:$LD_LIBRARY_PATH"
+# macOS uses DYLD_LIBRARY_PATH; harmless elsewhere.
+export DYLD_LIBRARY_PATH="$KIMBIM_ENV/lib:$DYLD_LIBRARY_PATH"
 exec "$here/kimbim-app" "$@"

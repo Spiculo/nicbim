@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.24)
+# Apple Silicon only (D252); the pixi platform has the same floor.
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0")
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+endif()
 project(NicBim VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)

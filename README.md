@@ -2,7 +2,7 @@
 
 **Open-source native BIM for architects, with version control built in.**
 
-NicBim is a desktop BIM application for Windows and Linux built on open standards (IFC). Model your building, cut through it, manage object data, reuse libraries and produce drawings. Then save versions, explore design options, compare them and combine them, the way software developers use Git, but for buildings.
+NicBim is a desktop BIM application for Windows, Linux and macOS (Apple Silicon) built on open standards (IFC). Model your building, cut through it, manage object data, reuse libraries and produce drawings. Then save versions, explore design options, compare them and combine them, the way software developers use Git, but for buildings.
 
 ## Try the desktop app
 
@@ -53,7 +53,7 @@ To build the portable package instead — the app, its Python sources and a relo
 
 ## Try it (command line)
 
-Requires [pixi](https://pixi.sh). Works on Windows and Linux.
+Requires [pixi](https://pixi.sh). Works on Windows, Linux and macOS 15+ on Apple Silicon. DWG import/export needs LibreDWG, which conda-forge does not build for macOS.
 
 ```bash
 pixi install                      # environment from conda-forge (IfcOpenShell, Rust, Git, ...)
@@ -83,11 +83,11 @@ Development: see [CONTRIBUTING.md](CONTRIBUTING.md).
 NicBim is pre-1.0. The modeling, drawing, versioning and agent-tool workflows described on this page work and are covered by tests, but these limits matter before using it on a real project:
 
 - **Distribution:** `pixi run app-build`, `pixi run house`, then `pixi run -e pack package` builds a portable `dist/NicBim` folder (about 1.7 GB) that starts without pixi, and `kimbim install` installs it per user with file associations. Released builds are not signed yet: `kimbim sign` works, but it needs a certificate. Run from a pixi environment (`pixi run app`) during development.
-- **Platforms:** Windows and Linux. macOS is not targeted for the first releases. The 3D view needs OpenGL 3.3 or newer.
+- **Platforms:** Windows, Linux, and macOS 15+ on Apple Silicon. The 3D view needs OpenGL 3.3. On macOS, Qt 6's layer-backed view cannot host OCCT's NSOpenGLContext directly, so the view renders offscreen with OCCT and is painted into the widget; macOS uses the Python decomposer because the optional C++ `ifcdump` bridge does not load with the current conda-forge IfcOpenShell build. DWG import/export is Windows/Linux only (no LibreDWG on macOS). File associations, a signed `.app` and notarization are future work.
 - **Interchange:** new projects are IFC4 by default or IFC4X3 (Preferences › *New projects use*); IFC2X3, IFC4 and IFC4X3 files open, edit and save in their own schema. *File › Change IFC schema…* converts a model explicitly (in a project, as a version of its own). IFC4X3 infrastructure entities (alignments, roads, bridges) are kept but have no authoring tools. A `.nic` file is NicBim's own project container (model, settings and history); IFC is the way out.
-- **Scale:** a 100k-object model reaches its first frame in about 11 s; all geometry takes about 2.5 minutes and a cold working decomposition about 110 s (the Rust decomposer; the Python fallback is slower). The 1M-object target is future work (see [docs/07](docs/07-roadmap.md)). `pixi run bench-100k` is the release gate.
+- **Scale:** a 100k-object model reaches its first frame in about 11 s; all geometry takes about 2.5 minutes and a cold working decomposition about 110 s (the Rust decomposer; the Python fallback, and therefore macOS today, is slower). The 1M-object target is future work (see [docs/07](docs/07-roadmap.md)). `pixi run bench-100k` is the release gate.
 - **Collaboration:** teamwork goes through Git: *Versions › Push to remote… / Pull from remote…* (a divergent pull merges object by object). There is no live concurrent editing of one model.
-- **Feature gaps:** every row of the tool inventory is built ([docs/21](docs/21-gap-checklist.md)) except walkthrough video (future scope) and three that need something only the owner can provide: a signing certificate, the SketchUp SDK for `.skp` import, and a headset for VR. Some rows are narrower than their name. The structural analytical model has no loads or results, and visualisation stops at still renders and sun animation (no walkthrough video).
+- **Feature gaps:** every row of the tool inventory is built ([docs/21](docs/21-gap-checklist.md)) except three that need something only the owner can provide: a signing certificate, the SketchUp SDK for `.skp` import, and a headset for VR. Some rows are narrower than their name.
 - **Large-model cap:** above 20,000 visible elements the plan cut still clips the model but omits the filled cut outlines (poché), which keeps the first plan paint responsive. This is a performance guard, not a modelling rule.
 - **AI:** the Assistant and agent tools write through reviewable design options, but they are optional and use your own provider and key.
 

@@ -1,7 +1,9 @@
 [workspace]
 name = "kimbim"
 channels = ["conda-forge"]
-platforms = ["win-64", "linux-64"]
+# macOS 15 is the floor: current conda-forge Qt 6 pulls MoltenVK (__osx >= 14) and PyMuPDF pulls
+# Mesa (__osx >= 15). Apple Silicon only; Intel Macs are out of scope for this port.
+platforms = ["win-64", "linux-64", { platform = "osx-arm64", macos = "15.0" }]
 # conda-forge's ifcopenshell ships no Python package metadata, so PyPI packages that need it
 # (ifctester, D81) are told the conda one is installed
 conda-pypi-map = { "conda-forge" = "tools/conda_pypi_map.json" }
@@ -61,7 +63,7 @@ ifctester = "==0.9.0"
 [tasks]
 # M3 exit test: build the two-storey sample house through the modeling commands, then check that
 # it validates (schema + EXPRESS rules) and that web-ifc opens and meshes every element.
-house = "python tools/make_house.py build/house.ifc"
+house = { cmd = "python tools/make_house.py build/house.ifc", depends-on = ["build"] }
 # M4 exit test: the house's sheet A01 (plan, section, elevation, title block) exported to PDF by the app
 # (no window) and checked: one A3 page, vector content, fonts; the sheet holds the three drawings.
 m4 = { cmd = "python tools/check_m4.py build/house.ifc build/m4", depends-on = ["house", "app-build", "build"] }
@@ -89,7 +91,7 @@ e57dump-build = { cmd = "cmake -S tools/e57dump -B build/e57dump -G Ninja -DCMAK
 build = "maturin develop --release --skip-install"
 check-spdx = "python tools/check_spdx.py"
 test-rust = "cargo test --workspace"
-test-py = { cmd = "pytest", depends-on = ["build", "e57dump-build"] }
+test-py = { cmd = "pytest", depends-on = ["build", "e57dump-build"], env = { LD_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/.pixi/envs/default/lib", DYLD_FALLBACK_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/.pixi/envs/default/lib" } }
 test = { depends-on = ["check-spdx", "test-rust", "test-py"] }
 # D241: the whole Python suite with every new project and the sample house in IFC4X3 (docs/02).
 test-ifc4x3 = { cmd = "pytest", depends-on = ["build", "e57dump-build"], env = { KIMBIM_TEST_SCHEMA = "IFC4X3" } }
@@ -134,7 +136,10 @@ psutil = "*"
 # DWG in and out needs LibreDWG's command-line tools. It cannot share the default environment:
 # conda-forge's libredwg wants the old msys2 epoch that IfcOpenShell 0.9's mpfr conflicts with, so it
 # lives in this separate environment and the app calls its `dwg2dxf` / `dwgwrite` by path or PATH.
-[feature.dwg.dependencies]
+# conda-forge ships no LibreDWG build for macOS, so this environment is Windows and Linux only.
+[feature.dwg.target.win-64.dependencies]
+libredwg = ">=0.11"
+[feature.dwg.target.linux-64.dependencies]
 libredwg = ">=0.11"
 
 # Packaging: conda-pack turns the app's environment into a relocatable runtime for the portable
