@@ -16,6 +16,7 @@ import ifcopenshell
 import ifcopenshell.validate
 
 from . import _core
+from . import gitremote as G
 from .content import Changed, Contents, references, schema_of, without_owner_history
 from .ifcdump import dump as ifcdump_dump
 from .layout import (CHECKS_PATH, META_PATH, SETTINGS_PATH, WORK_FILES_DIR, blob_oid, is_file_path, is_record_path,
@@ -126,7 +127,7 @@ def _describe(key: str, blob: bytes) -> tuple[str, str | None]:
 
 def _git_config(key: str) -> str | None:
     try:
-        out = subprocess.run(["git", "config", "--get", key], capture_output=True, text=True)
+        out = subprocess.run(["git", "config", "--get", key], capture_output=True, text=True, env=G.clean_env())
     except OSError:
         return None
     return out.stdout.strip() or None
@@ -638,14 +639,13 @@ class Project:
         return json.loads(self.repo.read_blobs([entries[p]])[0])
 
     # ---- remotes (R4 follow-up: push/pull over Git) ----
-    def _git(self, *args: str) -> subprocess.CompletedProcess:
-        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "LC_ALL": "C"}
-        result = subprocess.run(["git", f"--git-dir={self.path / '.git'}", *args],
-                                capture_output=True, text=True, env=env)
-        if result.returncode != 0:
-            message = (result.stderr or result.stdout or "git failed").strip().splitlines()[-1]
-            raise KimbimError(f"git {args[0]}: {message}")
-        return result
+    def _git(self, *args: str, url: str = "", username: str = "", token: str = "",
+             proxy: str = "") -> subprocess.CompletedProcess:
+        try:
+            return G.run(list(args), git_dir=self.path / ".git", url=url, username=username,
+                         token=token, proxy=proxy)
+        except G.GitError as ex:
+            raise KimbimError(str(ex)) from None
 
     def remotes(self) -> list[dict]:
         """Configured remotes: [{"name", "url"}]."""
@@ -663,49 +663,149 @@ class Project:
             raise KimbimError("a remote needs a simple name and a URL")
         self._git("remote", "add", name, url)
 
+    def set_remote(self, name: str, url: str) -> None:
+        """Add a remote or change its URL (the app's one remote editor uses this)."""
+        name, url = (name or "").strip(), (url or "").strip()
+        if not name or not url or any(c in name for c in " ~^:?*[\\"):
+            raise KimbimError("a remote needs a simple name and a URL")
+        if name in {r["name"] for r in self.remotes()}:
+            self._git("remote", "set-url", name, url)
+        else:
+            self._git("remote", "add", name, url)
+
+    def rename_remote(self, old: str, new: str) -> None:
+        new = (new or "").strip()
+        if not new or any(c in new for c in " ~^:?*[\\"):
+            raise KimbimError("a remote needs a simple name")
+        self._git("remote", "rename", old, new)
+
     def remove_remote(self, name: str) -> None:
         self._git("remote", "remove", name)
 
-    def push(self, remote: str = "origin", branch: str = "") -> dict:
-        """Push a branch (the current option by default) to a remote."""
+    def remote_url(self, name: str) -> str:
+        return G.remote_url(self.path / ".git", name)
+
+    def fetch(self, remote: str = "origin", username: str = "", token: str = "",
+              proxy: str = "") -> dict:
+        """Fetch every branch and tag of a remote into its remote-tracking refs."""
+        self._git("fetch", "--prune", "--tags", remote, f"+refs/heads/*:refs/remotes/{remote}/*",
+                  username=username, token=token, proxy=proxy)
+        return {"remote": remote, "url": self.remote_url(remote),
+                "branches": G.remote_branches(self.path / ".git", remote)}
+
+    def remote_status(self, remote: str = "origin", branch: str = "") -> dict:
         branch = branch or self.current_branch()
-        self._git("push", "--porcelain", remote, f"refs/heads/{branch}:refs/heads/{branch}")
-        return {"remote": remote, "branch": branch, "url": next(
-            (r["url"] for r in self.remotes() if r["name"] == remote), "")}
+        if remote not in {r["name"] for r in self.remotes()}:
+            return {"remote": remote, "branch": branch, "state": "no_remote", "head": self.head_commit(),
+                    "ahead": 0, "behind": 0}
+        return G.status(self.path / ".git", remote, branch)
+
+    def remote_branches(self, remote: str = "origin") -> list[dict]:
+        return G.remote_branches(self.path / ".git", remote)
+
+    def delete_remote_branch(self, remote: str, branch: str, username: str = "", token: str = "",
+                             proxy: str = "") -> dict:
+        self._git("push", "--porcelain", remote, "--delete", branch, username=username, token=token,
+                  proxy=proxy)
+        self._git("update-ref", "-d", f"refs/remotes/{remote}/{branch}")
+        return {"remote": remote, "branch": branch}
+
+    def push(self, remote: str = "origin", branch: str = "", force: bool = False, tags: bool = False,
+             username: str = "", token: str = "", proxy: str = "") -> dict:
+        """Push a branch (the current option by default) to a remote.
+
+        `force` uses --force-with-lease, not --force: a push that would overwrite a commit somebody
+        else pushed since the last fetch is refused. `tags` carries annotated milestones too.
+        """
+        branch = branch or self.current_branch()
+        url = self.remote_url(remote)
+        G.push(self.path / ".git", remote, branch, force=force, tags=tags, username=username,
+               token=token, proxy=proxy)
+        # Keep the remote-tracking ref in step so the dialog shows the pushed state before a fetch.
+        self._git("update-ref", f"refs/remotes/{remote}/{branch}", f"refs/heads/{branch}")
+        return {"remote": remote, "branch": branch, "url": url, "forced": force, "tags": tags}
+
+    def push_tags(self, remote: str = "origin", username: str = "", token: str = "",
+                  proxy: str = "") -> dict:
+        url = self.remote_url(remote)
+        G.push_tags(self.path / ".git", remote, username=username, token=token, proxy=proxy)
+        return {"remote": remote, "url": url, "tags": [t.name for t in self.tags()]}
 
     def pull(self, remote: str = "origin", branch: str = "", merge: bool = False,
-             resolutions: dict | None = None) -> dict:
-        """Fetch a remote branch and fast-forward the current one. With `merge`, a diverged branch is
-        combined through NicBim's record merge (never git's text merge) and committed with two parents;
-        without it, a diverged branch is refused. Conflicts raise MergeConflicts (use `merge_preview`
-        with resolutions to review them)."""
+             resolutions: dict | None = None, mode: str = "refuse", username: str = "",
+             token: str = "", proxy: str = "") -> dict:
+        """Fetch and bring the remote branch into the current one.
+
+        Fast-forwards when possible. A diverged branch is refused by default; `mode` chooses what the
+        app offers: "merge" runs NicBim's record merge (never Git's text merge), "force_remote" resets
+        the local option to the remote, "force_local" pushes the local option over the remote.
+        """
         branch = branch or self.current_branch()
+        mode = (mode or "refuse").strip().lower()
+        if merge:
+            mode = "merge"
+        if mode not in ("refuse", "merge", "force_remote", "force_local"):
+            raise KimbimError("unknown pull mode")
+        self.fetch(remote, username=username, token=token, proxy=proxy)
         ref = f"refs/remotes/{remote}/{branch}"
-        self._git("fetch", "--prune", remote, f"+refs/heads/{branch}:{ref}")
+        remote_head = G.rev_parse(self.path / ".git", ref)
+        if not remote_head:
+            raise KimbimError(f"the remote has no option called {branch}")
         head = self.head_commit()
         if head is None:
             self._git("update-ref", f"refs/heads/{branch}", ref)
-            result = "fast_forward"
-        else:
-            try:
-                self._git("merge-base", "--is-ancestor", head, ref)
-            except KimbimError:
-                if not merge:
-                    raise KimbimError(
-                        f"{branch} has diverged from {remote}/{branch}; push your versions or combine them in an option"
-                    ) from None
-                try:
-                    cid = self.merge(ref, f"Pull {remote}/{branch}", resolutions)
-                except MergeConflicts as ex:
-                    raise KimbimError(
-                        f"{branch} has diverged from {remote}/{branch} and "
-                        f"{len(ex.result.unresolved)} conflict(s) need a choice"
-                    ) from None
-                return {"remote": remote, "branch": branch, "status": "merged",
-                        "head": self.head_commit(), "id": cid}
+            return {"remote": remote, "branch": branch, "status": "fast_forward",
+                    "head": self.head_commit()}
+        if head == remote_head:
+            return {"remote": remote, "branch": branch, "status": "up_to_date", "head": head}
+        if G.is_ancestor(self.path / ".git", head, remote_head):
             self._git("update-ref", f"refs/heads/{branch}", ref)
-            result = "fast_forward"
-        return {"remote": remote, "branch": branch, "status": result, "head": self.head_commit()}
+            return {"remote": remote, "branch": branch, "status": "fast_forward",
+                    "head": self.head_commit()}
+        if G.is_ancestor(self.path / ".git", remote_head, head):
+            return {"remote": remote, "branch": branch, "status": "up_to_date", "head": head,
+                    "note": "this option already contains the remote"}
+        if mode == "force_remote":
+            self._git("update-ref", f"refs/heads/{branch}", ref)
+            return {"remote": remote, "branch": branch, "status": "forced_remote",
+                    "head": self.head_commit()}
+        if mode == "force_local":
+            G.push(self.path / ".git", remote, branch, force=True, username=username, token=token,
+                   proxy=proxy)
+            self._git("update-ref", f"refs/remotes/{remote}/{branch}", f"refs/heads/{branch}")
+            return {"remote": remote, "branch": branch, "status": "forced_local", "head": head}
+        if mode != "merge":
+            raise KimbimError(
+                f"{branch} has diverged from {remote}/{branch}; push your versions or combine them "
+                f"in an option")
+        try:
+            cid = self.merge(ref, f"Pull {remote}/{branch}", resolutions)
+        except MergeConflicts as ex:
+            raise KimbimError(
+                f"{branch} has diverged from {remote}/{branch} and "
+                f"{len(ex.result.unresolved)} conflict(s) need a choice") from None
+        return {"remote": remote, "branch": branch, "status": "merged",
+                "head": self.head_commit(), "id": cid}
+
+    @classmethod
+    def clone(cls, url: str, folder: str, username: str = "", token: str = "",
+              proxy: str = "") -> "Project":
+        """Clone a remote project into a folder and open it (no record checkout)."""
+        try:
+            G.clone(url, folder, username=username, token=token, proxy=proxy)
+        except G.GitError as ex:
+            raise KimbimError(str(ex)) from None
+        project = cls.open(folder)
+        if project.repo.head() is None:
+            raise KimbimError("the remote project has no versions yet")
+        return project
+
+    @staticmethod
+    def test_remote(url: str, username: str = "", token: str = "", proxy: str = "") -> dict:
+        try:
+            return G.test_remote(url, username=username, token=token, proxy=proxy)
+        except G.GitError as ex:
+            raise KimbimError(str(ex)) from None
 
     def head_commit(self) -> str | None:
         return self.repo.head()

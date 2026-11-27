@@ -370,11 +370,55 @@ def compare(rev_a: str, rev_b: str = "WORKING") -> str:
     return B._dump({"ok": True, **_summary(changes), "settings": keys})
 
 
+def _default_remote(remotes: list[dict] | None = None) -> str:
+    names = [r["name"] for r in (remotes if remotes is not None else (_project.remotes() if _project else []))]
+    if "origin" in names:
+        return "origin"
+    return names[0] if names else ""
+
+
+def _local_branches() -> list[dict]:
+    rows = []
+    for name in _project.branches():
+        try:
+            info = _project.log(name, 1)[0]
+            rows.append({"name": _decode(name), "ref": name, "head": info.id, "author": info.author_name,
+                         "time": info.time, "message": info.message})
+        except (KimbimError, IndexError):
+            rows.append({"name": _decode(name), "ref": name, "head": "", "author": "", "time": 0,
+                         "message": ""})
+    return sorted(rows, key=lambda r: r["name"])
+
+
+def git_state() -> str:
+    """What the Git dialog needs: remotes, the current option, its state and the branches."""
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        remotes = _project.remotes()
+        remote = _default_remote(remotes)
+        ref = _project.current_branch()
+        current = _decode(ref)
+        status = _project.remote_status(remote, ref) if remote else {
+            "remote": "", "branch": current, "state": "no_remote", "head": _project.head_commit(),
+            "ahead": 0, "behind": 0}
+        status["remote"] = remote
+        status["branch"] = current
+        return B._dump({"ok": True, "remotes": remotes, "default_remote": remote, "current": current,
+                        "head": _project.head_commit(), "dirty": _dirty(),
+                        "unversioned": _unversioned(), "status": status,
+                        "local_branches": _local_branches(),
+                        "remote_branches": _project.remote_branches(remote) if remote else []})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
 def remotes() -> str:
     if _project is None:
         return _fail("this model isn't versioned")
     try:
-        return B._dump({"ok": True, "remotes": _project.remotes()})
+        items = _project.remotes()
+        return B._dump({"ok": True, "remotes": items, "default_remote": _default_remote(items)})
     except KimbimError as ex:
         return _fail(str(ex))
 
@@ -384,7 +428,30 @@ def add_remote(name: str, url: str) -> str:
         return _fail("this model isn't versioned")
     try:
         _project.add_remote(name, url)
-        return B._dump({"ok": True, "remotes": _project.remotes()})
+        items = _project.remotes()
+        return B._dump({"ok": True, "remotes": items, "default_remote": _default_remote(items)})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def git_set_remote(name: str, url: str) -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        _project.set_remote(name, url)
+        items = _project.remotes()
+        return B._dump({"ok": True, "remotes": items, "default_remote": _default_remote(items)})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def git_rename_remote(old: str, new: str) -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        _project.rename_remote(old, new)
+        items = _project.remotes()
+        return B._dump({"ok": True, "remotes": items, "default_remote": _default_remote(items)})
     except KimbimError as ex:
         return _fail(str(ex))
 
@@ -394,22 +461,151 @@ def remove_remote(name: str) -> str:
         return _fail("this model isn't versioned")
     try:
         _project.remove_remote(name)
-        return B._dump({"ok": True, "remotes": _project.remotes()})
+        items = _project.remotes()
+        return B._dump({"ok": True, "remotes": items, "default_remote": _default_remote(items)})
     except KimbimError as ex:
         return _fail(str(ex))
 
 
-def push(remote: str = "origin", branch: str = "") -> str:
+def git_status(remote: str = "", branch: str = "") -> str:
     if _project is None:
         return _fail("this model isn't versioned")
     try:
-        return B._dump({"ok": True, **_project.push(remote or "origin", branch)})
+        remote = remote or _default_remote()
+        return B._dump({"ok": True, **_project.remote_status(remote, branch or _project.current_branch())})
     except KimbimError as ex:
         return _fail(str(ex))
 
 
+def git_fetch(remote: str = "", username: str = "", token: str = "") -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        remote = remote or _default_remote()
+        if not remote:
+            return _fail("there is no remote: add the NicGit project address first")
+        out = _project.fetch(remote, username=username, token=token)
+        return B._dump({"ok": True, **out})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def push(remote: str = "", branch: str = "", force: str = "", tags: str = "", username: str = "",
+         token: str = "") -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        remote = remote or _default_remote()
+        if not remote:
+            return _fail("there is no remote: add the NicGit project address first")
+        force_flag = force if isinstance(force, bool) else str(force).lower() in ("1", "true", "yes")
+        tags_flag = tags if isinstance(tags, bool) else str(tags).lower() in ("1", "true", "yes")
+        return B._dump({"ok": True, **_project.push(remote, branch, force=force_flag, tags=tags_flag,
+                                                    username=username, token=token)})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def git_push_tags(remote: str = "", username: str = "", token: str = "") -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        remote = remote or _default_remote()
+        if not remote:
+            return _fail("there is no remote: add the NicGit project address first")
+        return B._dump({"ok": True, **_project.push_tags(remote, username=username, token=token)})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def delete_remote_branch(remote: str = "", branch: str = "", username: str = "", token: str = "") -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    if not (branch or "").strip():
+        return _fail("choose the remote option to delete")
+    try:
+        remote = remote or _default_remote()
+        out = _project.delete_remote_branch(remote, _encode(_decode(branch)), username=username,
+                                            token=token)
+        return B._dump({"ok": True, **out})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def remote_branches(remote: str = "") -> str:
+    if _project is None:
+        return _fail("this model isn't versioned")
+    try:
+        remote = remote or _default_remote()
+        rows = _project.remote_branches(remote) if remote else []
+        return B._dump({"ok": True, "remote": remote,
+                        "branches": [{**row, "name": _decode(row["name"])} for row in rows]})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def git_test_remote(url: str, username: str = "", token: str = "") -> str:
+    try:
+        out = Project.test_remote(url, username=username, token=token)
+        return B._dump({"ok": True, **out})
+    except KimbimError as ex:
+        return _fail(str(ex))
+
+
+def git_clone(url: str, folder: str, username: str = "", token: str = "") -> str:
+    try:
+        project = Project.clone(url, folder, username=username, token=token)
+        return B._dump({"ok": True, "folder": str(project.path), "branch": _decode(project.current_branch()),
+                        "head": project.head_commit()})
+    except (KimbimError, NotAProject) as ex:
+        return _fail(str(ex))
+
+
+def git_host(url: str) -> str:
+    from .gitremote import host_of
+
+    return host_of(url)
+
+
+def git_set_token(host: str, token: str) -> str:
+    from .agent import credentials
+
+    host = (host or "").strip().lower()
+    if not host:
+        return _fail("choose the server first (its address is the key for the token)")
+    try:
+        credentials.set_git_token(host, token)
+        return B._dump({"ok": True, "host": host, "stored": bool((token or "").strip())})
+    except credentials.KeyStoreError as ex:
+        return _fail(str(ex))
+
+
+def git_clear_token(host: str) -> str:
+    from .agent import credentials
+
+    host = (host or "").strip().lower()
+    if not host:
+        return _fail("choose the server first")
+    try:
+        credentials.clear_git_token(host)
+        return B._dump({"ok": True, "host": host, "stored": False})
+    except credentials.KeyStoreError as ex:
+        return _fail(str(ex))
+
+
+def git_has_token(host: str) -> str:
+    from .agent import credentials
+
+    host = (host or "").strip().lower()
+    return B._dump({"ok": True, "host": host, "stored": bool(host) and credentials.has_git_token(host)})
+
+
+def git_default_remote() -> str:
+    return _default_remote() if _project is not None else ""
+
+
 def pull(remote: str = "origin", branch: str = "", merge: bool = False,
-         resolutions_json: str = "") -> str:
+         resolutions_json: str = "", mode: str = "", username: str = "", token: str = "") -> str:
     if _project is None:
         return _fail("this model isn't versioned")
     try:
@@ -417,7 +613,9 @@ def pull(remote: str = "origin", branch: str = "", merge: bool = False,
         if not isinstance(resolutions, dict):
             raise ValueError("resolutions must be an object")
         merge_flag = merge if isinstance(merge, bool) else str(merge).lower() in ("1", "true", "yes")
-        out = _project.pull(remote or "origin", branch, merge=merge_flag, resolutions=resolutions)
+        out = _project.pull(remote or _default_remote(), branch, merge=merge_flag,
+                            resolutions=resolutions, mode=mode or "refuse", username=username,
+                            token=token)
         _forget_working()
         _history_changed()
         return B._dump({"ok": True, **out})
@@ -460,6 +658,27 @@ def create_option(name: str) -> str:
         return _fail(str(ex))
     _history_changed()
     return B._dump({"ok": True, **json.loads(project_state())})
+
+
+def create_option_from(name: str, rev: str) -> str:
+    """A new design option at another version (e.g. a fetched remote branch); it becomes current."""
+    if _project is None:
+        return _fail("this model isn't versioned")
+    name = (name or "").strip()
+    if not name:
+        return _fail("an option needs a name")
+    if name in json.loads(options())["options"]:
+        return _fail(f"there is already an option called {name}")
+    if _unversioned():
+        return _fail("there are unsaved changes: save a version or discard them first")
+    try:
+        _project.create_branch(_encode(name), _revision(rev))
+        _project.switch(_encode(name))
+        out = _open_head(_project)
+    except KimbimError as ex:
+        return _fail(str(ex))
+    _history_changed()
+    return out
 
 
 def switch_option(name: str) -> str:

@@ -52,8 +52,10 @@ isodate = ">=0.7.2,<0.8"
 # compatible with this GPL-3.0 project through GPLv3 section 13). Guards in docs/decisions.md D132.
 lazrs-python = ">=0.8.2,<0.9"
 pymupdf = ">=2.0,<3"
-# Binary FBX through Assimp (BSD-3): D133.
+# Binary FBX through Assimp (BSD-3): D133. pyassimp is the Python wrapper; the native library is
+# a separate conda package, so the two are listed together.
 pyassimp = ">=5.2.5,<6"
+assimp = ">=5.2"
 # E57 point clouds through a small C++ bridge (BSD-3): D148.
 libe57format = ">=3.4.1,<4"
 

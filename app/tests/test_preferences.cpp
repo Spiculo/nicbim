@@ -117,6 +117,24 @@ private slots:
         QVERIFY(p.splitJoin()); // D92
         p.setValue("split_join", false);
         QVERIFY(!p.splitJoin());
+        QCOMPARE(p.theme(), QString("system"));
+        p.setValue("theme", "sepia");
+        QCOMPARE(p.theme(), QString("system"));
+        QCOMPARE(p.gitPullDiverged(), QString("refuse"));
+        p.setValue("git_pull_diverged", "rebase");
+        QCOMPARE(p.gitPullDiverged(), QString("refuse"));
+        QCOMPARE(p.updateChannel(), QString("off"));
+        p.setValue("update_channel", "nightly");
+        QCOMPARE(p.updateChannel(), QString("off"));
+        QCOMPARE(p.gitRemoteName(), QString("origin"));
+        p.setValue("git_remote_name", "  ");
+        QCOMPARE(p.gitRemoteName(), QString("origin"));
+        QCOMPARE(p.gitUsername(), QString("token"));
+        p.setValue("git_username", "");
+        QCOMPARE(p.gitUsername(), QString("token"));
+        QCOMPARE(p.gitFetchMinutes(), 0);
+        p.setValue("git_fetch_minutes", -2);
+        QCOMPARE(p.gitFetchMinutes(), 0);
     }
 
     void theDialogWritesWhatTheUserPicked()
@@ -171,6 +189,83 @@ private slots:
         QVERIFY(!p.splitJoin());
         QCOMPARE(p.authorName(), QString("Felipe"));
         QCOMPARE(p.templatesFolder(), QString("Z:/Plantillas"));
+    }
+
+    void gitAndFolderPreferencesRoundTrip()
+    {
+        QTemporaryDir tmp;
+        const QString path = tmp.filePath("preferences.json");
+        {
+            kimbim::Preferences p(path);
+            p.setValue("theme", "dark");
+            p.setValue("default_project_folder", "Z:/Projects");
+            p.setValue("backup_folder", "Z:/Backups");
+            p.setValue("cache_folder", "Z:/Cache");
+            p.setValue("plugin_folder", "Z:/Plugins");
+            p.setValue("git_server_url", "https://nicgit.example.com");
+            p.setValue("git_remote_name", "nicgit");
+            p.setValue("git_username", "ana");
+            p.setValue("git_fetch_on_open", true);
+            p.setValue("git_fetch_minutes", 15);
+            p.setValue("git_push_after_save", true);
+            p.setValue("git_pull_diverged", "merge");
+            p.setValue("git_push_tags", false);
+            p.setValue("http_proxy", "http://proxy:8080");
+            p.setValue("update_channel", "beta");
+            p.setValue("console_on_startup", true);
+            QVERIFY(p.save());
+        }
+        kimbim::Preferences q(path);
+        QVERIFY(q.load());
+        QCOMPARE(q.theme(), QString("dark"));
+        QCOMPARE(q.defaultProjectFolder(), QString("Z:/Projects"));
+        QCOMPARE(q.backupFolder(), QString("Z:/Backups"));
+        QCOMPARE(q.cacheFolder(), QString("Z:/Cache"));
+        QCOMPARE(q.pluginFolder(), QString("Z:/Plugins"));
+        QCOMPARE(q.gitServerUrl(), QString("https://nicgit.example.com"));
+        QCOMPARE(q.gitRemoteName(), QString("nicgit"));
+        QCOMPARE(q.gitUsername(), QString("ana"));
+        QVERIFY(q.gitFetchOnOpen());
+        QCOMPARE(q.gitFetchMinutes(), 15);
+        QVERIFY(q.gitPushAfterSave());
+        QCOMPARE(q.gitPullDiverged(), QString("merge"));
+        QVERIFY(!q.gitPushTags());
+        QCOMPARE(q.httpProxy(), QString("http://proxy:8080"));
+        QCOMPARE(q.updateChannel(), QString("beta"));
+        QVERIFY(q.consoleOnStartup());
+    }
+
+    void gitSettingsInTheDialog()
+    {
+        kimbim::Preferences p;
+        kimbim::PreferencesDialog d(p, nullptr);
+        d.findChild<QComboBox*>("theme")->setCurrentIndex(2); // system, light, dark
+        d.findChild<QLineEdit*>("defaultProjectFolder")->setText("Z:/Projects");
+        d.findChild<QLineEdit*>("gitServerUrl")->setText("https://nicgit.example.com");
+        d.findChild<QLineEdit*>("gitRemoteName")->setText("nicgit");
+        d.findChild<QLineEdit*>("gitUsername")->setText("ana");
+        d.findChild<QCheckBox*>("gitFetchOnOpen")->setChecked(true);
+        d.findChild<QSpinBox*>("gitFetchMinutes")->setValue(20);
+        d.findChild<QCheckBox*>("gitPushAfterSave")->setChecked(true);
+        d.findChild<QComboBox*>("gitPullDiverged")->setCurrentIndex(1); // refuse, merge, remote, local
+        d.findChild<QCheckBox*>("gitPushTags")->setChecked(false);
+        d.findChild<QLineEdit*>("httpProxy")->setText("http://proxy:8080");
+        d.findChild<QComboBox*>("updateChannel")->setCurrentIndex(2); // off, stable, beta
+        d.findChild<QCheckBox*>("consoleOnStartup")->setChecked(true);
+        d.apply();
+        QCOMPARE(p.theme(), QString("dark"));
+        QCOMPARE(p.defaultProjectFolder(), QString("Z:/Projects"));
+        QCOMPARE(p.gitServerUrl(), QString("https://nicgit.example.com"));
+        QCOMPARE(p.gitRemoteName(), QString("nicgit"));
+        QCOMPARE(p.gitUsername(), QString("ana"));
+        QVERIFY(p.gitFetchOnOpen());
+        QCOMPARE(p.gitFetchMinutes(), 20);
+        QVERIFY(p.gitPushAfterSave());
+        QCOMPARE(p.gitPullDiverged(), QString("merge"));
+        QVERIFY(!p.gitPushTags());
+        QCOMPARE(p.httpProxy(), QString("http://proxy:8080"));
+        QCOMPARE(p.updateChannel(), QString("beta"));
+        QVERIFY(p.consoleOnStartup());
     }
 
     void workspacesRoundTrip()

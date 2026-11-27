@@ -1250,6 +1250,20 @@ _EXPORTS = {
         "remove_remote",
         "push",
         "pull",
+        "git_state",
+        "git_set_remote",
+        "git_rename_remote",
+        "git_fetch",
+        "git_status",
+        "git_push_tags",
+        "git_test_remote",
+        "git_clone",
+        "git_set_token",
+        "git_clear_token",
+        "git_has_token",
+        "remote_branches",
+        "delete_remote_branch",
+        "create_option_from",
     ),
     "layers": (
         "assign_layer",
@@ -1550,6 +1564,7 @@ _EXPORTS = {
         "save_document",
         "save_template",
         "set_app_paths",
+        "set_app_folders",
         "set_author",
         "templates",
         "write_recovery",
@@ -1790,6 +1805,7 @@ _EXPORTS = {
         "save_object_version",
         "set_last_used",
     ),
+    "updates": ("check_for_updates",),
 }
 # D102 phase 2: the live session and the review bar (named apart from the catalogue's bare verbs).
 def agent_live_start() -> str:

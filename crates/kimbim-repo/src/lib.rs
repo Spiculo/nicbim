@@ -198,6 +198,15 @@ impl Repo {
     fn git(&self) -> Command {
         let mut c = Command::new("git");
         c.env("GIT_DIR", &self.git_dir);
+        // The macOS app launcher exports DYLD_LIBRARY_PATH for OCCT/Qt. A system git started with it
+        // loads the pixi libiconv and fails; the child must use its own libraries.
+        #[cfg(target_os = "macos")]
+        {
+            c.env_remove("DYLD_LIBRARY_PATH");
+            c.env_remove("DYLD_INSERT_LIBRARIES");
+        }
+        #[cfg(target_os = "linux")]
+        c.env_remove("LD_LIBRARY_PATH");
         c
     }
 

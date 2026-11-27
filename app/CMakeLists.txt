@@ -63,6 +63,8 @@ qt_add_library(kimbim_core STATIC
     src/Preferences.cpp src/Preferences.h
     src/ProjectSettingsDialog.cpp src/ProjectSettingsDialog.h
     src/PreferencesDialog.cpp src/PreferencesDialog.h
+    src/GitDialog.cpp src/GitDialog.h
+    src/Theme.cpp src/Theme.h
     src/FindSelectPanel.cpp src/FindSelectPanel.h src/SelectionTools.cpp
     src/ChecksPanel.cpp src/ChecksPanel.h src/Checks.cpp
     src/ConsolePanel.cpp src/ConsolePanel.h src/ConsoleTools.cpp
@@ -152,6 +154,7 @@ kimbim_test(test_dock_layout)
 kimbim_test(test_scene)
 kimbim_test(test_tool_palette)
 kimbim_test(test_preferences)
+kimbim_test(test_git_dialog)
 kimbim_test(test_graphics)
 kimbim_test(test_dxf_export)
 kimbim_test(test_underlays)

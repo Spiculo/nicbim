@@ -107,7 +107,8 @@ private slots:
         const auto r = MeasureTool::compute({{0, 0, 0}, {4, 0, 0}, {4, 3, 0}, {0, 3, 0}});
         const QString text = MeasureTool::describe(r, metres, [](double a) { return QString::number(a, 'f', 2) + QStringLiteral(" cm²"); });
         QVERIFY2(text.contains(QStringLiteral("12.00 cm²")), qPrintable(text));
-        QVERIFY(MeasureTool::describe(r, metres).contains(QStringLiteral("12.00 m²"))); // default unchanged
+        // The default readout follows the system locale (12.00 or 12,00): compare the formatted value.
+        QVERIFY(MeasureTool::describe(r, metres).contains(QLocale().toString(12.0, 'f', 2) + QStringLiteral(" m²")));
     }
 
     // D92: a level's elevation change can move the levels above it.

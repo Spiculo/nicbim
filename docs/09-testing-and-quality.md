@@ -65,3 +65,15 @@ The first frame is met by loading the mesh chunks before filling the levels, mod
 - **Format versioning:** any change to the canonical record format bumps `kimbim/N` and ships a migration with tests.
 - **Every bug fix adds a test.** If the bug involves a file, the file joins the corpus.
 - **Decision log:** architectural changes are recorded in [decisions.md](decisions.md) before they are implemented.
+
+## Git remotes and preferences (D253)
+
+- `tests/python/test_remotes.py`: push/pull, fast-forward, refusal on divergence, record merge, status,
+  remote branches, annotated tags, remote branch deletion, clone without a record checkout, both
+  forced-pull sides, and the HTTPS credential helper (the token never reaches the command line).
+- `tests/python/test_updates.py`: the optional release check (stable/beta/off, a newer version, a
+  network error) and the Preferences folders.
+- App `test_git_dialog.cpp`: the Remote, Sync, Options and Clone tabs, a versioned project and the
+  clone-only mode.
+- App `test_preferences.cpp`: the category pages, the new Git/folder/theme settings, token status and
+  the scroll area on a short window.

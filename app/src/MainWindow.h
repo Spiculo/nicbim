@@ -317,6 +317,15 @@ public:
     // R4 follow-up: push the current option to a Git remote, or fast-forward it from one.
     void pushRemote();
     void pullRemote();
+    void gitDialog(int tab = 1);       // 0 Remote, 1 Sync, 2 Options, 3 Clone
+    void cloneProjectDialog();
+    void applyThemePreference();
+    void applyNetworkPreferences();
+    void applyFolderPreferences();
+    void restartGitFetchTimer();
+    void gitAutoFetch();
+    void maybeFetchOnOpen();
+    void pushQuiet();
     QJsonArray history();
     bool compareWith(const QString& revA, const QString& revB = QStringLiteral("WORKING"));
     void endCompare();
@@ -1103,6 +1112,9 @@ private:
     bool m_panelsShrunk = false; // D92: the panels are at their smaller width
     QJsonObject m_settings;       // the project settings (D72)
     QTimer m_recoveryTimer;       // D72: the recovery copy
+    QTimer* m_gitFetchTimer = nullptr; // R4: periodic fetch
+    bool m_gitFetching = false;
+    bool m_proxySet = false; // the app put the proxy in the environment
     QLineEdit* m_lengthInput = nullptr;
     InputAidsController* m_inputAids = nullptr; // D89
     QAction* m_undo = nullptr;

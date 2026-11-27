@@ -20,7 +20,12 @@ public:
     QJsonValue value(const QString& key) const;  // falls back to defaults()
     void setValue(const QString& key, const QJsonValue& value);
     QString language() const;           // "auto", "en" or "es"
+    QString theme() const;              // "system", "light" or "dark"
     QString templatesFolder() const;
+    QString defaultProjectFolder() const;
+    QString backupFolder() const;       // empty: the app data folder
+    QString cacheFolder() const;
+    QString pluginFolder() const;
     QString authorName() const;
     QString authorEmail() const;
     QString newViews() const;           // "tab" or "window"
@@ -56,6 +61,18 @@ public:
     bool splitJoin() const;             // D92: split/trim pieces are joined (Ctrl inverts)
     QString mergeProps() const;         // D92: merging keeps the first's properties ("keep") or refuses ("refuse")
     double largeIfcMb() const;
+    // R4 follow-up: NicGit and other Git remotes.
+    QString gitServerUrl() const;       // default server shown when a remote is added
+    QString gitRemoteName() const;      // "origin"
+    QString gitUsername() const;        // "token"; NicGit accepts any name with a PAT as the password
+    bool gitFetchOnOpen() const;
+    int gitFetchMinutes() const;        // 0: off
+    bool gitPushAfterSave() const;
+    QString gitPullDiverged() const;    // "refuse", "merge", "force_remote" or "force_local"
+    bool gitPushTags() const;
+    QString httpProxy() const;
+    QString updateChannel() const;      // "off", "stable" or "beta"
+    bool consoleOnStartup() const;
     bool askImportStatus() const;       // D74: opening an IFC offers to mark elements without a renovation status          // an IFC this large asks before making a .nic; 0: never asks
     // Drawing generation: how long to wait before giving up (seconds; 0 = no limit) and the
     // hidden-line mode ("exact" is faster on BREP-heavy models, "poly" on curved ones).
