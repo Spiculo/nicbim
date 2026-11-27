@@ -17,6 +17,10 @@ const QStringList kOpenIfc{QStringLiteral("make_nic"), QStringLiteral("edit_ifc"
 const QStringList kNewSchema{QStringLiteral("IFC4"), QStringLiteral("IFC4X3")};
 const QStringList kAutoVersion{QStringLiteral("off"), QStringLiteral("saves"), QStringLiteral("minutes")};
 const QStringList kLanguages{QStringLiteral("auto"), QStringLiteral("en"), QStringLiteral("es")};
+const QStringList kThemes{QStringLiteral("system"), QStringLiteral("light"), QStringLiteral("dark")};
+const QStringList kPullModes{QStringLiteral("refuse"), QStringLiteral("merge"), QStringLiteral("force_remote"),
+                              QStringLiteral("force_local")};
+const QStringList kUpdateChannels{QStringLiteral("off"), QStringLiteral("stable"), QStringLiteral("beta")};
 
 QString oneOf(const QJsonValue& v, const QStringList& allowed)
 {
@@ -40,7 +44,12 @@ QJsonObject Preferences::defaults()
     const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     return {
         {"language", "auto"},
+        {"theme", "system"},
         {"templates_folder", QDir(docs).filePath(QStringLiteral("NicBim Templates"))},
+        {"default_project_folder", docs},
+        {"backup_folder", ""},
+        {"cache_folder", ""},
+        {"plugin_folder", ""},
         {"author_name", ""},
         {"author_email", ""},
         {"new_views", "tab"},
@@ -81,6 +90,17 @@ QJsonObject Preferences::defaults()
         {"assistant_provider", "anthropic"},
         {"assistant_model", "claude-sonnet-4-5"},
         {"assistant_base_url", ""},
+        {"git_server_url", ""},
+        {"git_remote_name", "origin"},
+        {"git_username", "token"},
+        {"git_fetch_on_open", false},
+        {"git_fetch_minutes", 0},
+        {"git_push_after_save", false},
+        {"git_pull_diverged", "refuse"},
+        {"git_push_tags", true},
+        {"http_proxy", ""},
+        {"update_channel", "off"},
+        {"console_on_startup", false},
         {"recent", QJsonArray()},
     };
 }
@@ -128,6 +148,7 @@ void Preferences::setValue(const QString& key, const QJsonValue& value)
 }
 
 QString Preferences::language() const { return oneOf(value("language"), kLanguages); }
+QString Preferences::theme() const { return oneOf(value("theme"), kThemes); }
 QString Preferences::newViews() const { return oneOf(value("new_views"), kViews); }
 QString Preferences::openIfc() const { return oneOf(value("open_ifc"), kOpenIfc); }
 QString Preferences::newProjectSchema() const { return oneOf(value("new_project_schema"), kNewSchema); }
@@ -140,6 +161,16 @@ QString Preferences::templatesFolder() const
     const QString s = value("templates_folder").toString();
     return s.isEmpty() ? defaults().value("templates_folder").toString() : s;
 }
+
+QString Preferences::defaultProjectFolder() const
+{
+    const QString s = value("default_project_folder").toString().trimmed();
+    return s.isEmpty() ? defaults().value("default_project_folder").toString() : s;
+}
+
+QString Preferences::backupFolder() const { return value("backup_folder").toString().trimmed(); }
+QString Preferences::cacheFolder() const { return value("cache_folder").toString().trimmed(); }
+QString Preferences::pluginFolder() const { return value("plugin_folder").toString().trimmed(); }
 
 int Preferences::autoVersionEvery() const
 {
@@ -245,6 +276,30 @@ QString Preferences::boxSelection() const
 }
 
 bool Preferences::splitJoin() const { return value("split_join").toBool(true); }
+
+QString Preferences::gitServerUrl() const { return value("git_server_url").toString().trimmed(); }
+QString Preferences::gitRemoteName() const
+{
+    const QString s = value("git_remote_name").toString().trimmed();
+    return s.isEmpty() ? QStringLiteral("origin") : s;
+}
+QString Preferences::gitUsername() const
+{
+    const QString s = value("git_username").toString().trimmed();
+    return s.isEmpty() ? QStringLiteral("token") : s;
+}
+bool Preferences::gitFetchOnOpen() const { return value("git_fetch_on_open").toBool(false); }
+int Preferences::gitFetchMinutes() const
+{
+    const QJsonValue v = value("git_fetch_minutes");
+    return v.isDouble() && v.toInt() > 0 ? v.toInt() : 0;
+}
+bool Preferences::gitPushAfterSave() const { return value("git_push_after_save").toBool(false); }
+QString Preferences::gitPullDiverged() const { return oneOf(value("git_pull_diverged"), kPullModes); }
+bool Preferences::gitPushTags() const { return value("git_push_tags").toBool(true); }
+QString Preferences::httpProxy() const { return value("http_proxy").toString().trimmed(); }
+QString Preferences::updateChannel() const { return oneOf(value("update_channel"), kUpdateChannels); }
+bool Preferences::consoleOnStartup() const { return value("console_on_startup").toBool(false); }
 
 QString Preferences::mergeProps() const
 {

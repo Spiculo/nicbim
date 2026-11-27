@@ -19,7 +19,7 @@ _loaded: dict[str, dict] = {}
 def folder() -> pathlib.Path:
     from . import documents
 
-    return documents.data_dir() / "plugins"
+    return documents.plugin_root()
 
 
 def plugins_folder() -> str:

@@ -153,7 +153,7 @@ Clones get **new NicBim IDs and GlobalIds**. They never share identity with the 
 | Combine options with conflict resolution UI | P1 | ✅ Slice 22 (M5 exit): dialog, combined model as preview, two-parent version ([03](03-versioning.md#merge-combine-options)) |
 | Milestones | P0 | ✅ Slice 20: annotated tags (D67) |
 | Re-import from external tool with reconciliation report | P1 | ✅ D104: `kimbim versions import` (GlobalId → Tag → heuristic review, dry run and JSON report); no app dialog yet ([03](03-versioning.md#import-reconciliation)) |
-| Remotes: push/pull to a Git host | P2 | ✅ D107: `kimbim versions remotes/push/pull` and Versions › Push/Pull (fast-forward pull; a diverged branch is refused). Merge-aware pull is next ([08](08-future.md)) |
+| Remotes: push/pull to a Git host | P2 | ✅ D107 and D253: `kimbim versions remotes/push/pull`; **Versions › Git…** manages remotes, the NicGit token in the OS credential store, fetch/status, push (with milestones), pull, tags, force push, remote option deletion and clone; **File › Clone project from remote…**. A diverged pull is refused by default, or merged / forced per the preference. |
 
 ## 10. Checking (local)
 
@@ -169,7 +169,7 @@ Clones get **new NicBim IDs and GlobalIds**. They never share identity with the 
 | Feature | Pri | Notes |
 |---------|-----|-------|
 | Python console with the model API | P1 | Done (D82): Console panel (View › Panels, Ctrl+Alt+P), Run Python script...; see [15](15-scripting.md) |
-| Plugins (Python) that add commands and panels | P2 | |
+| Plugins (Python) that add commands and panels | P2 | ✅ D212: `plugins` folder, reload, errors per file; the folder and "open the console at startup" are in Preferences › Plugins and scripting |
 | C ABI for native plugins / other languages | P2 | `kimbim-ffi` |
 
 ## 12. Languages (i18n)
@@ -191,6 +191,22 @@ Rules:
 - **Model data is never translated.** IFC class names, pset/property names and enumerations are stored exactly as the standard defines them. Translation happens only at display time.
 - No hard-coded user-visible strings, and no sentences assembled from fragments, because word order differs between languages.
 - CI fails on untranslated strings in English or Spanish.
+
+## 13. Preferences (per computer)
+
+*Edit › Preferences…* is a category list with one page on the right: **General** (language, author,
+theme), **Files and folders** (default project folder, templates, office library, recovery copies,
+temporary files, opening an IFC, new-project schema, large IFC), **Drawing** (timeout, hidden-line
+mode), **Editing and navigation** (views, scroll, tracker, angles, typed lengths, title bar, selection,
+underlay defaults), **Assistant** (provider, model, base URL, key), **Git and sync** (default NicGit
+server, remote name, user name, token, fetch on open and every N minutes, push after Save version,
+diverged-pull policy, push tags), **Network** (HTTP proxy), **Plugins and scripting** (plugins folder,
+console at startup), **Updates** (channel and *Check now*) and **Advanced** (automatic versions,
+recovery copies).
+
+The token is never stored in `preferences.json`: it goes to the OS credential store, one per server.
+Changing the theme applies immediately; the language changes on the next start. The recovery,
+temporary and plugin folders are passed to the engine, so they take effect without a restart.
 
 ## UX principles
 

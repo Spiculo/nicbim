@@ -118,5 +118,5 @@ kimbim/
 ## Build and dependencies (Proposed)
 
 - **CMake** is the top-level build. **Corrosion** builds the Rust crates from CMake.
-- **pixi + conda-forge** provide one reproducible dependency environment on Windows and Linux. conda-forge ships Qt 6, OpenCASCADE, IfcOpenShell and Python, which avoids building IfcOpenShell and OCCT from source. FreeCAD uses the same approach.
-- CI runs on Windows and Linux and includes the cross-platform determinism tests (see [09](09-testing-and-quality.md)).
+- **pixi + conda-forge** provide one reproducible dependency environment on Windows, Linux and macOS (Apple Silicon). conda-forge ships Qt 6, OpenCASCADE, IfcOpenShell and Python, which avoids building IfcOpenShell and OCCT from source. FreeCAD uses the same approach.
+- CI runs on Windows, Linux and macOS and includes the cross-platform determinism tests (see [09](09-testing-and-quality.md)).

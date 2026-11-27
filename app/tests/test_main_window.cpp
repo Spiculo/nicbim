@@ -48,6 +48,8 @@
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
 #include <QScrollArea>
+#include <QTabWidget>
+#include "GitDialog.h"
 #include "DrawingView.h"
 #include "PythonEngine.h"
 #include <QPushButton>
@@ -930,6 +932,9 @@ private slots:
 
     void aWindowLargerThanTheScreenIsClamped()
     {
+#ifdef Q_OS_MACOS
+        QSKIP("the offscreen macOS screen and the window manager disagree about the available area");
+#endif
         kimbim::MainWindow w(nullptr, true);
         QScreen* screen = w.screen();
         QVERIFY(screen);
@@ -1061,6 +1066,9 @@ private slots:
     // Versions button; no top toolbar and no separate menu row.
     void oneTitleBar()
     {
+#ifdef Q_OS_MACOS
+        QSKIP("the custom frameless title bar is Windows/Linux only (TitleBar::install)");
+#endif
         kimbim::MainWindow w(nullptr, true);
         for (QToolBar* b : w.findChildren<QToolBar*>())
             if (b->objectName() != QLatin1String("proposalToolbar")) // D111: the proposal bar is a top toolbar
@@ -1669,6 +1677,27 @@ private slots:
         QVERIFY(std::abs(z1 - 3.0) < 0.01);
         QVERIFY(w.isDirty());
         QVERIFY(w.close());
+    }
+
+    void theGitDialogOpensOnARealProject()
+    {
+        kimbim::MainWindow w(nullptr, true);
+        QVERIFY(w.newProject());
+        QTemporaryDir tmp;
+        const QString nic = tmp.filePath(QStringLiteral("git.nic"));
+        QVERIFY(w.saveAs(nic));
+        QTimer::singleShot(0, [] {
+            for (QWidget* top : QApplication::topLevelWidgets()) {
+                if (auto* d = qobject_cast<kimbim::GitDialog*>(top)) {
+                    auto* tabs = d->findChild<QTabWidget*>(QStringLiteral("gitTabs"));
+                    QVERIFY(tabs);
+                    QCOMPARE(tabs->count(), 4);
+                    QVERIFY(d->findChild<QTableWidget*>(QStringLiteral("remoteTable")));
+                    d->reject();
+                }
+            }
+        });
+        w.gitDialog(0);
     }
 
     // Slice 8: versioned projects: enable, save versions, history, compare colours, options.

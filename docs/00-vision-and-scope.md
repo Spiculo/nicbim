@@ -6,7 +6,7 @@
 
 ## Audience
 
-- **Primary:** architects and architectural designers who model buildings and produce documentation. They want an open, vendor-neutral tool that runs on Windows and Linux.
+- **Primary:** architects and architectural designers who model buildings and produce documentation. They want an open, vendor-neutral tool that runs on Windows, Linux and macOS (Apple Silicon).
 - **Secondary:** BIM coordinators who need to know *what changed, who changed it, and why*.
 - **Contributors:** OSS developers (Rust, C++/Qt, Python) and the OSArch / IfcOpenShell community.
 
@@ -27,7 +27,7 @@ The CLI and docs keep the Git terms.
 
 1. **Local-first.** Everything in scope works without a network or a server.
 2. **OpenBIM.** IFC is the data schema, and the app reads and writes standard IFC. IDS and BCF come later. No proprietary lock-in.
-3. **Native.** Qt desktop app for Windows and Linux. No web UI.
+3. **Native.** Qt desktop app for Windows, Linux and macOS. No web UI.
 4. **Semantic, not file-based.** Versioning tracks objects, properties and relationships, not whole files.
 5. **Deterministic.** The same model state always gives the same hash on every machine. See [02](02-data-model-and-format.md#determinism).
 6. **Evidence over inference.** Deterministic engines (geometry, validation, history) are authoritative. AI, when it arrives, only explains and proposes.
@@ -66,7 +66,7 @@ Summarized in [08-future.md](08-future.md).
 ### Non-goals
 
 - A web application.
-- macOS in the first releases. It is not excluded, just not targeted.
+- macOS on Intel is not targeted; Apple Silicon is (D252).
 - Rewriting IFC parsing, geometry kernels or drawing generation that already exist.
 - A CDE replacement.
 - Reproducing Revit/ArchiCAD feature-for-feature. NicBim covers the core architectural workflow well.

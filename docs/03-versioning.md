@@ -204,7 +204,11 @@ kimbim versions push [REMOTE] [--branch NAME]   # the current option by default
 kimbim versions pull [REMOTE] [--branch NAME]   # fetch + fast-forward; a diverged branch is refused
 ```
 
-`push` and `pull` are thin wrappers over git with `GIT_TERMINAL_PROMPT=0`, so credentials must be configured for the host (SSH agent, credential helper). `pull` is **fast-forward only**: a diverged option is refused and asks you to push your versions or combine them in a design option, never to run Git's text merge over IFC records. The app's Versions menu has *Push to remote...* and *Pull from remote...*.
+`push` and `pull` are thin wrappers over git with `GIT_TERMINAL_PROMPT=0`. **Versions › Git…** manages remotes, fetches, shows ahead/behind, pushes (with milestones), pulls, force-pushes with `--force-with-lease`, pushes tags and deletes a remote option. **File › Clone project from remote…** clones with `--no-checkout` and opens the folder.
 
-Not yet: `export-tree`, and a merge-aware remote pull.
+HTTPS remotes authenticate with a **NicGit personal access token kept in the operating system credential store**. The token reaches git through a credential helper that reads environment variables, so it never appears on a command line or in `.git/config`; SSH remotes use the user's SSH agent. Tokens are stored per server host. A missing token is reported; `GIT_TERMINAL_PROMPT=0` means git never waits for a terminal the desktop app cannot show.
+
+`pull` fast-forwards when it can. A diverged option is handled by the preference *When an option and the remote diverged*: **refuse** (default, with the reason), **merge** (NicBim's record merge, never Git's text merge), **force_remote** (reset the local option to the remote) or **force_local** (push the local option with `--force-with-lease`). The dialog offers the same four choices when the user pulls interactively.
+
+Not yet: `export-tree`, partial clone and a linked `.nic` that keeps only a URL and an option.
 The old top-level commands (`kimbim commit`, `kimbim log`...) are gone.

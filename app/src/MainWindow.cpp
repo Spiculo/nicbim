@@ -138,6 +138,8 @@
 #include "ModelLoader.h"
 #include "ModelTreePanel.h"
 #include "PreferencesDialog.h"
+#include "GitDialog.h"
+#include "Theme.h"
 #include "ProjectSettingsDialog.h"
 #include "PropertiesPanel.h"
 #include "PythonEngine.h"
@@ -223,6 +225,8 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     , m_loader(new ModelLoader(chunkSize))
 {
     m_prefs.load();
+    applyTheme(m_prefs.theme()); // Appearance, before the window is built
+    applyNetworkPreferences();
     applyViewPreferences(); // D92: the field of view and the home view, before any view is used
     qRegisterMetaType<kimbim::MeshChunk>();
     // D71: the bottom bar (pen, layers, zoom, selection, messages) replaces the status bar.
@@ -429,6 +433,7 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     if (!PythonEngine::instance().start(&error))
         showError(tr("NicBim cannot start"), error);
     bridge("set_app_paths", {QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)});
+    applyFolderPreferences();
     bridge("set_author", {m_prefs.authorName(), m_prefs.authorEmail()});
     applyDrawingPrefs();
     m_sinceVersion.start();
@@ -436,6 +441,8 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
         if (!PythonEngine::instance().busy() && isDirty())
             writeRecovery();
     });
+    m_gitFetchTimer = new QTimer(this);
+    connect(m_gitFetchTimer, &QTimer::timeout, this, &MainWindow::gitAutoFetch);
     restartRecoveryTimer();
     // The window layout of the last session (D71); tests and the self-test start from the default,
     // where the model view gets most of the width.
@@ -452,6 +459,21 @@ MainWindow::MainWindow(QWidget* parent, bool quiet, int chunkSize)
     // ~4 GB backing store and die; catch it once the window is shown and fall back to a sane size.
     clampWindowSize();
     QTimer::singleShot(0, this, &MainWindow::clampWindowSize);
+    if (!m_quiet && m_prefs.consoleOnStartup())
+        QTimer::singleShot(0, this, [this] {
+            if (QAction* console = findChild<QAction*>(QStringLiteral("actionConsole")))
+                console->trigger();
+        });
+    if (!m_quiet && m_prefs.updateChannel() != QLatin1String("off"))
+        QTimer::singleShot(5000, this, [this] {
+            if (!PythonEngine::instance().isRunning())
+                return;
+            const QJsonObject r = bridge("check_for_updates",
+                {QStringLiteral(KIMBIM_VERSION), m_prefs.updateChannel()});
+            if (r.value("ok").toBool() && r.value("update").toBool())
+                m_status->showMessage(tr("NicBim %1 is available: %2")
+                    .arg(r.value("latest").toString(), r.value("url").toString()));
+        });
 }
 
 void MainWindow::clampWindowSize()
@@ -564,6 +586,10 @@ void MainWindow::buildMenus()
     QAction* openProjectAction = file->addAction(tr("Open project &folder..."));
     openProjectAction->setObjectName(QStringLiteral("actionOpenProject"));
     connect(openProjectAction, &QAction::triggered, this, &MainWindow::openProjectDialog);
+    QAction* cloneRemote = file->addAction(tr("Clone project from &remote..."));
+    cloneRemote->setObjectName(QStringLiteral("actionCloneRemote"));
+    cloneRemote->setToolTip(tr("Clone a NicGit project into a new folder"));
+    connect(cloneRemote, &QAction::triggered, this, &MainWindow::cloneProjectDialog);
     m_recentMenu = file->addMenu(tr("&Recent files"));
     m_recentMenu->setObjectName(QStringLiteral("recentMenu"));
     connect(m_recentMenu, &QMenu::aboutToShow, this, &MainWindow::fillRecentMenu);
@@ -5193,6 +5219,11 @@ void MainWindow::buildVersions()
     combineAction->setToolTip(tr("Bring another design option's work into this one, choosing where both changed the same thing"));
     connect(combineAction, &QAction::triggered, this, &MainWindow::combineDialog);
     m_projectActions << menu->addSeparator();
+    QAction* gitAction = menu->addAction(tr("&Git...")); // R4: remotes, token, sync, clone
+    gitAction->setObjectName(QStringLiteral("actionGitDialog"));
+    gitAction->setToolTip(tr("Remotes, the NicGit access token, fetch/push/pull and design options"));
+    m_projectActions << gitAction;
+    connect(gitAction, &QAction::triggered, this, [this] { gitDialog(1); });
     // Save version stays visible: in an unversioned project its shortcut says to enable versioning.
     QAction* pushAction = menu->addAction(tr("Push to remote...")); // R4 follow-up: Git remotes
     pushAction->setObjectName(QStringLiteral("actionPushRemote"));
@@ -5275,7 +5306,10 @@ void MainWindow::enableVersioningDialog()
 {
     if (m_versioned || m_quiet)
         return;
-    QString path = QFileDialog::getSaveFileName(this, tr("Enable versioning"), m_document.value("path").toString(),
+    const QString current = m_document.value("path").toString();
+    const QString start = current.isEmpty()
+        ? QDir(m_prefs.defaultProjectFolder()).filePath(QStringLiteral("Untitled.nic")) : current;
+    QString path = QFileDialog::getSaveFileName(this, tr("Enable versioning"), start,
         tr("NicBim project (*.nic)"));
     if (path.isEmpty())
         return;
@@ -5453,6 +5487,7 @@ void MainWindow::applyProjectState(const QJsonObject& s, const QJsonObject& hist
         m_history->setVersions(history.value("versions").toArray());
     }
     m_currentOption = option;
+    restartGitFetchTimer();
     updateVersionsButton();
     QString name = doc.value("untitled").toBool() ? tr("Untitled") : doc.value("name").toString();
     if (m_versioned)
@@ -5601,6 +5636,7 @@ bool MainWindow::openIfc(const QString& path)
     openFile(r.value("path").toString());
     rememberRecent(nic);
     m_askImportStatus = true; // once loaded; the .nic's first version stays the IFC as it was
+    maybeFetchOnOpen();
     return true;
 }
 
@@ -5619,6 +5655,7 @@ bool MainWindow::openProject(const QString& folder, bool readOnly)
     endCompare();
     openFile(r.value("path").toString());
     rememberRecent(folder);
+    maybeFetchOnOpen();
     return true;
 }
 
@@ -5639,7 +5676,8 @@ void MainWindow::fillRecentMenu()
 
 void MainWindow::openProjectDialog()
 {
-    const QString folder = QFileDialog::getExistingDirectory(this, tr("Open a NicBim project folder"));
+    const QString folder = QFileDialog::getExistingDirectory(this, tr("Open a NicBim project folder"),
+        m_prefs.defaultProjectFolder());
     if (!folder.isEmpty())
         openProject(folder);
 }
@@ -5649,6 +5687,8 @@ bool MainWindow::saveVersion(const QString& message)
     if (!commitVersion(message))
         return false; // (the bridge packs a .nic when its history changes)
     refreshProject();
+    if (m_prefs.gitPushAfterSave())
+        pushQuiet();
     return true;
 }
 
@@ -5714,11 +5754,19 @@ bool MainWindow::commitVersion(const QString& message)
 
 void MainWindow::pushRemote()
 {
+    if (!m_versioned) {
+        cloneProjectDialog();
+        return;
+    }
     const QJsonArray remotes = bridge("remotes").value("remotes").toArray();
+    if (remotes.isEmpty()) {
+        gitDialog(0); // the Remote tab explains the server and the token
+        return;
+    }
     QString remote;
     if (remotes.size() == 1) {
         remote = remotes[0].toObject().value("name").toString();
-    } else if (!remotes.isEmpty()) {
+    } else {
         QStringList names;
         for (const auto& value : remotes)
             names << value.toObject().value("name").toString();
@@ -5726,23 +5774,33 @@ void MainWindow::pushRemote()
         remote = QInputDialog::getItem(this, tr("Push to remote"), tr("Remote:"), names, 0, false, &ok);
         if (!ok)
             return;
-    } else {
-        m_status->showMessage(tr("No Git remote: add one with `kimbim versions remotes --add origin=URL`"));
+    }
+    const QJsonObject r = bridgeInBackground("push",
+        {remote, QString(), QStringLiteral("false"), m_prefs.gitPushTags() ? QStringLiteral("true") : QStringLiteral("false")},
+        tr("Pushing to the remote..."));
+    if (!r.value("ok").toBool()) {
+        m_status->showMessage(tr("Push failed: %1").arg(r.value("error").toString()));
         return;
     }
-    const QJsonObject r = bridge("push", {remote});
-    m_status->showMessage(r.value("ok").toBool()
-                              ? tr("Pushed %1 to %2").arg(r.value("branch").toString(), remote)
-                              : tr("Push failed: %1").arg(r.value("error").toString()));
+    m_status->showMessage(tr("Pushed %1 to %2").arg(r.value("branch").toString(), remote));
+    refreshProject();
 }
 
 void MainWindow::pullRemote()
 {
+    if (!m_versioned) {
+        cloneProjectDialog();
+        return;
+    }
     const QJsonArray remotes = bridge("remotes").value("remotes").toArray();
+    if (remotes.isEmpty()) {
+        gitDialog(0);
+        return;
+    }
     QString remote;
     if (remotes.size() == 1) {
         remote = remotes[0].toObject().value("name").toString();
-    } else if (!remotes.isEmpty()) {
+    } else {
         QStringList names;
         for (const auto& value : remotes)
             names << value.toObject().value("name").toString();
@@ -5750,16 +5808,30 @@ void MainWindow::pullRemote()
         remote = QInputDialog::getItem(this, tr("Pull from remote"), tr("Remote:"), names, 0, false, &ok);
         if (!ok)
             return;
-    } else {
-        m_status->showMessage(tr("No Git remote: add one with `kimbim versions remotes --add origin=URL`"));
-        return;
     }
-    QJsonObject r = bridge("pull", {remote});
+    QString mode = m_prefs.gitPullDiverged();
+    QJsonObject r = bridgeInBackground("pull", {remote, QString(), QString(), QString(), mode},
+        tr("Pulling from the remote..."));
     if (!r.value("ok").toBool() && r.value("error").toString().contains(QLatin1String("diverged"))) {
-        if (QMessageBox::question(this, tr("Pull from remote"),
-                tr("The remote and this option have diverged. Combine them with NicBim's record merge?"))
-            == QMessageBox::Yes)
-            r = bridge("pull", {remote, QString(), QStringLiteral("true")}); // D128: merge-aware pull
+        QMessageBox box(this);
+        box.setWindowTitle(tr("Pull from remote"));
+        box.setText(tr("This option and the remote have both changed. How should they be brought together?"));
+        box.setInformativeText(tr("A record merge uses NicBim's object merge, never Git's text merge."));
+        QPushButton* merge = box.addButton(tr("Merge with NicBim"), QMessageBox::AcceptRole);
+        QPushButton* theirs = box.addButton(tr("Use the remote"), QMessageBox::DestructiveRole);
+        QPushButton* ours = box.addButton(tr("Use this option"), QMessageBox::DestructiveRole);
+        box.addButton(QMessageBox::Cancel);
+        box.exec();
+        if (box.clickedButton() == merge)
+            mode = QStringLiteral("merge");
+        else if (box.clickedButton() == theirs)
+            mode = QStringLiteral("force_remote");
+        else if (box.clickedButton() == ours)
+            mode = QStringLiteral("force_local");
+        else
+            return;
+        r = bridgeInBackground("pull", {remote, QString(), QString(), QString(), mode},
+            tr("Pulling from the remote..."));
     }
     if (!r.value("ok").toBool()) {
         m_status->showMessage(tr("Pull failed: %1").arg(r.value("error").toString()));
@@ -5767,6 +5839,138 @@ void MainWindow::pullRemote()
     }
     m_status->showMessage(tr("Pulled %1 from %2").arg(r.value("branch").toString(), remote));
     switchOption(m_currentOption); // reopen the pulled state
+}
+
+void MainWindow::gitDialog(int tab)
+{
+    if (!m_versioned && tab != 3) {
+        cloneProjectDialog();
+        return;
+    }
+    GitDialog dialog([this](const char* fn, const QStringList& args) { return bridge(fn, args); },
+        m_prefs, m_versioned, this);
+    const GitDialog::Tab which = tab == 0 ? GitDialog::Tab::Remote
+        : tab == 1 ? GitDialog::Tab::Sync
+        : tab == 2 ? GitDialog::Tab::Options
+        : GitDialog::Tab::Clone;
+    dialog.setTab(which);
+    dialog.exec();
+    if (dialog.changed())
+        refreshProject();
+    if (!dialog.cloneFolder().isEmpty()) {
+        openProject(dialog.cloneFolder());
+        return;
+    }
+    if (!dialog.switchTo().isEmpty()) {
+        switchOption(dialog.switchTo());
+        return;
+    }
+    if (dialog.needsReload() && m_versioned)
+        switchOption(m_currentOption);
+}
+
+void MainWindow::cloneProjectDialog()
+{
+    GitDialog dialog([this](const char* fn, const QStringList& args) { return bridge(fn, args); },
+        m_prefs, m_versioned, this);
+    dialog.setTab(GitDialog::Tab::Clone);
+    dialog.exec();
+    if (!dialog.cloneFolder().isEmpty())
+        openProject(dialog.cloneFolder());
+    else if (dialog.changed())
+        refreshProject();
+}
+
+void MainWindow::applyThemePreference()
+{
+    applyTheme(m_prefs.theme());
+}
+
+void MainWindow::applyNetworkPreferences()
+{
+    const QString proxy = m_prefs.httpProxy();
+    if (proxy.isEmpty()) {
+        if (!m_proxySet)
+            return; // leave a system proxy in the environment alone
+        for (const char* key : {"https_proxy", "http_proxy", "all_proxy"})
+            qunsetenv(key);
+        m_proxySet = false;
+        return;
+    }
+    for (const char* key : {"https_proxy", "http_proxy", "all_proxy"})
+        qputenv(key, proxy.toUtf8());
+    m_proxySet = true;
+}
+
+void MainWindow::applyFolderPreferences()
+{
+    bridge("set_app_folders", {m_prefs.backupFolder(), m_prefs.cacheFolder(), m_prefs.pluginFolder()});
+}
+
+void MainWindow::restartGitFetchTimer()
+{
+    if (!m_gitFetchTimer)
+        return;
+    m_gitFetchTimer->stop();
+    if (m_versioned && !m_quiet && m_prefs.gitFetchMinutes() > 0)
+        m_gitFetchTimer->start(m_prefs.gitFetchMinutes() * 60000);
+}
+
+void MainWindow::gitAutoFetch()
+{
+    if (!m_versioned || m_gitFetching || m_quiet)
+        return;
+    const QJsonArray remotes = bridge("remotes").value("remotes").toArray();
+    if (remotes.isEmpty())
+        return;
+    QString remote;
+    for (const auto& value : remotes) {
+        const QJsonObject item = value.toObject();
+        if (item.value("name").toString() == QLatin1String("origin")) {
+            remote = QStringLiteral("origin");
+            break;
+        }
+        if (remote.isEmpty())
+            remote = item.value("name").toString();
+    }
+    m_gitFetching = true;
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const QJsonObject r = bridge("git_fetch", {remote});
+    QApplication::restoreOverrideCursor();
+    m_gitFetching = false;
+    if (r.value("ok").toBool())
+        m_status->showMessage(tr("Fetched %1").arg(remote));
+}
+
+void MainWindow::maybeFetchOnOpen()
+{
+    if (m_prefs.gitFetchOnOpen())
+        gitAutoFetch();
+}
+
+void MainWindow::pushQuiet()
+{
+    if (!m_versioned)
+        return;
+    const QJsonArray remotes = bridge("remotes").value("remotes").toArray();
+    if (remotes.isEmpty())
+        return;
+    QString remote;
+    for (const auto& value : remotes) {
+        const QJsonObject item = value.toObject();
+        if (item.value("name").toString() == QLatin1String("origin")) {
+            remote = QStringLiteral("origin");
+            break;
+        }
+        if (remote.isEmpty())
+            remote = item.value("name").toString();
+    }
+    const QJsonObject r = bridgeInBackground("push",
+        {remote, QString(), QStringLiteral("false"), m_prefs.gitPushTags() ? QStringLiteral("true") : QStringLiteral("false")},
+        tr("Pushing the new version..."));
+    m_status->showMessage(r.value("ok").toBool()
+        ? tr("Pushed the new version to %1").arg(remote)
+        : tr("Version saved, but the push failed: %1").arg(r.value("error").toString()));
 }
 
 void MainWindow::saveVersionDialog()
@@ -11720,7 +11924,10 @@ bool MainWindow::saveAs(const QString& path)
 void MainWindow::saveAsDialog()
 {
     QString selected;
-    const QString path = QFileDialog::getSaveFileName(this, tr("Save As"), m_document.value("path").toString(),
+    const QString current = m_document.value("path").toString();
+    const QString start = current.isEmpty()
+        ? QDir(m_prefs.defaultProjectFolder()).filePath(QStringLiteral("Untitled.nic")) : current;
+    const QString path = QFileDialog::getSaveFileName(this, tr("Save As"), start,
         tr("NicBim project (*.nic);;IFC file (*.ifc)"), &selected);
     if (!path.isEmpty())
         saveAs(path);
@@ -11906,7 +12113,8 @@ void MainWindow::changeSchemaDialog()
 
 void MainWindow::saveAsFolderDialog()
 {
-    const QString folder = QFileDialog::getExistingDirectory(this, tr("Choose an empty folder for the project"));
+    const QString folder = QFileDialog::getExistingDirectory(this, tr("Choose an empty folder for the project"),
+        m_prefs.defaultProjectFolder());
     if (!folder.isEmpty())
         saveAsFolder(folder);
 }
@@ -11988,6 +12196,10 @@ void MainWindow::preferencesDialog()
     applyTitleBarPreferences(); // D92: which controls the title bar holds
     bridge("set_author", {m_prefs.authorName(), m_prefs.authorEmail()});
     applyDrawingPrefs();
+    applyThemePreference();
+    applyNetworkPreferences();
+    applyFolderPreferences();
+    restartGitFetchTimer();
     restartRecoveryTimer();
     applyLibraryPaths(); // D86: the office library may have changed
 }

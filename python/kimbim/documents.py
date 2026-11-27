@@ -32,6 +32,9 @@ from .project import KimbimError, NotAProject, Project
 
 _data_dir: pathlib.Path | None = None
 _pending: dict | None = None
+_recovery_root: pathlib.Path | None = None
+_tmp_root: pathlib.Path | None = None
+_plugin_root: pathlib.Path | None = None
 
 
 def _plain(path: str = "") -> dict:
@@ -83,6 +86,28 @@ def set_app_paths(data: str) -> str:
     global _data_dir
     _data_dir = pathlib.Path(data) if data else None
     return B._dump({"ok": True, "data": str(data_dir())})
+
+
+def set_app_folders(recovery: str = "", tmp: str = "", plugins: str = "") -> str:
+    """Optional folders from Preferences. Empty means the app data folder."""
+    global _recovery_root, _tmp_root, _plugin_root
+    _recovery_root = pathlib.Path(recovery).expanduser() if (recovery or "").strip() else None
+    _tmp_root = pathlib.Path(tmp).expanduser() if (tmp or "").strip() else None
+    _plugin_root = pathlib.Path(plugins).expanduser() if (plugins or "").strip() else None
+    return B._dump({"ok": True, "recovery": str(recovery_root()), "tmp": str(tmp_dir()),
+                    "plugins": str(plugin_root())})
+
+
+def recovery_root() -> pathlib.Path:
+    return _recovery_root or (data_dir() / "recovery")
+
+
+def tmp_dir() -> pathlib.Path:
+    return _tmp_root or (data_dir() / "tmp")
+
+
+def plugin_root() -> pathlib.Path:
+    return _plugin_root or (data_dir() / "plugins")
 
 
 def set_author(name: str, email: str) -> str:
@@ -546,7 +571,7 @@ def export_ifc(path: str) -> str:
 # ---------------------------------------------------------------- recovery copies
 
 def _recovery_dir(key: str) -> pathlib.Path:
-    return data_dir() / "recovery" / K.path_hash(key)
+    return recovery_root() / K.path_hash(key)
 
 
 def _clear_recovery(key: str) -> None:
@@ -574,7 +599,7 @@ def write_recovery() -> str:
 
 def recoveries() -> str:
     items = []
-    root = data_dir() / "recovery"
+    root = recovery_root()
     own = _recovery_dir(_recovery_key()) if B._model is not None else None
     for folder in sorted(root.glob("*")) if root.exists() else ():
         try:
@@ -594,7 +619,7 @@ def recoveries() -> str:
 
 
 def discard_recovery(id: str) -> str:
-    shutil.rmtree(data_dir() / "recovery" / pathlib.Path(id).name, ignore_errors=True)
+    shutil.rmtree(recovery_root() / pathlib.Path(id).name, ignore_errors=True)
     return B._dump({"ok": True})
 
 
@@ -602,7 +627,7 @@ def recover(id: str) -> str:
     """Reopen a recovered copy: a .nic or folder opens normally with the copy as its unsaved work; an IFC
     or untitled model opens the copy as unsaved work (Save writes the original IFC)."""
     global _pending
-    folder = data_dir() / "recovery" / pathlib.Path(id).name
+    folder = recovery_root() / pathlib.Path(id).name
     try:
         info = json.loads((folder / "info.json").read_text())
     except (OSError, ValueError):
@@ -676,7 +701,7 @@ def save_template(folder: str, name: str, replace: str = "") -> str:
     target = pathlib.Path(folder) / f"{name}.nic"
     if target.exists() and not replace:
         return _fail(f"a template called {name} exists", exists=True)
-    tmp = data_dir() / "tmp" / uuid.uuid4().hex
+    tmp = tmp_dir() / uuid.uuid4().hex
     try:
         (tmp / ".kimbim").mkdir(parents=True)
         B._model.write(str(tmp / ".kimbim" / "working.ifc"))
@@ -729,7 +754,7 @@ def new_from_template(path: str, schema: str = "") -> str:
         _doc = {**_plain(), "template": BUILTIN_NAME}
         return B._dump({"ok": True, "path": ""})
     nic = pathlib.Path(path)
-    tmp = data_dir() / "tmp" / uuid.uuid4().hex
+    tmp = tmp_dir() / uuid.uuid4().hex
     try:
         if K.read_manifest(nic).get("kind") != "template":
             return _fail(f"{nic.name} is not a template")

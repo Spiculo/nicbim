@@ -20,14 +20,14 @@ Large files are stored with Git LFS or downloaded by a script, so they are not c
 | Suite | What it checks | Blocks release |
 |-------|----------------|:--------------:|
 | **Round-trip** | IFC → records → IFC is semantically equal; records → IFC → records is a fixed point (identical hashes) | Yes |
-| **Determinism** | Golden record and tree hashes are identical on Windows and Linux CI | Yes |
+| **Determinism** | Golden record and tree hashes are identical on Windows and Linux CI; macOS uses the Python decomposer until the C++ bridge loads | Yes |
 | **Canonical format** | JSON canonicalization rules: key sorting, SET ordering, numbers (INTEGER vs REAL), exact strings, unset omission | Yes |
 | **Merge** | Three-way merge scenarios, including ported `ifcmerge` cases; merge is deterministic and commutative where expected | Yes |
 | **Reconciliation** | Match rates and no false matches on the reconciliation pairs | Yes |
 | **Commands** | Each authoring command: apply → expected change set → undo restores identical records | Yes |
 | **Export validity** | Exported IFC passes `ifcopenshell.validate`, opens in web-ifc and in xBIM (independent parsers; `pixi run interop`, `pixi run interop-xbim`) | Yes |
 | **100k release gate** | First frame under 15 s and warm decomposition under 15 s on a 100k-object model (`pixi run bench-100k`); full load and cold decomposition are reported and gated at 240 s/150 s | Yes (tags and manual runs) |
-| **GUI smoke** | App launches, opens a corpus file, selects, cuts, saves (Qt Test) | Yes |
+| **GUI smoke** | App launches, opens a corpus file, selects, cuts, saves (Qt Test) | Yes (Windows); macOS CI runs the non-GUI suites |
 | **Portable package** | `dist/NicBim` starts with `CONDA_PREFIX`, `PIXI_*` and `PYTHON*` removed, then exports the sample house's A01 sheet to PDF (`tools/check_package.py`) | Yes (Windows CI) |
 | **Benchmarks** | Open time, frame rate, memory, commit time, diff time, merge time by model size | Tracks regressions |
 
@@ -65,3 +65,15 @@ The first frame is met by loading the mesh chunks before filling the levels, mod
 - **Format versioning:** any change to the canonical record format bumps `kimbim/N` and ships a migration with tests.
 - **Every bug fix adds a test.** If the bug involves a file, the file joins the corpus.
 - **Decision log:** architectural changes are recorded in [decisions.md](decisions.md) before they are implemented.
+
+## Git remotes and preferences (D253)
+
+- `tests/python/test_remotes.py`: push/pull, fast-forward, refusal on divergence, record merge, status,
+  remote branches, annotated tags, remote branch deletion, clone without a record checkout, both
+  forced-pull sides, and the HTTPS credential helper (the token never reaches the command line).
+- `tests/python/test_updates.py`: the optional release check (stable/beta/off, a newer version, a
+  network error) and the Preferences folders.
+- App `test_git_dialog.cpp`: the Remote, Sync, Options and Clone tabs, a versioned project and the
+  clone-only mode.
+- App `test_preferences.cpp`: the category pages, the new Git/folder/theme settings, token status and
+  the scroll area on a short window.

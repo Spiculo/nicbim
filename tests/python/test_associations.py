@@ -2,9 +2,14 @@
 """Per-user file associations for .nic and .ifc (D139): the Windows registry plan and apply (with a
 fake registry), the Linux desktop/MIME files, `--print` and `--remove`."""
 import json
+import sys
+
+import pytest
 
 from kimbim import associations as A
 from kimbim.agent import cli
+
+pytestmark = pytest.mark.skipif(sys.platform == "darwin", reason="macOS file associations need an .app bundle (D252)")
 
 
 class FakeKey:
